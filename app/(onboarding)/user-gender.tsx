@@ -138,7 +138,6 @@ export default function UserGenderScreen() {
                   ]}
                 >
                   <View style={styles.optionContent}>
-                    <ThemedText style={styles.emoji}>{option.emoji}</ThemedText>
                     <ThemedText
                       style={[
                         styles.optionLabel,
@@ -152,7 +151,9 @@ export default function UserGenderScreen() {
                       {option.label}
                     </ThemedText>
                     {isSelected && (
-                      <CheckIcon width={20} height={20} color={colors.accent} />
+                      <View style={{ flex: 0, marginLeft: 'auto' }}>
+                        <CheckIcon width={20} height={20} color={colors.accent} />
+                      </View>
                     )}
                   </View>
                 </Pressable>
@@ -160,27 +161,7 @@ export default function UserGenderScreen() {
             })}
           </Animated.View>
 
-          {/* Selected identity preview */}
-          {gender && (
-            <Animated.View
-              entering={FadeInUp.delay(100).duration(400)}
-              style={[
-                styles.identityPreview,
-                {
-                  backgroundColor: `${colors.accent}1A`,
-                  borderColor: `${colors.accent}33`,
-                },
-              ]}
-            >
-              <ThemedText
-                style={[styles.identityText, { color: colors.accent }]}
-              >
-                {t("screens.onboarding.genderIdentitySelected", {
-                  identity: gender,
-                })}
-              </ThemedText>
-            </Animated.View>
-          )}
+          {/* Selected identity preview removido */}
 
           {/* Continue Button */}
           <Animated.View

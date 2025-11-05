@@ -91,8 +91,6 @@ export default function VerifyCodeScreen() {
         verificationCode
       );
 
-      Alert.alert("Sucesso", t("screens.onboarding.codeVerifiedSuccess"));
-
       // Navigate to user name screen
       console.log("User authenticated:", userCredential.user.uid);
 

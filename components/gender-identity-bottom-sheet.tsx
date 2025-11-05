@@ -40,16 +40,11 @@ export function GenderIdentityBottomSheet({
 
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option);
-    if (option === "Outro") {
-      setShowOtherInput(true);
-      setShowSuggestion(false);
-    } else {
-      setShowOtherInput(false);
-      setCustomGender("");
-      setShowSuggestion(false);
-      // Auto-confirm and close
-      onSelect(option);
-    }
+    setShowOtherInput(false);
+    setCustomGender("");
+    setShowSuggestion(false);
+    // Auto-confirm and close
+    onSelect(option);
   };
 
   const handleConfirmCustom = () => {
@@ -172,45 +167,7 @@ export function GenderIdentityBottomSheet({
         ))}
       </View>
 
-      {showOtherInput && (
-        <Animated.View
-          entering={FadeInUp.duration(300)}
-          style={styles.customContainer}
-        >
-          <ThemedText
-            style={[styles.customLabel, { color: colors.textSecondary }]}
-          >
-            {t("screens.onboarding.genderCustomPrompt")}
-          </ThemedText>
-          <TextInput
-            value={customGender}
-            onChangeText={setCustomGender}
-            placeholder={t("screens.onboarding.genderCustomPlaceholder")}
-            placeholderTextColor={colors.textSecondary}
-            style={[
-              styles.input,
-              {
-                ...typography.body,
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            autoFocus
-          />
-
-          {customGender.trim() && (
-            <Button
-              onPress={handleConfirmCustom}
-              size="default"
-              fullWidth
-              style={styles.confirmButton}
-            >
-              {t("screens.onboarding.confirm")}
-            </Button>
-          )}
-        </Animated.View>
-      )}
+      {/* Input removido, 'Outro' agora é só uma opção como as demais */}
 
       <Pressable onPress={handleShowSuggestion} style={styles.suggestionLink}>
         <ThemedText style={[styles.suggestionText, { color: colors.accent }]}>

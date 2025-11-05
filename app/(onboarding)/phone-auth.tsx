@@ -85,12 +85,6 @@ export default function PhoneAuthScreen() {
 
       console.log("Verification code sent successfully");
 
-      const formattedForDisplay = `+55 ${phoneNumber}`;
-      Alert.alert(
-        "Sucesso",
-        t("screens.onboarding.codeSentSuccess", { phone: formattedForDisplay })
-      );
-
       // Navigate to code verification screen
       router.push({
         pathname: "/(onboarding)/verify-code",
