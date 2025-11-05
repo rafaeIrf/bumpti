@@ -9,21 +9,50 @@ const tintColorLight = "#0a7ea4";
 
 export const Colors = {
   light: {
-    background: "#FFFFFF",
-    surface: "#F8F8F8",
-    primary: "#00BFA5",
-    secondary: "#03DAC6",
-    accent: "#1DE9B6",
-    text: "#121212",
-    textSecondary: "#555555",
-    border: "#E0E0E0",
-    success: "#2ECC71",
-    warning: "#F1C40F",
-    error: "#E74C3C",
-    tint: tintColorLight,
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
+    // Main palette
+    background: "#000000", // Fundo principal
+    surface: "#16181C", // Cards, superfícies elevadas
+    surfaceHover: "#1C1F23", // Estado hover de superfícies
+    border: "#2F3336", // Bordas, separadores
+
+    // Text colors
+    text: "#E7E9EA", // Texto principal
+    textPrimary: "#E7E9EA",
+    textSecondary: "#8B98A5",
+    textTertiary: "#5B6671",
+    disabled: "#3A3C40",
+
+    // Accent/action
+    accent: "#1D9BF0", // Botões primários, links
+    accentBlue: "#1D9BF0",
+    accentBlueHover: "#1A8CD8",
+    accentBlueLight: "rgba(29, 155, 240, 0.1)",
+    accentBlueLighter: "rgba(29, 155, 240, 0.05)",
+
+    // State
+    error: "#FF453A",
+    success: "#00BA7C",
+    disabledBG: "#0E0F10",
+
+    // Additional
+    plansBlue: "#00A8E8",
+    premiumGold: "#FFD700",
+    premiumOrange: "#FFA500",
+
+    // Chart colors
+    chart1: "#1D9BF0",
+    chart2: "#00BA7C",
+    chart3: "#F91880",
+    chart4: "#FFD400",
+    chart5: "#794BC4",
+
+    // Tab icons
+    icon: "#8B98A5",
+    tabIconDefault: "#8B98A5",
+    tabIconSelected: "#1D9BF0",
+
+    // Legacy/compat
+    tint: "#1D9BF0",
   },
   dark: {
     // Main palette

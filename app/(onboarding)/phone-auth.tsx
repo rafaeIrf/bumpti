@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   StyleSheet,
   TextInput,
   View,
@@ -71,8 +72,18 @@ export default function PhoneAuthScreen() {
       const digits = getDigitsOnly(phoneNumber);
       const fullPhoneNumber = `+55${digits}`;
 
+      console.log("Sending verification code to:", fullPhoneNumber);
+
+      // Show reCAPTCHA info on iOS
+      if (Platform.OS === "ios") {
+        console.log("[UI] iOS: User will see reCAPTCHA verification");
+      }
+
       // Send verification code via Firebase
+      // On iOS, this will open a Safari WebView for reCAPTCHA verification
       await phoneAuthService.sendVerificationCode(fullPhoneNumber);
+
+      console.log("Verification code sent successfully");
 
       const formattedForDisplay = `+55 ${phoneNumber}`;
       Alert.alert(
@@ -86,7 +97,27 @@ export default function PhoneAuthScreen() {
         params: { phone: fullPhoneNumber },
       });
     } catch (error: any) {
-      Alert.alert("Erro", error.message);
+      console.error("Error in handleSendCode:", error);
+      console.error("Error details:", {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      // More detailed error message for iOS
+      let errorMessage = error.message || "Ocorreu um erro ao enviar o código";
+
+      if (Platform.OS === "ios") {
+        if (error.code === "auth/network-request-failed") {
+          errorMessage =
+            "Erro de conexão. Verifique se você completou a verificação reCAPTCHA.";
+        } else if (error.code === "auth/too-many-requests") {
+          errorMessage =
+            "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+        }
+      }
+
+      Alert.alert("Erro", errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -57,7 +57,9 @@ export function BaseTemplateScreen({
   return (
     <View style={[styles.wrapper, containerStyle]}>
       {/* Top Header with scroll position - positioned absolutely to stay on top */}
-      <View style={styles.headerContainer}>{renderTopHeader()}</View>
+      <View style={styles.headerContainer} pointerEvents="box-none">
+        {renderTopHeader()}
+      </View>
 
       {/* Scrollable content */}
       <Animated.ScrollView
