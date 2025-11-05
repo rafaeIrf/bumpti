@@ -118,9 +118,8 @@ function getSizeStyles(size: ButtonSize, fullWidth?: boolean) {
     case "lg":
       base.container.minHeight = 40;
       base.container.paddingHorizontal = 20;
-      base.text.fontSize = typography.heading.fontSize;
+      base.text.fontSize = typography.body.fontSize;
       base.text.lineHeight = typography.heading.lineHeight;
-      base.text.fontWeight = "700";
       break;
     case "icon":
       base.container.minHeight = 36;

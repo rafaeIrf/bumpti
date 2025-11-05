@@ -1,6 +1,24 @@
 import functions from "@react-native-firebase/functions";
 import { Place, PlaceType } from "./types";
 
+export async function searchPlacesByText(
+  input: string,
+  lat: number,
+  lng: number,
+  radius: number = 20000,
+  sessionToken?: string
+): Promise<{ places: Place[] }> {
+  const callable = functions().httpsCallable<any, { places: Place[] }>(
+    "searchPlacesByText"
+  );
+  const payload: any = { input, lat, lng, radius };
+  if (sessionToken) payload.sessionToken = sessionToken;
+  const result = await callable(payload);
+  return {
+    places: (result?.data?.places || []) as Place[],
+  };
+}
+
 // Fetch nearby places for given coordinates and included types
 export async function getNearbyPlaces(
   latitude: number,
@@ -33,4 +51,33 @@ export async function getFeaturedPlaces(placeIds: string[]): Promise<Place[]> {
     console.error("Failed to fetch featured places:", err);
     return [];
   }
+}
+
+// Search places by text query with pagination support
+export async function searchTextPlaces(
+  lat: number,
+  lng: number,
+  includedType: string,
+  radius: number = 20000,
+  maxResultCount: number = 20,
+  pageToken?: string
+): Promise<{ places: Place[]; nextPageToken: string | null }> {
+  const callable = functions().httpsCallable<
+    any,
+    { places: Place[]; nextPageToken: string | null }
+  >("searchTextPlaces");
+
+  const result = await callable({
+    lat,
+    lng,
+    includedType,
+    radius,
+    maxResultCount,
+    ...(pageToken && { pageToken }),
+  });
+
+  return {
+    places: (result?.data?.places || []) as Place[],
+    nextPageToken: result?.data?.nextPageToken || null,
+  };
 }

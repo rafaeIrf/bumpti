@@ -16,7 +16,7 @@ import * as functions from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { onCall } from "firebase-functions/v2/https";
 import fetch from "node-fetch";
-import { PlaceType } from "./places/types";
+import { PlaceType, SearchPlacesByTextRequest } from "./places/types";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -233,5 +233,215 @@ export const getPlacesByIds = onCall(
         error.message || "Failed to fetch places"
       );
     }
+  }
+);
+
+export const searchPlacesByText = onCall(
+  {
+    secrets: [GOOGLE_PLACES_API_KEY],
+  },
+  async (request) => {
+    const {
+      input,
+      lat,
+      lng,
+      radius = 20000,
+      sessionToken,
+    } = request.data as SearchPlacesByTextRequest & { sessionToken?: string };
+
+    if (!input || typeof input !== "string" || input.length < 2) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Input text is required and must be at least 2 characters."
+      );
+    }
+    if (typeof lat !== "number" || typeof lng !== "number") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing or invalid coordinates"
+      );
+    }
+
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Google Places API key not configured"
+      );
+    }
+
+    // Allowed types for filtering results
+    const allowedTypes = ["bar", "night_club", "cafe", "university", "gym"];
+
+    const autocompleteURL =
+      "https://places.googleapis.com/v1/places:autocomplete";
+    const body: any = {
+      input,
+      includedPrimaryTypes: allowedTypes,
+      locationRestriction: {
+        circle: {
+          center: { latitude: lat, longitude: lng },
+          radius,
+        },
+      },
+    };
+
+    // sessionToken é opcional, mas recomendado pela Google para billing/analytics
+    if (sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
+    const response = await fetch(autocompleteURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new functions.https.HttpsError(
+        "unknown",
+        `Failed to fetch from Google Places Autocomplete API: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data: any = await response.json();
+
+    // Autocomplete retorna suggestions, não places
+    // Cada suggestion tem place e placePrediction
+    const places =
+      data.suggestions?.map((suggestion: any) => ({
+        placeId:
+          suggestion.placePrediction?.placeId ||
+          suggestion.placePrediction?.place,
+        name:
+          suggestion.placePrediction?.text?.text ||
+          suggestion.placePrediction?.structuredFormat?.mainText?.text ||
+          "Unknown",
+        types: suggestion.placePrediction?.types || [],
+        formattedAddress:
+          suggestion.placePrediction?.structuredFormat?.secondaryText?.text ||
+          "",
+        location: undefined, // Autocomplete não retorna location, precisa buscar depois se necessário
+      })) || [];
+
+    // Autocomplete não suporta paginação nativa (nextPageToken)
+    // Retorna todas as sugestões de uma vez (limitado pela API)
+    return { places };
+  }
+);
+
+type SearchTextRequest = {
+  textQuery?: string;
+  lat: number;
+  lng: number;
+  radius?: number; // in meters, max 50000
+  includedType: string; // single type for this search
+  maxResultCount?: number; // max 20 per request
+  pageToken?: string; // for pagination
+};
+
+export const searchTextPlaces = onCall(
+  {
+    secrets: [GOOGLE_PLACES_API_KEY],
+  },
+  async (request) => {
+    const {
+      lat,
+      lng,
+      radius = 20000,
+      includedType,
+      maxResultCount = 20,
+      pageToken,
+    } = request.data as SearchTextRequest;
+
+    if (typeof lat !== "number" || typeof lng !== "number") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing or invalid coordinates"
+      );
+    }
+
+    if (!includedType || typeof includedType !== "string") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "includedType is required"
+      );
+    }
+
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Google Places API key not configured"
+      );
+    }
+
+    // Use the new Places API Text Search endpoint
+    const url = "https://places.googleapis.com/v1/places:searchText";
+
+    const body: any = {
+      includedType,
+      maxResultCount: Math.min(maxResultCount, 20), // API limit is 20
+      locationBias: {
+        circle: {
+          center: {
+            latitude: lat,
+            longitude: lng,
+          },
+          radius,
+        },
+      },
+    };
+
+    // Add pageToken if provided for pagination
+    if (pageToken) {
+      body.pageToken = pageToken;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.location,places.types,nextPageToken",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new functions.https.HttpsError(
+        "unknown",
+        `Failed to fetch from Google Places Text Search API: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data: any = await response.json();
+
+    if (!data.places || !Array.isArray(data.places)) {
+      return { places: [], nextPageToken: null };
+    }
+
+    // Map to consistent format
+    const places = data.places.map((place: NewPlacesAPIPlace) => ({
+      placeId: place.id,
+      name: place.displayName?.text || "Unknown",
+      location: {
+        lat: place.location?.latitude || 0,
+        lng: place.location?.longitude || 0,
+      },
+      types: place.types || [],
+      formattedAddress: place.formattedAddress,
+    }));
+
+    return {
+      places,
+      nextPageToken: data.nextPageToken || null,
+    };
   }
 );

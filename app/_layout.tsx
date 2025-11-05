@@ -5,10 +5,13 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
+import BottomSheetProvider from "@/components/BottomSheetProvider";
+import { ReduxProvider } from "@/components/redux-provider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import I18nProvider from "@/modules/i18n-provider";
+import I18nProvider from "@/modules/locales/i18n-provider";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -45,14 +48,31 @@ export default function RootLayout() {
   }
 
   return (
-    <I18nProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </I18nProvider>
+    <ReduxProvider>
+      <I18nProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetProvider>
+              <Stack>
+                <Stack.Screen
+                  name="(onboarding)"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="main"
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+              </Stack>
+              <StatusBar style="auto" />
+            </BottomSheetProvider>
+          </GestureHandlerRootView>
+        </ThemeProvider>
+      </I18nProvider>
+    </ReduxProvider>
   );
 }

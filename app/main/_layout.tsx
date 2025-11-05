@@ -1,16 +1,13 @@
 import { Stack } from "expo-router";
 
-export default function HomeLayout() {
+export default function MainLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
-        name="index"
+        name="category-results"
         options={{
           headerShown: false,
+          presentation: "card",
         }}
       />
     </Stack>

@@ -16,7 +16,54 @@ These guidelines steer GitHub Copilot (Chat and inline suggestions) when generat
 ## Language and tone
 
 - Write UI strings, comments, and docs in English (US).
-- Keep messages short, clear, and consistent with the app’s tone.
+- Keep messages short, clear, and consistent with the app's tone.
+
+## Internationalization (i18n)
+
+- **Always use translation keys** for user-facing strings (UI text, labels, messages, etc.).
+- Import translation function: `import { translate, t } from "@/modules/locales";`
+- Use `translate(key)` instead of hardcoded strings.
+- **When adding new text:**
+  1. Create a new translation key in all i18n files (`modules/locales/en.json`, `pt.json`, `es.json`)
+  2. Use descriptive, dot-notation keys (e.g., `"screens.home.title"`, `"common.welcome"`)
+  3. Translate the text appropriately for each language:
+     - `en.json` - English (US)
+     - `pt.json` - Portuguese (Brazil)
+     - `es.json` - Spanish
+  4. Use the translation function in code: `t("screens.home.title")`
+- **When removing text or features:**
+  1. Remove the translation keys from all i18n files (`modules/locales/en.json`, `pt.json`, `es.json`)
+  2. Remove the `t()` function calls from the code
+  3. Keep locale files synchronized - if a key is removed from one file, remove it from all three
+- **Key naming conventions:**
+  - Group by feature/screen: `"screens.explore.subtitle"`
+  - Common strings: `"common.save"`, `"common.cancel"`
+  - Errors: `"errors.notFound"`, `"errors.network"`
+  - Actions: `"actions.delete"`, `"actions.confirm"`
+- **Interpolation example:**
+  ```json
+  // pt.json
+  { "greeting": "Olá, {{name}}!" }
+  ```
+  ```tsx
+  // Component
+  t("greeting", { name: "João" }); // "Olá, João!"
+  ```
+- **Never hardcode user-facing text** - always use translation keys.
+
+### i18n Examples:
+
+```tsx
+// ❌ Don't - Hardcoded text
+<ThemedText>Bem-vindo!</ThemedText>
+
+// ✅ Do - Use translation
+import { t } from "@/modules/locales";
+<ThemedText>{t("common.welcome")}</ThemedText>
+
+// ✅ With interpolation
+<ThemedText>{t("greeting", { name: user.name })}</ThemedText>
+```
 
 ## Code standards
 
@@ -51,10 +98,84 @@ These guidelines steer GitHub Copilot (Chat and inline suggestions) when generat
 
 ## UI and style
 
-- Use `ThemedView`/`ThemedText` to respect light/dark themes.
-- Colors from `constants/theme.ts` (e.g., `Colors.light.tint`).
-- Icons with `IconSymbol`; haptics with `HapticTab` in tabs.
+- **Always use theme colors** from `constants/theme.ts` via `useThemeColors()` hook.
+  - Available colors: `background`, `surface`, `text`, `textSecondary`, `accent`, `border`, `error`, `success`, etc.
+  - Access: `const colors = useThemeColors(); <View style={{ backgroundColor: colors.surface }} />`
+  - **Never hardcode colors** unless introducing a new color to the theme.
+- **Always use typography** from `constants/theme.ts` for consistent text styling.
+  - Import: `import { typography } from "@/constants/theme";`
+  - Available styles: `heading`, `subheading`, `body`, `caption`
+  - Usage: `<Text style={{ ...typography.body, color: colors.text }}>Title</Text>`
+  - **Never hardcode font sizes or line heights** - always spread typography tokens first, then override if needed.
+  - Example override: `<Text style={{ ...typography.heading, fontSize: 32 }}>Large Title</Text>`
+- **Spacing**: Use values from `spacing` in `constants/theme.ts` (xs, sm, md, lg, xl, xxl).
+  - **Never hardcode spacing values** - use spacing tokens for margins, padding, gaps.
+- Icons with `IconSymbol` or SVG icons from `@/assets/icons`.
+- Haptics with `HapticTab` in tabs.
 - Images via `expo-image` and assets in `assets/images`.
+
+### Style Examples:
+
+```tsx
+// ❌ Don't - Hardcoded colors, font sizes, and spacing
+<Text style={{ color: "#8B98A5", fontSize: 16, marginBottom: 24 }}>Hello</Text>;
+
+// ✅ Do - Use theme colors, typography, and spacing
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { typography, spacing } from "@/constants/theme";
+
+const colors = useThemeColors();
+<Text
+  style={{
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
+  }}
+>
+  Hello
+</Text>;
+
+// ✅ Correct - Override typography when needed
+<Text style={{ ...typography.heading, fontSize: 32, color: colors.text }}>
+  Custom Size
+</Text>;
+```
+
+## Screen structure
+
+- **Always use `BaseTemplateScreen`** for new screens (located in `components/base-template-screen.tsx`).
+- Pass `TopHeader` prop only if the screen requires a header/toolbar (e.g., with `ScreenToolbar`).
+- `BaseTemplateScreen` provides built-in pull-to-refresh support via `refreshing` and `onRefresh` props.
+- Wrap screen content inside `BaseTemplateScreen` children.
+
+### Example with header:
+
+```tsx
+<BaseTemplateScreen
+  TopHeader={
+    <ScreenToolbar
+      title="Screen Title"
+      leftAction={{
+        icon: BackIcon,
+        onClick: () => router.back(),
+        ariaLabel: "Back",
+      }}
+    />
+  }
+  refreshing={refreshing}
+  onRefresh={handleRefresh}
+>
+  <ThemedView>{/* Screen content */}</ThemedView>
+</BaseTemplateScreen>
+```
+
+### Example without header:
+
+```tsx
+<BaseTemplateScreen refreshing={refreshing} onRefresh={handleRefresh}>
+  <ThemedView>{/* Screen content */}</ThemedView>
+</BaseTemplateScreen>
+```
 
 ## Folder structure (suggestions)
 

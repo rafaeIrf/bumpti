@@ -96,3 +96,10 @@ export enum PlaceType {
   veterinary_care = "veterinary_care",
   zoo = "zoo",
 }
+
+export type SearchPlacesByTextRequest = {
+  input: string;
+  lat: number;
+  lng: number;
+  radius?: number;
+};

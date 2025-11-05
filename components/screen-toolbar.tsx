@@ -23,7 +23,7 @@ export type ViewMode = "list" | "map";
 interface ScreenToolbarProps {
   // Basic toolbar props
   leftAction?: ToolbarAction;
-  title: string;
+  title?: string;
   titleIcon?: ComponentType<SvgProps>; // SVG Icon component
   titleIconColor?: string;
   rightActions?: ToolbarAction | ToolbarAction[]; // Single action or array

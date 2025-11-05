@@ -2,9 +2,9 @@ import * as Localization from "expo-localization";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-import en from "./locales/en.json";
-import es from "./locales/es.json";
-import pt from "./locales/pt.json";
+import en from "./en.json";
+import es from "./es.json";
+import pt from "./pt.json";
 
 const resources = {
   en: { translation: en },

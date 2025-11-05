@@ -5,6 +5,10 @@ export default function OnboardingLayout() {
   return (
     <Stack>
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
+      <Stack.Screen name="phone-auth" options={{ headerShown: false }} />
+      <Stack.Screen name="verify-code" options={{ headerShown: false }} />
+      <Stack.Screen name="user-name" options={{ headerShown: false }} />
+      <Stack.Screen name="user-age" options={{ headerShown: false }} />
     </Stack>
   );
 }

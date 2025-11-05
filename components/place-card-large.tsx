@@ -1,3 +1,4 @@
+import { getPlaceGradient, getPlaceIcon } from "@/components/place-card-utils";
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,7 +16,6 @@ interface PlaceCardLargeProps {
     name: string;
     type: string;
     category: string;
-    categoryIcon: string;
     distance: number;
     activeUsers: number;
     image?: string;
@@ -27,15 +27,6 @@ interface PlaceCardLargeProps {
   onPlansClick?: () => void;
   onToggleFavorite?: () => void;
 }
-
-const GRADIENTS: Record<string, [string, string]> = {
-  restaurant: ["#E74C3C", "#C0392B"],
-  bar: ["#F39C12", "#D35400"],
-  cafe: ["#8E6E53", "#5C4033"],
-  night_club: ["#8E44AD", "#2C3E50"],
-  gym: ["#27AE60", "#145A32"],
-  default: ["#1D9BF0", "#16181C"],
-};
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -60,7 +51,8 @@ export function PlaceCardLarge({
     scale.value = withSpring(1);
   };
 
-  const gradient = GRADIENTS[place.type] || GRADIENTS.default;
+  const gradient = getPlaceGradient(place.type);
+  const Icon = getPlaceIcon(place.type);
 
   return (
     <AnimatedPressable
@@ -78,11 +70,7 @@ export function PlaceCardLarge({
         >
           {/* Centered icon */}
           <View style={styles.iconContainer}>
-            <IconSymbol
-              name={getIconForType(place.type) as any}
-              size={96}
-              color="rgba(255, 255, 255, 0.9)"
-            />
+            <Icon width={96} height={96} color="rgba(255, 255, 255, 0.9)" />
           </View>
 
           {/* Gradient overlay */}
@@ -107,9 +95,7 @@ export function PlaceCardLarge({
                   {place.name}
                 </ThemedText>
                 <View style={styles.metaRow}>
-                  <Text style={styles.metaText}>
-                    {place.categoryIcon} {place.type}
-                  </Text>
+                  <Text style={styles.metaText}>{place.type}</Text>
                   <Text style={styles.metaText}>•</Text>
                   <Text style={styles.metaText}>
                     {place.distance.toFixed(1)}km
@@ -139,20 +125,6 @@ export function PlaceCardLarge({
       </View>
     </AnimatedPressable>
   );
-}
-
-function getIconForType(type: string): string {
-  const icons: Record<string, string> = {
-    restaurant: "fork.knife",
-    bar: "wineglass",
-    cafe: "cup.and.saucer.fill",
-    night_club: "music.note.house.fill",
-    gym: "figure.walk",
-    park: "tree.fill",
-    shopping_mall: "bag.fill",
-    default: "mappin.circle.fill",
-  };
-  return icons[type] || icons.default;
 }
 
 const styles = StyleSheet.create({

@@ -7,8 +7,9 @@ export type Place = {
   placeId: string;
   name: string;
   formattedAddress?: string;
-  location: { lat: number; lng: number };
-  type: PlaceType | null;
+  location?: { lat: number; lng: number };
+  type?: PlaceType | null;
+  types?: string[]; // Para autocomplete
 };
 
 export type NearbyPlacesResponse = { places: Place[] };

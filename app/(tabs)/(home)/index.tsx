@@ -1,376 +1,418 @@
-import { useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
-
 import {
-  MapIcon,
+  BeerIcon,
+  CoffeeIcon,
+  DumbbellIcon,
+  FlameIcon,
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { HelloWave } from "@/components/hello-wave";
-import { PlaceCardCompact } from "@/components/place-card-compact";
-import { PlaceCardFavorite } from "@/components/place-card-favorite";
-import { PlaceCardLarge } from "@/components/place-card-large";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { CategoryCard } from "@/components/category-card";
+import { PlaceCardFeatured } from "@/components/place-card-featured";
+import PlaceSearchContent from "@/components/place-search-content";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { getUserPosition } from "@/modules/places";
-import { getFeaturedPlaces, getNearbyPlaces } from "@/modules/places/api";
-import { Place, PlaceType } from "@/modules/places/types";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { FlatList, StyleSheet } from "react-native";
+import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
+
+interface ActivePlace {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  distance: number;
+  activeUsers: number;
+}
+
+interface Category {
+  id: string;
+  icon: React.ComponentType<{ width: number; height: number; color: string }>;
+  title: string;
+  description: string;
+  gradient: [string, string];
+  types: string[];
+  categoryIcon: string;
+}
+
+const categories: Category[] = [
+  {
+    id: "nightlife",
+    icon: BeerIcon,
+    title: "Rolês & Noitadas",
+    description: "Pra sair e conhecer gente nova.",
+    gradient: ["#F39C12", "#D35400"],
+    types: ["bar", "night_club"],
+    categoryIcon: "🍸",
+  },
+  {
+    id: "cafes",
+    icon: CoffeeIcon,
+    title: "Cafés & Bate-Papo",
+    description: "Lugares pra conversar e relaxar.",
+    gradient: ["#8E6E53", "#5C4033"],
+    types: ["cafe"],
+    categoryIcon: "☕",
+  },
+  {
+    id: "university",
+    icon: MapPinIcon,
+    title: "Vida Universitária",
+    description: "Onde os encontros acontecem na rotina.",
+    gradient: ["#3498DB", "#2C3E50"],
+    types: ["university"],
+    categoryIcon: "🎓",
+  },
+  {
+    id: "fitness",
+    icon: DumbbellIcon,
+    title: "Bem-estar & Movimento",
+    description: "Conexões que começam no treino.",
+    gradient: ["#27AE60", "#145A32"],
+    types: ["gym"],
+    categoryIcon: "🏋️",
+  },
+];
+
+// Mock de lugares com pessoas conectadas agora
+const mockActivePlaces: ActivePlace[] = [
+  {
+    id: "place-1",
+    name: "Bar do Zeca",
+    type: "bar",
+    category: "bar",
+    distance: 0.8,
+    activeUsers: 12,
+  },
+  {
+    id: "place-2",
+    name: "Café Aurora",
+    type: "cafe",
+    category: "cafe",
+    distance: 1.2,
+    activeUsers: 7,
+  },
+  {
+    id: "place-3",
+    name: "Universidade Mackenzie",
+    type: "university",
+    category: "university",
+    distance: 2.5,
+    activeUsers: 23,
+  },
+  {
+    id: "place-4",
+    name: "Balada Fusion",
+    type: "nightclub",
+    category: "nightclub",
+    distance: 1.8,
+    activeUsers: 34,
+  },
+  {
+    id: "place-5",
+    name: "Academia Smart Fit",
+    type: "gym",
+    category: "gym",
+    distance: 0.5,
+    activeUsers: 15,
+  },
+];
 
 export default function HomeScreen() {
-  const [featuredPlaces, setFeaturedPlaces] = useState<Place[] | null>(null);
-  const [firstNearbyPlaces, setFirstNearbyPlaces] = useState<Place[] | null>(
-    null
-  );
-  const [secondNearbyPlaces, setSecondNearbyPlaces] = useState<Place[] | null>(
-    null
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
   const colors = useThemeColors();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activePlaces] = useState<ActivePlace[]>(mockActivePlaces);
+  const [refreshing, setRefreshing] = useState(false);
+  const bottomSheet = useCustomBottomSheet();
 
-  // Lista fixa de placeIds para a seção "Em Destaque"
-  const featuredPlaceIds = [
-    "ChIJBwa1_Hfk3JQRxQoUhQVJOow", // exemplo Sydney Opera House
-    "ChIJLWF2Z-2QmQARB24HTMRoIGU", // exemplo Sydney Opera House
-    "ChIJZ_y9EKDl3JQRFQX_OqqYD9U", // exemplo Sydney Opera House
-    "ChIJZ_y9EKDl3JQRFQX_OqqYD9U", // exemplo Sydney Opera House
-    "ChIJZ_y9EKDl3JQRFQX_OqqYD9U", // exemplo Sydney Opera House
-  ];
-
-  const fetchNearbyPlaces = async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const { latitude, longitude } = await getUserPosition();
-      setUserLocation({ latitude, longitude });
-      const firstPlaceList = await getNearbyPlaces(
-        latitude,
-        longitude,
-        [PlaceType.bar, PlaceType.night_club, PlaceType.cafe],
-        "POPULARITY",
-        10
-      );
-      const secondPlaceList = await getNearbyPlaces(
-        latitude,
-        longitude,
-        [PlaceType.university, PlaceType.gym],
-        "DISTANCE",
-        10
-      );
-      setFirstNearbyPlaces(firstPlaceList);
-      setSecondNearbyPlaces(secondPlaceList);
-      // Busca lugares em destaque em paralelo (se ainda não foram carregados)
-      if (!featuredPlaces) {
-        const featured = await getFeaturedPlaces(featuredPlaceIds);
-        setFeaturedPlaces(featured);
-      }
-    } catch (err: any) {
-      setError(err?.message || "Failed to fetch places");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const handleCategoryClick = (category: Category) => {
+    setSelectedCategory(category.id);
+    router.push({
+      pathname: "/main/category-results",
+      params: {
+        categoryName: category.title,
+        placeTypes: category.types.join(","),
+        isPremium: "false", // TODO: Get from user premium status
+      },
+    });
+    setSelectedCategory(null);
   };
 
-  const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ): number => {
-    return 1;
+  const handlePlaceClick = (placeId: string) => {
+    console.log("Place clicked:", placeId);
+    // TODO: Navigate to place detail
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // TODO: Fetch real data
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  const renderActivePlace = ({
+    item,
+    index,
+  }: {
+    item: ActivePlace;
+    index: number;
+  }) => (
+    <Animated.View
+      entering={FadeInRight.delay(index * 100).springify()}
+      style={{ marginRight: 12 }}
+    >
+      <PlaceCardFeatured
+        place={item}
+        onClick={() => handlePlaceClick(item.id)}
+        index={index}
+      />
+    </Animated.View>
+  );
+
+  const handleOpenSearch = () => {
+    if (!bottomSheet) return;
+    bottomSheet.expand({
+      content: () => (
+        <PlaceSearchContent
+          onBack={() => bottomSheet.close()}
+          onPlaceSelect={() => bottomSheet.close()}
+          isPremium={false}
+        />
+      ),
+      draggable: true,
+      snapPoints: ["100%"],
+    });
   };
 
   return (
     <BaseTemplateScreen
       TopHeader={
-        <ScreenToolbar
-          leftAction={{
-            icon: SlidersHorizontalIcon,
-            onClick: () => {},
-            ariaLabel: "Voltar",
-            color: colors.icon,
-          }}
-          title="Explorar"
-          titleIcon={MapPinIcon}
-          titleIconColor={colors.accent}
-          rightActions={[
-            {
-              icon: MapIcon,
-              onClick: () => console.log("Filtros"),
-              ariaLabel: "Filtros",
+        <ThemedView>
+          <ScreenToolbar
+            leftAction={{
+              icon: SlidersHorizontalIcon,
+              onClick: () => {},
+              ariaLabel: "Voltar",
               color: colors.icon,
-            },
-            {
-              icon: SearchIcon,
-              onClick: () => console.log("Filtros"),
-              ariaLabel: "Filtros",
-              color: colors.icon,
-            },
-          ]}
-        />
+            }}
+            title="Explorar"
+            titleIcon={MapPinIcon}
+            titleIconColor={colors.accent}
+            rightActions={[
+              {
+                icon: SearchIcon,
+                onClick: handleOpenSearch,
+                ariaLabel: "Buscar",
+                color: colors.icon,
+              },
+            ]}
+          />
+        </ThemedView>
       }
       refreshing={refreshing}
-      onRefresh={() => fetchNearbyPlaces(true)}
+      onRefresh={handleRefresh}
     >
-      <ThemedView style={styles.header}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="title" style={{ ...typography.heading }}>
-            Lugares Próximos
-          </ThemedText>
-          <HelloWave />
-        </ThemedView>
-      </ThemedView>
+      <ThemedView>
+        <Animated.View entering={FadeInDown.delay(0).springify()}>
+          <ThemedView style={styles.section}>
+            <ThemedView style={styles.sectionHeader}>
+              <FlameIcon width={18} height={18} color={colors.error} />
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                Lugares com pessoas agora
+              </ThemedText>
+            </ThemedView>
 
-      <ThemedView style={styles.content}>
-        {!firstNearbyPlaces && !loading && !error && (
-          <ThemedView style={styles.emptyState}>
-            <ThemedText type="subtitle" style={styles.emptyTitle}>
-              Descubra lugares ao seu redor
-            </ThemedText>
-            <ThemedText style={styles.emptyText}>
-              Puxe para baixo para buscar bares, restaurantes e cafés próximos
-            </ThemedText>
-          </ThemedView>
-        )}
-
-        {loading && !refreshing && (
-          <ThemedView style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1D9BF0" />
-            <ThemedText style={styles.loadingText}>
-              Buscando lugares...
-            </ThemedText>
-          </ThemedView>
-        )}
-
-        {error && (
-          <ThemedView style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>❌ {error}</ThemedText>
-          </ThemedView>
-        )}
-
-        {firstNearbyPlaces && firstNearbyPlaces.length === 0 && (
-          <ThemedView style={styles.emptyState}>
-            <ThemedText>Nenhum lugar encontrado nas proximidades.</ThemedText>
-          </ThemedView>
-        )}
-
-        {(featuredPlaces || firstNearbyPlaces || secondNearbyPlaces) && (
-          <View style={styles.placesContainer}>
-            {/* Featured places - Large cards horizontal from getPlacesByIds */}
-            {featuredPlaces && featuredPlaces.length > 0 && (
-              <View style={styles.section}>
-                <ThemedText type="subtitle" style={styles.sectionTitle}>
-                  Em Destaque
+            {activePlaces.length > 0 ? (
+              <FlatList
+                horizontal
+                data={activePlaces}
+                renderItem={renderActivePlace}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+              />
+            ) : (
+              <ThemedView
+                style={[
+                  styles.emptyCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <ThemedText
+                  style={[styles.emptyText, { color: colors.textSecondary }]}
+                >
+                  Ainda não há pessoas conectadas por perto. Que tal ser o
+                  primeiro a aparecer? 👀
                 </ThemedText>
-                <FlatList
-                  horizontal
-                  data={featuredPlaces}
-                  showsHorizontalScrollIndicator={false}
-                  keyExtractor={(item) => item.placeId}
-                  contentContainerStyle={styles.horizontalList}
-                  renderItem={({ item }) => (
-                    <View style={styles.largeCardWrapper}>
-                      <PlaceCardLarge
-                        place={{
-                          id: item.placeId,
-                          name: item.name,
-                          type: String(item.type || "default"),
-                          category: "Featured",
-                          categoryIcon: "⭐",
-                          distance:
-                            item.location && userLocation
-                              ? calculateDistance(
-                                  userLocation.latitude,
-                                  userLocation.longitude,
-                                  item.location.lat,
-                                  item.location.lng
-                                )
-                              : 0,
-                          activeUsers: Math.floor(Math.random() * 10),
-                          isFavorite: false,
-                        }}
-                        onClick={() => console.log("Place clicked:", item.name)}
-                        onToggleFavorite={() => console.log("Favorite toggled")}
-                      />
-                    </View>
-                  )}
-                />
-              </View>
+              </ThemedView>
             )}
+          </ThemedView>
+        </Animated.View>
 
-            {/* Sua Vibe - Horizontal grid with two columns from firstNearbyPlaces */}
-            <View style={styles.section}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Sua Vibe
-              </ThemedText>
-              <ThemedText style={styles.sectionDescription} numberOfLines={1}>
-                Onde o dia a dia também vira encontro.
-              </ThemedText>
-              {firstNearbyPlaces && firstNearbyPlaces.length > 0 && (
-                <FlatList
-                  data={firstNearbyPlaces}
-                  numColumns={2}
-                  keyExtractor={(item) => item.placeId}
-                  renderItem={({ item, index }) => (
-                    <View style={styles.favoriteCardWrapper}>
-                      <PlaceCardFavorite
-                        place={{
-                          id: item.placeId,
-                          name: item.name,
-                          type: String(item.type || "default"),
-                          category: "Rolê",
-                          activeUsers: Math.floor(Math.random() * 10),
-                          isFavorite: false,
-                        }}
-                        onClick={() => console.log("Place clicked:", item.name)}
-                        onToggleFavorite={() => console.log("Favorite toggled")}
-                      />
-                    </View>
-                  )}
-                />
-              )}
-            </View>
+        {/* Title Section */}
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <ThemedView style={[styles.section, { paddingTop: 8 }]}>
+            <ThemedText style={[styles.mainTitle, { color: colors.text }]}>
+              Onde você quer se conectar hoje?
+            </ThemedText>
+            <ThemedText
+              style={[styles.mainSubtitle, { color: colors.textSecondary }]}
+            >
+              Escolha o tipo de lugar e descubra quem está por lá.
+            </ThemedText>
+          </ThemedView>
+        </Animated.View>
 
-            {/* Rolê & Conexões - Compact cards horizontal from secondNearbyPlaces */}
-            <View style={styles.section}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Rolê & Conexões
-              </ThemedText>
-              <ThemedText style={styles.sectionDescription} numberOfLines={1}>
-                Lugares pra viver o momento e conhecer gente nova.
-              </ThemedText>
-              {secondNearbyPlaces && secondNearbyPlaces.length > 0 && (
-                <FlatList
-                  data={secondNearbyPlaces}
-                  keyExtractor={(item) => item.placeId}
-                  contentContainerStyle={styles.horizontalList}
-                  renderItem={({ item, index }) => (
-                    <View>
-                      <PlaceCardCompact
-                        place={{
-                          id: item.placeId,
-                          name: item.name,
-                          type: String(item.type || "default"),
-                          category: "Rolê",
-                          categoryIcon: "🎉",
-                          distance:
-                            item.location && userLocation
-                              ? calculateDistance(
-                                  userLocation.latitude,
-                                  userLocation.longitude,
-                                  item.location.lat,
-                                  item.location.lng
-                                )
-                              : 0,
-                          activeUsers: Math.floor(Math.random() * 10),
-                          isFavorite: false,
-                        }}
-                        onClick={() => console.log("Place clicked:", item.name)}
-                        onToggleFavorite={() => console.log("Favorite toggled")}
-                      />
-                    </View>
-                  )}
+        {/* Categories List */}
+        <ThemedView style={styles.categoriesContainer}>
+          {categories.map((category, index) => {
+            const isSelected = selectedCategory === category.id;
+
+            return (
+              <Animated.View
+                key={category.id}
+                entering={FadeInDown.delay(300 + index * 100).springify()}
+              >
+                <CategoryCard
+                  category={category}
+                  isSelected={isSelected}
+                  onClick={() => handleCategoryClick(category)}
                 />
-              )}
-            </View>
-          </View>
-        )}
+              </Animated.View>
+            );
+          })}
+        </ThemedView>
+
+        {/* Info Card */}
+        <Animated.View entering={FadeInDown.delay(700).springify()}>
+          <ThemedView style={styles.section}>
+            <ThemedView
+              style={[
+                styles.infoCard,
+                {
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <ThemedView style={styles.infoContent}>
+                <ThemedView
+                  style={[
+                    styles.infoIconContainer,
+                    { backgroundColor: `${colors.accent}10` },
+                  ]}
+                >
+                  <MapPinIcon width={20} height={20} color={colors.accent} />
+                </ThemedView>
+                <ThemedView style={styles.infoTextContainer}>
+                  <ThemedText
+                    style={[styles.infoTitle, { color: colors.text }]}
+                  >
+                    Como funciona?
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.infoDescription,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    Escolha uma categoria e veja lugares próximos onde você pode
+                    se conectar com outras pessoas.
+                  </ThemedText>
+                </ThemedView>
+              </ThemedView>
+            </ThemedView>
+          </ThemedView>
+        </Animated.View>
       </ThemedView>
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerSubtitle: {
+    fontSize: 14,
     paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 24,
+    marginTop: 8,
   },
-  headerImage: {
-    width: 290,
-    height: 178,
-    marginBottom: 16,
-    alignSelf: "center",
+  section: {
+    paddingTop: 24,
   },
-  titleContainer: {
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    justifyContent: "center",
-  },
-  content: {
+    marginBottom: 16,
     paddingHorizontal: 16,
   },
-  emptyState: {
-    paddingVertical: 48,
-    alignItems: "center",
-    justifyContent: "center",
+  sectionTitle: {
+    ...typography.subheading,
+    fontSize: 18,
+    fontWeight: "600",
   },
-  emptyTitle: {
-    marginBottom: 8,
-    textAlign: "center",
+  emptyCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
   },
   emptyText: {
     textAlign: "center",
-    opacity: 0.7,
+    lineHeight: 22,
   },
-  loadingContainer: {
-    paddingVertical: 48,
-    alignItems: "center",
-    gap: 16,
-  },
-  loadingText: {
-    opacity: 0.7,
-  },
-  errorContainer: {
-    paddingVertical: 24,
+  mainTitle: {
+    ...typography.subheading,
+    marginBottom: 8,
+    marginTop: 16,
     paddingHorizontal: 16,
-    backgroundColor: "rgba(255, 69, 58, 0.1)",
-    borderRadius: 12,
-    marginVertical: 16,
   },
-  errorText: {
-    color: "#FF453A",
-    textAlign: "center",
+  mainSubtitle: {
+    ...typography.caption,
+    paddingHorizontal: 16,
   },
-  placesContainer: {
-    gap: 24,
-  },
-  section: {
-    gap: 4,
-  },
-  horizontalList: {
-    paddingRight: 16,
+  categoriesContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
     gap: 16,
   },
-  largeCardWrapper: {
-    width: 320,
-    marginRight: 16,
+  infoCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 24,
   },
-  sectionTitle: {
-    marginBottom: 0,
+  infoContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
   },
-  sectionDescription: {
-    color: "#8B98A5",
+  infoIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  favoriteCardWrapper: {
+  infoTextContainer: {
     flex: 1,
-    margin: 8,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  infoDescription: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

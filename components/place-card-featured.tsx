@@ -1,8 +1,9 @@
 import { ArrowRightIcon, NavigationIcon, UsersIcon } from "@/assets/icons";
+import { getPlaceIcon } from "@/components/place-card-utils";
 import { ThemedText } from "@/components/themed-text";
-import { spacing, typography } from "@/constants/theme";
-import { useThemeColors } from "@/hooks/use-theme-colors";
+import { spacing } from "@/constants/theme";
 import { t } from "@/modules/locales";
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -11,7 +12,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-interface PlaceCardCompactProps {
+interface PlaceCardFeaturedProps {
   place: {
     id: string;
     name: string;
@@ -19,26 +20,18 @@ interface PlaceCardCompactProps {
     category: string;
     distance: number;
     activeUsers: number;
-    image?: string;
-    isFavorite?: boolean;
-    formattedAddress?: string;
   };
-  plansCount?: number;
   onClick: () => void;
-  onPlansClick?: () => void;
-  onToggleFavorite?: () => void;
+  index?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function PlaceCardCompact({
+export function PlaceCardFeatured({
   place,
-  plansCount = 0,
   onClick,
-  onPlansClick,
-  onToggleFavorite,
-}: PlaceCardCompactProps) {
-  const colors = useThemeColors();
+  index = 0,
+}: PlaceCardFeaturedProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
 
@@ -51,7 +44,7 @@ export function PlaceCardCompact({
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.98);
+    scale.value = withSpring(0.97);
     opacity.value = withSpring(1);
   };
 
@@ -59,6 +52,8 @@ export function PlaceCardCompact({
     scale.value = withSpring(1);
     opacity.value = withSpring(0);
   };
+
+  const Icon = getPlaceIcon(place.type);
 
   const formatDistance = (km: number): string => {
     if (km < 1) {
@@ -79,111 +74,112 @@ export function PlaceCardCompact({
       onPressOut={handlePressOut}
       style={[styles.card, animatedStyle]}
     >
-      <View style={[styles.cardInner, { backgroundColor: colors.surface }]}>
-        {/* Blue overlay on press */}
+      <LinearGradient
+        colors={["#141414", "#1E1E1E"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientContainer}
+      >
+        {/* Gradient Overlay on Hover/Press */}
         <Animated.View style={[styles.hoverOverlay, overlayStyle]}>
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(41, 151, 255, 0.08)" },
-            ]}
+          <LinearGradient
+            colors={["rgba(41, 151, 255, 0.05)", "rgba(41, 151, 255, 0.1)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
           />
         </Animated.View>
 
-        <View style={styles.content}>
-          {/* Header Row - Name and Arrow */}
-          <View style={styles.headerRow}>
-            <View style={styles.titleContainer}>
+        {/* Decorative Icon - Bottom Right */}
+        <View style={styles.decorativeIconContainer} pointerEvents="none">
+          <View style={{ opacity: 0.3 }}>
+            <Icon width={64} height={64} color="#FFFFFF" />
+          </View>
+        </View>
+
+        {/* Content Container */}
+        <View style={styles.contentContainer}>
+          {/* Top Section */}
+          <View>
+            <View style={styles.headerRow}>
+              {/* Place Name */}
               <ThemedText
-                type="defaultSemiBold"
-                style={styles.placeName}
                 numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.placeName}
               >
                 {place.name}
               </ThemedText>
-              {place.formattedAddress && (
-                <ThemedText style={styles.addressText} numberOfLines={1}>
-                  {place.formattedAddress}
-                </ThemedText>
-              )}
-              <ThemedText style={styles.categoryText} numberOfLines={1}>
-                {place.type}
-              </ThemedText>
+
+              {/* Arrow Icon */}
+              <View style={styles.arrowContainer}>
+                <ArrowRightIcon width={16} height={16} color="#2997FF" />
+              </View>
             </View>
 
-            {/* Arrow indicator */}
-            <View style={styles.arrowContainer}>
-              <ArrowRightIcon width={16} height={16} color="#2997FF" />
-            </View>
-          </View>
-
-          {/* Meta information */}
-          <View style={styles.metaRow}>
-            {place.activeUsers > 0 && (
-              <View style={styles.metaItem}>
+            {/* Info - People and Distance */}
+            <View style={styles.infoContainer}>
+              <View style={styles.infoRow}>
                 <UsersIcon width={12} height={12} color="#B0B0B0" />
-                <ThemedText style={styles.metaText}>
+                <ThemedText style={styles.infoText}>
                   {formatActiveUsers(place.activeUsers)}
                 </ThemedText>
               </View>
-            )}
-            <View style={styles.metaItem}>
-              <NavigationIcon width={12} height={12} color="#8B98A5" />
-              <ThemedText style={styles.distanceText}>
-                {formatDistance(place.distance)}
-              </ThemedText>
+              <View style={styles.infoRow}>
+                <NavigationIcon width={12} height={12} color="#8B98A5" />
+                <ThemedText style={styles.distanceText}>
+                  {formatDistance(place.distance)}
+                </ThemedText>
+              </View>
             </View>
           </View>
         </View>
-      </View>
+      </LinearGradient>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  cardInner: {
+    width: 220,
+    height: 130,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#2F3336",
     overflow: "hidden",
+  },
+  gradientContainer: {
+    flex: 1,
     position: "relative",
   },
   hoverOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
-  content: {
-    padding: spacing.md,
-    gap: spacing.sm,
+  decorativeIconContainer: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
     zIndex: 2,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: spacing.md,
+    justifyContent: "space-between",
+    zIndex: 3,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: spacing.sm,
-  },
-  titleContainer: {
-    flex: 1,
-    minWidth: 0,
-    gap: 4,
+    marginBottom: spacing.sm,
   },
   placeName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "600",
-  },
-  addressText: {
-    ...typography.caption,
-    color: "#71767B",
-    marginTop: 2,
-  },
-  categoryText: {
-    fontSize: 13,
-    color: "#8B98A5",
+    color: "#FFFFFF",
+    paddingRight: spacing.sm,
   },
   arrowContainer: {
     width: 28,
@@ -194,17 +190,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  infoContainer: {
+    gap: 4,
   },
-  metaItem: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  metaText: {
+  infoText: {
     fontSize: 12,
     color: "#B0B0B0",
   },
