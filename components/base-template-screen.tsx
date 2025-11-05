@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
 import { RefreshControl, StyleSheet, View, ViewStyle } from "react-native";
 import Animated, {
@@ -56,6 +57,13 @@ export function BaseTemplateScreen({
 
   return (
     <View style={[styles.wrapper, containerStyle]}>
+      {/* Always show a light status bar (our theme is dark) */}
+      <StatusBar
+        style="light"
+        hidden={false}
+        translucent
+        backgroundColor="transparent"
+      />
       {/* Top Header with scroll position - positioned absolutely to stay on top */}
       <View style={styles.headerContainer} pointerEvents="box-none">
         {renderTopHeader()}

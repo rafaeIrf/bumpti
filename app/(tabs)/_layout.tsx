@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 
 import {
   CompassIcon,
@@ -24,7 +25,8 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        // Use custom haptic tab button only on Android to avoid iOS touch issues
+        tabBarButton: Platform.OS === "android" ? HapticTab : undefined,
         tabBarStyle: {
           height: 70 + (insets.bottom || 0),
           paddingBottom: Math.max(18, insets.bottom),
