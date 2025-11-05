@@ -60,7 +60,16 @@
       "genderSuggestPlaceholder": "Escribe tu sugerencia (opcional)",
       "cancel": "Cancelar",
       "sendSuggestion": "Enviar sugerencia",
-      "genderSuggestionSuccess": "¡Gracias por la sugerencia! La revisaremos y consideraremos incluirla pronto."
+      "genderSuggestionSuccess": "¡Gracias por la sugerencia! La revisaremos y consideraremos incluirla pronto.",
+      "connectWithTitle": "¿Con quién te gustaría conectar?",
+      "connectWithSubtitle": "Elige una o más opciones.",
+      "connectWithInfo": "Esta información no se mostrará públicamente.",
+      "connectWithFemale": "Mujeres",
+      "connectWithMale": "Hombres",
+      "connectWithNonBinary": "Personas no binarias",
+      "connectWithAll": "Todos",
+      "connectWithPrivacy": "Esta información solo se usa para mostrar personas con quienes quieres conectar.",
+      "connectWithFooter": "Podrás cambiar esto después en la configuración."
     },
     "categoryResults": {
       "subtitle": "Vea los lugares más populares de la región",

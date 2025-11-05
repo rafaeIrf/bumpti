@@ -10,6 +10,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="user-name" options={{ headerShown: false }} />
       <Stack.Screen name="user-age" options={{ headerShown: false }} />
       <Stack.Screen name="user-gender" options={{ headerShown: false }} />
+      <Stack.Screen name="connect-with" options={{ headerShown: false }} />
     </Stack>
   );
 }

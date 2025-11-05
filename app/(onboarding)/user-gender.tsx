@@ -69,8 +69,8 @@ export default function UserGenderScreen() {
       // TODO: Save gender to profile/storage
       console.log("Gender:", gender);
 
-      // Navigate to home screen
-      router.replace("/(tabs)/(home)" as any);
+      // Navega para a tela de conexão
+      router.replace("/(onboarding)/connect-with");
     }
   };
 
@@ -151,8 +151,12 @@ export default function UserGenderScreen() {
                       {option.label}
                     </ThemedText>
                     {isSelected && (
-                      <View style={{ flex: 0, marginLeft: 'auto' }}>
-                        <CheckIcon width={20} height={20} color={colors.accent} />
+                      <View style={{ flex: 0, marginLeft: "auto" }}>
+                        <CheckIcon
+                          width={20}
+                          height={20}
+                          color={colors.accent}
+                        />
                       </View>
                     )}
                   </View>

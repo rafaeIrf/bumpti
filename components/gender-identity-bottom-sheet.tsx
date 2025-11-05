@@ -4,7 +4,6 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
 import { ThemedText } from "./themed-text";
 import { Button } from "./ui/button";
 
