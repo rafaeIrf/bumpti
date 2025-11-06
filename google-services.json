@@ -1,0 +1,80 @@
+{
+  "project_info": {
+    "project_number": "740378542204",
+    "firebase_url": "https://save-my-time-3ce22.firebaseio.com",
+    "project_id": "save-my-time-3ce22",
+    "storage_bucket": "save-my-time-3ce22.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:740378542204:android:1681c32344cf561d",
+        "android_client_info": {
+          "package_name": "com.savemytime"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "740378542204-97trd7kdoa33tmrtsb9kqsolg3ssbnt7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.savemytime",
+            "certificate_hash": "edb9cb3819f952d6d28ad0e0c226bb2b1d5db371"
+          }
+        },
+        {
+          "client_id": "740378542204-aqjqah1p4ltc3ub6odn6plshv10nvuj3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.savemytime",
+            "certificate_hash": "e1358f3f838c1e9319385c57b551fbb04eed4686"
+          }
+        },
+        {
+          "client_id": "740378542204-f2p6vihc57mj23uca2q4s67nk2cfkqmv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.savemytime",
+            "certificate_hash": "25e7d628743e968396d5fc9ffb3b8f08a590ae5b"
+          }
+        },
+        {
+          "client_id": "740378542204-qk8bf890mfbb46t8nm0n0vf0cqnsddac.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.savemytime",
+            "certificate_hash": "a5febb77ab75dcd019a317fc7e0e3d175a0028df"
+          }
+        },
+        {
+          "client_id": "740378542204-uuhgvso9mq7q8v07lgjsnm4vbldtd1ma.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKRARU_cIEze5Fuydj0fUuT-TSMgtLc7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "740378542204-uuhgvso9mq7q8v07lgjsnm4vbldtd1ma.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "740378542204-7bvhtaen8nopifpkkhkdid8ekeh1oqcc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.habitude"
+              }
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-8583526541144059~6741753150"
+    }
+  ],
+  "configuration_version": "1"
+}
