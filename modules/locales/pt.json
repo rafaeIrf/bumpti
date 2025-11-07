@@ -93,6 +93,14 @@
       "locationDeniedTitle": "Permissão negada",
       "locationDeniedMessage": "Você negou a permissão de localização. Pode ativar depois nas configurações do app.",
       "locationError": "Erro ao solicitar permissão de localização. Tente novamente.",
+      "notificationsTitle": "Ativar notificações?",
+      "notificationsSubtitle": "Usamos notificações para avisar você sobre novidades importantes no app.",
+      "notificationsEnable": "Permitir notificações",
+      "notificationsSkip": "Agora não",
+      "notificationsRequesting": "Solicitando permissão...",
+      "notificationsDeniedTitle": "Permissão negada",
+      "notificationsDeniedMessage": "Você negou a permissão de notificações. Pode ativar depois nas configurações do app.",
+      "notificationsError": "Erro ao solicitar permissão de notificações. Tente novamente.",
       "completeTitle": "Tudo pronto para começar a se conectar!",
       "completeSubtitle": "Entre em um lugar e veja quem também compartilha dos mesmos gostos.",
       "completeExplore": "Explorar locais",
@@ -115,6 +123,7 @@
     "search": "Buscar",
     "fromYou": "de você",
     "onePerson": "1 pessoa agora",
-    "peopleNow": "{{count}} pessoas agora"
+    "peopleNow": "{{count}} pessoas agora",
+    "error": "Erro"
   }
 }

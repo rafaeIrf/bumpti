@@ -10,11 +10,32 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "googleServicesFile": "./ios/BumpIn/GoogleService-Info.plist",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "com.bumpin",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "We use your location to show nearby venues."
+        "NSLocationWhenInUseUsageDescription": "We use your location to show nearby venues.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "app-1-749353410034-ios-e438b00e260bab619fdf6b"
+            ]
+          }
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true,
+          "NSExceptionDomains": {
+            "firebaseapp.com": {
+              "NSIncludesSubdomains": true,
+              "NSThirdPartyExceptionAllowsInsecureHTTPLoads": true
+            },
+            "googleapis.com": {
+              "NSIncludesSubdomains": true,
+              "NSThirdPartyExceptionAllowsInsecureHTTPLoads": true
+            }
+          }
+        }
       }
     },
     "android": {
@@ -26,7 +47,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "googleServicesFile": "./android/app/google-services.json",
+      "googleServicesFile": "./google-services.json",
       "package": "com.bumpin"
     },
     "web": {
@@ -70,10 +91,6 @@
       "eas": {
         "projectId": "adcc88e7-5429-4830-810c-31cf704d53e4"
       }
-    },
-    "permissions": {
-      "ACCESS_COARSE_LOCATION": true,
-      "ACCESS_FINE_LOCATION": true
     },
     "owner": "rafaelrrf"
   }

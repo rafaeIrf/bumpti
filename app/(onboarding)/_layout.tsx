@@ -13,6 +13,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="connect-with" options={{ headerShown: false }} />
       <Stack.Screen name="intention" options={{ headerShown: false }} />
       <Stack.Screen name="location" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
       <Stack.Screen name="complete" options={{ headerShown: false }} />
     </Stack>
   );

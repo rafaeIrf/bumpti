@@ -93,6 +93,14 @@
       "locationDeniedTitle": "Permission denied",
       "locationDeniedMessage": "You denied location permission. You can enable it later in the app settings.",
       "locationError": "Error requesting location permission. Please try again.",
+      "notificationsTitle": "Enable notifications?",
+      "notificationsSubtitle": "We use notifications to notify you about important news in the app.",
+      "notificationsEnable": "Allow notifications",
+      "notificationsSkip": "Not now",
+      "notificationsRequesting": "Requesting permission...",
+      "notificationsDeniedTitle": "Permission denied",
+      "notificationsDeniedMessage": "You denied notification permission. You can enable it later in the app settings.",
+      "notificationsError": "Error requesting notification permission. Please try again.",
       "completeTitle": "You're all set to start connecting!",
       "completeSubtitle": "Enter a place and see who also shares the same interests.",
       "completeExplore": "Explore places",
@@ -115,6 +123,7 @@
     "search": "Search",
     "fromYou": "from you",
     "onePerson": "1 person now",
-    "peopleNow": "{{count}} people now"
+    "peopleNow": "{{count}} people now",
+    "error": "Error"
   }
 }

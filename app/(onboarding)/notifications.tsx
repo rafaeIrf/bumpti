@@ -1,12 +1,13 @@
-import { MapPinIcon, NavigationIcon } from "@/assets/icons";
+import { SparklesIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -14,64 +15,90 @@ import Animated, {
   FadeInDown,
   FadeInUp,
   ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 
-export default function LocationScreen() {
+export default function NotificationsScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
 
-  const handleEnableLocation = async () => {
+  // Animação de balanço do sino
+  const bellRotation = useSharedValue(0);
+
+  React.useEffect(() => {
+    bellRotation.value = withDelay(
+      2000,
+      withRepeat(
+        withSequence(
+          withTiming(-10, { duration: 100 }),
+          withTiming(10, { duration: 100 }),
+          withTiming(-10, { duration: 100 }),
+          withTiming(0, { duration: 100 }),
+          withTiming(0, { duration: 2000 })
+        ),
+        -1
+      )
+    );
+  }, [bellRotation]);
+
+  const bellAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${bellRotation.value}deg` }],
+  }));
+
+  const handleEnableNotifications = async () => {
     setIsRequesting(true);
     try {
-      // Verificar se já tem permissão
       const { status: existingStatus } =
-        await Location.getForegroundPermissionsAsync();
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
 
-      if (existingStatus === "granted") {
-        // Já tem permissão, pular para notificações
-        router.push("/(onboarding)/notifications");
-        setIsRequesting(false);
-        return;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
       }
 
-      // Solicitar permissão de localização
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status === "granted") {
-        // Permissão concedida - salvar no contexto do usuário
+      if (finalStatus === "granted") {
+        // Permissão concedida
         // TODO: Save to user profile or context
-        // updateUserData({ locationEnabled: true });
+        // updateUserData({ notificationsEnabled: true });
 
-        // Aguardar um pouco para feedback visual
         setTimeout(() => {
-          router.push("/(onboarding)/notifications");
+          router.push("/(onboarding)/complete");
           setIsRequesting(false);
         }, 500);
       } else {
         // Permissão negada
         Alert.alert(
-          t("screens.onboarding.locationDeniedTitle"),
-          t("screens.onboarding.locationDeniedMessage")
+          t("screens.onboarding.notificationsDeniedTitle"),
+          t("screens.onboarding.notificationsDeniedMessage")
         );
         setIsRequesting(false);
       }
     } catch (error) {
-      console.error("Error requesting location permission:", error);
-      Alert.alert(t("common.error"), t("screens.onboarding.locationError"));
+      console.error("Error requesting notification permission:", error);
+      Alert.alert(
+        t("common.error"),
+        t("screens.onboarding.notificationsError")
+      );
       setIsRequesting(false);
     }
   };
 
   const handleSkip = () => {
     // TODO: Save to user profile or context
-    // updateUserData({ locationEnabled: false });
-    router.push("/(onboarding)/notifications");
+    // updateUserData({ notificationsEnabled: false });
+    router.push("/(onboarding)/complete");
   };
 
   return (
     <BaseTemplateScreen>
       <View style={styles.container}>
-        {/* Location Icon */}
+        {/* Notification Icon with sparkles */}
         <Animated.View
           entering={ZoomIn.delay(200).duration(600).springify()}
           style={styles.iconContainer}
@@ -82,8 +109,26 @@ export default function LocationScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.iconGradient}
           >
-            <NavigationIcon width={48} height={48} color="#FFFFFF" />
+            <Animated.View style={bellAnimatedStyle}>
+              <Ionicons name="notifications" size={48} color="#FFFFFF" />
+            </Animated.View>
           </LinearGradient>
+
+          {/* Sparkle 1 - Top Left */}
+          <Animated.View
+            entering={FadeInUp.delay(600).duration(500)}
+            style={[styles.sparkle, styles.sparkleTopLeft]}
+          >
+            <SparklesIcon width={20} height={20} color={colors.accent} />
+          </Animated.View>
+
+          {/* Sparkle 2 - Bottom Right */}
+          <Animated.View
+            entering={FadeInDown.delay(800).duration(500)}
+            style={[styles.sparkle, styles.sparkleBottomRight]}
+          >
+            <SparklesIcon width={20} height={20} color={colors.accent} />
+          </Animated.View>
         </Animated.View>
 
         {/* Title */}
@@ -92,7 +137,7 @@ export default function LocationScreen() {
           style={styles.titleContainer}
         >
           <ThemedText style={[styles.title, { color: colors.text }]}>
-            {t("screens.onboarding.locationTitle")}
+            {t("screens.onboarding.notificationsTitle")}
           </ThemedText>
         </Animated.View>
 
@@ -104,7 +149,7 @@ export default function LocationScreen() {
           <ThemedText
             style={[styles.subtitle, { color: colors.textSecondary }]}
           >
-            {t("screens.onboarding.locationSubtitle")}
+            {t("screens.onboarding.notificationsSubtitle")}
           </ThemedText>
         </Animated.View>
 
@@ -114,20 +159,17 @@ export default function LocationScreen() {
           style={styles.buttonsContainer}
         >
           <Button
-            onPress={handleEnableLocation}
+            onPress={handleEnableNotifications}
             disabled={isRequesting}
             size="lg"
             fullWidth
             style={styles.enableButton}
           >
-            <View style={styles.buttonContent}>
-              <MapPinIcon width={20} height={20} color="#FFFFFF" />
-              <ThemedText style={styles.enableButtonText}>
-                {isRequesting
-                  ? t("screens.onboarding.locationRequesting")
-                  : t("screens.onboarding.locationEnable")}
-              </ThemedText>
-            </View>
+            <ThemedText style={styles.enableButtonText}>
+              {isRequesting
+                ? t("screens.onboarding.notificationsRequesting")
+                : t("screens.onboarding.notificationsEnable")}
+            </ThemedText>
           </Button>
 
           <Button
@@ -141,21 +183,9 @@ export default function LocationScreen() {
             <ThemedText
               style={[styles.skipButtonText, { color: colors.textSecondary }]}
             >
-              {t("screens.onboarding.locationSkip")}
+              {t("screens.onboarding.notificationsSkip")}
             </ThemedText>
           </Button>
-        </Animated.View>
-
-        {/* Privacy Note */}
-        <Animated.View
-          entering={FadeInDown.delay(700).duration(500)}
-          style={styles.privacyContainer}
-        >
-          <ThemedText
-            style={[styles.privacyText, { color: colors.textTertiary }]}
-          >
-            {t("screens.onboarding.locationPrivacy")}
-          </ThemedText>
         </Animated.View>
       </View>
     </BaseTemplateScreen>
@@ -172,6 +202,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginBottom: spacing.xl,
+    position: "relative",
   },
   iconGradient: {
     width: 96,
@@ -184,6 +215,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+  },
+  sparkle: {
+    position: "absolute",
+  },
+  sparkleTopLeft: {
+    top: -4,
+    left: -4,
+  },
+  sparkleBottomRight: {
+    bottom: -4,
+    right: -4,
   },
   titleContainer: {
     alignItems: "center",
@@ -218,11 +260,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
   enableButtonText: {
     ...typography.body,
     color: "#FFFFFF",
@@ -236,14 +273,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: "600",
     fontSize: 16,
-  },
-  privacyContainer: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  privacyText: {
-    ...typography.caption,
-    fontSize: 12,
-    textAlign: "center",
   },
 });

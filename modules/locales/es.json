@@ -93,6 +93,14 @@
       "locationDeniedTitle": "Permiso denegado",
       "locationDeniedMessage": "Has denegado el permiso de ubicación. Puedes activarlo después en la configuración de la app.",
       "locationError": "Error al solicitar permiso de ubicación. Inténtalo de nuevo.",
+      "notificationsTitle": "¿Activar notificaciones?",
+      "notificationsSubtitle": "Usamos notificaciones para avisarte sobre novedades importantes en la app.",
+      "notificationsEnable": "Permitir notificaciones",
+      "notificationsSkip": "Ahora no",
+      "notificationsRequesting": "Solicitando permiso...",
+      "notificationsDeniedTitle": "Permiso denegado",
+      "notificationsDeniedMessage": "Has denegado el permiso de notificaciones. Puedes activarlo después en la configuración de la app.",
+      "notificationsError": "Error al solicitar permiso de notificaciones. Inténtalo de nuevo.",
       "completeTitle": "¡Todo listo para empezar a conectar!",
       "completeSubtitle": "Entra en un lugar y ve quién también comparte los mismos gustos.",
       "completeExplore": "Explorar lugares",
@@ -115,6 +123,7 @@
     "search": "Buscar",
     "fromYou": "de ti",
     "onePerson": "1 persona ahora",
-    "peopleNow": "{{count}} personas ahora"
+    "peopleNow": "{{count}} personas ahora",
+    "error": "Error"
   }
 }
