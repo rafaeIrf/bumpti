@@ -12,6 +12,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="user-gender" options={{ headerShown: false }} />
       <Stack.Screen name="connect-with" options={{ headerShown: false }} />
       <Stack.Screen name="intention" options={{ headerShown: false }} />
+      <Stack.Screen name="location" options={{ headerShown: false }} />
       <Stack.Screen name="complete" options={{ headerShown: false }} />
     </Stack>
   );

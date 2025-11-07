@@ -81,7 +81,7 @@ export default function IntentionScreen() {
     if (selectedIntentions.length > 0) {
       // TODO: Save to user profile or context
       // updateUserData({ lookingFor: selectedIntentions[0] });
-      router.replace("/(onboarding)/complete");
+      router.replace("/(onboarding)/location");
     }
   };
 
