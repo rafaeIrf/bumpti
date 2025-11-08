@@ -12,6 +12,8 @@ import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
+import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { router } from "expo-router";
@@ -68,6 +70,20 @@ export default function IntentionScreen() {
   const [selectedIntentions, setSelectedIntentions] = useState<
     IntentionOption[]
   >([]);
+  const { shouldShowScreen: shouldShowLocation } = useLocationPermission();
+  const { shouldShowScreen: shouldShowNotifications } =
+    useNotificationPermission();
+
+  const navigateNext = () => {
+    // Navegar baseado nas permissões pendentes
+    if (shouldShowLocation) {
+      router.push("/(onboarding)/location");
+    } else if (shouldShowNotifications) {
+      router.push("/(onboarding)/notifications");
+    } else {
+      router.push("/(onboarding)/complete");
+    }
+  };
 
   const toggleIntention = (value: IntentionOption) => {
     if (selectedIntentions.includes(value)) {
@@ -82,7 +98,7 @@ export default function IntentionScreen() {
     if (selectedIntentions.length > 0) {
       // TODO: Save to user profile or context
       // updateUserData({ lookingFor: selectedIntentions[0] });
-      router.push("/(onboarding)/location");
+      navigateNext();
     }
   };
 

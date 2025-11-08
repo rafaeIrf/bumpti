@@ -3,10 +3,11 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -19,32 +20,33 @@ import Animated, {
 export default function LocationScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
+  const { shouldShowScreen: shouldShowNotifications } =
+    useNotificationPermission();
+  const { request } = useLocationPermission();
+
+  const navigateNext = () => {
+    // Se precisar mostrar a tela de notificações, vai para lá
+    // Senão, vai direto para complete
+    if (shouldShowNotifications) {
+      router.push("/(onboarding)/notifications");
+    } else {
+      router.push("/(onboarding)/complete");
+    }
+  };
 
   const handleEnableLocation = async () => {
     setIsRequesting(true);
     try {
-      // Verificar se já tem permissão
-      const { status: existingStatus } =
-        await Location.getForegroundPermissionsAsync();
+      const result = await request();
 
-      if (existingStatus === "granted") {
-        // Já tem permissão, pular para notificações
-        router.push("/(onboarding)/notifications");
-        setIsRequesting(false);
-        return;
-      }
-
-      // Solicitar permissão de localização
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status === "granted") {
+      if (result.status === "granted") {
         // Permissão concedida - salvar no contexto do usuário
         // TODO: Save to user profile or context
         // updateUserData({ locationEnabled: true });
 
         // Aguardar um pouco para feedback visual
         setTimeout(() => {
-          router.push("/(onboarding)/notifications");
+          navigateNext();
           setIsRequesting(false);
         }, 500);
       } else {
@@ -65,7 +67,7 @@ export default function LocationScreen() {
   const handleSkip = () => {
     // TODO: Save to user profile or context
     // updateUserData({ locationEnabled: false });
-    router.push("/(onboarding)/notifications");
+    navigateNext();
   };
 
   return (

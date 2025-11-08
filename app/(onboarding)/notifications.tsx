@@ -3,11 +3,11 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -26,6 +26,7 @@ import Animated, {
 export default function NotificationsScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
+  const { request } = useNotificationPermission();
 
   // Animação de balanço do sino
   const bellRotation = useSharedValue(0);
@@ -53,16 +54,9 @@ export default function NotificationsScreen() {
   const handleEnableNotifications = async () => {
     setIsRequesting(true);
     try {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      const result = await request();
 
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus === "granted") {
+      if (result.status === "granted") {
         // Permissão concedida
         // TODO: Save to user profile or context
         // updateUserData({ notificationsEnabled: true });
