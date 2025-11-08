@@ -80,7 +80,7 @@ export function ScreenBottomBar({
   const containerStyle = [
     styles.container,
     {
-      paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) + 100,
+      paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md),
       backgroundColor: backgroundColor || colors.background,
       borderTopColor: showBorder ? colors.border : "transparent",
     },

@@ -15,6 +15,8 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby venues.",
+        "NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você adicionar imagens ao seu perfil",
+        "NSCameraUsageDescription": "Precisamos acessar sua câmera para você tirar fotos para o seu perfil",
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
@@ -56,6 +58,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que $(PRODUCT_NAME) acesse suas fotos para você adicionar ao perfil",
+          "cameraPermission": "Permitir que $(PRODUCT_NAME) acesse sua câmera para você tirar fotos"
+        }
+      ],
       [
         "expo-splash-screen",
         {
