@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>BumpIn</string>
+    <string>Bumpti</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,13 +27,13 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>app-1-749353410034-ios-e438b00e260bab619fdf6b</string>
+          <string>app-1-219202844049-ios-583c5f75d0c5b8f825d630</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+bumpin</string>
+          <string>exp+bumpti</string>
         </array>
       </dict>
     </array>

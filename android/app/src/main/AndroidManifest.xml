@@ -27,8 +27,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="boopi"/>
-        <data android:scheme="exp+bumpin"/>
+        <data android:scheme="bumpti"/>
+        <data android:scheme="exp+bumpti"/>
       </intent-filter>
     </activity>
   </application>

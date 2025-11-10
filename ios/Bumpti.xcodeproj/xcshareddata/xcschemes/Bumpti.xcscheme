@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "BumpIn.app"
-               BlueprintName = "BumpIn"
-               ReferencedContainer = "container:BumpIn.xcodeproj">
+               BuildableName = "Bumpti.app"
+               BlueprintName = "Bumpti"
+               ReferencedContainer = "container:Bumpti.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "BumpInTests.xctest"
-               BlueprintName = "BumpInTests"
-               ReferencedContainer = "container:BumpIn.xcodeproj">
+               BuildableName = "BumptiTests.xctest"
+               BlueprintName = "BumptiTests"
+               ReferencedContainer = "container:Bumpti.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "BumpIn.app"
-            BlueprintName = "BumpIn"
-            ReferencedContainer = "container:BumpIn.xcodeproj">
+            BuildableName = "Bumpti.app"
+            BlueprintName = "Bumpti"
+            ReferencedContainer = "container:Bumpti.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "BumpIn.app"
-            BlueprintName = "BumpIn"
-            ReferencedContainer = "container:BumpIn.xcodeproj">
+            BuildableName = "Bumpti.app"
+            BlueprintName = "Bumpti"
+            ReferencedContainer = "container:Bumpti.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

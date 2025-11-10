@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "bump-b4507"
-  }
+    "default": "bump-b4507",
+    "develop": "bumpti-61ab7"
+  },
+  "targets": {},
+  "etags": {}
 }

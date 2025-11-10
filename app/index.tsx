@@ -29,6 +29,6 @@ export default function RootIndex() {
   return hasOnboarded ? (
     <Redirect href="/(tabs)/(home)" />
   ) : (
-    <Redirect href="/(onboarding)/intention" />
+    <Redirect href="/(onboarding)/welcome" />
   );
 }

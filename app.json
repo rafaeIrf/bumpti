@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "BumpIn",
-    "slug": "bumpin",
+    "name": "Bumpti",
+    "slug": "bumpti",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "boopi",
+    "scheme": "bumpti",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
-      "bundleIdentifier": "com.bumpin",
+      "bundleIdentifier": "com.bumpti",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby venues.",
@@ -20,7 +20,7 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
-              "app-1-749353410034-ios-e438b00e260bab619fdf6b"
+              "app-1-219202844049-ios-583c5f75d0c5b8f825d630"
             ]
           }
         ],
@@ -50,7 +50,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "googleServicesFile": "./google-services.json",
-      "package": "com.bumpin"
+      "package": "com.bumpti"
     },
     "web": {
       "output": "static",

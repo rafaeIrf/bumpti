@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "749353410034",
-    "project_id": "bump-b4507",
-    "storage_bucket": "bump-b4507.firebasestorage.app"
+    "project_number": "219202844049",
+    "project_id": "bumpti-61ab7",
+    "storage_bucket": "bumpti-61ab7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:749353410034:android:26f9a87c6a7192cd9fdf6b",
+        "mobilesdk_app_id": "1:219202844049:android:5725f0d34547805725d630",
         "android_client_info": {
-          "package_name": "com.bumpin"
+          "package_name": "com.bumpti"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBZ408kX7i-PaFmjlfjXGn9JkpYc22ZG2I"
+          "current_key": "AIzaSyCgiJp2K7Nd6lTBRUCMlNLAWT3IH-UU1as"
         }
       ],
       "services": {
