@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
@@ -18,9 +19,12 @@ import Animated, {
 export default function CompleteScreen() {
   const colors = useThemeColors();
 
-  const handleComplete = () => {
-    // TODO: Mark onboarding as completed in AsyncStorage
-    // await AsyncStorage.setItem('hasOnboarded', 'true');
+  const handleComplete = async () => {
+    try {
+      await AsyncStorage.setItem("hasOnboarded", "true");
+    } catch (error) {
+      console.error("Error saving onboarding status:", error);
+    }
     router.replace("/(tabs)/(home)");
   };
 

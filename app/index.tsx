@@ -1,10 +1,12 @@
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export default function RootIndex() {
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
+  const colors = useThemeColors();
 
   useEffect(() => {
     (async () => {
@@ -20,8 +22,8 @@ export default function RootIndex() {
 
   if (hasOnboarded === null) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -32,3 +34,11 @@ export default function RootIndex() {
     <Redirect href="/(onboarding)/welcome" />
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

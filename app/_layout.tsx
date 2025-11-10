@@ -22,7 +22,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  initialRouteName: "index",
 };
 
 export default function RootLayout() {
@@ -56,6 +56,7 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetProvider>
               <Stack>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="(onboarding)"
                   options={{ headerShown: false }}

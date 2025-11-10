@@ -1,6 +1,10 @@
 import { Stack } from "expo-router";
 import React from "react";
 
+export const unstable_settings = {
+  initialRouteName: "welcome",
+};
+
 export default function OnboardingLayout() {
   return (
     <Stack>
