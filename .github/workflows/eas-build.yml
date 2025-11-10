@@ -61,15 +61,13 @@ jobs:
 
       - name: 🍎 Build & Submit iOS (Production)
         run: |
-          eas build --platform ios --profile production --non-interactive
-          eas submit --platform ios --latest --non-interactive
+          eas build --platform ios --profile production --non-interactive --no-wait
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
       - name: 🍎 Build & Submit Android (Production)
         run: |
-          eas build --platform android --profile production --non-interactive
-          eas submit --platform android --latest --non-interactive
+          eas build --platform android --profile production --non-interactive --no-wait
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
