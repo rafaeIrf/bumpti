@@ -114,7 +114,7 @@ export default function BottomSheetProvider({
       {children}
       <BottomSheet
         index={-1}
-        snapPoints={bsProps?.snapPoints ?? ["90%"]}
+        snapPoints={bsProps?.snapPoints}
         handleIndicatorStyle={styles.handleIndicatorStyle}
         ref={bottomSheetRef}
         enablePanDownToClose={isDraggable}
@@ -134,10 +134,12 @@ export default function BottomSheetProvider({
       >
         <BottomSheetScrollView
           enableFooterMarginAdjustment={true}
-          contentContainerStyle={{
-            paddingBottom: contentPaddingBottom,
-            flexGrow: 1,
-          }}
+          contentContainerStyle={[
+            {
+              paddingBottom: contentPaddingBottom,
+            },
+            bsProps?.snapPoints && { flexGrow: 1 },
+          ]}
           showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
         >

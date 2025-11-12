@@ -1,7 +1,9 @@
 import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
 import { PlaceCardCompact } from "@/components/place-card-compact";
+import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import PlaceSearchContent from "@/components/place-search-content";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -74,8 +76,29 @@ export default function CategoryResultsScreen() {
     })) || [];
 
   const handlePlaceClick = (place: PlaceResult) => {
-    console.log("Place selected:", place.id, place.name);
-    // TODO: Navigate to place detail
+    if (!bottomSheet) return;
+
+    bottomSheet.expand({
+      content: () => (
+        <ConnectionBottomSheet
+          venueName={place.name}
+          currentVenue="Teste"
+          venueState="premium"
+          onConnect={() => {
+            console.log("Connected to:", place.name);
+            bottomSheet.close();
+            // TODO: Implement connection logic
+          }}
+          onCancel={() => {
+            bottomSheet.close();
+          }}
+          onClose={() => {
+            bottomSheet.close();
+          }}
+        />
+      ),
+      draggable: true,
+    });
   };
 
   const handleOpenSearch = () => {
@@ -96,52 +119,6 @@ export default function CategoryResultsScreen() {
       snapPoints: ["100%"],
     });
   };
-
-  const renderLoadingSkeleton = () => (
-    <ThemedView style={styles.skeletonContainer}>
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <ThemedView
-          key={i}
-          style={[
-            styles.skeletonCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <ThemedView style={styles.skeletonContent}>
-            <ThemedView
-              style={[styles.skeletonImage, { backgroundColor: colors.border }]}
-            />
-            <ThemedView style={styles.skeletonText}>
-              <ThemedView
-                style={[
-                  styles.skeletonLine,
-                  styles.skeletonLineTitle,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-              <ThemedView
-                style={[
-                  styles.skeletonLine,
-                  styles.skeletonLineSubtitle,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-              <ThemedView
-                style={[
-                  styles.skeletonLine,
-                  styles.skeletonLineSmall,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
-      ))}
-    </ThemedView>
-  );
 
   const renderEmptyState = () => (
     <Animated.View entering={FadeInDown.delay(0).springify()}>
@@ -262,11 +239,13 @@ export default function CategoryResultsScreen() {
       }
     >
       <ThemedView>
-        {locationLoading || isLoading
-          ? renderLoadingSkeleton()
-          : places.length === 0
-          ? renderEmptyState()
-          : renderPlacesList()}
+        {locationLoading || isLoading ? (
+          <PlaceLoadingSkeleton count={6} />
+        ) : places.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          renderPlacesList()
+        )}
       </ThemedView>
     </BaseTemplateScreen>
   );
@@ -277,44 +256,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: spacing.md,
     marginTop: spacing.sm,
-  },
-  // Loading skeleton
-  skeletonContainer: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  skeletonCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: spacing.md,
-  },
-  skeletonContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.md,
-  },
-  skeletonImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-  },
-  skeletonText: {
-    flex: 1,
-    gap: spacing.sm,
-  },
-  skeletonLine: {
-    height: 16,
-    borderRadius: 4,
-  },
-  skeletonLineTitle: {
-    width: "66%",
-    height: 20,
-  },
-  skeletonLineSubtitle: {
-    width: "50%",
-  },
-  skeletonLineSmall: {
-    width: "33%",
   },
   // Empty state
   emptyContainer: {

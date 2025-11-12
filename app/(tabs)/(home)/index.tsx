@@ -10,6 +10,9 @@ import {
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CategoryCard } from "@/components/category-card";
+import { ConnectedBar } from "@/components/connected-bar";
+import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
+import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import PlaceSearchContent from "@/components/place-search-content";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -17,6 +20,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { t } from "@/modules/locales";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
@@ -129,6 +133,9 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activePlaces] = useState<ActivePlace[]>(mockActivePlaces);
   const [refreshing, setRefreshing] = useState(false);
+  const [connectedVenue, setConnectedVenue] = useState<string | null>(
+    "Bar do Zeca"
+  ); // Mock: usuário conectado
   const bottomSheet = useCustomBottomSheet();
 
   const handleCategoryClick = (category: Category) => {
@@ -144,9 +151,60 @@ export default function HomeScreen() {
     setSelectedCategory(null);
   };
 
-  const handlePlaceClick = (placeId: string) => {
-    console.log("Place clicked:", placeId);
-    // TODO: Navigate to place detail
+  const handlePlaceClick = (place: ActivePlace) => {
+    if (!bottomSheet) return;
+
+    bottomSheet.expand({
+      content: () => (
+        <ConnectionBottomSheet
+          venueName={place.name}
+          venueState="active"
+          onConnect={() => {
+            console.log("Connected to:", place.name);
+            bottomSheet.close();
+            // TODO: Implement connection logic
+          }}
+          onCancel={() => {
+            bottomSheet.close();
+          }}
+          onClose={() => {
+            bottomSheet.close();
+          }}
+        />
+      ),
+      draggable: true,
+    });
+  };
+
+  const handleLeaveVenue = () => {
+    if (!bottomSheet) return;
+
+    bottomSheet.expand({
+      content: () => (
+        <GenericConfirmationBottomSheet
+          title={t("connectedBar.leaveConfirmation.title")}
+          description={t("connectedBar.leaveConfirmation.description")}
+          icon={MapPinIcon}
+          primaryButton={{
+            text: t("connectedBar.leaveConfirmation.disconnect"),
+            onClick: () => {
+              setConnectedVenue(null);
+              bottomSheet.close();
+              console.log("Disconnected from venue");
+            },
+            variant: "danger",
+          }}
+          secondaryButton={{
+            text: t("connectedBar.leaveConfirmation.cancel"),
+            onClick: () => bottomSheet.close(),
+            variant: "secondary",
+          }}
+          onClose={() => bottomSheet.close()}
+        />
+      ),
+      draggable: true,
+      snapPoints: ["45%"],
+    });
   };
 
   const handleRefresh = async () => {
@@ -170,7 +228,7 @@ export default function HomeScreen() {
     >
       <PlaceCardFeatured
         place={item}
-        onClick={() => handlePlaceClick(item.id)}
+        onClick={() => handlePlaceClick(item)}
         index={index}
       />
     </Animated.View>
@@ -220,6 +278,11 @@ export default function HomeScreen() {
       onRefresh={handleRefresh}
     >
       <ThemedView>
+        {/* Connected Bar */}
+        {connectedVenue && (
+          <ConnectedBar venueName={connectedVenue} onLeave={handleLeaveVenue} />
+        )}
+
         <Animated.View entering={FadeInDown.delay(0).springify()}>
           <ThemedView style={styles.section}>
             <ThemedView style={styles.sectionHeader}>

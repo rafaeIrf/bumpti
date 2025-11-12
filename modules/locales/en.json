@@ -132,5 +132,53 @@
     "onePerson": "1 person now",
     "peopleNow": "{{count}} people now",
     "error": "Error"
+  },
+  "venue": {
+    "connection": {
+      "active": {
+        "subtitle": "People are connected here right now!",
+        "supportText": "Connect and see who's there.",
+        "button": "Connect now",
+        "microcopy": "You'll be able to see and chat with people at this place right now."
+      },
+      "quiet": {
+        "subtitle": "It's a bit empty here right now...",
+        "supportText": "No one's connected yet, but you can be the first!",
+        "button": "Connect anyway",
+        "microcopy": "When other people arrive, you'll see them appear here."
+      },
+      "premium": {
+        "subtitle": "You're getting ahead of the game. ⚡",
+        "supportText": "Premium members can connect before arriving at the place.",
+        "button": "Connect in advance",
+        "microcopy": "When you get close, the app will notify you automatically."
+      },
+      "locked": {
+        "subtitle": "This place is out of your reach right now.",
+        "supportText": "Only Premium members can connect in advance to distant locations.",
+        "button": "Go Premium",
+        "microcopy": "Unlock early connections and see who's at places before you arrive."
+      },
+      "alreadyConnected": {
+        "subtitle": "You're already connected at {{currentVenue}}!",
+        "supportText": "Want to leave there and enter here?",
+        "button": "Enter here",
+        "buttonCancel": "Cancel",
+        "microcopy": "You can only be connected at one place at a time — to keep everything real and authentic."
+      },
+      "default": {
+        "subtitle": "Connect at this location",
+        "button": "Connect"
+      }
+    }
+  },
+  "connectedBar": {
+    "label": "Connected at",
+    "leaveConfirmation": {
+      "title": "Disconnect from location?",
+      "description": "When you leave, you'll stop appearing to people at this place.",
+      "disconnect": "Disconnect",
+      "cancel": "Cancel"
+    }
   }
 }

@@ -132,5 +132,53 @@
     "onePerson": "1 pessoa agora",
     "peopleNow": "{{count}} pessoas agora",
     "error": "Erro"
+  },
+  "venue": {
+    "connection": {
+      "active": {
+        "subtitle": "Tem gente conectada aqui agora!",
+        "supportText": "Se conecte e veja quem tá por lá.",
+        "button": "Conectar agora",
+        "microcopy": "Você poderá ver e conversar com pessoas que estão nesse lugar agora."
+      },
+      "quiet": {
+        "subtitle": "Tá meio vazio aqui agora...",
+        "supportText": "Ainda não tem ninguém conectado, mas você pode ser o primeiro!",
+        "button": "Conectar mesmo assim",
+        "microcopy": "Quando outras pessoas chegarem, você verá elas aparecerem aqui."
+      },
+      "premium": {
+        "subtitle": "Você tá se adiantando. ⚡",
+        "supportText": "Membros Premium podem se conectar antes de chegar no lugar.",
+        "button": "Conectar antecipadamente",
+        "microcopy": "Quando você chegar perto, o app vai notificar você automaticamente."
+      },
+      "locked": {
+        "subtitle": "Esse lugar está fora do seu alcance agora.",
+        "supportText": "Apenas membros Premium podem se conectar antecipadamente em locais distantes.",
+        "button": "Seja Premium",
+        "microcopy": "Desbloqueie conexões antecipadas e veja quem tá nos lugares antes de chegar."
+      },
+      "alreadyConnected": {
+        "subtitle": "Você já está conectado em {{currentVenue}}!",
+        "supportText": "Quer sair de lá e entrar aqui?",
+        "button": "Entrar aqui",
+        "buttonCancel": "Cancelar",
+        "microcopy": "Você só pode estar conectado em um lugar por vez — pra manter tudo real e autêntico."
+      },
+      "default": {
+        "subtitle": "Conectar neste local",
+        "button": "Conectar"
+      }
+    }
+  },
+  "connectedBar": {
+    "label": "Conectado em",
+    "leaveConfirmation": {
+      "title": "Desconectar do local?",
+      "description": "Ao sair, você deixa de aparecer para quem está nesse lugar.",
+      "disconnect": "Desconectar",
+      "cancel": "Cancelar"
+    }
   }
 }
