@@ -10,6 +10,13 @@ export default function MainLayout() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="place-people"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }

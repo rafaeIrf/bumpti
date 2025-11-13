@@ -85,9 +85,15 @@ export default function CategoryResultsScreen() {
           currentVenue="Teste"
           venueState="premium"
           onConnect={() => {
-            console.log("Connected to:", place.name);
             bottomSheet.close();
-            // TODO: Implement connection logic
+            router.push({
+              pathname: "/main/place-people",
+              params: {
+                placeId: place.id,
+                placeName: place.name,
+                distance: "1.2 km", // TODO: Calculate real distance
+              },
+            });
           }}
           onCancel={() => {
             bottomSheet.close();

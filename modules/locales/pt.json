@@ -180,5 +180,35 @@
       "disconnect": "Desconectar",
       "cancel": "Cancelar"
     }
+  },
+  "userProfile": {
+    "hereNow": "Aqui agora",
+    "favorite": "Favorito",
+    "visitCount": "{{count}}x aqui",
+    "nearLocation": "Próximo de {{location}}",
+    "interest": "INTERESSE",
+    "favoritePlaces": "LOCAIS FAVORITOS",
+    "lookingFor": {
+      "friends": "Fazer novas amizades",
+      "chat": "Conversar e conhecer pessoas",
+      "networking": "Networking profissional",
+      "meetpeople": "Encontrar pessoas novas",
+      "dating": "Encontrar alguém especial"
+    }
+  },
+  "profileSwiper": {
+    "emptyStateTitle": "Você viu todos os perfis",
+    "emptyStateDescription": "Volte mais tarde para ver novas pessoas!",
+    "connectedWith": "Você se conectou com {{name}}!"
+  },
+  "placePeople": {
+    "premiumRequired": "Premium necessário",
+    "premiumDescription": "Assinantes Premium podem ver e se conectar com pessoas em qualquer lugar, mesmo sem estar fisicamente presente!",
+    "benefit1": "Veja pessoas em qualquer local",
+    "benefit2": "Conecte-se antes de ir ao lugar",
+    "benefit3": "Explore locais em outras cidades",
+    "subscribePremium": "Assinar Premium",
+    "backToPlaces": "Voltar aos lugares",
+    "howItWorks": "Como funciona"
   }
 }

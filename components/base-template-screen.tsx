@@ -71,7 +71,7 @@ export function BaseTemplateScreen({
   containerStyle,
   contentContainerStyle,
   scrollEnabled = true,
-  showsVerticalScrollIndicator = true,
+  showsVerticalScrollIndicator = false,
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
 
