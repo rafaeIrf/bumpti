@@ -51,6 +51,13 @@ ios/**/*.xcworkspace/xcuserdata/
 ios/**/*.xcodeproj/xcuserdata/
 ios/**/*.xcodeproj/project.xcworkspace/xcuserdata/
 
+# Local Expo modules build artifacts
+modules/**/android/build/
+modules/**/android/.gradle/
+modules/**/android/.cxx/
+modules/**/ios/build/
+modules/**/node_modules/
+
 # Firebase debug logs (mas manter os arquivos de config)
 firebase-debug.log
 firestore-debug.log
