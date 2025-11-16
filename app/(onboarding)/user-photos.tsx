@@ -4,12 +4,11 @@ import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
-import { useLocationPermission } from "@/hooks/use-location-permission";
-import { useNotificationPermission } from "@/hooks/use-notification-permission";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -22,11 +21,9 @@ import {
 
 export default function UserPhotosScreen() {
   const colors = useThemeColors();
-  const [photos, setPhotos] = useState<string[]>([]);
+  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
   const { isLoading, pickFromLibrary } = useImagePicker();
-  const { shouldShowScreen: shouldShowLocation } = useLocationPermission();
-  const { shouldShowScreen: shouldShowNotifications } =
-    useNotificationPermission();
 
   const handleAddPhoto = async () => {
     if (photos.length >= 9) return;
@@ -77,17 +74,8 @@ export default function UserPhotosScreen() {
 
   const handleContinue = () => {
     if (photos.length >= 3) {
-      // TODO: Save photos to user profile
-      console.log("Photos to save:", photos);
-
-      // Navegar baseado nas permissões pendentes
-      if (shouldShowLocation) {
-        router.push("/(onboarding)/location");
-      } else if (shouldShowNotifications) {
-        router.push("/(onboarding)/notifications");
-      } else {
-        router.push("/(onboarding)/complete");
-      }
+      onboardingActions.setPhotoUris(photos);
+      completeCurrentStep("user-photos");
     }
   };
 

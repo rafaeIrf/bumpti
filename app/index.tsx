@@ -1,26 +1,18 @@
+import { useAuthState } from "@/hooks/use-auth-state";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppSelector } from "@/modules/store/hooks";
 import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export default function RootIndex() {
-  const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const colors = useThemeColors();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthState();
+  const { isOnboardingComplete, currentStep, completedSteps } = useAppSelector(
+    (state) => state.onboarding
+  );
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const value = await AsyncStorage.getItem("hasOnboarded");
-        setHasOnboarded(value === "true");
-      } catch {
-        // If it fails, default to showing onboarding
-        setHasOnboarded(false);
-      }
-    })();
-  }, []);
-
-  if (hasOnboarded === null) {
+  // Show loading while checking auth state
+  if (isAuthLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -28,11 +20,24 @@ export default function RootIndex() {
     );
   }
 
-  return false ? (
-    <Redirect href="/(tabs)/(home)" />
-  ) : (
-    <Redirect href="/(onboarding)/welcome" />
-  );
+  // If not authenticated, go to onboarding auth flow
+  if (!isAuthenticated) {
+    return <Redirect href="/(onboarding)/welcome" />;
+  }
+
+  // User is authenticated - check onboarding completion
+  // If onboarding is complete, go to tabs
+  if (isOnboardingComplete) {
+    return <Redirect href="/(tabs)/(home)" />;
+  }
+
+  // If user has completed some steps, redirect to current step or next incomplete step
+  if (completedSteps.length > 0 && currentStep !== "phone-auth") {
+    return <Redirect href={`/(onboarding)/${currentStep}`} />;
+  }
+
+  // Default: Start from user-name (first post-auth screen)
+  return <Redirect href="/(onboarding)/user-name" />;
 }
 
 const styles = StyleSheet.create({

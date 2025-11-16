@@ -5,9 +5,10 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useRouter } from "expo-router";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -18,11 +19,11 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 export default function UserGenderScreen() {
-  const router = useRouter();
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
 
-  const [gender, setGender] = useState("");
+  const [gender, setGender] = useState(userData.gender || "");
 
   const genderOptions = [
     {
@@ -59,11 +60,8 @@ export default function UserGenderScreen() {
 
   const handleContinue = () => {
     if (gender) {
-      // TODO: Save gender to profile/storage
-      console.log("Gender:", gender);
-
-      // Navega para a tela de conexão
-      router.replace("/(onboarding)/connect-with");
+      onboardingActions.setUserGender(gender);
+      completeCurrentStep("user-gender");
     }
   };
 

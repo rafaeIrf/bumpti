@@ -4,11 +4,11 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useLocationPermission } from "@/hooks/use-location-permission";
-import { useNotificationPermission } from "@/hooks/use-notification-permission";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import Animated, {
@@ -20,19 +20,8 @@ import Animated, {
 export default function LocationScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
-  const { shouldShowScreen: shouldShowNotifications } =
-    useNotificationPermission();
+  const { completeCurrentStep } = useOnboardingFlow();
   const { request } = useLocationPermission();
-
-  const navigateNext = () => {
-    // Se precisar mostrar a tela de notificações, vai para lá
-    // Senão, vai direto para complete
-    if (shouldShowNotifications) {
-      router.push("/(onboarding)/notifications");
-    } else {
-      router.push("/(onboarding)/complete");
-    }
-  };
 
   const handleEnableLocation = async () => {
     setIsRequesting(true);
@@ -40,13 +29,11 @@ export default function LocationScreen() {
       const result = await request();
 
       if (result.status === "granted") {
-        // Permissão concedida - salvar no contexto do usuário
-        // TODO: Save to user profile or context
-        // updateUserData({ locationEnabled: true });
+        onboardingActions.setLocationPermission(true);
 
         // Aguardar um pouco para feedback visual
         setTimeout(() => {
-          navigateNext();
+          completeCurrentStep("location");
           setIsRequesting(false);
         }, 500);
       } else {
@@ -65,14 +52,12 @@ export default function LocationScreen() {
   };
 
   const handleSkip = () => {
-    // TODO: Save to user profile or context
-    // updateUserData({ locationEnabled: false });
-    navigateNext();
+    onboardingActions.setLocationPermission(false);
+    completeCurrentStep("location");
   };
 
   return (
-    <BaseTemplateScreen
->
+    <BaseTemplateScreen>
       <View style={styles.container}>
         {/* Location Icon */}
         <Animated.View

@@ -2,9 +2,10 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useRouter } from "expo-router";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -16,17 +17,17 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 export default function UserNameScreen() {
-  const router = useRouter();
   const colors = useThemeColors();
-  const [name, setName] = useState("");
+  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const [name, setName] = useState(userData.name || "");
 
   const handleContinue = () => {
     if (name.trim()) {
-      // TODO: Save user name to profile/storage
-      console.log("User name:", name.trim());
+      // Save name to Redux
+      onboardingActions.setUserName(name.trim());
 
-      // Navigate to age screen
-      router.push("/(onboarding)/user-age");
+      // Complete this step and navigate to next
+      completeCurrentStep("user-name");
     }
   };
 

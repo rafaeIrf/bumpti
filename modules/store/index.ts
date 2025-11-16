@@ -1,14 +1,46 @@
 import { placesApi } from "@/modules/places/placesApi";
-import { configureStore } from "@reduxjs/toolkit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
+import {
+  FLUSH,
+  PAUSE,
+  PERSIST,
+  persistReducer,
+  persistStore,
+  PURGE,
+  REGISTER,
+  REHYDRATE,
+} from "redux-persist";
+import onboardingReducer from "./slices/onboardingSlice";
+
+// Configure persistence
+const persistConfig = {
+  key: "root",
+  storage: AsyncStorage,
+  whitelist: ["onboarding"], // Only persist onboarding state
+};
+
+// Combine reducers
+const rootReducer = combineReducers({
+  [placesApi.reducerPath]: placesApi.reducer,
+  onboarding: onboardingReducer,
+});
+
+// Create persisted reducer
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    [placesApi.reducerPath]: placesApi.reducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(placesApi.middleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }).concat(placesApi.middleware),
 });
+
+export const persistor = persistStore(store);
 
 // Enable refetchOnFocus/refetchOnReconnect behaviors
 setupListeners(store.dispatch);

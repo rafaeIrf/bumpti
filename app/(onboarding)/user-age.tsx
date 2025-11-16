@@ -3,10 +3,11 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -19,8 +20,8 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 export default function UserAgeScreen() {
-  const router = useRouter();
   const colors = useThemeColors();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
 
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [dateText, setDateText] = useState("");
@@ -120,12 +121,10 @@ export default function UserAgeScreen() {
   };
 
   const handleContinue = () => {
-    if (isValid) {
-      // TODO: Save birthdate to profile/storage
-      console.log("Birth date:", birthDate);
-
-      // Navigate to next onboarding step (gender selection)
-      router.push("/(onboarding)/user-gender" as any);
+    if (isValid && birthDate) {
+      const age = calculateAge(birthDate);
+      onboardingActions.setUserAge(age);
+      completeCurrentStep("user-age");
     }
   };
 

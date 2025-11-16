@@ -4,11 +4,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useNotificationPermission } from "@/hooks/use-notification-permission";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import Animated, {
@@ -26,6 +27,7 @@ import Animated, {
 export default function NotificationsScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
+  const { completeCurrentStep } = useOnboardingFlow();
   const { request } = useNotificationPermission();
 
   // Animação de balanço do sino
@@ -57,12 +59,10 @@ export default function NotificationsScreen() {
       const result = await request();
 
       if (result.status === "granted") {
-        // Permissão concedida
-        // TODO: Save to user profile or context
-        // updateUserData({ notificationsEnabled: true });
+        onboardingActions.setNotificationPermission(true);
 
         setTimeout(() => {
-          router.push("/(onboarding)/complete");
+          completeCurrentStep("notifications");
           setIsRequesting(false);
         }, 500);
       } else {
@@ -84,14 +84,12 @@ export default function NotificationsScreen() {
   };
 
   const handleSkip = () => {
-    // TODO: Save to user profile or context
-    // updateUserData({ notificationsEnabled: false });
-    router.push("/(onboarding)/complete");
+    onboardingActions.setNotificationPermission(false);
+    completeCurrentStep("notifications");
   };
 
   return (
-    <BaseTemplateScreen
->
+    <BaseTemplateScreen>
       <View style={styles.container}>
         {/* Notification Icon with sparkles */}
         <Animated.View

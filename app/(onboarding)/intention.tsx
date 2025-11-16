@@ -8,9 +8,10 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { router } from "expo-router";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -45,14 +46,10 @@ const intentionOptions: {
 
 export default function IntentionScreen() {
   const colors = useThemeColors();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
   const [selectedIntentions, setSelectedIntentions] = useState<
     IntentionOption[]
-  >([]);
-
-  const navigateNext = () => {
-    // Navegar para a tela de fotos
-    router.push("/(onboarding)/user-photos" as any);
-  };
+  >((userData.intentions as IntentionOption[]) || []);
 
   const toggleIntention = (value: IntentionOption) => {
     if (selectedIntentions.includes(value)) {
@@ -63,11 +60,9 @@ export default function IntentionScreen() {
   };
 
   const handleContinue = () => {
-    console.log("Selected intentions:", selectedIntentions);
     if (selectedIntentions.length > 0) {
-      // TODO: Save to user profile or context
-      // updateUserData({ lookingFor: selectedIntentions[0] });
-      navigateNext();
+      onboardingActions.setIntentions(selectedIntentions);
+      completeCurrentStep("intention");
     }
   };
 
