@@ -5,6 +5,101 @@
   "matches": "Chat",
   "profile": "Profile",
   "screens": {
+    "profile": {
+      "title": "Profile",
+      "settings": "Settings",
+      "completeProfile": "Complete profile",
+      "yearsOld": "{{age}} years old",
+      "turbo": {
+        "title": "Turbo+",
+        "subtitle": "Highlight your profile"
+      },
+      "pings": {
+        "title": "Pings",
+        "subtitle": "Send special notifications"
+      },
+      "earlyCheckin": {
+        "title": "Early Checkin",
+        "subtitle": "Connect before arriving"
+      },
+      "premium": {
+        "title": "Go Premium",
+        "subtitle": "Unlimited access",
+        "description": "Access exclusive features and unlock the full potential of the app.",
+        "cta": "View plans"
+      },
+      "benefits": {
+        "title": "Compare plans",
+        "free": "Free",
+        "premium": "Premium",
+        "unlimitedLikes": "Unlimited likes",
+        "seeWhoLiked": "Who liked you",
+        "priorityLikes": "Priority likes",
+        "unlimitedRewind": "Unlimited rewind",
+        "visibilityControl": "Visibility control",
+        "seeWhoViewedYou": "See who viewed you at venue",
+        "turboWeekly": "Turbo+ (5/week)",
+        "earlyCheckinWeekly": "Early Checkin (5/week)",
+        "pingsWeekly": "Pings (5/week)"
+      }
+    },
+    "premiumPaywall": {
+      "badge": "BUMPTI PREMIUM",
+      "title": "Your upgrade to real encounters",
+      "subtitle": "More visibility. More connections. More live moments.",
+      "plans": {
+        "week": "1 week",
+        "month": "1 month",
+        "threeMonths": "3 months",
+        "year": "12 months",
+        "perMonth": "month",
+        "mostPopular": "Most popular",
+        "bestValue": "Best value",
+        "save20": "Save 20%",
+        "save40": "Save 40%"
+      },
+      "benefits": {
+        "unlimitedLikes": {
+          "title": "Like without limits",
+          "subtitle": "Like as many people as you want and increase your connection chances."
+        },
+        "seeWhoLiked": {
+          "title": "See who liked you",
+          "subtitle": "Discover who's already shown interest and skip straight to matches."
+        },
+        "priorityLikes": {
+          "title": "Priority likes",
+          "subtitle": "Your likes get highlighted and appear first to other people."
+        },
+        "unlimitedRewind": {
+          "title": "Unlimited rewind",
+          "subtitle": "Go back to profiles whenever you want and never miss an opportunity."
+        },
+        "visibilityControl": {
+          "title": "Visibility control",
+          "subtitle": "Decide who can see you and keep your presence more private."
+        },
+        "seeWhoViewed": {
+          "title": "See who viewed you at venue",
+          "subtitle": "Discover who crossed paths with you at bars, cafes, parties and other places."
+        },
+        "turboIncluded": {
+          "title": "Turbo+ included (5 per week)",
+          "subtitle": "Stand out more at venues and gain instant visibility when you need it."
+        },
+        "earlyCheckin": {
+          "title": "Early Checkin (5 per week)",
+          "subtitle": "Show up at venues before arriving and increase your chances of being discovered."
+        },
+        "pings": {
+          "title": "Pings unlocked (5 per week)",
+          "subtitle": "Send special social signals to get someone's attention."
+        }
+      },
+      "terms": "You can cancel anytime through the App Store / Google Play.",
+      "subscribe": "Subscribe to Bumpti Premium",
+      "close": "Close"
+    },
     "onboarding": {
       "title": "Meet real people,\nin real places",
       "subtitle": "Discover and connect with people who frequent the same places as you. Make friends, chat and expand your social network",

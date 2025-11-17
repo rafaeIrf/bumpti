@@ -132,6 +132,7 @@ export const typography = {
   heading: { fontFamily: "Poppins-SemiBold", fontSize: 24, lineHeight: 32 },
   subheading: { fontFamily: "Poppins-Medium", fontSize: 18, lineHeight: 24 },
   body: { fontFamily: "Poppins-Regular", fontSize: 16, lineHeight: 22 },
+  bodyBold: { fontFamily: "Poppins-SemiBold", fontSize: 16, lineHeight: 22 },
   caption: { fontFamily: "Poppins-Regular", fontSize: 12, lineHeight: 18 },
 };
 

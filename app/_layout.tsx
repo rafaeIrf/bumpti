@@ -68,6 +68,14 @@ export default function RootLayout() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen
+                  name="premium-paywall"
+                  options={{
+                    presentation: "modal",
+                    headerShown: false,
+                    animation: "slide_from_bottom",
+                  }}
+                />
               </Stack>
               <StatusBar style="auto" />
             </BottomSheetProvider>
