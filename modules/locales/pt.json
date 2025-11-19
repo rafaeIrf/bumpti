@@ -292,7 +292,9 @@
       "emptyTitle": "Nenhum lugar dessa categoria por aqui",
       "emptyDescription": "Ainda não há lugares dessa categoria por aqui. Que tal explorar outra vibe? 👀",
       "tryAnother": "Tente outra categoria 👇",
-      "infoText": "Os lugares são ordenados por popularidade. Toque em um card para ver mais detalhes e conectar com as pessoas que estão lá."
+      "infoText": "Os lugares são ordenados por popularidade. Toque em um card para ver mais detalhes e conectar com as pessoas que estão lá.",
+      "searchFallback": "Não encontrou o que procurava?",
+      "searchCta": "Buscar lugares"
     }
   },
   "common": {

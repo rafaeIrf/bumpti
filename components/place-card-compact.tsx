@@ -1,28 +1,41 @@
-import { ArrowRightIcon, NavigationIcon, UsersIcon } from "@/assets/icons";
+import {
+  ArrowRightIcon,
+  HeartIcon,
+  NavigationIcon,
+  Open,
+} from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useCallback } from "react";
+import {
+  GestureResponderEvent,
+  Linking,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 
+interface PlaceInfo {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  distance: number;
+  activeUsers: number;
+  image?: string;
+  isFavorite?: boolean;
+  formattedAddress?: string;
+}
+
 interface PlaceCardCompactProps {
-  place: {
-    id: string;
-    name: string;
-    type: string;
-    category: string;
-    distance: number;
-    activeUsers: number;
-    image?: string;
-    isFavorite?: boolean;
-    formattedAddress?: string;
-  };
+  place: PlaceInfo;
   plansCount?: number;
   onClick: () => void;
   onPlansClick?: () => void;
@@ -40,101 +53,134 @@ export function PlaceCardCompact({
 }: PlaceCardCompactProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(0);
+  const overlayOpacity = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
   const overlayStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: overlayOpacity.value,
   }));
 
   const handlePressIn = () => {
     scale.value = withSpring(0.98);
-    opacity.value = withSpring(1);
+    overlayOpacity.value = withSpring(1);
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1);
-    opacity.value = withSpring(0);
+    overlayOpacity.value = withSpring(0);
   };
 
-  const formatDistance = (km: number): string => {
+  const formatDistance = (km: number) => {
     if (km < 1) {
       return `${Math.round(km * 1000)}m ${t("common.fromYou")}`;
     }
     return `${km.toFixed(1)} km ${t("common.fromYou")}`;
   };
 
-  const formatActiveUsers = (count: number): string => {
-    if (count === 1) return t("common.onePerson");
-    return t("common.peopleNow", { count });
-  };
+  const handleOpenMaps = useCallback(() => {
+    const address = place.formattedAddress || place.name;
+    if (!address) return;
+    const encodedAddress = encodeURIComponent(address);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    Linking.openURL(mapsUrl).catch(() => {});
+  }, [place.formattedAddress, place.name]);
+
+  const handleFavoritePress = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation();
+      onToggleFavorite?.();
+    },
+    [onToggleFavorite]
+  );
 
   return (
     <AnimatedPressable
       onPress={onClick}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.card, animatedStyle]}
+      style={[styles.card, cardAnimatedStyle]}
     >
-      <View style={[styles.cardInner, { backgroundColor: colors.surface }]}>
-        {/* Blue overlay on press */}
-        <Animated.View style={[styles.hoverOverlay, overlayStyle]}>
+      <View
+        style={[
+          styles.cardInner,
+          {
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Animated.View style={[styles.hoverOverlay, overlayStyle]} />
+
+        <View style={styles.topSection}>
           <View
             style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(41, 151, 255, 0.08)" },
+              styles.topBackground,
+              { backgroundColor: colors.surfaceHover },
             ]}
           />
-        </Animated.View>
-
-        <View style={styles.content}>
-          {/* Header Row - Name and Arrow */}
-          <View style={styles.headerRow}>
-            <View style={styles.titleContainer}>
-              <ThemedText
-                type="defaultSemiBold"
-                style={styles.placeName}
-                numberOfLines={1}
-              >
-                {place.name}
-              </ThemedText>
-              {place.formattedAddress && (
-                <ThemedText style={styles.addressText} numberOfLines={1}>
-                  {place.formattedAddress}
+          <View style={styles.topContent}>
+            <View style={styles.topHeader}>
+              <View style={styles.titleRow}>
+                <ThemedText style={styles.placeName} numberOfLines={1}>
+                  {place.name}
                 </ThemedText>
-              )}
-              <ThemedText style={styles.categoryText} numberOfLines={1}>
-                {place.type}
-              </ThemedText>
-            </View>
-
-            {/* Arrow indicator */}
-            <View style={styles.arrowContainer}>
-              <ArrowRightIcon width={16} height={16} color="#2997FF" />
-            </View>
-          </View>
-
-          {/* Meta information */}
-          <View style={styles.metaRow}>
-            {place.activeUsers > 0 && (
-              <View style={styles.metaItem}>
-                <UsersIcon width={12} height={12} color="#B0B0B0" />
-                <ThemedText style={styles.metaText}>
-                  {formatActiveUsers(place.activeUsers)}
-                </ThemedText>
+                {onToggleFavorite && (
+                  <Pressable onPress={handleFavoritePress} hitSlop={8}>
+                    <HeartIcon
+                      width={18}
+                      height={18}
+                      color={place.isFavorite ? "#FF4D67" : "#FFFFFF"}
+                      stroke={place.isFavorite ? "#FF4D67" : "#FFFFFF"}
+                      fill={place.isFavorite ? "#FF4D67" : "none"}
+                    />
+                  </Pressable>
+                )}
               </View>
-            )}
-            <View style={styles.metaItem}>
-              <NavigationIcon width={12} height={12} color="#8B98A5" />
-              <ThemedText style={styles.distanceText}>
+              <Pressable onPress={onClick} hitSlop={8}>
+                <ArrowRightIcon width={24} height={24} color="#FFFFFF" />
+              </Pressable>
+            </View>
+            <View style={styles.distanceRow}>
+              <NavigationIcon width={12} height={12} color="#FFFFFF" />
+              <ThemedText style={styles.distanceTextTop}>
                 {formatDistance(place.distance)}
               </ThemedText>
             </View>
           </View>
         </View>
+
+        {place.formattedAddress && (
+          <View
+            style={[
+              styles.bottomSection,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <ThemedText
+              style={[
+                typography.caption,
+                styles.addressText,
+                { color: colors.text },
+              ]}
+              numberOfLines={1}
+            >
+              {place.formattedAddress}
+            </ThemedText>
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                handleOpenMaps();
+              }}
+            >
+              <Open width={12} height={12} color={colors.accent} />
+            </Pressable>
+          </View>
+        )}
       </View>
     </AnimatedPressable>
   );
@@ -142,74 +188,71 @@ export function PlaceCardCompact({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: "hidden",
   },
   cardInner: {
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#2F3336",
     overflow: "hidden",
     position: "relative",
   },
   hoverOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(41, 151, 255, 0.08)",
     zIndex: 1,
   },
-  content: {
+  topSection: {
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    overflow: "hidden",
+  },
+  topBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topContent: {
     padding: spacing.md,
     gap: spacing.sm,
-    zIndex: 2,
   },
-  headerRow: {
+  topHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flex: 1,
+    minWidth: 0,
+  },
+  placeName: {
+    ...typography.body1,
+    color: "#FFFFFF",
+    flexShrink: 1,
+  },
+  distanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  distanceTextTop: {
+    ...typography.caption,
+    color: "#FFFFFF",
+  },
+  bottomSection: {
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    borderTopWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.sm,
   },
-  titleContainer: {
-    flex: 1,
-    minWidth: 0,
-    gap: 4,
-  },
-  placeName: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
   addressText: {
-    ...typography.caption,
-    color: "#71767B",
-    marginTop: 2,
-  },
-  categoryText: {
-    fontSize: 13,
-    color: "#8B98A5",
-  },
-  arrowContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(41, 151, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  metaText: {
-    fontSize: 12,
-    color: "#B0B0B0",
-  },
-  distanceText: {
-    fontSize: 12,
-    color: "#8B98A5",
+    flex: 1,
   },
 });

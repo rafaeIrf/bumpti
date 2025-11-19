@@ -5,9 +5,11 @@ import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
 import { PlaceCardCompact } from "@/components/place-card-compact";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import PlaceSearchContent from "@/components/place-search-content";
+import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -15,17 +17,13 @@ import { t } from "@/modules/locales";
 import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 // Ícones de placeholder
 const TrendingUpIcon = ({ width, height, color }: any) => (
   <ThemedText style={{ fontSize: width / 2 }}>📈</ThemedText>
-);
-
-const InfoIcon = ({ width, height, color }: any) => (
-  <ThemedText style={{ fontSize: width / 2 }}>ℹ️</ThemedText>
 );
 
 interface PlaceResult {
@@ -71,7 +69,7 @@ export default function CategoryResultsScreen() {
     placesData?.map((place: any) => ({
       id: place.placeId,
       name: place.name,
-      type: place.types?.[0] || typesList[0],
+      type: place.type || "",
       address: place.formattedAddress || "",
     })) || [];
 
@@ -83,7 +81,7 @@ export default function CategoryResultsScreen() {
         <ConnectionBottomSheet
           venueName={place.name}
           currentVenue="Teste"
-          venueState="premium"
+          venueState="active"
           onConnect={() => {
             bottomSheet.close();
             router.push({
@@ -167,58 +165,70 @@ export default function CategoryResultsScreen() {
       </ThemedView>
     </Animated.View>
   );
+  const [favoritePlaces, setFavoritePlaces] = useState<Set<string>>(
+    () => new Set()
+  );
 
-  const renderPlacesList = () => (
-    <ThemedView style={styles.listContainer}>
-      {/* Places List */}
-      {places.map((place, index) => {
-        const placeData = {
-          id: place.id,
-          name: place.name,
-          type: place.type,
-          category: place.type,
-          formattedAddress: place.address,
-          image: "",
-          distance: 0,
-          isFavorite: false,
-          activeUsers: 0,
-        };
+  const handleFavoriteToggle = useCallback((placeId: string) => {
+    setFavoritePlaces((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(placeId)) {
+        updated.delete(placeId);
+      } else {
+        updated.add(placeId);
+      }
+      return updated;
+    });
+  }, []);
 
-        return (
-          <Animated.View
-            key={place.id}
-            entering={FadeInDown.delay(index * 30).springify()}
-            style={styles.placeCardWrapper}
-          >
-            <PlaceCardCompact
-              place={placeData}
-              onClick={() => handlePlaceClick(place)}
-              onToggleFavorite={() => {}}
-            />
-          </Animated.View>
-        );
-      })}
+  const renderPlaceItem = useCallback(
+    ({ item, index }: { item: PlaceResult; index: number }) => {
+      const placeData = {
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        category: item.type,
+        formattedAddress: item.address,
+        image: "",
+        distance: 0,
+        isFavorite: favoritePlaces.has(item.id),
+        activeUsers: 0,
+      };
 
-      {/* Info Footer */}
-      <ThemedView
-        style={[
-          styles.infoFooter,
-          {
-            backgroundColor: `${colors.surface}80`,
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        <ThemedView style={styles.infoContent}>
-          <InfoIcon width={20} height={20} color={colors.accent} />
-          <ThemedText
-            style={[styles.infoText, { color: colors.textSecondary }]}
-          >
-            {t("screens.categoryResults.infoText")}
-          </ThemedText>
-        </ThemedView>
+      return (
+        <Animated.View
+          entering={FadeInDown.delay(index * 40).springify()}
+          style={styles.placeCardWrapper}
+        >
+          <PlaceCardCompact
+            place={placeData}
+            onClick={() => handlePlaceClick(item)}
+            onToggleFavorite={() => handleFavoriteToggle(item.id)}
+          />
+        </Animated.View>
+      );
+    },
+    [favoritePlaces, handleFavoriteToggle]
+  );
+
+  const listFooterComponent = useMemo(
+    () => (
+      <ThemedView style={styles.footerContainer}>
+        <ThemedText
+          style={[styles.footerCopy, { color: colors.textSecondary }]}
+        >
+          {t("screens.categoryResults.searchFallback")}
+        </ThemedText>
+        <Button
+          onPress={handleOpenSearch}
+          variant="default"
+          size="sm"
+          leftIcon={<SearchIcon width={16} height={16} color={colors.text} />}
+          label={t("screens.categoryResults.searchCta")}
+        />
       </ThemedView>
-    </ThemedView>
+    ),
+    [colors.accent, colors.textSecondary, handleOpenSearch, t]
   );
 
   return (
@@ -250,7 +260,20 @@ export default function CategoryResultsScreen() {
         ) : places.length === 0 ? (
           renderEmptyState()
         ) : (
-          renderPlacesList()
+          <>
+            <ScreenSectionHeading
+              titleStyle={{ marginTop: 24 }}
+              title="Populares na sua região"
+            />
+            <FlatList
+              data={places}
+              keyExtractor={(item) => item.id}
+              renderItem={renderPlaceItem}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+              ListFooterComponent={listFooterComponent}
+            />
+          </>
         )}
       </ThemedView>
     </BaseTemplateScreen>
@@ -305,20 +328,19 @@ const styles = StyleSheet.create({
   placeCardWrapper: {
     position: "relative",
   },
-  infoFooter: {
+  footerContainer: {
     marginTop: spacing.lg,
     padding: spacing.md,
-    borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
+    alignItems: "center",
+    gap: spacing.md,
   },
-  infoContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.sm,
+  footerCopy: {
+    textAlign: "center",
+    ...typography.caption,
   },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+  footerButtonLabel: {
+    fontWeight: "600",
+    color: "#000",
   },
 });

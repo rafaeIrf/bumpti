@@ -4,24 +4,32 @@ import {
   DumbbellIcon,
   FlameIcon,
   HeartIcon,
-  MapIcon,
+  LogoName,
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
 } from "@/assets/icons";
+import {
+  Cocoa,
+  Graduation,
+  Heart,
+  Passion,
+  Toast,
+  Weight,
+} from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CARD_COLORS, CategoryCard } from "@/components/category-card";
 import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
 import PlaceSearchContent from "@/components/place-search-content";
+import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -56,7 +64,7 @@ const categories: Category[] = [
     iconBgColor: "rgba(41, 151, 255, 0.12)",
     types: ["bar", "night_club"],
     color: CARD_COLORS.flameOrange,
-    illustration: MapIcon,
+    illustration: Passion,
   },
   {
     id: "favorites",
@@ -66,8 +74,8 @@ const categories: Category[] = [
     iconColor: "#FFFFFF",
     iconBgColor: "rgba(41, 151, 255, 0.12)",
     types: ["bar", "night_club"],
-    color: CARD_COLORS.rosePulse,
-    illustration: MapIcon,
+    color: CARD_COLORS.red,
+    illustration: Heart,
   },
   {
     id: "nightlife",
@@ -78,7 +86,7 @@ const categories: Category[] = [
     iconBgColor: "rgba(255, 138, 51, 0.12)",
     types: ["bar", "night_club"],
     color: CARD_COLORS.heatBurst,
-    illustration: MapIcon,
+    illustration: Toast,
   },
   {
     id: "cafes",
@@ -89,7 +97,7 @@ const categories: Category[] = [
     iconBgColor: "rgba(155, 108, 74, 0.12)",
     types: ["cafe"],
     color: CARD_COLORS.apricotPastel,
-    illustration: BeerIcon,
+    illustration: Cocoa,
   },
   {
     id: "university",
@@ -100,7 +108,7 @@ const categories: Category[] = [
     iconBgColor: "rgba(61, 170, 255, 0.12)",
     types: ["university"],
     color: CARD_COLORS.azurePop,
-    illustration: MapIcon,
+    illustration: Graduation,
   },
   {
     id: "fitness",
@@ -111,7 +119,7 @@ const categories: Category[] = [
     iconBgColor: "rgba(29, 185, 84, 0.12)",
     types: ["gym"],
     color: CARD_COLORS.vitalGreen,
-    illustration: MapIcon,
+    illustration: Weight,
   },
 ];
 
@@ -236,18 +244,7 @@ export default function HomeScreen() {
     <BaseTemplateScreen
       TopHeader={
         <ScreenToolbar
-          customTitleView={
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
-            >
-              <MapPinIcon width={20} height={20} color={colors.accent} />
-              <ThemedText
-                style={{ ...typography.heading1, color: colors.accent }}
-              >
-                bumpti
-              </ThemedText>
-            </View>
-          }
+          customTitleView={<LogoName />}
           titleIconColor={colors.accent}
           rightActions={[
             {
@@ -270,18 +267,11 @@ export default function HomeScreen() {
     >
       <ThemedView>
         {/* Title Section */}
-        <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <ThemedView style={[styles.section, { paddingTop: 8 }]}>
-            <ThemedText style={[styles.mainTitle, { color: colors.text }]}>
-              Onde você quer se conectar hoje?
-            </ThemedText>
-            <ThemedText
-              style={[styles.mainSubtitle, { color: colors.textSecondary }]}
-            >
-              Escolha o tipo de lugar e descubra quem está por lá.
-            </ThemedText>
-          </ThemedView>
-        </Animated.View>
+        <ScreenSectionHeading
+          titleStyle={{ marginTop: 24 }}
+          title="Onde você quer se conectar hoje?"
+          subtitle="Escolha o tipo de lugar e descubra quem está por lá."
+        />
 
         {/* Categories List */}
         <FlatList
@@ -367,14 +357,6 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: "center",
     lineHeight: 22,
-  },
-  mainTitle: {
-    ...typography.subheading,
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  mainSubtitle: {
-    ...typography.caption,
   },
   categoriesList: {
     paddingTop: 24,

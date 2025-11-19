@@ -4,6 +4,7 @@ import {
   EllipsisVerticalIcon,
   SparklesIcon,
   UsersIcon,
+  XIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
@@ -191,6 +192,7 @@ export default function PlacePeopleScreen() {
   if (!isUserHere && isFarAway && !isPremium) {
     return (
       <BaseTemplateScreen
+        isModal
         TopHeader={
           <ScreenToolbar
             leftAction={{
@@ -339,11 +341,12 @@ export default function PlacePeopleScreen() {
   return (
     <View style={styles.screenContainer}>
       <BaseTemplateScreen
+        isModal
         contentContainerStyle={{ paddingBottom: 156 }}
         TopHeader={
           <ScreenToolbar
             leftAction={{
-              icon: ArrowLeftIcon,
+              icon: XIcon,
               onClick: handleBack,
               ariaLabel: t("common.back"),
               color: colors.icon,
