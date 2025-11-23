@@ -62,7 +62,7 @@ export function CategoryCard({
     if (!illustration) return null;
 
     const Illustration = illustration as React.ComponentType<SvgProps>;
-    return <Illustration width={48} height={64} />;
+    return <Illustration width={100} height={100} />;
   };
 
   return (
@@ -170,6 +170,7 @@ export const CARD_COLORS = {
   darkCoral: "#CC5E59",
   twilightRose: "#FF85A6",
   moonlightTeal: "#00C9A7",
+  red: "#f97286ff",
 };
 
 const styles = StyleSheet.create({
@@ -238,7 +239,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexGrow: 1,
-    minHeight: 90,
   },
   illustrationImage: {
     width: "70%",

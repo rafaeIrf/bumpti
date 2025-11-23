@@ -56,6 +56,7 @@ export const placesApi = createApi({
             types,
             rankPreference,
           });
+          console.log("Nearby places fetched:", result?.data?.places);
           return { data: (result?.data?.places || []) as Place[] };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };

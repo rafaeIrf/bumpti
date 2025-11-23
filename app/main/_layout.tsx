@@ -6,22 +6,25 @@ export default function MainLayout() {
       <Stack.Screen
         name="category-results"
         options={{
+          presentation: "modal",
           headerShown: false,
-          presentation: "card",
+          animation: "slide_from_bottom",
         }}
       />
       <Stack.Screen
         name="place-people"
         options={{
+          presentation: "modal",
           headerShown: false,
-          presentation: "card",
+          animation: "slide_from_bottom",
         }}
       />
       <Stack.Screen
         name="filters"
         options={{
-          headerShown: false,
           presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
         }}
       />
     </Stack>

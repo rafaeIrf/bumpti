@@ -292,7 +292,61 @@
       "emptyTitle": "No places of this category around here",
       "emptyDescription": "There are no places of this category around here yet. How about exploring another vibe? 👀",
       "tryAnother": "Try another category 👇",
-      "infoText": "Places are sorted by popularity. Tap a card to see more details and connect with people who are there."
+      "searchFallback": "Didn't find what you're looking for?",
+      "searchCta": "Search places"
+    },
+    "placeSearch": {
+      "placeholderPremium": "Search in any city...",
+      "placeholderDefault": "Search places...",
+      "emptyTitle": "Search places",
+      "emptyDescription": "Type the name of a place or pick a suggestion.",
+      "suggestionsLabel": "Search suggestions",
+      "suggestionsOptions": {
+        "bar": "Bar",
+        "cafe": "Cafe",
+        "club": "Club",
+        "restaurant": "Restaurant"
+      },
+      "noResultsTitle": "No places found",
+      "noResultsDescription": "Try searching with another name or check the spelling.",
+      "clearButton": "Clear search",
+      "addressFallback": "Address unavailable"
+    },
+    "home": {
+      "heroTitle": "Where do you want to connect today?",
+      "heroSubtitle": "Pick the vibe and discover who's already there.",
+      "toolbar": {
+        "filters": "Filters",
+        "search": "Search"
+      },
+      "infoTitle": "How it works",
+      "infoDescription": "Choose a category and see nearby spots where you can connect with others.",
+      "categories": {
+        "highlighted": {
+          "title": "Trending now",
+          "description": "Busy spots full of people connecting."
+        },
+        "favorites": {
+          "title": "Favorite places",
+          "description": "Your go-to spots to connect."
+        },
+        "nightlife": {
+          "title": "Bars & nightlife",
+          "description": "Go out and meet new people."
+        },
+        "cafes": {
+          "title": "Cafés & hangouts",
+          "description": "Cozy spots to chat and relax."
+        },
+        "university": {
+          "title": "Campus life",
+          "description": "Where everyday meetups happen."
+        },
+        "fitness": {
+          "title": "Wellness & movement",
+          "description": "Connections that start during workouts."
+        }
+      }
     }
   },
   "common": {

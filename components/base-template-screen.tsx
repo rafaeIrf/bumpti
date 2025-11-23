@@ -66,6 +66,7 @@ interface BaseTemplateScreenProps {
   // Whether the screen has a Stack header (e.g., onboarding screens with progress bar)
   // If true, won't add paddingTop for safe area (header already handles it)
   hasStackHeader?: boolean;
+  isModal?: boolean;
 }
 
 export function BaseTemplateScreen({
@@ -79,6 +80,7 @@ export function BaseTemplateScreen({
   scrollEnabled = true,
   showsVerticalScrollIndicator = false,
   hasStackHeader = false,
+  isModal = false,
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -106,7 +108,7 @@ export function BaseTemplateScreen({
         styles.wrapper,
         containerStyle,
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
-        hasStackHeader ? undefined : { paddingTop: insets.top },
+        hasStackHeader || isModal ? undefined : { paddingTop: insets.top },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}

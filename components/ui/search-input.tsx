@@ -3,7 +3,13 @@ import { ThemedView } from "@/components/themed-view";
 import { typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React, { forwardRef } from "react";
-import { Pressable, TextInput, TextInputProps, ViewStyle } from "react-native";
+import {
+  Pressable,
+  TextInput,
+  TextInputProps,
+  TextStyle,
+  ViewStyle,
+} from "react-native";
 
 export interface InputProps extends Omit<TextInputProps, "style"> {
   value: string;
@@ -22,6 +28,7 @@ export interface InputProps extends Omit<TextInputProps, "style"> {
   }>;
   showClearButton?: boolean;
   containerStyle?: ViewStyle;
+  inputStyle?: TextStyle;
 }
 
 export const Input = forwardRef<TextInput, InputProps>(
@@ -35,6 +42,7 @@ export const Input = forwardRef<TextInput, InputProps>(
       rightIcon: RightIcon,
       showClearButton = true,
       containerStyle,
+      inputStyle,
       ...textInputProps
     },
     ref
@@ -81,6 +89,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             color: colors.text,
             textAlignVertical: "center",
             ...typography.body,
+            ...inputStyle,
           }}
           {...textInputProps}
         />

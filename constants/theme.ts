@@ -58,6 +58,7 @@ export const Colors = {
     // Main palette
     background: "#000000", // Fundo principal
     surface: "#16181C", // Cards, superfícies elevadas
+    surface1: "#0F0F0F", // Cards, superfícies elevadas
     surfaceHover: "#1C1F23", // Estado hover de superfícies
     border: "#2F3336", // Bordas, separadores
 
@@ -133,6 +134,8 @@ export const typography = {
   heading1: { fontFamily: "Poppins-Bold", fontSize: 24, lineHeight: 32 },
   heading2: { fontFamily: "Poppins-Regular", fontSize: 24, lineHeight: 32 },
   subheading: { fontFamily: "Poppins-Medium", fontSize: 18, lineHeight: 24 },
+  subheading1: { fontFamily: "Poppins-Regular", fontSize: 18, lineHeight: 24 },
+  subheading2: { fontFamily: "Poppins-Bold", fontSize: 18, lineHeight: 24 },
   body: { fontFamily: "Poppins-Regular", fontSize: 16, lineHeight: 22 },
   body1: { fontFamily: "Poppins-SemiBold", fontSize: 16, lineHeight: 22 },
   body2: { fontFamily: "Poppins-Bold", fontSize: 16, lineHeight: 22 },

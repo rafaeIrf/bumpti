@@ -71,6 +71,14 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen
+                  name="(modals)"
+                  options={{
+                    headerShown: false,
+                    presentation: "modal",
+                    animation: "slide_from_bottom",
+                  }}
+                />
+                <Stack.Screen
                   name="premium-paywall"
                   options={{
                     presentation: "modal",

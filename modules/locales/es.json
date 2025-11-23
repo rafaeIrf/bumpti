@@ -292,7 +292,62 @@
       "emptyTitle": "No hay lugares de esta categoría por aquí",
       "emptyDescription": "Todavía no hay lugares de esta categoría por aquí. ¿Qué tal explorar otra vibra? 👀",
       "tryAnother": "Prueba otra categoría 👇",
-      "infoText": "Los lugares están ordenados por popularidad. Toca una tarjeta para ver más detalles y conectarte con las personas que están allí."
+      "infoText": "Los lugares están ordenados por popularidad. Toca una tarjeta para ver más detalles y conectarte con las personas que están allí.",
+      "searchFallback": "¿No encontraste lo que buscabas?",
+      "searchCta": "Buscar lugares"
+    },
+    "placeSearch": {
+      "placeholderPremium": "Busca en cualquier ciudad...",
+      "placeholderDefault": "Buscar lugares...",
+      "emptyTitle": "Buscar lugares",
+      "emptyDescription": "Escribe el nombre de un lugar o elige una sugerencia.",
+      "suggestionsLabel": "Sugerencias de búsqueda",
+      "suggestionsOptions": {
+        "bar": "Bar",
+        "cafe": "Café",
+        "club": "Club",
+        "restaurant": "Restaurante"
+      },
+      "noResultsTitle": "No se encontraron lugares",
+      "noResultsDescription": "Intenta buscar con otro nombre o revisa la ortografía.",
+      "clearButton": "Limpiar búsqueda",
+      "addressFallback": "Dirección no disponible"
+    },
+    "home": {
+      "heroTitle": "¿Dónde quieres conectar hoy?",
+      "heroSubtitle": "Elige el tipo de lugar y descubre quién está por ahí.",
+      "toolbar": {
+        "filters": "Filtros",
+        "search": "Buscar"
+      },
+      "infoTitle": "¿Cómo funciona?",
+      "infoDescription": "Elige una categoría y mira los lugares cercanos donde puedes conectar con otras personas.",
+      "categories": {
+        "highlighted": {
+          "title": "En tendencia ahora",
+          "description": "Lugares llenos y con mucha gente conectando."
+        },
+        "favorites": {
+          "title": "Lugares favoritos",
+          "description": "Tus sitios preferidos para conectar."
+        },
+        "nightlife": {
+          "title": "Bares y vida nocturna",
+          "description": "Para salir y conocer gente nueva."
+        },
+        "cafes": {
+          "title": "Cafés y charlas",
+          "description": "Espacios acogedores para conversar y relajarse."
+        },
+        "university": {
+          "title": "Vida universitaria",
+          "description": "Donde ocurren los encuentros del día a día."
+        },
+        "fitness": {
+          "title": "Bienestar y movimiento",
+          "description": "Conexiones que comienzan en el entrenamiento."
+        }
+      }
     }
   },
   "common": {
