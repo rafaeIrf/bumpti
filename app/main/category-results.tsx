@@ -2,9 +2,8 @@ import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
-import { PlaceCardCompact } from "@/components/place-card-compact";
+import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
-import PlaceSearchContent from "@/components/place-search-content";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -106,22 +105,7 @@ export default function CategoryResultsScreen() {
   };
 
   const handleOpenSearch = () => {
-    if (!bottomSheet) return;
-    bottomSheet.expand({
-      content: () => (
-        <PlaceSearchContent
-          onBack={() => bottomSheet.close()}
-          onPlaceSelect={(placeId, placeName) => {
-            console.log("Place selected from search:", placeId, placeName);
-            bottomSheet.close();
-            // TODO: Navigate to place detail
-          }}
-          isPremium={false}
-        />
-      ),
-      draggable: true,
-      snapPoints: ["100%"],
-    });
+    router.push("/place-search");
   };
 
   const renderEmptyState = () => (
@@ -188,7 +172,7 @@ export default function CategoryResultsScreen() {
         name: item.name,
         type: item.type,
         category: item.type,
-        formattedAddress: item.address,
+        address: item.address,
         image: "",
         distance: 0,
         isFavorite: favoritePlaces.has(item.id),
@@ -200,9 +184,9 @@ export default function CategoryResultsScreen() {
           entering={FadeInDown.delay(index * 40).springify()}
           style={styles.placeCardWrapper}
         >
-          <PlaceCardCompact
+          <PlaceCard
             place={placeData}
-            onClick={() => handlePlaceClick(item)}
+            onPress={() => handlePlaceClick(item)}
             onToggleFavorite={() => handleFavoriteToggle(item.id)}
           />
         </Animated.View>

@@ -21,12 +21,12 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CARD_COLORS, CategoryCard } from "@/components/category-card";
 import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
-import PlaceSearchContent from "@/components/place-search-content";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { t } from "@/modules/locales";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
@@ -53,75 +53,6 @@ interface Category {
   color: string;
   illustration?: React.ComponentType<SvgProps>;
 }
-
-const categories: Category[] = [
-  {
-    id: "hightlighted",
-    icon: FlameIcon,
-    title: "Movimentados Agora",
-    description: "Lugares cheios e com gente se conectando.",
-    iconColor: "#FF6B35",
-    iconBgColor: "rgba(41, 151, 255, 0.12)",
-    types: ["bar", "night_club"],
-    color: CARD_COLORS.flameOrange,
-    illustration: Passion,
-  },
-  {
-    id: "favorites",
-    icon: HeartIcon,
-    title: "Locais Favoritos",
-    description: "Seus lugares preferidos para se conectar.",
-    iconColor: "#FFFFFF",
-    iconBgColor: "rgba(41, 151, 255, 0.12)",
-    types: ["bar", "night_club"],
-    color: CARD_COLORS.red,
-    illustration: Heart,
-  },
-  {
-    id: "nightlife",
-    icon: BeerIcon,
-    title: "Bares & Baladas",
-    description: "Pra sair e conhecer gente nova.",
-    iconColor: "#FF8A33",
-    iconBgColor: "rgba(255, 138, 51, 0.12)",
-    types: ["bar", "night_club"],
-    color: CARD_COLORS.heatBurst,
-    illustration: Toast,
-  },
-  {
-    id: "cafes",
-    icon: CoffeeIcon,
-    title: "Cafés & Bate-Papo",
-    description: "Lugares pra conversar e relaxar.",
-    iconColor: "#9B6C4A",
-    iconBgColor: "rgba(155, 108, 74, 0.12)",
-    types: ["cafe"],
-    color: CARD_COLORS.apricotPastel,
-    illustration: Cocoa,
-  },
-  {
-    id: "university",
-    icon: MapPinIcon,
-    title: "Vida Universitária",
-    description: "Onde os encontros acontecem na rotina.",
-    iconColor: "#3DAAFF",
-    iconBgColor: "rgba(61, 170, 255, 0.12)",
-    types: ["university"],
-    color: CARD_COLORS.azurePop,
-    illustration: Graduation,
-  },
-  {
-    id: "fitness",
-    icon: DumbbellIcon,
-    title: "Bem-estar & Movimento",
-    description: "Conexões que começam no treino.",
-    iconColor: "#1DB954",
-    iconBgColor: "rgba(29, 185, 84, 0.12)",
-    types: ["gym"],
-    color: CARD_COLORS.vitalGreen,
-    illustration: Weight,
-  },
-];
 
 // Mock de lugares com pessoas conectadas agora
 const mockActivePlaces: ActivePlace[] = [
@@ -172,6 +103,74 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const bottomSheet = useCustomBottomSheet();
+  const categories: Category[] = [
+    {
+      id: "highlighted",
+      icon: FlameIcon,
+      title: t("screens.home.categories.highlighted.title"),
+      description: t("screens.home.categories.highlighted.description"),
+      iconColor: "#FF6B35",
+      iconBgColor: "rgba(41, 151, 255, 0.12)",
+      types: ["bar", "night_club"],
+      color: CARD_COLORS.flameOrange,
+      illustration: Passion,
+    },
+    {
+      id: "favorites",
+      icon: HeartIcon,
+      title: t("screens.home.categories.favorites.title"),
+      description: t("screens.home.categories.favorites.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(41, 151, 255, 0.12)",
+      types: ["bar", "night_club"],
+      color: CARD_COLORS.red,
+      illustration: Heart,
+    },
+    {
+      id: "nightlife",
+      icon: BeerIcon,
+      title: t("screens.home.categories.nightlife.title"),
+      description: t("screens.home.categories.nightlife.description"),
+      iconColor: "#FF8A33",
+      iconBgColor: "rgba(255, 138, 51, 0.12)",
+      types: ["bar", "night_club"],
+      color: CARD_COLORS.heatBurst,
+      illustration: Toast,
+    },
+    {
+      id: "cafes",
+      icon: CoffeeIcon,
+      title: t("screens.home.categories.cafes.title"),
+      description: t("screens.home.categories.cafes.description"),
+      iconColor: "#9B6C4A",
+      iconBgColor: "rgba(155, 108, 74, 0.12)",
+      types: ["cafe"],
+      color: CARD_COLORS.apricotPastel,
+      illustration: Cocoa,
+    },
+    {
+      id: "university",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.university.title"),
+      description: t("screens.home.categories.university.description"),
+      iconColor: "#3DAAFF",
+      iconBgColor: "rgba(61, 170, 255, 0.12)",
+      types: ["university"],
+      color: CARD_COLORS.azurePop,
+      illustration: Graduation,
+    },
+    {
+      id: "fitness",
+      icon: DumbbellIcon,
+      title: t("screens.home.categories.fitness.title"),
+      description: t("screens.home.categories.fitness.description"),
+      iconColor: "#1DB954",
+      iconBgColor: "rgba(29, 185, 84, 0.12)",
+      types: ["gym"],
+      color: CARD_COLORS.vitalGreen,
+      illustration: Weight,
+    },
+  ];
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);
@@ -226,18 +225,7 @@ export default function HomeScreen() {
   };
 
   const handleOpenSearch = () => {
-    if (!bottomSheet) return;
-    bottomSheet.expand({
-      content: () => (
-        <PlaceSearchContent
-          onBack={() => bottomSheet.close()}
-          onPlaceSelect={() => bottomSheet.close()}
-          isPremium={false}
-        />
-      ),
-      draggable: true,
-      snapPoints: ["100%"],
-    });
+    router.push("/place-search");
   };
 
   return (
@@ -250,13 +238,13 @@ export default function HomeScreen() {
             {
               icon: SlidersHorizontalIcon,
               onClick: () => router.push("main/filters" as any),
-              ariaLabel: "Filtros",
+              ariaLabel: t("screens.home.toolbar.filters"),
               color: colors.icon,
             },
             {
               icon: SearchIcon,
               onClick: handleOpenSearch,
-              ariaLabel: "Pesquisar",
+              ariaLabel: t("screens.home.toolbar.search"),
               color: colors.icon,
             },
           ]}
@@ -269,8 +257,8 @@ export default function HomeScreen() {
         {/* Title Section */}
         <ScreenSectionHeading
           titleStyle={{ marginTop: 24 }}
-          title="Onde você quer se conectar hoje?"
-          subtitle="Escolha o tipo de lugar e descubra quem está por lá."
+          title={t("screens.home.heroTitle")}
+          subtitle={t("screens.home.heroSubtitle")}
         />
 
         {/* Categories List */}
@@ -324,7 +312,7 @@ export default function HomeScreen() {
                   <ThemedText
                     style={[styles.infoTitle, { color: colors.text }]}
                   >
-                    Como funciona?
+                    {t("screens.home.infoTitle")}
                   </ThemedText>
                   <ThemedText
                     style={[
@@ -332,8 +320,7 @@ export default function HomeScreen() {
                       { color: colors.textSecondary },
                     ]}
                   >
-                    Escolha uma categoria e veja lugares próximos onde você pode
-                    se conectar com outras pessoas.
+                    {t("screens.home.infoDescription")}
                   </ThemedText>
                 </ThemedView>
               </ThemedView>

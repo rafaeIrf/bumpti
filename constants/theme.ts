@@ -58,6 +58,7 @@ export const Colors = {
     // Main palette
     background: "#000000", // Fundo principal
     surface: "#16181C", // Cards, superfícies elevadas
+    surface1: "#0F0F0F", // Cards, superfícies elevadas
     surfaceHover: "#1C1F23", // Estado hover de superfícies
     border: "#2F3336", // Bordas, separadores
 

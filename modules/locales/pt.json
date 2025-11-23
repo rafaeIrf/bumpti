@@ -295,6 +295,59 @@
       "infoText": "Os lugares são ordenados por popularidade. Toque em um card para ver mais detalhes e conectar com as pessoas que estão lá.",
       "searchFallback": "Não encontrou o que procurava?",
       "searchCta": "Buscar lugares"
+    },
+    "placeSearch": {
+      "placeholderPremium": "Buscar em qualquer cidade...",
+      "placeholderDefault": "Buscar lugares...",
+      "emptyTitle": "Buscar lugares",
+      "emptyDescription": "Digite o nome de um local ou escolha uma sugestão.",
+      "suggestionsLabel": "Sugestões de busca",
+      "suggestionsOptions": {
+        "bar": "Bar",
+        "cafe": "Café",
+        "club": "Balada",
+        "restaurant": "Restaurante"
+      },
+      "noResultsTitle": "Nenhum local encontrado",
+      "noResultsDescription": "Tente buscar com outro nome ou verifique a ortografia.",
+      "clearButton": "Limpar busca",
+      "addressFallback": "Endereço indisponível"
+    },
+    "home": {
+      "heroTitle": "Onde você quer se conectar hoje?",
+      "heroSubtitle": "Escolha o tipo de lugar e descubra quem está por lá.",
+      "toolbar": {
+        "filters": "Filtros",
+        "search": "Pesquisar"
+      },
+      "infoTitle": "Como funciona?",
+      "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
+      "categories": {
+        "highlighted": {
+          "title": "Movimentados agora",
+          "description": "Lugares cheios e com gente se conectando."
+        },
+        "favorites": {
+          "title": "Locais favoritos",
+          "description": "Seus lugares preferidos para se conectar."
+        },
+        "nightlife": {
+          "title": "Bares & baladas",
+          "description": "Pra sair e conhecer gente nova."
+        },
+        "cafes": {
+          "title": "Cafés & bate-papo",
+          "description": "Lugares pra conversar e relaxar."
+        },
+        "university": {
+          "title": "Vida universitária",
+          "description": "Onde os encontros acontecem na rotina."
+        },
+        "fitness": {
+          "title": "Bem-estar & movimento",
+          "description": "Conexões que começam no treino."
+        }
+      }
     }
   },
   "common": {
