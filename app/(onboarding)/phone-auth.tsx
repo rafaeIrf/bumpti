@@ -12,7 +12,6 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   StyleSheet,
   TextInput,
   View,
@@ -73,13 +72,7 @@ export default function PhoneAuthScreen() {
 
       console.log("Sending verification code to:", fullPhoneNumber);
 
-      // Show reCAPTCHA info on iOS
-      if (Platform.OS === "ios") {
-        console.log("[UI] iOS: User will see reCAPTCHA verification");
-      }
-
-      // Send verification code via Firebase
-      // On iOS, this will open a Safari WebView for reCAPTCHA verification
+      // Send verification code via Supabase Auth
       await phoneAuthService.sendVerificationCode(fullPhoneNumber);
 
       console.log("Verification code sent successfully");
@@ -97,18 +90,9 @@ export default function PhoneAuthScreen() {
         stack: error.stack,
       });
 
-      // More detailed error message for iOS
-      let errorMessage = error.message || "Ocorreu um erro ao enviar o código";
-
-      if (Platform.OS === "ios") {
-        if (error.code === "auth/network-request-failed") {
-          errorMessage =
-            "Erro de conexão. Verifique se você completou a verificação reCAPTCHA.";
-        } else if (error.code === "auth/too-many-requests") {
-          errorMessage =
-            "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
-        }
-      }
+      const errorMessage =
+        error.message ||
+        "Ocorreu um erro ao enviar o código. Tente novamente.";
 
       Alert.alert("Erro", errorMessage);
     } finally {
