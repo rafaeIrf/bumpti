@@ -122,7 +122,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.favorites.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(41, 151, 255, 0.12)",
-      types: ["bar", "night_club"],
+      types: [],
       color: CARD_COLORS.red,
       illustration: Heart,
     },
@@ -178,7 +178,9 @@ export default function HomeScreen() {
       pathname: "/main/category-results",
       params: {
         categoryName: category.title,
-        placeTypes: category.types.join(","),
+        ...(category.id === "favorites"
+          ? { favorites: "true" }
+          : { placeTypes: category.types.join(",") }),
         isPremium: "false", // TODO: Get from user premium status
       },
     });

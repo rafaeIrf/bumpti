@@ -104,3 +104,4 @@ export const fetchOptions =
   };
 
 export default optionsSlice.reducer;
+export type { OnboardingOption };

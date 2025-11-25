@@ -14,6 +14,18 @@ export {
 } from "./profileSlice";
 export { profileActions } from "./profileActions";
 export {
+  setFavorites,
+  addFavoriteLocal,
+  removeFavoriteLocal,
+  setFavoritesLoading,
+  setFavoritesError,
+  setFavoritesLoaded,
+  resetFavorites,
+  fetchFavoritePlaces,
+  toggleFavoritePlace,
+  type FavoritesState,
+} from "./favoritesSlice";
+export {
   setOptions,
   setLoaded as setOptionsLoaded,
   setLastFetchedAt as setOptionsLastFetchedAt,

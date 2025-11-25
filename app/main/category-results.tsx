@@ -13,10 +13,16 @@ import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { getFeaturedPlaces } from "@/modules/places/api";
 import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
+import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import {
+  fetchFavoritePlaces,
+  toggleFavoritePlace,
+} from "@/modules/store/slices/favoritesSlice";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -37,6 +43,7 @@ export default function CategoryResultsScreen() {
   const params = useLocalSearchParams();
   const categoryName = params.categoryName as string;
   const placeTypes = params.placeTypes as string;
+  const favoritesMode = params.favorites === "true";
   const bottomSheet = useCustomBottomSheet();
 
   // Use cached location hook
@@ -59,18 +66,23 @@ export default function CategoryResultsScreen() {
       maxResultCount: 20,
     },
     {
-      skip: !userLocation, // Don't run query until we have location
+      skip: !userLocation || favoritesMode, // skip when favorites
     }
   );
 
+  const [favoritePlacesData, setFavoritePlacesData] = useState<PlaceResult[]>(
+    []
+  );
+
   // Transform API results to PlaceResult format
-  const places: PlaceResult[] =
-    placesData?.map((place: any) => ({
-      id: place.placeId,
-      name: place.name,
-      type: place.type || "",
-      address: place.formattedAddress || "",
-    })) || [];
+  const places: PlaceResult[] = favoritesMode
+    ? favoritePlacesData
+    : placesData?.map((place: any) => ({
+        id: place.placeId,
+        name: place.name,
+        type: place.type || "",
+        address: place.formattedAddress || "",
+      })) || [];
 
   const handlePlaceClick = (place: PlaceResult) => {
     if (!bottomSheet) return;
@@ -152,18 +164,48 @@ export default function CategoryResultsScreen() {
   const [favoritePlaces, setFavoritePlaces] = useState<Set<string>>(
     () => new Set()
   );
+  const favorites = useAppSelector((state) => state.favorites.placeIds);
+  const favoritesState = useAppSelector((state) => state.favorites);
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(fetchFavoritePlaces());
+  }, [dispatch]);
 
-  const handleFavoriteToggle = useCallback((placeId: string) => {
-    setFavoritePlaces((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(placeId)) {
-        updated.delete(placeId);
-      } else {
-        updated.add(placeId);
+  useEffect(() => {
+    if (favoritesMode) {
+      if (favorites.length === 0) {
+        setFavoritePlacesData([]);
+        return;
       }
-      return updated;
-    });
-  }, []);
+      getFeaturedPlaces(favorites).then((result) => {
+        const mapped =
+          result?.map((place: any) => ({
+            id: place.placeId || place.id,
+            name: place.name,
+            type: place.type || "",
+            address: place.formattedAddress || place.address || "",
+          })) || [];
+        setFavoritePlacesData(mapped);
+      });
+    }
+  }, [favoritesMode, favorites]);
+
+  useEffect(() => {
+    setFavoritePlaces(new Set(favorites));
+  }, [favorites]);
+
+  const handleFavoriteToggle = useCallback(
+    (placeId: string) => {
+      const isFav = favoritePlaces.has(placeId);
+      dispatch(toggleFavoritePlace(placeId, isFav));
+      if (favoritesMode && isFav) {
+        setFavoritePlacesData((prev) =>
+          prev.filter((p) => p.id !== placeId)
+        );
+      }
+    },
+    [dispatch, favoritePlaces, favoritesMode]
+  );
 
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: PlaceResult; index: number }) => {
@@ -239,26 +281,36 @@ export default function CategoryResultsScreen() {
       }
     >
       <ThemedView>
-        {locationLoading || isLoading ? (
-          <PlaceLoadingSkeleton count={6} />
-        ) : places.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <>
-            <ScreenSectionHeading
-              titleStyle={{ marginTop: 24 }}
-              title="Populares na sua região"
-            />
-            <FlatList
-              data={places}
-              keyExtractor={(item) => item.id}
-              renderItem={renderPlaceItem}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponent={listFooterComponent}
-            />
-          </>
-        )}
+        {(() => {
+          const isLoadingState = favoritesMode
+            ? favoritesState.isLoading || !favoritesState.loaded
+            : locationLoading || isLoading;
+
+          if (isLoadingState) {
+            return <PlaceLoadingSkeleton count={6} />;
+          }
+
+          if (places.length === 0) {
+            return renderEmptyState();
+          }
+
+          return (
+            <>
+              <ScreenSectionHeading
+                titleStyle={{ marginTop: 24 }}
+                title="Populares na sua região"
+              />
+              <FlatList
+                data={places}
+                keyExtractor={(item) => item.id}
+                renderItem={renderPlaceItem}
+                contentContainerStyle={styles.listContainer}
+                showsVerticalScrollIndicator={false}
+                ListFooterComponent={listFooterComponent}
+              />
+            </>
+          );
+        })()}
       </ThemedView>
     </BaseTemplateScreen>
   );
