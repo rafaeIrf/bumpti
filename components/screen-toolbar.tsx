@@ -99,7 +99,9 @@ export function ScreenToolbar({
       <View style={styles.content}>
         <View style={styles.row}>
           {/* Left Action */}
-          <View style={styles.sideContainer}>
+          <View
+            style={hasLeftAction ? styles.sideContainer : styles.sideContainerEmpty}
+          >
             {leftAction && (
               <ActionButton
                 icon={leftAction.icon}
@@ -115,6 +117,7 @@ export function ScreenToolbar({
             style={[
               styles.titleCenterContainer,
               !hasLeftAction && styles.titleLeftAligned,
+              !hasLeftAction && styles.titleFullWidth,
             ]}
           >
             {customTitleView ? (
@@ -137,6 +140,8 @@ export function ScreenToolbar({
                     styles.title,
                     !hasLeftAction && { ...typography.heading },
                   ]}
+                  numberOfLines={hasLeftAction ? 1 : undefined}
+                  ellipsizeMode={hasLeftAction ? "tail" : undefined}
                 >
                   {title}
                 </Text>
@@ -212,18 +217,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  sideContainerEmpty: {
+    width: 0,
+    height: 48,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   titleCenterContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+    flex: 2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    pointerEvents: "none",
+    paddingHorizontal: 8,
   },
   titleLeftAligned: {
     justifyContent: "flex-start",
+  },
+  titleFullWidth: {
+    width: "100%",
   },
   actionButton: {
     width: 40,

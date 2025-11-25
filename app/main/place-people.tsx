@@ -342,7 +342,7 @@ export default function PlacePeopleScreen() {
     <View style={styles.screenContainer}>
       <BaseTemplateScreen
         isModal
-        contentContainerStyle={{ paddingBottom: 156 }}
+        contentContainerStyle={{ paddingBottom: 156, paddingHorizontal: 0 }}
         TopHeader={
           <ScreenToolbar
             leftAction={{

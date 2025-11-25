@@ -11,32 +11,32 @@ import { ThemedView } from "@/components/themed-view";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import {
+  useFavoritePlacesList,
+  type FavoritePlaceResult,
+} from "@/hooks/use-favorite-places-list";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeOut,
+  Layout,
+} from "react-native-reanimated";
 
-// Ícones de placeholder
-const TrendingUpIcon = ({ width, height, color }: any) => (
-  <ThemedText style={{ fontSize: width / 2 }}>📈</ThemedText>
-);
-
-interface PlaceResult {
-  id: string;
-  name: string;
-  type: string;
-  address: string;
-}
+type PlaceResult = FavoritePlaceResult;
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams();
   const categoryName = params.categoryName as string;
   const placeTypes = params.placeTypes as string;
+  const favoritesMode = params.favorites === "true";
   const bottomSheet = useCustomBottomSheet();
 
   // Use cached location hook
@@ -50,6 +50,8 @@ export default function CategoryResultsScreen() {
     .filter(Boolean);
 
   // Use RTK Query hook - only runs when userLocation is available
+  const shouldFetchNearby = !favoritesMode && !!userLocation;
+
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
@@ -59,18 +61,23 @@ export default function CategoryResultsScreen() {
       maxResultCount: 20,
     },
     {
-      skip: !userLocation, // Don't run query until we have location
+      skip: !shouldFetchNearby, // skip when favorites or missing location
     }
   );
 
+  const { favoriteIds, handleToggle } = useFavoriteToggle();
+  const { favoritePlacesData, favoritePlacesLoading } =
+    useFavoritePlacesList(favoritesMode);
+
   // Transform API results to PlaceResult format
-  const places: PlaceResult[] =
-    placesData?.map((place: any) => ({
-      id: place.placeId,
-      name: place.name,
-      type: place.type || "",
-      address: place.formattedAddress || "",
-    })) || [];
+  const places: PlaceResult[] = favoritesMode
+    ? favoritePlacesData
+    : placesData?.map((place: any) => ({
+        id: place.placeId,
+        name: place.name,
+        type: place.type || "",
+        address: place.formattedAddress || "",
+      })) || [];
 
   const handlePlaceClick = (place: PlaceResult) => {
     if (!bottomSheet) return;
@@ -149,22 +156,6 @@ export default function CategoryResultsScreen() {
       </ThemedView>
     </Animated.View>
   );
-  const [favoritePlaces, setFavoritePlaces] = useState<Set<string>>(
-    () => new Set()
-  );
-
-  const handleFavoriteToggle = useCallback((placeId: string) => {
-    setFavoritePlaces((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(placeId)) {
-        updated.delete(placeId);
-      } else {
-        updated.add(placeId);
-      }
-      return updated;
-    });
-  }, []);
-
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: PlaceResult; index: number }) => {
       const placeData = {
@@ -175,24 +166,26 @@ export default function CategoryResultsScreen() {
         address: item.address,
         image: "",
         distance: 0,
-        isFavorite: favoritePlaces.has(item.id),
+        isFavorite: favoriteIds.has(item.id),
         activeUsers: 0,
       };
 
       return (
         <Animated.View
           entering={FadeInDown.delay(index * 40).springify()}
+          exiting={FadeOut.duration(220)}
+          layout={Layout.springify()}
           style={styles.placeCardWrapper}
         >
           <PlaceCard
             place={placeData}
             onPress={() => handlePlaceClick(item)}
-            onToggleFavorite={() => handleFavoriteToggle(item.id)}
+            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
           />
         </Animated.View>
       );
     },
-    [favoritePlaces, handleFavoriteToggle]
+    [favoriteIds, handleToggle, handlePlaceClick]
   );
 
   const listFooterComponent = useMemo(
@@ -215,6 +208,12 @@ export default function CategoryResultsScreen() {
     [colors.accent, colors.textSecondary, handleOpenSearch, t]
   );
 
+  const isLoadingState = useMemo(
+    () =>
+      favoritesMode ? favoritePlacesLoading : locationLoading || isLoading,
+    [favoritesMode, favoritePlacesLoading, locationLoading, isLoading]
+  );
+
   return (
     <BaseTemplateScreen
       TopHeader={
@@ -226,39 +225,53 @@ export default function CategoryResultsScreen() {
               ariaLabel: t("common.back"),
             }}
             title={categoryName || ""}
-            rightActions={[
-              {
-                icon: SearchIcon,
-                onClick: handleOpenSearch,
-                ariaLabel: t("common.search"),
-                color: colors.icon,
-              },
-            ]}
+            rightActions={
+              favoritesMode
+                ? []
+                : [
+                    {
+                      icon: SearchIcon,
+                      onClick: handleOpenSearch,
+                      ariaLabel: t("common.search"),
+                      color: colors.icon,
+                    },
+                  ]
+            }
           />
         </ThemedView>
       }
     >
       <ThemedView>
-        {locationLoading || isLoading ? (
-          <PlaceLoadingSkeleton count={6} />
-        ) : places.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <>
-            <ScreenSectionHeading
-              titleStyle={{ marginTop: 24 }}
-              title="Populares na sua região"
-            />
-            <FlatList
-              data={places}
-              keyExtractor={(item) => item.id}
-              renderItem={renderPlaceItem}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponent={listFooterComponent}
-            />
-          </>
-        )}
+        {(() => {
+          if (isLoadingState) {
+            return <PlaceLoadingSkeleton count={6} />;
+          }
+
+          if (places.length === 0) {
+            return renderEmptyState();
+          }
+
+          return (
+            <>
+              {!favoritesMode && (
+                <ScreenSectionHeading
+                  titleStyle={{ marginTop: 24 }}
+                  title="Populares na sua região"
+                />
+              )}
+              <FlatList
+                data={places}
+                keyExtractor={(item) => item.id}
+                renderItem={renderPlaceItem}
+                contentContainerStyle={styles.listContainer}
+                showsVerticalScrollIndicator={false}
+                ListFooterComponent={
+                  favoritesMode ? undefined : listFooterComponent
+                }
+              />
+            </>
+          );
+        })()}
       </ThemedView>
     </BaseTemplateScreen>
   );

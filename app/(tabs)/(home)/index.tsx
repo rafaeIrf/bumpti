@@ -18,9 +18,7 @@ import {
   Weight,
 } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CARD_COLORS, CategoryCard } from "@/components/category-card";
-import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -32,15 +30,6 @@ import React, { useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
-
-interface ActivePlace {
-  id: string;
-  name: string;
-  type: string;
-  category: string;
-  distance: number;
-  activeUsers: number;
-}
 
 interface Category {
   id: string;
@@ -54,55 +43,10 @@ interface Category {
   illustration?: React.ComponentType<SvgProps>;
 }
 
-// Mock de lugares com pessoas conectadas agora
-const mockActivePlaces: ActivePlace[] = [
-  {
-    id: "place-1",
-    name: "Bar do Zeca",
-    type: "bar",
-    category: "bar",
-    distance: 0.8,
-    activeUsers: 12,
-  },
-  {
-    id: "place-2",
-    name: "Café Aurora",
-    type: "cafe",
-    category: "cafe",
-    distance: 1.2,
-    activeUsers: 7,
-  },
-  {
-    id: "place-3",
-    name: "Universidade Mackenzie",
-    type: "university",
-    category: "university",
-    distance: 2.5,
-    activeUsers: 23,
-  },
-  {
-    id: "place-4",
-    name: "Balada Fusion",
-    type: "nightclub",
-    category: "nightclub",
-    distance: 1.8,
-    activeUsers: 34,
-  },
-  {
-    id: "place-5",
-    name: "Academia Smart Fit",
-    type: "gym",
-    category: "gym",
-    distance: 0.5,
-    activeUsers: 15,
-  },
-];
-
 export default function HomeScreen() {
   const colors = useThemeColors();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const bottomSheet = useCustomBottomSheet();
   const categories: Category[] = [
     {
       id: "highlighted",
@@ -122,7 +66,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.favorites.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(41, 151, 255, 0.12)",
-      types: ["bar", "night_club"],
+      types: [],
       color: CARD_COLORS.red,
       illustration: Heart,
     },
@@ -178,42 +122,13 @@ export default function HomeScreen() {
       pathname: "/main/category-results",
       params: {
         categoryName: category.title,
-        placeTypes: category.types.join(","),
+        ...(category.id === "favorites"
+          ? { favorites: "true" }
+          : { placeTypes: category.types.join(",") }),
         isPremium: "false", // TODO: Get from user premium status
       },
     });
     setSelectedCategory(null);
-  };
-
-  const handlePlaceClick = (place: ActivePlace) => {
-    if (!bottomSheet) return;
-
-    bottomSheet.expand({
-      content: () => (
-        <ConnectionBottomSheet
-          venueName={place.name}
-          venueState="active"
-          onConnect={() => {
-            bottomSheet.close();
-            router.push({
-              pathname: "/main/place-people",
-              params: {
-                placeId: place.id,
-                placeName: place.name,
-                distance: place.distance,
-              },
-            });
-          }}
-          onCancel={() => {
-            bottomSheet.close();
-          }}
-          onClose={() => {
-            bottomSheet.close();
-          }}
-        />
-      ),
-      draggable: true,
-    });
   };
 
   const handleRefresh = async () => {

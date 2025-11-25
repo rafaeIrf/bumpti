@@ -1,5 +1,7 @@
-import functions from "@react-native-firebase/functions";
+import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
 import { Place, PlaceType } from "./types";
+
+const firebaseFunctions = getFunctions();
 
 export async function searchPlacesByText(
   input: string,
@@ -8,7 +10,8 @@ export async function searchPlacesByText(
   radius: number = 20000,
   sessionToken?: string
 ): Promise<{ places: Place[] }> {
-  const callable = functions().httpsCallable<any, { places: Place[] }>(
+  const callable = httpsCallable<any, { places: Place[] }>(
+    firebaseFunctions,
     "searchPlacesByText"
   );
   const payload: any = { input, lat, lng, radius };
@@ -27,7 +30,8 @@ export async function getNearbyPlaces(
   rankPreference: "POPULARITY" | "DISTANCE" = "POPULARITY",
   maxResultCount: number = 20
 ): Promise<Place[]> {
-  const callable = functions().httpsCallable<any, { places: Place[] }>(
+  const callable = httpsCallable<any, { places: Place[] }>(
+    firebaseFunctions,
     "getNearbyPlaces"
   );
   const result = await callable({
@@ -42,7 +46,8 @@ export async function getNearbyPlaces(
 // Fetch featured places by fixed place IDs (batch)
 export async function getFeaturedPlaces(placeIds: string[]): Promise<Place[]> {
   try {
-    const callable = functions().httpsCallable<any, { places: Place[] }>(
+    const callable = httpsCallable<any, { places: Place[] }>(
+      firebaseFunctions,
       "getPlacesByIds"
     );
     const result = await callable({ placeIds });
@@ -62,10 +67,10 @@ export async function searchTextPlaces(
   maxResultCount: number = 20,
   pageToken?: string
 ): Promise<{ places: Place[]; nextPageToken: string | null }> {
-  const callable = functions().httpsCallable<
+  const callable = httpsCallable<
     any,
     { places: Place[]; nextPageToken: string | null }
-  >("searchTextPlaces");
+  >(firebaseFunctions, "searchTextPlaces");
 
   const result = await callable({
     lat,

@@ -18,7 +18,6 @@ export type ProfilePayload = {
 
 export async function getOnboardingOptions(): Promise<{
   genders: OnboardingOption[];
-  connectWith: OnboardingOption[];
   intentions: OnboardingOption[];
 }> {
   const { data, error } = await supabase.functions.invoke("get-onboarding-options");
@@ -29,7 +28,6 @@ export async function getOnboardingOptions(): Promise<{
 
   return {
     genders: data.genders ?? [],
-    connectWith: data.connectWith ?? [],
     intentions: data.intentions ?? [],
   };
 }

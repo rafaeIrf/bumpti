@@ -9,16 +9,14 @@ export function useOnboardingOptions() {
   useEffect(() => {
     const hasData =
       options.genders.length > 0 ||
-      options.connectWith.length > 0 ||
       options.intentions.length > 0;
     if (!hasData || !options.loaded) {
       dispatch(fetchOptions());
     }
-  }, [dispatch, options.genders.length, options.connectWith.length, options.intentions.length, options.loaded]);
+  }, [dispatch, options.genders.length, options.intentions.length, options.loaded]);
 
   return {
     genders: options.genders,
-    connectWith: options.connectWith,
     intentions: options.intentions,
     isLoading: options.isLoading || !options.loaded,
     error: options.error,

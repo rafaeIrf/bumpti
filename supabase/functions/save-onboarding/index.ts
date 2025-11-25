@@ -123,8 +123,8 @@ Deno.serve(async (req) => {
       throw new Error(userError?.message ?? "User not found");
     }
 
-    const connectPromise = connectWith.length
-      ? supabase.from("connect_options").select("id,key").in("key", connectWith).eq("active", true)
+    const gendersPromise = connectWith.length
+      ? supabase.from("gender_options").select("id,key").in("key", connectWith).eq("active", true)
       : Promise.resolve({ data: [], error: null });
 
     const intentionPromise = intentions.length
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       : Promise.resolve({ data: [], error: null });
 
     const [{ data: connectOptions, error: connectError }, { data: intentionOptions, error: intentionError }] =
-      await Promise.all([connectPromise, intentionPromise]);
+      await Promise.all([gendersPromise, intentionPromise]);
 
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;

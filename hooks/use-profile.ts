@@ -12,6 +12,7 @@ export function useProfile(options: UseProfileOptions = {}) {
   const { enabled = true, force = false } = options;
   const profileState = useAppSelector((state) => state.profile);
   const [error, setError] = useState<string | undefined>();
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -37,9 +38,11 @@ export function useProfile(options: UseProfileOptions = {}) {
 
   useEffect(() => {
     if (!enabled) return;
+    if (hasFetched) return;
     if (profileState.data && !force) return;
+    setHasFetched(true);
     fetchProfile();
-  }, [enabled, force, fetchProfile, profileState.data]);
+  }, [enabled, force, fetchProfile, hasFetched, profileState.data]);
 
   return {
     profile: profileState.data,
