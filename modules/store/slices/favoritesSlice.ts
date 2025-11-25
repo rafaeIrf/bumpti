@@ -1,6 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { supabase } from "@/modules/supabase/client";
-import type { AppDispatch, RootState } from "../index";
 
 export interface FavoritesState {
   placeIds: string[];
@@ -53,67 +51,5 @@ export const {
   setFavoritesError,
   resetFavorites,
 } = favoritesSlice.actions;
-
-export const fetchFavoritePlaces =
-  () => async (dispatch: AppDispatch, getState: () => RootState) => {
-    const { favorites } = getState();
-    if (favorites.isLoading) return;
-    dispatch(setFavoritesLoading(true));
-    dispatch(setFavoritesError(undefined));
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "get-favorite-places"
-      );
-      if (error) throw new Error(error.message);
-      dispatch(setFavorites(data.placeIds ?? []));
-      dispatch(setFavoritesLoaded(true));
-    } catch (err: any) {
-      dispatch(
-        setFavoritesError(err?.message || "Não foi possível carregar favoritos.")
-      );
-    } finally {
-      dispatch(setFavoritesLoading(false));
-    }
-  };
-
-export const toggleFavoritePlace =
-  (placeId: string, isFavorite: boolean) =>
-  async (dispatch: AppDispatch) => {
-    // optimistic update
-    if (isFavorite) {
-      dispatch(removeFavoriteLocal(placeId));
-    } else {
-      dispatch(addFavoriteLocal(placeId));
-    }
-
-    try {
-      const { error } = await supabase.functions.invoke(
-        "toggle-favorite-place",
-        {
-          body: {
-            placeId,
-            action: isFavorite ? "remove" : "add",
-          },
-        }
-      );
-      if (error) {
-        throw new Error(error.message);
-      }
-    } catch (err) {
-      // revert on failure
-      if (isFavorite) {
-        dispatch(addFavoriteLocal(placeId));
-      } else {
-        dispatch(removeFavoriteLocal(placeId));
-      }
-      dispatch(
-        setFavoritesError(
-          err instanceof Error
-            ? err.message
-            : "Não foi possível atualizar favorito."
-        )
-      );
-    }
-  };
 
 export default favoritesSlice.reducer;

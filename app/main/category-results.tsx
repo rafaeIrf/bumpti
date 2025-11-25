@@ -11,32 +11,25 @@ import { ThemedView } from "@/components/themed-view";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import {
+  useFavoritePlacesList,
+  type FavoritePlaceResult,
+} from "@/hooks/use-favorite-places-list";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { getFeaturedPlaces } from "@/modules/places/api";
 import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
-import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
-import {
-  fetchFavoritePlaces,
-  toggleFavoritePlace,
-} from "@/modules/store/slices/favoritesSlice";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeOut,
+  Layout,
+} from "react-native-reanimated";
 
-// Ícones de placeholder
-const TrendingUpIcon = ({ width, height, color }: any) => (
-  <ThemedText style={{ fontSize: width / 2 }}>📈</ThemedText>
-);
-
-interface PlaceResult {
-  id: string;
-  name: string;
-  type: string;
-  address: string;
-}
+type PlaceResult = FavoritePlaceResult;
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
@@ -57,6 +50,8 @@ export default function CategoryResultsScreen() {
     .filter(Boolean);
 
   // Use RTK Query hook - only runs when userLocation is available
+  const shouldFetchNearby = !favoritesMode && !!userLocation;
+
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
@@ -66,13 +61,13 @@ export default function CategoryResultsScreen() {
       maxResultCount: 20,
     },
     {
-      skip: !userLocation || favoritesMode, // skip when favorites
+      skip: !shouldFetchNearby, // skip when favorites or missing location
     }
   );
 
-  const [favoritePlacesData, setFavoritePlacesData] = useState<PlaceResult[]>(
-    []
-  );
+  const { favoriteIds, handleToggle } = useFavoriteToggle();
+  const { favoritePlacesData, favoritePlacesLoading } =
+    useFavoritePlacesList(favoritesMode);
 
   // Transform API results to PlaceResult format
   const places: PlaceResult[] = favoritesMode
@@ -161,52 +156,6 @@ export default function CategoryResultsScreen() {
       </ThemedView>
     </Animated.View>
   );
-  const [favoritePlaces, setFavoritePlaces] = useState<Set<string>>(
-    () => new Set()
-  );
-  const favorites = useAppSelector((state) => state.favorites.placeIds);
-  const favoritesState = useAppSelector((state) => state.favorites);
-  const dispatch = useAppDispatch();
-  useEffect(() => {
-    dispatch(fetchFavoritePlaces());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (favoritesMode) {
-      if (favorites.length === 0) {
-        setFavoritePlacesData([]);
-        return;
-      }
-      getFeaturedPlaces(favorites).then((result) => {
-        const mapped =
-          result?.map((place: any) => ({
-            id: place.placeId || place.id,
-            name: place.name,
-            type: place.type || "",
-            address: place.formattedAddress || place.address || "",
-          })) || [];
-        setFavoritePlacesData(mapped);
-      });
-    }
-  }, [favoritesMode, favorites]);
-
-  useEffect(() => {
-    setFavoritePlaces(new Set(favorites));
-  }, [favorites]);
-
-  const handleFavoriteToggle = useCallback(
-    (placeId: string) => {
-      const isFav = favoritePlaces.has(placeId);
-      dispatch(toggleFavoritePlace(placeId, isFav));
-      if (favoritesMode && isFav) {
-        setFavoritePlacesData((prev) =>
-          prev.filter((p) => p.id !== placeId)
-        );
-      }
-    },
-    [dispatch, favoritePlaces, favoritesMode]
-  );
-
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: PlaceResult; index: number }) => {
       const placeData = {
@@ -217,24 +166,26 @@ export default function CategoryResultsScreen() {
         address: item.address,
         image: "",
         distance: 0,
-        isFavorite: favoritePlaces.has(item.id),
+        isFavorite: favoriteIds.has(item.id),
         activeUsers: 0,
       };
 
       return (
         <Animated.View
           entering={FadeInDown.delay(index * 40).springify()}
+          exiting={FadeOut.duration(220)}
+          layout={Layout.springify()}
           style={styles.placeCardWrapper}
         >
           <PlaceCard
             place={placeData}
             onPress={() => handlePlaceClick(item)}
-            onToggleFavorite={() => handleFavoriteToggle(item.id)}
+            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
           />
         </Animated.View>
       );
     },
-    [favoritePlaces, handleFavoriteToggle]
+    [favoriteIds, handleToggle, handlePlaceClick]
   );
 
   const listFooterComponent = useMemo(
@@ -257,6 +208,12 @@ export default function CategoryResultsScreen() {
     [colors.accent, colors.textSecondary, handleOpenSearch, t]
   );
 
+  const isLoadingState = useMemo(
+    () =>
+      favoritesMode ? favoritePlacesLoading : locationLoading || isLoading,
+    [favoritesMode, favoritePlacesLoading, locationLoading, isLoading]
+  );
+
   return (
     <BaseTemplateScreen
       TopHeader={
@@ -268,24 +225,24 @@ export default function CategoryResultsScreen() {
               ariaLabel: t("common.back"),
             }}
             title={categoryName || ""}
-            rightActions={[
-              {
-                icon: SearchIcon,
-                onClick: handleOpenSearch,
-                ariaLabel: t("common.search"),
-                color: colors.icon,
-              },
-            ]}
+            rightActions={
+              favoritesMode
+                ? []
+                : [
+                    {
+                      icon: SearchIcon,
+                      onClick: handleOpenSearch,
+                      ariaLabel: t("common.search"),
+                      color: colors.icon,
+                    },
+                  ]
+            }
           />
         </ThemedView>
       }
     >
       <ThemedView>
         {(() => {
-          const isLoadingState = favoritesMode
-            ? favoritesState.isLoading || !favoritesState.loaded
-            : locationLoading || isLoading;
-
           if (isLoadingState) {
             return <PlaceLoadingSkeleton count={6} />;
           }
@@ -296,17 +253,21 @@ export default function CategoryResultsScreen() {
 
           return (
             <>
-              <ScreenSectionHeading
-                titleStyle={{ marginTop: 24 }}
-                title="Populares na sua região"
-              />
+              {!favoritesMode && (
+                <ScreenSectionHeading
+                  titleStyle={{ marginTop: 24 }}
+                  title="Populares na sua região"
+                />
+              )}
               <FlatList
                 data={places}
                 keyExtractor={(item) => item.id}
                 renderItem={renderPlaceItem}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
-                ListFooterComponent={listFooterComponent}
+                ListFooterComponent={
+                  favoritesMode ? undefined : listFooterComponent
+                }
               />
             </>
           );

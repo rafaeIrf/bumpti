@@ -21,10 +21,9 @@ export {
   setFavoritesError,
   setFavoritesLoaded,
   resetFavorites,
-  fetchFavoritePlaces,
-  toggleFavoritePlace,
   type FavoritesState,
 } from "./favoritesSlice";
+export { favoritesActions } from "./favoritesActions";
 export {
   setOptions,
   setLoaded as setOptionsLoaded,

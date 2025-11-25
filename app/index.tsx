@@ -1,4 +1,5 @@
 import { useAuthState } from "@/hooks/use-auth-state";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
 import { Redirect } from "expo-router";
@@ -7,12 +8,14 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 export default function RootIndex() {
   const colors = useThemeColors();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthState();
-  const { isOnboardingComplete, currentStep, completedSteps } = useAppSelector(
-    (state) => state.onboarding
-  );
+  const { profile, isLoading: isProfileLoading } = useProfile({
+    enabled: !!isAuthenticated,
+    force: true, // sempre confirma no backend se o perfil existe
+  });
+  const { currentStep } = useAppSelector((state) => state.onboarding);
 
   // Show loading while checking auth state
-  if (isAuthLoading) {
+  if (isAuthLoading || (isAuthenticated && isProfileLoading)) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -25,19 +28,18 @@ export default function RootIndex() {
     return <Redirect href="/(onboarding)/welcome" />;
   }
 
-  // User is authenticated - check onboarding completion
-  // If onboarding is complete, go to tabs
-  if (isOnboardingComplete) {
+  // User authenticated: if profile exists, onboarding is done
+  if (profile) {
     return <Redirect href="/(tabs)/(home)" />;
   }
 
-  // If user has completed some steps, redirect to current step or next incomplete step
-  if (completedSteps.length > 0 && currentStep !== "phone-auth") {
-    return <Redirect href={`/(onboarding)/${currentStep}`} />;
-  }
+  // No profile yet: continue onboarding from last saved step (persisted) or start
+  const onboardingRoute =
+    currentStep && currentStep !== "phone-auth"
+      ? `/(onboarding)/${currentStep}`
+      : "/(onboarding)/user-name";
 
-  // Default: Start from user-name (first post-auth screen)
-  return <Redirect href="/(onboarding)/user-name" />;
+  return <Redirect href={onboardingRoute} />;
 }
 
 const styles = StyleSheet.create({

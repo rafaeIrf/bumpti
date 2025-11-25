@@ -9,7 +9,8 @@ import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import React, { useCallback } from "react";
+import debounce from "lodash/debounce";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -30,10 +31,24 @@ interface PlaceCardData {
 interface PlaceCardProps {
   place: PlaceCardData;
   onPress: () => void;
-  onToggleFavorite?: (placeId: string) => void;
+  onToggleFavorite?: (
+    placeId: string,
+    options?: {
+      optimisticOnly?: boolean;
+      sync?: boolean;
+      value?: boolean;
+    }
+  ) => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const debouncedSyncFavorite = debounce(
+  (placeId: string, fn: (placeId: string) => void) => {
+    fn(placeId);
+  },
+  500
+);
 
 export function PlaceCard({
   place,
@@ -43,6 +58,12 @@ export function PlaceCard({
   const colors = useThemeColors();
   const scale = useSharedValue(1);
   const overlay = useSharedValue(0);
+  const tapLockedRef = useRef(false);
+  const [localFavorite, setLocalFavorite] = useState(Boolean(place.isFavorite));
+
+  useEffect(() => {
+    setLocalFavorite(Boolean(place.isFavorite));
+  }, [place.isFavorite]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -69,12 +90,27 @@ export function PlaceCard({
     return `${km.toFixed(1)} km ${t("common.fromYou")}`;
   };
 
+  const lockTap = () => {
+    if (tapLockedRef.current) return true;
+    tapLockedRef.current = true;
+    setTimeout(() => {
+      tapLockedRef.current = false;
+    }, 300);
+    return false;
+  };
+
   const handleFavorite = useCallback(
     (event: any) => {
       event.stopPropagation();
-      onToggleFavorite?.(place.id);
+      if (lockTap()) return;
+      const nextValue = !localFavorite;
+      setLocalFavorite(nextValue);
+      onToggleFavorite?.(place.id, { optimisticOnly: true, value: nextValue });
+      debouncedSyncFavorite(place.id, (finalPlaceId: string) => {
+        onToggleFavorite?.(finalPlaceId, { sync: true, value: nextValue });
+      });
     },
-    [onToggleFavorite, place.id]
+    [localFavorite, onToggleFavorite, place.id]
   );
 
   const handleOpenMaps = useCallback(
@@ -116,9 +152,9 @@ export function PlaceCard({
               <HeartIcon
                 width={18}
                 height={18}
-                color={place.isFavorite ? "#FF4D67" : "#FFFFFF"}
-                stroke={place.isFavorite ? "#FF4D67" : "#FFFFFF"}
-                fill={place.isFavorite ? "#FF4D67" : "none"}
+                color={localFavorite ? "#FF4D67" : "#FFFFFF"}
+                stroke={localFavorite ? "#FF4D67" : "#FFFFFF"}
+                fill={localFavorite ? "#FF4D67" : "none"}
               />
             </Pressable>
             <Pressable

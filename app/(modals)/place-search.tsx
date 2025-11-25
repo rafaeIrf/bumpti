@@ -5,10 +5,13 @@ import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { calculateDistance } from "@/modules/location";
 import { searchPlacesByText as searchPlacesByTextApi } from "@/modules/places/api";
+import { useAppSelector } from "@/modules/store/hooks";
+import { favoritesActions } from "@/modules/store/slices";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, {
@@ -55,6 +58,8 @@ export default function PlaceSearch({
 }: PlaceSearchProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  const favoritesState = useAppSelector((state) => state.favorites);
+  const { favoriteIds, handleToggle } = useFavoriteToggle();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -75,6 +80,12 @@ export default function PlaceSearch({
       });
     })();
   }, []);
+
+  useEffect(() => {
+    if (!favoritesState.loaded && !favoritesState.isLoading) {
+      favoritesActions.fetchFavorites();
+    }
+  }, [favoritesState.isLoading, favoritesState.loaded]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -192,13 +203,15 @@ export default function PlaceSearch({
               item.formattedAddress ?? t("screens.placeSearch.addressFallback"),
             distance: item.distanceKm ?? 0,
             activeUsers: 0,
+            isFavorite: favoriteIds.has(item.placeId),
             tag,
           }}
           onPress={() => handleResultPress(item)}
+          onToggleFavorite={(id, opts) => handleToggle(id, opts)}
         />
       );
     },
-    [handleResultPress]
+    [favoriteIds, handleResultPress, handleToggle]
   );
 
   return (
