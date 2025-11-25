@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       supabase
         .from("profile_connect_with")
-        .select("option:option_id(key)")
+        .select("gender:gender_id(key)")
         .eq("user_id", userId),
       supabase
         .from("profile_intentions")
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       genderKey = genderRow?.key ?? null;
     }
 
-    const connectWith = (connectRows ?? []).map((row: any) => row.option?.key).filter(Boolean);
+    const connectWith = (connectRows ?? []).map((row: any) => row.gender?.key).filter(Boolean);
     const intentions = (intentionRows ?? []).map((row: any) => row.option?.key).filter(Boolean);
     let photos =
       (photoRows ?? [])

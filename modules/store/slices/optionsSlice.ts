@@ -7,7 +7,6 @@ import type { AppDispatch, RootState } from "../index";
 
 export interface OptionsState {
   genders: OnboardingOption[];
-  connectWith: OnboardingOption[];
   intentions: OnboardingOption[];
   loaded: boolean;
   lastFetchedAt: number | null;
@@ -17,7 +16,6 @@ export interface OptionsState {
 
 const initialState: OptionsState = {
   genders: [],
-  connectWith: [],
   intentions: [],
   loaded: false,
   lastFetchedAt: null,
@@ -35,12 +33,10 @@ const optionsSlice = createSlice({
       state,
       action: PayloadAction<{
         genders: OnboardingOption[];
-        connectWith: OnboardingOption[];
         intentions: OnboardingOption[];
       }>
     ) => {
       state.genders = action.payload.genders;
-      state.connectWith = action.payload.connectWith;
       state.intentions = action.payload.intentions;
     },
     setLoaded: (state, action: PayloadAction<boolean>) => {
@@ -76,9 +72,7 @@ export const fetchOptions =
 
     const now = Date.now();
     const hasData =
-      options.genders.length > 0 ||
-      options.connectWith.length > 0 ||
-      options.intentions.length > 0;
+      options.genders.length > 0 || options.intentions.length > 0;
     const isExpired =
       options.lastFetchedAt === null ||
       now - options.lastFetchedAt >= TTL_MS;
@@ -95,7 +89,6 @@ export const fetchOptions =
       dispatch(
         setOptions({
           genders: data.genders,
-          connectWith: data.connectWith,
           intentions: data.intentions,
         })
       );

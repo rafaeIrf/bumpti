@@ -28,22 +28,18 @@ Deno.serve(async (req) => {
   try {
     const [
       { data: genders, error: gendersError },
-      { data: connectWith, error: connectError },
       { data: intentions, error: intentionsError },
     ] = await Promise.all([
       supabase.from("gender_options").select("id,key").eq("active", true).order("id"),
-      supabase.from("connect_options").select("id,key").eq("active", true).order("id"),
       supabase.from("intention_options").select("id,key").eq("active", true).order("id"),
     ]);
 
     if (gendersError) throw gendersError;
-    if (connectError) throw connectError;
     if (intentionsError) throw intentionsError;
 
     return new Response(
       JSON.stringify({
         genders: genders ?? [],
-        connectWith: connectWith ?? [],
         intentions: intentions ?? [],
       }),
       {

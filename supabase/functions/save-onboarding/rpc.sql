@@ -26,7 +26,7 @@ begin
   -- Replace connect_with
   delete from public.profile_connect_with where user_id = p_user_id;
   if array_length(p_connect_ids, 1) is not null then
-    insert into public.profile_connect_with (user_id, option_id)
+    insert into public.profile_connect_with (user_id, gender_id)
     select p_user_id, unnest(p_connect_ids);
   end if;
 

@@ -26,9 +26,9 @@ const optionIconMap: Record<
 
 function getOptionLabel(key: ConnectWithOptionKey) {
   switch (key) {
-    case "women":
+    case "female":
       return t("screens.onboarding.connectWithFemale");
-    case "men":
+    case "male":
       return t("screens.onboarding.connectWithMale");
     case "non-binary":
       return t("screens.onboarding.connectWithNonBinary");
@@ -42,21 +42,21 @@ function getOptionLabel(key: ConnectWithOptionKey) {
 export default function ConnectWithScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const { connectWith, isLoading, error, reload } = useOnboardingOptions();
+  const { genders, isLoading, error, reload } = useOnboardingOptions();
   const [selectedOptions, setSelectedOptions] = useState<
     ConnectWithOptionKey[]
   >((userData.connectWith as ConnectWithOptionKey[]) || []);
 
   useEffect(() => {
-    if (connectWith.length === 0) return;
+    if (genders.length === 0) return;
     const validKeys = [
-      ...connectWith.map((opt) => opt.key as ConnectWithOptionKey),
+      ...genders.map((opt) => opt.key as ConnectWithOptionKey),
       "all",
     ];
     setSelectedOptions((current) =>
       current.filter((key) => validKeys.includes(key))
     );
-  }, [connectWith]);
+  }, [genders]);
 
   const handleOptionToggle = (value: ConnectWithOptionKey) => {
     if (value === "all") {
@@ -76,7 +76,7 @@ export default function ConnectWithScreen() {
 
   const handleContinue = () => {
     if (selectedOptions.length > 0) {
-      const allKeys = connectWith.map((opt) => opt.key as ConnectWithOptionKey);
+      const allKeys = genders.map((opt) => opt.key as ConnectWithOptionKey);
       const selectedKeys = selectedOptions.includes("all")
         ? allKeys
         : selectedOptions.filter((key) => key !== "all");
@@ -108,7 +108,7 @@ export default function ConnectWithScreen() {
           entering={FadeInUp.delay(300).duration(500)}
           style={styles.optionsGrid}
         >
-          {connectWith.map((option, index) => {
+          {genders.map((option, index) => {
             const key = option.key as ConnectWithOptionKey;
             const Icon = optionIconMap[key] ?? HeartIcon;
             const isSelected = selectedOptions.includes(key);
@@ -151,9 +151,7 @@ export default function ConnectWithScreen() {
 
           {/* All option (not returned by backend) - show last */}
           <Animated.View
-            entering={FadeInUp.delay(450 + connectWith.length * 75).duration(
-              500
-            )}
+            entering={FadeInUp.delay(450 + genders.length * 75).duration(500)}
           >
             <Pressable
               onPress={() => setSelectedOptions(["all"])}
