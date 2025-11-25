@@ -8,6 +8,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import moment, { Moment } from "moment";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -23,34 +24,24 @@ export default function UserAgeScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
-  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
-  const [dateText, setDateText] = useState("");
+  const [birthDate, setBirthDate] = useState<Moment | null>(null);
+  const [dateText, setDateText] = useState<string>("");
   const [showPicker, setShowPicker] = useState(false);
 
-  const calculateAge = (dateOfBirth: Date): number => {
-    const today = new Date();
-    let age = today.getFullYear() - dateOfBirth.getFullYear();
-    const monthDiff = today.getMonth() - dateOfBirth.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < dateOfBirth.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
+  const calculateAge = (dateOfBirth: Moment): number => {
+    return moment().diff(dateOfBirth, "years");
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (_event: any, selectedDate?: Date) => {
     // On Android, hide picker after selection
     if (Platform.OS === "android") {
       setShowPicker(false);
     }
 
     if (selectedDate) {
-      setBirthDate(selectedDate);
-      setDateText(formatDate(selectedDate));
+      const mDate = moment(selectedDate);
+      setBirthDate(mDate);
+      setDateText(mDate.format("DD/MM/YYYY"));
     }
   };
 
@@ -75,31 +66,9 @@ export default function UserAgeScreen() {
   };
 
   const parseDateFromText = (text: string): Date | null => {
-    // Expected format: DD/MM/YYYY
-    const parts = text.split("/");
-    if (parts.length !== 3) return null;
-
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const year = parseInt(parts[2], 10);
-
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    if (day < 1 || day > 31) return null;
-    if (month < 1 || month > 12) return null;
-    if (year < 1900 || year > new Date().getFullYear()) return null;
-
-    const date = new Date(year, month - 1, day);
-
-    // Verify the date is valid (handles invalid dates like Feb 30)
-    if (
-      date.getDate() !== day ||
-      date.getMonth() !== month - 1 ||
-      date.getFullYear() !== year
-    ) {
-      return null;
-    }
-
-    return date;
+    const parsed = moment(text, "DD/MM/YYYY", true);
+    if (!parsed.isValid()) return null;
+    return parsed.toDate();
   };
 
   const handleTextChange = (text: string) => {
@@ -110,38 +79,30 @@ export default function UserAgeScreen() {
     if (formatted.length === 10) {
       const parsed = parseDateFromText(formatted);
       if (parsed) {
-        setBirthDate(parsed);
+        setBirthDate(moment(parsed));
       }
     } else {
       // Clear birthDate if text is incomplete
       if (birthDate) {
-        setBirthDate(undefined);
+        setBirthDate(null);
       }
     }
   };
 
   const handleContinue = () => {
     if (isValid && birthDate) {
-      const age = calculateAge(birthDate);
-      onboardingActions.setUserAge(age);
+      const isoDate = birthDate.toISOString().split("T")[0]; // YYYY-MM-DD
+      onboardingActions.setUserBirthdate(isoDate);
       completeCurrentStep("user-age");
     }
   };
 
-  const formatDate = (date: Date): string => {
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const isValid = birthDate !== undefined;
+  const isValid = birthDate !== null;
   const age = birthDate ? calculateAge(birthDate) : null;
 
   // Get max date (today) and min date (120 years ago)
   const maxDate = new Date();
-  const minDate = new Date();
-  minDate.setFullYear(maxDate.getFullYear() - 120);
+  const minDate = moment().subtract(120, "years").toDate();
 
   return (
     <BaseTemplateScreen hasStackHeader>
@@ -236,7 +197,7 @@ export default function UserAgeScreen() {
         {/* Date Picker Modal */}
         {showPicker && (
           <DateTimePicker
-            value={birthDate || maxDate}
+            value={birthDate ? birthDate.toDate() : maxDate}
             mode="date"
             display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={handleDateChange}

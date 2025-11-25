@@ -4,71 +4,83 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-export type ConnectWithOption = "female" | "male" | "nonbinary" | "all";
+type ConnectWithOptionKey = string | "all";
 
-type ConnectWithScreenProps = object;
+const optionIconMap: Record<
+  ConnectWithOptionKey,
+  React.ComponentType<{ width: number; height: number; color: string }>
+> = {
+  women: UserRoundIcon,
+  men: UserRoundIcon,
+  "non-binary": UsersIcon,
+  all: HeartIcon,
+};
 
-const connectOptions: {
-  value: ConnectWithOption;
-  icon: React.ComponentType<{ width: number; height: number; color: string }>;
-  label: string;
-}[] = [
-  {
-    value: "female",
-    icon: UserRoundIcon,
-    label: t("screens.onboarding.connectWithFemale"),
-  },
-  {
-    value: "male",
-    icon: UserRoundIcon,
-    label: t("screens.onboarding.connectWithMale"),
-  },
-  {
-    value: "nonbinary",
-    icon: UsersIcon,
-    label: t("screens.onboarding.connectWithNonBinary"),
-  },
-  {
-    value: "all",
-    icon: HeartIcon,
-    label: t("screens.onboarding.connectWithAll"),
-  },
-];
+function getOptionLabel(key: ConnectWithOptionKey) {
+  switch (key) {
+    case "women":
+      return t("screens.onboarding.connectWithFemale");
+    case "men":
+      return t("screens.onboarding.connectWithMale");
+    case "non-binary":
+      return t("screens.onboarding.connectWithNonBinary");
+    case "all":
+      return t("screens.onboarding.connectWithAll");
+    default:
+      return key;
+  }
+}
 
-export default function ConnectWithScreen(props: ConnectWithScreenProps) {
+export default function ConnectWithScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const [selectedOptions, setSelectedOptions] = useState<ConnectWithOption[]>(
-    (userData.connectWith as ConnectWithOption[]) || []
-  );
+  const { connectWith, isLoading, error, reload } = useOnboardingOptions();
+  const [selectedOptions, setSelectedOptions] = useState<
+    ConnectWithOptionKey[]
+  >((userData.connectWith as ConnectWithOptionKey[]) || []);
 
-  const handleOptionToggle = (value: ConnectWithOption) => {
+  useEffect(() => {
+    if (connectWith.length === 0) return;
+    const validKeys = [
+      ...connectWith.map((opt) => opt.key as ConnectWithOptionKey),
+      "all",
+    ];
+    setSelectedOptions((current) =>
+      current.filter((key) => validKeys.includes(key))
+    );
+  }, [connectWith]);
+
+  const handleOptionToggle = (value: ConnectWithOptionKey) => {
     if (value === "all") {
-      if (selectedOptions.includes("all")) {
-        setSelectedOptions([]);
-      } else {
-        setSelectedOptions(["all"]);
-      }
-    } else {
-      let newSelection = selectedOptions.filter((opt) => opt !== "all");
-      if (newSelection.includes(value)) {
-        newSelection = newSelection.filter((opt) => opt !== value);
-      } else {
-        newSelection = [...newSelection, value];
-      }
-      setSelectedOptions(newSelection);
+      setSelectedOptions(["all"]);
+      return;
     }
+    if (selectedOptions.includes("all")) {
+      setSelectedOptions([value]);
+      return;
+    }
+
+    const newSelection = selectedOptions.includes(value)
+      ? selectedOptions.filter((opt) => opt !== value)
+      : [...selectedOptions, value];
+    setSelectedOptions(newSelection);
   };
 
   const handleContinue = () => {
     if (selectedOptions.length > 0) {
-      onboardingActions.setConnectWith(selectedOptions);
+      const allKeys = connectWith.map((opt) => opt.key as ConnectWithOptionKey);
+      const selectedKeys = selectedOptions.includes("all")
+        ? allKeys
+        : selectedOptions.filter((key) => key !== "all");
+      onboardingActions.setConnectWith(selectedKeys);
       completeCurrentStep("connect-with");
     }
   };
@@ -78,52 +90,111 @@ export default function ConnectWithScreen(props: ConnectWithScreenProps) {
   return (
     <BaseTemplateScreen hasStackHeader>
       <View style={styles.container}>
-        <ThemedText style={[styles.heading, { color: colors.text }]}>
-          {t("screens.onboarding.connectWithTitle")}
-        </ThemedText>
-        <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {t("screens.onboarding.connectWithSubtitle")}
-        </ThemedText>
-        <ThemedText style={[styles.info, { color: colors.textTertiary }]}>
-          {t("screens.onboarding.connectWithInfo")}
-        </ThemedText>
+        <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+          <ThemedText style={[styles.heading, { color: colors.text }]}>
+            {t("screens.onboarding.connectWithTitle")}
+          </ThemedText>
+          <ThemedText
+            style={[styles.subtitle, { color: colors.textSecondary }]}
+          >
+            {t("screens.onboarding.connectWithSubtitle")}
+          </ThemedText>
+          <ThemedText style={[styles.info, { color: colors.textTertiary }]}>
+            {t("screens.onboarding.connectWithInfo")}
+          </ThemedText>
+        </Animated.View>
 
-        <View style={styles.optionsGrid}>
-          {connectOptions.map((option) => {
-            const isSelected = selectedOptions.includes(option.value);
+        <Animated.View
+          entering={FadeInUp.delay(300).duration(500)}
+          style={styles.optionsGrid}
+        >
+          {connectWith.map((option, index) => {
+            const key = option.key as ConnectWithOptionKey;
+            const Icon = optionIconMap[key] ?? HeartIcon;
+            const isSelected = selectedOptions.includes(key);
             return (
-              <Pressable
-                key={option.value}
-                onPress={() => handleOptionToggle(option.value)}
-                style={[
-                  styles.optionButton,
-                  {
-                    backgroundColor: isSelected
-                      ? colors.accent
-                      : colors.surface,
-                    borderColor: isSelected ? colors.accent : colors.border,
-                  },
-                ]}
+              <Animated.View
+                key={option.key}
+                entering={FadeInUp.delay(450 + index * 75).duration(500)}
               >
-                <View style={styles.optionContent}>
-                  <option.icon
-                    width={32}
-                    height={32}
-                    color={isSelected ? "#fff" : colors.textSecondary}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.optionLabel,
-                      { color: isSelected ? "#fff" : colors.textSecondary },
-                    ]}
-                  >
-                    {option.label}
-                  </ThemedText>
-                </View>
-              </Pressable>
+                <Pressable
+                  onPress={() => handleOptionToggle(key)}
+                  style={[
+                    styles.optionButton,
+                    {
+                      backgroundColor: isSelected
+                        ? colors.accent
+                        : colors.surface,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.optionContent}>
+                    <Icon
+                      width={32}
+                      height={32}
+                      color={isSelected ? "#fff" : colors.textSecondary}
+                    />
+                    <ThemedText
+                      style={[
+                        styles.optionLabel,
+                        { color: isSelected ? "#fff" : colors.textSecondary },
+                      ]}
+                    >
+                      {getOptionLabel(key)}
+                    </ThemedText>
+                  </View>
+                </Pressable>
+              </Animated.View>
             );
           })}
-        </View>
+
+          {/* All option (not returned by backend) - show last */}
+          <Animated.View
+            entering={FadeInUp.delay(450 + connectWith.length * 75).duration(
+              500
+            )}
+          >
+            <Pressable
+              onPress={() => setSelectedOptions(["all"])}
+              style={[
+                styles.optionButton,
+                {
+                  backgroundColor: selectedOptions.includes("all")
+                    ? colors.accent
+                    : colors.surface,
+                  borderColor: selectedOptions.includes("all")
+                    ? colors.accent
+                    : colors.border,
+                },
+              ]}
+            >
+              <View style={styles.optionContent}>
+                <HeartIcon
+                  width={32}
+                  height={32}
+                  color={
+                    selectedOptions.includes("all")
+                      ? "#fff"
+                      : colors.textSecondary
+                  }
+                />
+                <ThemedText
+                  style={[
+                    styles.optionLabel,
+                    {
+                      color: selectedOptions.includes("all")
+                        ? "#fff"
+                        : colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {t("screens.onboarding.connectWithAll")}
+                </ThemedText>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
 
         <ThemedText style={[styles.info, { color: colors.textSecondary }]}>
           {t("screens.onboarding.connectWithPrivacy")}
@@ -131,13 +202,22 @@ export default function ConnectWithScreen(props: ConnectWithScreenProps) {
 
         <Button
           onPress={handleContinue}
-          disabled={!isValid}
+          disabled={!isValid || isLoading}
           size="lg"
           fullWidth
           style={styles.continueButton}
         >
           {t("screens.onboarding.continue")}
         </Button>
+
+        {error ? (
+          <ThemedText
+            style={[styles.footer, { color: colors.error }]}
+            onPress={reload}
+          >
+            {error}
+          </ThemedText>
+        ) : null}
 
         <ThemedText style={[styles.footer, { color: colors.textTertiary }]}>
           {t("screens.onboarding.connectWithFooter")}
@@ -187,9 +267,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  emoji: {
-    marginBottom: 4,
-  },
   optionLabel: {
     ...typography.body,
     textAlign: "center",
@@ -201,6 +278,5 @@ const styles = StyleSheet.create({
   footer: {
     ...typography.caption,
     textAlign: "center",
-    marginTop: spacing.lg,
   },
 });

@@ -10,7 +10,7 @@ import {
   setLocationPermission as setLocationPermissionAction,
   setNotificationPermission as setNotificationPermissionAction,
   setPhotoUris as setPhotoUrisAction,
-  setUserAge as setUserAgeAction,
+  setUserBirthdate as setUserBirthdateAction,
   setUserGender as setUserGenderAction,
   setUserName as setUserNameAction,
 } from "./onboardingSlice";
@@ -29,8 +29,8 @@ export const onboardingActions = {
     store.dispatch(setUserNameAction(name));
   },
 
-  setUserAge: (age: number) => {
-    store.dispatch(setUserAgeAction(age));
+  setUserBirthdate: (birthdate: string) => {
+    store.dispatch(setUserBirthdateAction(birthdate));
   },
 
   setUserGender: (gender: string) => {

@@ -91,8 +91,7 @@ export default function PhoneAuthScreen() {
       });
 
       const errorMessage =
-        error.message ||
-        "Ocorreu um erro ao enviar o código. Tente novamente.";
+        error.message || "Ocorreu um erro ao enviar o código. Tente novamente.";
 
       Alert.alert("Erro", errorMessage);
     } finally {
@@ -207,7 +206,6 @@ export default function PhoneAuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
   },
   iconContainer: {

@@ -13,18 +13,22 @@ import {
   REHYDRATE,
 } from "redux-persist";
 import onboardingReducer from "./slices/onboardingSlice";
+import optionsReducer from "./slices/optionsSlice";
+import profileReducer from "./slices/profileSlice";
 
 // Configure persistence
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding"], // Only persist onboarding state
+  whitelist: ["onboarding", "profile", "options"], // Persist onboarding, profile, and options state
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   onboarding: onboardingReducer,
+  profile: profileReducer,
+  options: optionsReducer,
 });
 
 // Create persisted reducer

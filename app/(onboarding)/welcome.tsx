@@ -165,7 +165,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xxl,
     alignItems: "center",
     justifyContent: "center",
@@ -232,7 +231,6 @@ const styles = StyleSheet.create({
   termsTopContainer: {
     maxWidth: 400,
     marginBottom: spacing.xl,
-    paddingHorizontal: spacing.md,
   },
   termsTopText: {
     ...typography.body,

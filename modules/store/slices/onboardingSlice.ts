@@ -15,7 +15,7 @@ export type OnboardingStep =
 
 export interface OnboardingUserData {
   name?: string;
-  age?: number;
+  birthdate?: string;
   gender?: string;
   connectWith?: string[];
   intentions?: string[];
@@ -53,8 +53,8 @@ const onboardingSlice = createSlice({
     setUserName: (state, action: PayloadAction<string>) => {
       state.userData.name = action.payload;
     },
-    setUserAge: (state, action: PayloadAction<number>) => {
-      state.userData.age = action.payload;
+    setUserBirthdate: (state, action: PayloadAction<string>) => {
+      state.userData.birthdate = action.payload;
     },
     setUserGender: (state, action: PayloadAction<string>) => {
       state.userData.gender = action.payload;
@@ -86,7 +86,7 @@ export const {
   setCurrentStep,
   completeStep,
   setUserName,
-  setUserAge,
+  setUserBirthdate,
   setUserGender,
   setConnectWith,
   setIntentions,
