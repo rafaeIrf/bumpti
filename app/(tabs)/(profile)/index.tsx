@@ -17,9 +17,10 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useProfile } from "@/hooks/use-profile";
+import { useAppSelector } from "@/modules/store/hooks";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useAppSelector } from "@/modules/store/hooks";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -123,7 +124,8 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const bottomSheet = useCustomBottomSheet();
-  const { userData } = useAppSelector((state) => state.onboarding);
+  const { profile } = useProfile();
+  const onboardingUserData = useAppSelector((state) => state.onboarding.userData);
 
   const handleSettingsClick = () => {
     // TODO: Navigate to settings
@@ -180,7 +182,7 @@ export default function ProfileScreen() {
     router.push("/premium-paywall");
   };
 
-  const profilePhoto = userData.photoUris?.[0];
+  const profilePhoto = profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
   return (
     <BaseTemplateScreen
@@ -222,8 +224,8 @@ export default function ProfileScreen() {
           {/* Profile Info */}
           <View style={styles.profileInfo}>
             <ThemedText style={[typography.body1, { color: colors.text }]}>
-              {userData.name || t("screens.profile.title")}
-              {userData.age ? `, ${userData.age}` : ""}
+              {profile?.name || t("screens.profile.title")}
+              {profile?.age ? `, ${profile.age}` : ""}
             </ThemedText>
 
             <Button

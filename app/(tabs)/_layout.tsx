@@ -12,11 +12,13 @@ import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
+import { useProfile } from "@/hooks/use-profile";
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
+  useProfile(); // Preload profile data into Redux
 
   return (
     <Tabs

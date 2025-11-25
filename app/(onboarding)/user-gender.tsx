@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -22,30 +23,60 @@ export default function UserGenderScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
   const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { genders, isLoading } = useOnboardingOptions();
 
-  const [gender, setGender] = useState(userData.gender || "");
+  const normalizeInitialGender = (value?: string | null) => {
+    if (!value) return "";
+    const lower = value.toLowerCase();
+    if (lower.includes("female") || lower.includes("mulher")) return "female";
+    if (lower.includes("male") || lower.includes("homem")) return "male";
+    if (lower.includes("non-binary") || lower.includes("não bin"))
+      return "non-binary";
+    if (lower.includes("other")) return "other";
+    return "";
+  };
 
-  const genderOptions = [
-    {
-      value: "Mulher",
-      emoji: "👩",
-      label: t("screens.onboarding.genderWoman"),
-    },
-    { value: "Homem", emoji: "👨", label: t("screens.onboarding.genderMan") },
-    {
-      value: "Não binário",
-      emoji: "⚧️",
-      label: t("screens.onboarding.genderNonBinary"),
-    },
-  ];
+  const [gender, setGender] = useState<string>(
+    normalizeInitialGender(userData.gender)
+  );
+
+  const genderOptions =
+    genders.map((option) => {
+      switch (option.key) {
+        case "female":
+          return {
+            value: option.key,
+            emoji: "👩",
+            label: t("screens.onboarding.genderWoman"),
+          };
+        case "male":
+          return {
+            value: option.key,
+            emoji: "👨",
+            label: t("screens.onboarding.genderMan"),
+          };
+        case "non-binary":
+          return {
+            value: option.key,
+            emoji: "⚧️",
+            label: t("screens.onboarding.genderNonBinary"),
+          };
+        default:
+          return {
+            value: option.key,
+            emoji: "✨",
+            label: t("screens.onboarding.genderOther"),
+          };
+      }
+    }) ?? [];
 
   const handleGenderSelect = (value: string) => {
-    if (value === "Não binário") {
+    if (value === "non-binary") {
       bottomSheet?.expand({
         content: () => (
           <GenderIdentityBottomSheet
             onSelect={(identity) => {
-              setGender(identity);
+              setGender("non-binary");
               bottomSheet.close();
             }}
             onClose={() => bottomSheet.close()}
@@ -53,6 +84,8 @@ export default function UserGenderScreen() {
         ),
         snapPoints: ["70%"],
       });
+    } else if (value === "other") {
+      setGender("other");
     } else {
       setGender(value);
     }
@@ -66,7 +99,21 @@ export default function UserGenderScreen() {
   };
 
   const isValid = Boolean(gender);
-  const isNonBinaryGender = gender && gender !== "Mulher" && gender !== "Homem";
+  const isNonBinaryGender = gender === "non-binary";
+
+  if (isLoading && !genderOptions.length) {
+    return (
+      <BaseTemplateScreen hasStackHeader>
+        <View style={styles.loadingContainer}>
+          <ThemedText
+            style={[styles.subtitle, { color: colors.textSecondary }]}
+          >
+            {t("screens.onboarding.loading")}
+          </ThemedText>
+        </View>
+      </BaseTemplateScreen>
+    );
+  }
 
   return (
     <BaseTemplateScreen hasStackHeader>
@@ -179,5 +226,11 @@ const styles = StyleSheet.create({
   infoText: {
     ...typography.caption,
     textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
   },
 });

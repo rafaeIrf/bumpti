@@ -5,3 +5,22 @@ export type {
   OnboardingStep,
   OnboardingUserData,
 } from "./onboardingSlice";
+export {
+  setProfile,
+  setProfileLoading,
+  resetProfile,
+  type ProfileData,
+  type ProfileState,
+} from "./profileSlice";
+export { profileActions } from "./profileActions";
+export {
+  setOptions,
+  setLoaded as setOptionsLoaded,
+  setLastFetchedAt as setOptionsLastFetchedAt,
+  setLoading as setOptionsLoading,
+  setError as setOptionsError,
+  resetOptions,
+  fetchOptions,
+  type OptionsState,
+  type OnboardingOption as OnboardingOptionType,
+} from "./optionsSlice";

@@ -22,13 +22,6 @@
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby venues.",
         "NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você adicionar imagens ao seu perfil",
         "NSCameraUsageDescription": "Precisamos acessar sua câmera para você tirar fotos para o seu perfil",
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "app-1-219202844049-ios-583c5f75d0c5b8f825d630"
-            ]
-          }
-        ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
           "NSAllowsLocalNetworking": true,
@@ -56,9 +49,7 @@
       "predictiveBackGestureEnabled": false,
       "googleServicesFile": "./google-services.json",
       "package": "com.bumpti",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "output": "static",

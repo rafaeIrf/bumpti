@@ -3,13 +3,19 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { profileActions } from "@/modules/store/slices/profileActions";
+import {
+  getProfile,
+  saveOnboarding,
+} from "@/modules/supabase/onboarding-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -18,11 +24,38 @@ import Animated, {
 
 export default function CompleteScreen() {
   const colors = useThemeColors();
+  const { userData } = useOnboardingFlow();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleComplete = () => {
-    // Mark onboarding as complete in Redux
-    onboardingActions.completeOnboarding();
-    router.replace("/(tabs)/(home)");
+  const handleComplete = async () => {
+    if (isSaving) return;
+
+    try {
+      setIsSaving(true);
+      await saveOnboarding(userData);
+
+      // Sync profile state in Redux
+      const profileResponse = await getProfile();
+      profileActions.setProfile({
+        id: profileResponse?.id,
+        name: profileResponse?.name ?? null,
+        birthdate: profileResponse?.birthdate ?? null,
+        gender: profileResponse?.gender ?? null,
+        connectWith: profileResponse?.connectWith ?? [],
+        intentions: profileResponse?.intentions ?? [],
+        photos: profileResponse?.photos ?? [],
+        updatedAt: profileResponse?.updated_at ?? null,
+      });
+      onboardingActions.completeOnboarding();
+      router.replace("/(tabs)/(home)");
+    } catch (error: any) {
+      Alert.alert(
+        t("common.error"),
+        error?.message || "Não foi possível salvar seu onboarding."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -72,12 +105,17 @@ export default function CompleteScreen() {
         >
           <Button
             onPress={handleComplete}
+            disabled={isSaving}
             size="lg"
             fullWidth
             style={styles.exploreButton}
           >
             <View style={styles.buttonContent}>
-              <MapPinIcon width={20} height={20} color="#FFFFFF" />
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <MapPinIcon width={20} height={20} color="#FFFFFF" />
+              )}
               <ThemedText style={styles.buttonText}>
                 {t("screens.onboarding.completeExplore")}
               </ThemedText>

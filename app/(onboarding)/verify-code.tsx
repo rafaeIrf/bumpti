@@ -85,13 +85,13 @@ export default function VerifyCodeScreen() {
     setIsLoading(true);
 
     try {
-      // Verify code with Firebase
-      const userCredential = await phoneAuthService.verifyCode(
+      // Verify code with Supabase
+      const authenticatedUser = await phoneAuthService.verifyCode(
         verificationCode
       );
 
       // Navigate to user name screen
-      console.log("User authenticated:", userCredential.user.uid);
+      console.log("User authenticated:", authenticatedUser.id);
 
       setTimeout(() => {
         router.replace("/(onboarding)/user-name");
@@ -267,7 +267,6 @@ export default function VerifyCodeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
   },
   iconContainer: {

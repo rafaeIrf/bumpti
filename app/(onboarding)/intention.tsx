@@ -9,49 +9,60 @@ import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-export type IntentionOption = "friends" | "casual" | "networking" | "dating";
+export type IntentionOptionKey =
+  | "relationship"
+  | "casual"
+  | "networking"
+  | "friendship";
 
-const intentionOptions: {
-  value: IntentionOption;
-  label: string;
-  icon: React.ComponentType<{ width: number; height: number; color: string }>;
-}[] = [
-  {
-    value: "friends",
-    label: t("screens.onboarding.intentionFriends"),
-    icon: UsersIcon,
-  },
-  {
-    value: "casual",
-    label: t("screens.onboarding.intentionCasual"),
-    icon: FlameIcon,
-  },
-  {
-    value: "networking",
-    label: t("screens.onboarding.intentionNetworking"),
-    icon: ShoppingBagIcon,
-  },
-  {
-    value: "dating",
-    label: t("screens.onboarding.intentionDating"),
-    icon: HeartIcon,
-  },
-];
+const intentionIconMap: Record<
+  IntentionOptionKey,
+  React.ComponentType<{ width: number; height: number; color: string }>
+> = {
+  relationship: HeartIcon,
+  casual: FlameIcon,
+  networking: ShoppingBagIcon,
+  friendship: UsersIcon,
+};
+
+function getIntentionLabel(key: IntentionOptionKey) {
+  switch (key) {
+    case "relationship":
+      return t("screens.onboarding.intentionDating");
+    case "casual":
+      return t("screens.onboarding.intentionCasual");
+    case "networking":
+      return t("screens.onboarding.intentionNetworking");
+    case "friendship":
+      return t("screens.onboarding.intentionFriends");
+    default:
+      return key;
+  }
+}
 
 export default function IntentionScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const [selectedIntentions, setSelectedIntentions] = useState<
-    IntentionOption[]
-  >((userData.intentions as IntentionOption[]) || []);
+  const { intentions, isLoading, error, reload } = useOnboardingOptions();
+  const [selectedIntentions, setSelectedIntentions] = useState<IntentionOptionKey[]>(
+    (userData.intentions as IntentionOptionKey[]) || []
+  );
 
-  const toggleIntention = (value: IntentionOption) => {
+  useEffect(() => {
+    if (intentions.length === 0) return;
+    const validKeys = intentions.map((opt) => opt.key) as IntentionOptionKey[];
+    setSelectedIntentions((current) => current.filter((key) => validKeys.includes(key)));
+  }, [intentions]);
+
+  const toggleIntention = (value: IntentionOptionKey) => {
     if (selectedIntentions.includes(value)) {
       setSelectedIntentions(selectedIntentions.filter((i) => i !== value));
     } else {
@@ -73,54 +84,65 @@ export default function IntentionScreen() {
         <ScreenBottomBar
           primaryLabel={t("screens.onboarding.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={selectedIntentions.length === 0}
+          primaryDisabled={selectedIntentions.length === 0 || isLoading}
         />
       }
     >
-      <ThemedText style={[styles.heading, { color: colors.text }]}>
-        {t("screens.onboarding.intentionTitle")}
-      </ThemedText>
-      <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-        {t("screens.onboarding.intentionSubtitle")}
-      </ThemedText>
+      <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+        <ThemedText style={[styles.heading, { color: colors.text }]}>
+          {t("screens.onboarding.intentionTitle")}
+        </ThemedText>
+        <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {t("screens.onboarding.intentionSubtitle")}
+        </ThemedText>
+      </Animated.View>
 
-      <View style={styles.optionsList}>
-        {intentionOptions.map((option) => {
-          const isSelected = selectedIntentions.includes(option.value);
+      <Animated.View
+        entering={FadeInUp.delay(300).duration(500)}
+        style={styles.optionsList}
+      >
+        {intentions.map((option, index) => {
+          const key = option.key as IntentionOptionKey;
+          const Icon = intentionIconMap[key] ?? UsersIcon;
+          const isSelected = selectedIntentions.includes(key);
           return (
-            <Pressable
-              key={option.value}
-              onPress={() => toggleIntention(option.value)}
-              style={[
-                styles.optionButton,
-                {
-                  backgroundColor: isSelected
-                    ? `${colors.accent}1A`
-                    : colors.surface,
-                  borderColor: isSelected ? colors.accent : colors.border,
-                },
-              ]}
+            <Animated.View
+              key={option.key}
+              entering={FadeInUp.delay(400 + index * 75).duration(500)}
             >
-              <View style={styles.optionContent}>
-                <option.icon
-                  width={24}
-                  height={24}
-                  color={isSelected ? colors.accent : colors.textSecondary}
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <View style={styles.optionLabelRow}>
-                    <ThemedText
-                      style={[styles.optionLabel, { color: colors.text }]}
-                    >
-                      {option.label}
-                    </ThemedText>
+              <Pressable
+                onPress={() => toggleIntention(key)}
+                style={[
+                  styles.optionButton,
+                  {
+                    backgroundColor: isSelected
+                      ? `${colors.accent}1A`
+                      : colors.surface,
+                    borderColor: isSelected ? colors.accent : colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.optionContent}>
+                  <Icon
+                    width={24}
+                    height={24}
+                    color={isSelected ? colors.accent : colors.textSecondary}
+                  />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={styles.optionLabelRow}>
+                      <ThemedText
+                        style={[styles.optionLabel, { color: colors.text }]}
+                      >
+                        {getIntentionLabel(key)}
+                      </ThemedText>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Pressable>
+              </Pressable>
+            </Animated.View>
           );
         })}
-      </View>
+      </Animated.View>
 
       {selectedIntentions.length > 0 && (
         <ThemedText
@@ -133,6 +155,15 @@ export default function IntentionScreen() {
               })}
         </ThemedText>
       )}
+
+      {error ? (
+        <ThemedText
+          style={[styles.selectedInfo, { color: colors.error }]}
+          onPress={reload}
+        >
+          {error}
+        </ThemedText>
+      ) : null}
     </BaseTemplateScreen>
   );
 }

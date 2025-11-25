@@ -27,7 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>app-1-219202844049-ios-583c5f75d0c5b8f825d630</string>
+          <string>bumpti</string>
+          <string>com.bumpti</string>
         </array>
       </dict>
       <dict>
