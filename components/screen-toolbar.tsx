@@ -137,6 +137,8 @@ export function ScreenToolbar({
                     styles.title,
                     !hasLeftAction && { ...typography.heading },
                   ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
                   {title}
                 </Text>
@@ -213,14 +215,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   titleCenterContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+    flex: 2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    pointerEvents: "none",
+    paddingHorizontal: 8,
   },
   titleLeftAligned: {
     justifyContent: "flex-start",
