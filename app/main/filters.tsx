@@ -172,7 +172,7 @@ export default function FiltersScreen() {
         console.error("Auto-save filters failed", error);
       } finally {
       }
-    }, 1000); // debounce auto-save to reduce chatter
+    }, 600); // debounce auto-save to reduce chatter
   };
 
   useEffect(() => {
