@@ -100,7 +100,9 @@ export function ScreenToolbar({
         <View style={styles.row}>
           {/* Left Action */}
           <View
-            style={hasLeftAction ? styles.sideContainer : styles.sideContainerEmpty}
+            style={
+              hasLeftAction ? styles.sideContainer : styles.sideContainerEmpty
+            }
           >
             {leftAction && (
               <ActionButton

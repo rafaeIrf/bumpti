@@ -205,7 +205,7 @@ export function PlaceCard({
       >
         <ThemedText
           style={[styles.address, { color: colors.text }]}
-          numberOfLines={2}
+          numberOfLines={1}
         >
           {place.address}
         </ThemedText>

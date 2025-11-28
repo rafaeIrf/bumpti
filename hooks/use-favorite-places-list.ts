@@ -1,17 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import { getFeaturedPlaces } from "@/modules/places/api";
-import { favoritesActions } from "@/modules/store/slices";
 import { useAppSelector } from "@/modules/store/hooks";
+import { favoritesActions } from "@/modules/store/slices";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useCachedLocation } from "./use-cached-location";
 
 export interface FavoritePlaceResult {
   id: string;
   name: string;
   type: string;
   address: string;
+  distance: number;
 }
 
 export function useFavoritePlacesList(enabled: boolean) {
   const favoritesState = useAppSelector((state) => state.favorites);
+  const { location: userLocation, loading: locationLoading } =
+      useCachedLocation();
   const favorites = favoritesState.placeIds;
   const [favoritePlacesData, setFavoritePlacesData] = useState<
     FavoritePlaceResult[]
@@ -29,6 +33,11 @@ export function useFavoritePlacesList(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return;
+    if (!userLocation) {
+      // Wait until location is available before fetching
+      setFavoritePlacesLoading(locationLoading);
+      return;
+    }
 
     const prevFavorites = prevFavoritesRef.current;
     const removed = prevFavorites.filter((id) => !favorites.includes(id));
@@ -57,7 +66,11 @@ export function useFavoritePlacesList(enabled: boolean) {
 
     // Initial load or new favorites: fetch once
     setFavoritePlacesLoading(true);
-    getFeaturedPlaces(favorites)
+    getFeaturedPlaces(
+      userLocation.latitude,
+      userLocation.longitude,
+      favorites
+    )
       .then((result) => {
         const mapped =
           result?.map((place: any) => ({
@@ -65,6 +78,7 @@ export function useFavoritePlacesList(enabled: boolean) {
             name: place.name,
             type: place.type || "",
             address: place.formattedAddress || place.address || "",
+            distance: place.distance || 0,
           })) || [];
         setFavoritePlacesData(mapped);
       })
@@ -72,7 +86,7 @@ export function useFavoritePlacesList(enabled: boolean) {
         setFavoritePlacesLoading(false);
         prevFavoritesRef.current = favorites;
       });
-  }, [enabled, favorites]);
+  }, [enabled, favorites, userLocation, locationLoading]);
 
   const isLoading =
     favoritesState.isLoading || !favoritesState.loaded || favoritePlacesLoading;

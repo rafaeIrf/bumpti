@@ -21,7 +21,7 @@ export function SearchToolbar({
   placeholder,
   onBack,
   autoFocus,
-}: SearchToolbarProps) {
+}: Readonly<SearchToolbarProps>) {
   const colors = useThemeColors();
 
   return (
@@ -30,6 +30,7 @@ export function SearchToolbar({
         styles.container,
         {
           backgroundColor: colors.background,
+          paddingTop: spacing.md,
         },
       ]}
     >

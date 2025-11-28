@@ -40,17 +40,26 @@ export async function getNearbyPlaces(
     types,
     rankPreference,
   });
+  console.log("Nearby places result:", result?.data);
   return (result?.data?.places || []) as Place[];
 }
 
 // Fetch featured places by fixed place IDs (batch)
-export async function getFeaturedPlaces(placeIds: string[]): Promise<Place[]> {
+export async function getFeaturedPlaces(
+  latitude: number,
+  longitude: number,
+  placeIds: string[]
+): Promise<Place[]> {
   try {
     const callable = httpsCallable<any, { places: Place[] }>(
       firebaseFunctions,
       "getPlacesByIds"
     );
-    const result = await callable({ placeIds });
+    const result = await callable({
+      placeIds,
+      lat: latitude,
+      lng: longitude,
+    });
     return (result?.data?.places || []) as Place[];
   } catch (err) {
     console.error("Failed to fetch featured places:", err);

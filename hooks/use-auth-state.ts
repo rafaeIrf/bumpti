@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AppState } from "react-native";
 import { supabase } from "@/modules/supabase/client";
 
 export function useAuthState() {
@@ -33,9 +34,16 @@ export function useAuthState() {
       }
     );
 
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        loadSession();
+      }
+    });
+
     return () => {
       isMounted = false;
       authSubscription?.subscription.unsubscribe();
+      appStateSubscription.remove();
     };
   }, []);
 

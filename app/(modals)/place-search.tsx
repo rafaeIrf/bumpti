@@ -145,7 +145,7 @@ export default function PlaceSearch({
       onPlaceSelect(result.placeId, result.name);
     } else {
       router.push({
-        pathname: "/main/place-people",
+        pathname: "/(modals)/place-people",
         params: {
           placeId: result.placeId,
           placeName: result.name,

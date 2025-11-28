@@ -111,13 +111,16 @@ export const placesApi = createApi({
     }),
 
     // Get featured places by IDs
-    getFeaturedPlaces: builder.query<Place[], { placeIds: string[] }>({
-      queryFn: async ({ placeIds }) => {
+    getFeaturedPlaces: builder.query<
+      Place[],
+      { placeIds: string[]; lat: number; lng: number }
+    >({
+      queryFn: async ({ placeIds, lat, lng }) => {
         try {
           const callable = functions().httpsCallable<any, { places: Place[] }>(
             "getPlacesByIds"
           );
-          const result = await callable({ placeIds });
+          const result = await callable({ placeIds, lat, lng });
           return { data: (result?.data?.places || []) as Place[] };
         } catch (error) {
           console.error("Failed to fetch featured places:", error);
