@@ -1,35 +1,39 @@
+import {
+  useGetFavoritePlacesQuery,
+  useToggleFavoritePlaceMutation,
+} from "@/modules/places/placesApi";
 import { useCallback, useMemo } from "react";
-import { useAppSelector } from "@/modules/store/hooks";
-import { favoritesActions } from "@/modules/store/slices";
 
 type ToggleOptions = { optimisticOnly?: boolean; sync?: boolean; value?: boolean };
 
-export function useFavoriteToggle() {
-  const favorites = useAppSelector((state) => state.favorites.placeIds);
+export function useFavoriteToggle(queryArg?: { lat?: number; lng?: number }) {
+  const { data } = useGetFavoritePlacesQuery(queryArg);
+  const [toggleFavoritePlace] = useToggleFavoritePlaceMutation();
 
-  const favoriteIds = useMemo(() => new Set(favorites), [favorites]);
+  const favoriteIds = useMemo(() => {
+    const ids = (data?.places || []).map((p) => p.placeId || p.id);
+    return new Set(ids);
+  }, [data?.places]);
 
   const handleToggle = useCallback(
     (placeId: string, options?: ToggleOptions) => {
       const desiredValue =
-        typeof options?.value === "boolean"
-          ? options.value
-          : favoriteIds.has(placeId);
+        typeof options?.value === "boolean" ? options.value : !favoriteIds.has(placeId);
 
       if (options?.optimisticOnly) {
-        if (desiredValue) {
-          favoritesActions.addFavoriteLocal(placeId);
-        } else {
-          favoritesActions.removeFavoriteLocal(placeId);
-        }
+        // handled by caller; cache update occurs in mutation
         return;
       }
 
       if (options?.sync) {
-        favoritesActions.toggleFavorite(placeId, desiredValue);
+        toggleFavoritePlace({
+          placeId,
+          action: desiredValue ? "add" : "remove",
+          queryArg,
+        });
       }
     },
-    [favoriteIds]
+    [favoriteIds, toggleFavoritePlace, queryArg]
   );
 
   return { favoriteIds, handleToggle };

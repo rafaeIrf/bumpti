@@ -61,11 +61,11 @@ Deno.serve(async (req) => {
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       supabase
         .from("profile_connect_with")
-        .select("gender:gender_id(key)")
+        .select("gender_id")
         .eq("user_id", userId),
       supabase
         .from("profile_intentions")
-        .select("option:option_id(key)")
+        .select("option_id")
         .eq("user_id", userId),
       supabase
         .from("profile_photos")
@@ -97,8 +97,12 @@ Deno.serve(async (req) => {
       genderKey = genderRow?.key ?? null;
     }
 
-    const connectWith = (connectRows ?? []).map((row: any) => row.gender?.key).filter(Boolean);
-    const intentions = (intentionRows ?? []).map((row: any) => row.option?.key).filter(Boolean);
+    const connectWith = (connectRows ?? [])
+      .map((row: any) => row.gender_id)
+      .filter((id: number | null) => id != null);
+    const intentions = (intentionRows ?? [])
+      .map((row: any) => row.option_id)
+      .filter((id: number | null) => id != null);
     let photos =
       (photoRows ?? [])
         .map((row: any) => ({
@@ -130,6 +134,9 @@ Deno.serve(async (req) => {
       ? {
           ...profile,
           gender: genderKey ?? null,
+          gender_id: profile.gender_id ?? null,
+          age_range_min: profile.age_range_min ?? null,
+          age_range_max: profile.age_range_max ?? null,
           connectWith,
           intentions,
           photos,

@@ -8,32 +8,21 @@ import { t } from "@/modules/locales";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-const GENDER_OPTIONS = [
-  { value: "male", labelKey: "screens.onboarding.connectWithMale" as const },
-  {
-    value: "female",
-    labelKey: "screens.onboarding.connectWithFemale" as const,
-  },
-  {
-    value: "nonbinary",
-    labelKey: "screens.onboarding.connectWithNonBinary" as const,
-  },
-];
-
 interface GenderSelectionBottomSheetContentProps {
-  readonly initialSelection: string[];
-  readonly onConfirm: (selection: string[]) => void;
+  readonly initialSelection: number[];
+  readonly onConfirm: (selection: number[]) => void;
+  readonly options: { id: number; label: string }[];
 }
 
 export function GenderSelectionBottomSheetContent({
   initialSelection,
   onConfirm,
+  options,
 }: GenderSelectionBottomSheetContentProps) {
   const colors = useThemeColors();
-  const [tempSelection, setTempSelection] =
-    useState<string[]>(initialSelection);
+  const [tempSelection, setTempSelection] = useState<number[]>(initialSelection);
 
-  const toggleGenderOption = (value: string) => {
+  const toggleGenderOption = (value: number) => {
     setTempSelection((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
@@ -53,12 +42,12 @@ export function GenderSelectionBottomSheetContent({
       </View>
 
       <View style={styles.optionsContainer}>
-        {GENDER_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectionCard
-            key={option.value}
-            label={t(option.labelKey)}
-            isSelected={tempSelection.includes(option.value)}
-            onPress={() => toggleGenderOption(option.value)}
+            key={option.id}
+            label={option.label}
+            isSelected={tempSelection.includes(option.id)}
+            onPress={() => toggleGenderOption(option.id)}
           />
         ))}
       </View>

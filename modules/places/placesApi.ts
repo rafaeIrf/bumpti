@@ -1,5 +1,10 @@
-import functions from "@react-native-firebase/functions";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  getFavoritePlaces as getFavoritePlacesApi,
+  getNearbyPlaces as getNearbyPlacesApi,
+  searchPlacesByText as searchPlacesByTextApi,
+  toggleFavoritePlace as toggleFavoritePlaceApi,
+} from "@/modules/places/api";
 import { Place, PlaceType } from "./types";
 
 // TTL configurations (in seconds)
@@ -7,9 +12,8 @@ import { Place, PlaceType } from "./types";
 // Reference: https://cloud.google.com/maps-platform/terms/maps-service-terms Section 10.3
 const CACHE_TIME = {
   NEARBY_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - Google's maximum allowed cache time
-  FEATURED_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - featured places are static
   SEARCH_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - search results cache
-  TEXT_SEARCH: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - text search results cache
+  FAVORITE_PLACES: __DEV__ ? 30 : 5 * 60, // shorter cache; keep fresh
 };
 
 // Round coordinates to create cache grid (approximately 200m precision)
@@ -23,9 +27,8 @@ export const placesApi = createApi({
   baseQuery: fakeBaseQuery(),
   tagTypes: [
     "NearbyPlaces",
-    "FeaturedPlaces",
     "SearchPlaces",
-    "TextSearchPlaces",
+    "FavoritePlaces",
   ],
   endpoints: (builder) => ({
     // Get nearby places by types
@@ -36,7 +39,9 @@ export const placesApi = createApi({
         longitude: number;
         types: PlaceType[];
         rankPreference?: "POPULARITY" | "DISTANCE";
+        radius?: number;
         maxResultCount?: number;
+        keyword?: string;
       }
     >({
       queryFn: async ({
@@ -44,20 +49,21 @@ export const placesApi = createApi({
         longitude,
         types,
         rankPreference = "POPULARITY",
+        radius = 20000,
         maxResultCount = 20,
+        keyword,
       }) => {
         try {
-          const callable = functions().httpsCallable<any, { places: Place[] }>(
-            "getNearbyPlaces"
-          );
-          const result = await callable({
-            lat: latitude,
-            lng: longitude,
+          const places = await getNearbyPlacesApi(
+            latitude,
+            longitude,
             types,
             rankPreference,
-          });
-          console.log("Nearby places fetched:", result?.data?.places);
-          return { data: (result?.data?.places || []) as Place[] };
+            radius,
+            maxResultCount,
+            keyword
+          );
+          return { data: places as Place[] };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }
@@ -69,7 +75,9 @@ export const placesApi = createApi({
         return [
           {
             type: "NearbyPlaces",
-            id: `${lat}_${lng}_${arg.types.join(",")}`,
+            id: `${lat}_${lng}_${arg.types.join(",")}_${arg.radius ?? 20000}_${
+              arg.keyword ?? "none"
+            }`,
           },
         ];
       },
@@ -89,17 +97,15 @@ export const placesApi = createApi({
     >({
       queryFn: async ({ input, lat, lng, radius = 20000, sessionToken }) => {
         try {
-          const callable = functions().httpsCallable<any, { places: Place[] }>(
-            "searchPlacesByText"
+          const { places } = await searchPlacesByTextApi(
+            input,
+            lat,
+            lng,
+            radius,
+            sessionToken
           );
-          const payload: any = { input, lat, lng, radius };
-          if (sessionToken) payload.sessionToken = sessionToken;
-          const result = await callable(payload);
-          return {
-            data: {
-              places: (result?.data?.places || []) as Place[],
-            },
-          };
+
+          return { data: { places: places as Place[] } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }
@@ -110,91 +116,74 @@ export const placesApi = createApi({
       keepUnusedDataFor: CACHE_TIME.SEARCH_PLACES,
     }),
 
-    // Get featured places by IDs
-    getFeaturedPlaces: builder.query<Place[], { placeIds: string[] }>({
-      queryFn: async ({ placeIds }) => {
-        try {
-          const callable = functions().httpsCallable<any, { places: Place[] }>(
-            "getPlacesByIds"
-          );
-          const result = await callable({ placeIds });
-          return { data: (result?.data?.places || []) as Place[] };
-        } catch (error) {
-          console.error("Failed to fetch featured places:", error);
-          return { data: [] };
-        }
-      },
-      providesTags: (result, error, arg) => [
-        { type: "FeaturedPlaces", id: arg.placeIds.join(",") },
-      ],
-      keepUnusedDataFor: CACHE_TIME.FEATURED_PLACES,
-    }),
-
-    // Search places by text query with pagination
-    searchTextPlaces: builder.query<
-      { places: Place[]; nextPageToken: string | null },
-      {
-        lat: number;
-        lng: number;
-        includedType: string;
-        radius?: number;
-        maxResultCount?: number;
-        pageToken?: string;
-      }
+    // Favorites: single call returning hydrated places
+    getFavoritePlaces: builder.query<
+      { places: Place[] },
+      { lat?: number; lng?: number } | void
     >({
-      queryFn: async ({
-        lat,
-        lng,
-        includedType,
-        radius = 20000,
-        maxResultCount = 20,
-        pageToken,
-      }) => {
+      queryFn: async (args) => {
         try {
-          const callable = functions().httpsCallable<
-            any,
-            { places: Place[]; nextPageToken: string | null }
-          >("searchTextPlaces");
-
-          const result = await callable({
-            lat,
-            lng,
-            includedType,
-            radius,
-            maxResultCount,
-            ...(pageToken && { pageToken }),
-          });
-
-          return {
-            data: {
-              places: (result?.data?.places || []) as Place[],
-              nextPageToken: result?.data?.nextPageToken || null,
-            },
-          };
+          const { places } = await getFavoritePlacesApi(args?.lat, args?.lng);
+          return { data: { places: places as Place[] } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }
       },
-      providesTags: (result, error, arg) => [
-        {
-          type: "TextSearchPlaces",
-          id: `${arg.lat}_${arg.lng}_${arg.includedType}_${
-            arg.pageToken || ""
-          }`,
-        },
-      ],
-      keepUnusedDataFor: CACHE_TIME.TEXT_SEARCH,
+      providesTags: [{ type: "FavoritePlaces", id: "list" }],
+      keepUnusedDataFor: CACHE_TIME.FAVORITE_PLACES,
     }),
+
+    toggleFavoritePlace: builder.mutation<
+      void,
+      { placeId: string; action: "add" | "remove"; queryArg?: { lat?: number; lng?: number } }
+    >({
+          queryFn: async ({ placeId, action }) => {
+            try {
+              await toggleFavoritePlaceApi({ placeId, action });
+              return { data: { success: true } };
+            } catch (error) {
+              return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+            }
+          },
+      onQueryStarted: ({ placeId, action, queryArg }, { dispatch, queryFulfilled }) => {
+        const targets = [
+          queryArg ?? undefined,
+          undefined, // default cache entry
+        ].filter(
+          (value, index, self) => self.findIndex((v) => JSON.stringify(v) === JSON.stringify(value)) === index
+        );
+
+        const patches = targets.map((target) =>
+          dispatch(
+            placesApi.util.updateQueryData("getFavoritePlaces", target as any, (draft) => {
+              if (!draft?.places) return;
+              if (action === "add") {
+                // Without place details we can't insert; rely on refetch
+                return;
+              }
+              draft.places = draft.places.filter(
+                (p: any) => (p.placeId || p.id) !== placeId
+              );
+            })
+          )
+        );
+
+        queryFulfilled.catch(() => patches.forEach((p) => p.undo()));
+      },
+      invalidatesTags: (result, error, arg) =>
+        arg.action === "add"
+          ? [{ type: "FavoritePlaces", id: "list" }]
+          : [], // no refetch on remove; rely on optimistic update
+    }),
+
   }),
 });
 
 export const {
   useGetNearbyPlacesQuery,
   useSearchPlacesByTextQuery,
-  useGetFeaturedPlacesQuery,
-  useSearchTextPlacesQuery,
+  useGetFavoritePlacesQuery,
+  useToggleFavoritePlaceMutation,
   useLazyGetNearbyPlacesQuery,
   useLazySearchPlacesByTextQuery,
-  useLazyGetFeaturedPlacesQuery,
-  useLazySearchTextPlacesQuery,
 } = placesApi;

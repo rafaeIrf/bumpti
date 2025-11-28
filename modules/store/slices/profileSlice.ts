@@ -5,10 +5,14 @@ export type ProfileData = {
   name?: string | null;
   birthdate?: string | null;
   gender?: string | null;
-  connectWith?: string[];
-  intentions?: string[];
+  gender_id?: number | null;
+  age_range_min?: number | null;
+  age_range_max?: number | null;
+  connectWith?: number[];
+  intentions?: number[];
   photos?: { url: string; position: number }[];
   updatedAt?: string | null;
+  bio?: string | null;
 };
 
 export interface ProfileState {

@@ -445,7 +445,10 @@
       "title": "Gênero",
       "all": "Todos os gêneros",
       "description": "Escolha com quem você quer ver e se conectar. Isso só afeta o seu feed.",
-      "selectAtLeastOne": "Selecione pelo menos uma opção"
+      "selectAtLeastOne": "Selecione pelo menos uma opção",
+      "female": "Mulheres",
+      "male": "Homens",
+      "non-binary": "Não-binários"
     },
     "age": {
       "title": "Idade",
@@ -457,9 +460,8 @@
     "connectionType": {
       "title": "Tipo de conexão",
       "description": "Escolha uma ou mais intenções para encontrar pessoas com os mesmos objetivos.",
-      "friends": "Amizades",
-      "dating": "Relacionamento",
-      "serious": "Relacionamento sério",
+      "friendship": "Amizades",
+      "relationship": "Relacionamento sério",
       "networking": "Networking",
       "casual": "Casual"
     },

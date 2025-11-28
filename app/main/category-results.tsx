@@ -23,11 +23,7 @@ import { PlaceType } from "@/modules/places/types";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
-import Animated, {
-  FadeInDown,
-  FadeOut,
-  Layout,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
 
 type PlaceResult = FavoritePlaceResult;
 
@@ -65,9 +61,9 @@ export default function CategoryResultsScreen() {
     }
   );
 
-  const { favoriteIds, handleToggle } = useFavoriteToggle();
-  const { favoritePlacesData, favoritePlacesLoading } =
+  const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
+  const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
 
   // Transform API results to PlaceResult format
   const places: PlaceResult[] = favoritesMode
@@ -76,6 +72,7 @@ export default function CategoryResultsScreen() {
         id: place.placeId,
         name: place.name,
         type: place.type || "",
+        distance: place.distance || 0,
         address: place.formattedAddress || "",
       })) || [];
 
@@ -91,7 +88,7 @@ export default function CategoryResultsScreen() {
           onConnect={() => {
             bottomSheet.close();
             router.push({
-              pathname: "/main/place-people",
+              pathname: "/(modals)/place-people",
               params: {
                 placeId: place.id,
                 placeName: place.name,
@@ -165,7 +162,7 @@ export default function CategoryResultsScreen() {
         category: item.type,
         address: item.address,
         image: "",
-        distance: 0,
+        distance: item.distance,
         isFavorite: favoriteIds.has(item.id),
         activeUsers: 0,
       };

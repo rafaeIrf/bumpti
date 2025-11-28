@@ -17,6 +17,7 @@ import { defineSecret } from "firebase-functions/params";
 import { onCall } from "firebase-functions/v2/https";
 import fetch from "node-fetch";
 import { PlaceType, SearchPlacesByTextRequest } from "./places/types";
+import { haversineDistance } from "./places/utils";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -41,9 +42,7 @@ const GOOGLE_PLACES_API_KEY = defineSecret("GOOGLE_PLACES_API_KEY");
 type NearbyPlacesRequest = {
   lat: number;
   lng: number;
-  radius?: number; // in meters, max 50000
   types: string[]; // multiple types supported natively (required)
-  keyword?: string; // optional keyword filter
   rankPreference: string;
   maxResultCount: number;
 };
@@ -57,9 +56,7 @@ export const getNearbyPlaces = onCall(
     const {
       lat,
       lng,
-      radius = 20000,
       types,
-      keyword,
       rankPreference = "POPULARITY",
       maxResultCount = 20,
     } = request.data as NearbyPlacesRequest;
@@ -111,10 +108,9 @@ export const getNearbyPlaces = onCall(
             latitude: lat,
             longitude: lng,
           },
-          radius,
+          radius: 20000, // 20km
         },
       },
-      ...(keyword && { keyword }),
     };
 
     const response = await fetch(url, {
@@ -146,10 +142,7 @@ export const getNearbyPlaces = onCall(
     const places = data.places.map((place: NewPlacesAPIPlace) => ({
       placeId: place.id,
       name: place.displayName?.text || "Unknown",
-      location: {
-        lat: place.location?.latitude || 0,
-        lng: place.location?.longitude || 0,
-      },
+      distance: haversineDistance(lat, lng, place.location?.latitude || 0, place.location?.longitude || 0),
       types: place.types || [],
       type: place.types?.find((type) => types.includes(type)) || null,
       formattedAddress: place.formattedAddress,
@@ -161,6 +154,8 @@ export const getNearbyPlaces = onCall(
 
 type PlacesByIdsRequest = {
   placeIds: string[];
+  lat?: number;
+  lng?: number;
 };
 
 export const getPlacesByIds = onCall(
@@ -168,7 +163,7 @@ export const getPlacesByIds = onCall(
     secrets: [GOOGLE_PLACES_API_KEY],
   },
   async (request) => {
-    const { placeIds } = request.data as PlacesByIdsRequest;
+    const { placeIds, lat = 0, lng = 0 } = request.data as PlacesByIdsRequest;
 
     if (!Array.isArray(placeIds) || placeIds.length === 0) {
       throw new functions.https.HttpsError(
@@ -216,9 +211,12 @@ export const getPlacesByIds = onCall(
       return {
         placeId: data.id || placeId,
         name: data.displayName?.text || "Unknown",
-        location: data.location
-          ? { lat: data.location.latitude, lng: data.location.longitude }
-          : null,
+        distance: haversineDistance(
+          lat,
+          lng,
+          data.location.latitude,
+          data.location.longitude
+        ),
         type: data.types?.[0] || null,
         formattedAddress: data.formattedAddress || null,
       };

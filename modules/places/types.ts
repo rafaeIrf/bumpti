@@ -7,7 +7,7 @@ export type Place = {
   placeId: string;
   name: string;
   formattedAddress?: string;
-  location?: { lat: number; lng: number };
+  distance: number; // in km
   type?: PlaceType | null;
   types?: string[]; // Para autocomplete
 };

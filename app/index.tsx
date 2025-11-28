@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import { useAuthState } from "@/hooks/use-auth-state";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
 import { Redirect } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 
 export default function RootIndex() {
   const colors = useThemeColors();
@@ -12,7 +14,25 @@ export default function RootIndex() {
     enabled: !!isAuthenticated,
     force: true, // sempre confirma no backend se o perfil existe
   });
-  const { currentStep } = useAppSelector((state) => state.onboarding);
+  const onboardingState = useAppSelector((state) => state.onboarding);
+
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      !isProfileLoading &&
+      !profile &&
+      (onboardingState.isOnboardingComplete ||
+        onboardingState.currentStep === "complete")
+    ) {
+      onboardingActions.resetOnboarding();
+    }
+  }, [
+    isAuthenticated,
+    isProfileLoading,
+    profile,
+    onboardingState.isOnboardingComplete,
+    onboardingState.currentStep,
+  ]);
 
   // Show loading while checking auth state
   if (isAuthLoading || (isAuthenticated && isProfileLoading)) {
@@ -34,9 +54,16 @@ export default function RootIndex() {
   }
 
   // No profile yet: continue onboarding from last saved step (persisted) or start
+  const targetStep =
+    onboardingState.isOnboardingComplete ||
+    onboardingState.currentStep === "complete" ||
+    !onboardingState.currentStep
+      ? "user-name"
+      : onboardingState.currentStep;
+
   const onboardingRoute =
-    currentStep && currentStep !== "phone-auth"
-      ? `/(onboarding)/${currentStep}`
+    targetStep && targetStep !== "phone-auth"
+      ? `/(onboarding)/${targetStep}`
       : "/(onboarding)/user-name";
 
   return <Redirect href={onboardingRoute} />;

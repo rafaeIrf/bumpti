@@ -10,8 +10,6 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { calculateDistance } from "@/modules/location";
 import { searchPlacesByText as searchPlacesByTextApi } from "@/modules/places/api";
-import { useAppSelector } from "@/modules/store/hooks";
-import { favoritesActions } from "@/modules/store/slices";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, {
@@ -58,8 +56,6 @@ export default function PlaceSearch({
 }: PlaceSearchProps) {
   const colors = useThemeColors();
   const router = useRouter();
-  const favoritesState = useAppSelector((state) => state.favorites);
-  const { favoriteIds, handleToggle } = useFavoriteToggle();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -68,6 +64,9 @@ export default function PlaceSearch({
     lat: number;
     lng: number;
   } | null>(null);
+  const { favoriteIds, handleToggle } = useFavoriteToggle(
+    userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined
+  );
 
   useEffect(() => {
     (async () => {
@@ -80,12 +79,6 @@ export default function PlaceSearch({
       });
     })();
   }, []);
-
-  useEffect(() => {
-    if (!favoritesState.loaded && !favoritesState.isLoading) {
-      favoritesActions.fetchFavorites();
-    }
-  }, [favoritesState.isLoading, favoritesState.loaded]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -145,7 +138,7 @@ export default function PlaceSearch({
       onPlaceSelect(result.placeId, result.name);
     } else {
       router.push({
-        pathname: "/main/place-people",
+        pathname: "/(modals)/place-people",
         params: {
           placeId: result.placeId,
           placeName: result.name,

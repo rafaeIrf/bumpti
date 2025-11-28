@@ -15,13 +15,12 @@ import {
 import onboardingReducer from "./slices/onboardingSlice";
 import optionsReducer from "./slices/optionsSlice";
 import profileReducer from "./slices/profileSlice";
-import favoritesReducer from "./slices/favoritesSlice";
 
 // Configure persistence
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile", "options", "favorites"], // Persist onboarding, profile, options, favorites
+  whitelist: ["onboarding", "profile", "options"], // Persist onboarding, profile, options
 };
 
 // Combine reducers
@@ -29,7 +28,6 @@ const rootReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
-  favorites: favoritesReducer,
   options: optionsReducer,
 });
 
