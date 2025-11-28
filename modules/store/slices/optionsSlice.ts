@@ -1,7 +1,7 @@
 import {
   getOnboardingOptions,
   OnboardingOption,
-} from "@/modules/supabase/onboarding-service";
+} from "@/modules/onboarding/onboarding-service";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../index";
 

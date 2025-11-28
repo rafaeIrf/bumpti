@@ -416,11 +416,10 @@
     "interest": "INTEREST",
     "favoritePlaces": "FAVORITE PLACES",
     "lookingFor": {
-      "friends": "Making new friends",
-      "chat": "Chat and meet people",
+      "friendship": "Making new friends",
       "networking": "Professional networking",
-      "meetpeople": "Meeting new people",
-      "dating": "Find someone special"
+      "casual": "Meeting new people",
+      "relationship": "Find someone special"
     }
   },
   "profileSwiper": {

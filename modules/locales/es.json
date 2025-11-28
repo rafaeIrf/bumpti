@@ -417,11 +417,10 @@
     "interest": "INTERÉS",
     "favoritePlaces": "LUGARES FAVORITOS",
     "lookingFor": {
-      "friends": "Hacer nuevas amistades",
-      "chat": "Conversar y conocer personas",
+      "friendship": "Hacer nuevas amistades",
       "networking": "Networking profesional",
-      "meetpeople": "Conocer gente nueva",
-      "dating": "Encontrar a alguien especial"
+      "casual": "Conocer gente nueva",
+      "relationship": "Encontrar a alguien especial"
     }
   },
   "profileSwiper": {
