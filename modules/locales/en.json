@@ -444,7 +444,10 @@
       "title": "Gender",
       "all": "All genders",
       "description": "Choose who you want to see and connect with. This only affects your feed.",
-      "selectAtLeastOne": "Select at least one option"
+      "selectAtLeastOne": "Select at least one option",
+      "male": "Men",
+      "female": "Woman",
+      "non-binary": "Non-binary"
     },
     "age": {
       "title": "Age",
@@ -456,9 +459,8 @@
     "connectionType": {
       "title": "Connection type",
       "description": "Pick one or more intentions to match with people looking for the same.",
-      "friends": "Friends",
-      "dating": "Dating",
-      "serious": "Serious relationship",
+      "friendship": "Friendship",
+      "relationship": "Relationship",
       "networking": "Networking",
       "casual": "Casual"
     },

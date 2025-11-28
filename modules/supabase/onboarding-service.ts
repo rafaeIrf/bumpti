@@ -9,11 +9,15 @@ export type ProfilePayload = {
   name: string | null;
   birthdate?: string | null;
   gender: string | null;
+  gender_id?: number | null;
+  age_range_min?: number | null;
+  age_range_max?: number | null;
   created_at?: string;
   updated_at?: string;
-  connectWith?: string[];
-  intentions?: string[];
+  connectWith?: number[];
+  intentions?: number[];
   photos?: { url: string; position: number }[];
+  bio?: string | null;
 };
 
 export async function getOnboardingOptions(): Promise<{
@@ -79,14 +83,4 @@ export async function saveOnboarding(userData: OnboardingUserData) {
   if (error) {
     throw new Error(error.message || "Não foi possível salvar seus dados.");
   }
-}
-
-export async function getProfile(): Promise<ProfilePayload | null> {
-  const { data, error } = await supabase.functions.invoke("get-profile");
-
-  if (error) {
-    throw new Error(error.message || "Não foi possível carregar seu perfil.");
-  }
-
-  return (data?.profile ?? null) as ProfilePayload | null;
 }

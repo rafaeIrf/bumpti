@@ -9,9 +9,9 @@ import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { profileActions } from "@/modules/store/slices/profileActions";
 import {
-  getProfile,
   saveOnboarding,
 } from "@/modules/supabase/onboarding-service";
+import { getProfile } from "@/modules/profile/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";

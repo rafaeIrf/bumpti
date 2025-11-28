@@ -5,80 +5,124 @@ import { GenderSelectionBottomSheetContent } from "@/components/gender-selection
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import ToggleSwitch from "@/components/toogle-switch";
 import { AgeRangeSlider } from "@/components/ui/age-range-slider";
-import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { updateProfile } from "@/modules/profile/api";
+import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { profileActions } from "@/modules/store/slices/profileActions";
+import { getOnboardingOptions } from "@/modules/supabase/onboarding-service";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-
-export interface FilterValues {
-  genderPreferences: string[];
-  ageRange: [number, number];
-  connectionTypes: string[];
-  verifiedOnly: boolean;
-}
 
 export default function FiltersScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
+  const dispatch = useAppDispatch();
+  const { profile, isLoading: profileLoading } = useProfile();
+  const optionsState = useAppSelector((state) => state.options);
 
-  const [genderPreferences, setGenderPreferences] = useState<string[]>([]);
-  const [ageRange, setAgeRange] = useState<[number, number]>([18, 35]);
-  const [connectionTypes, setConnectionTypes] = useState<string[]>([]);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [genderOptions, setGenderOptions] = useState<
+    { id: number; label: string; key: string }[]
+  >([]);
+  const [intentionOptions, setIntentionOptions] = useState<
+    { id: number; label: string; key: string }[]
+  >([]);
+  const [localFilters, setLocalFilters] = useState({
+    connectWith: (profile?.connectWith ?? []).filter(
+      (v) => typeof v === "number"
+    ) as number[],
+    intentions: (profile?.intentions ?? []).filter(
+      (v) => typeof v === "number"
+    ) as number[],
+    ageRangeMin: profile?.age_range_min ?? 18,
+    ageRangeMax: profile?.age_range_max ?? 100,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const hasInitialized = useRef(false);
+  const hasProfileSeeded = useRef(false);
+  const skipNextSave = useRef(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Connection types with translations
-  const CONNECTION_TYPES = [
-    { value: "friends", label: t("filters.connectionType.friends") },
-    { value: "dating", label: t("filters.connectionType.dating") },
-    { value: "serious", label: t("filters.connectionType.serious") },
-    { value: "networking", label: t("filters.connectionType.networking") },
-    { value: "casual", label: t("filters.connectionType.casual") },
-  ];
-
-  // Gender options with translations
-  const GENDER_OPTIONS = [
-    { value: "male", label: t("screens.onboarding.connectWithMale") },
-    { value: "female", label: t("screens.onboarding.connectWithFemale") },
-    {
-      value: "nonbinary",
-      label: t("screens.onboarding.connectWithNonBinary"),
-    },
-  ];
-
-  // Auto-save filters whenever they change
+  // Load options and sync with profile data
+  // Load options from store first; fallback to remote fetch
   useEffect(() => {
-    // Filters are automatically saved when changed
-    // In the future, this will persist to AsyncStorage or Redux
-    console.log("Filters updated:", {
-      genderPreferences,
-      ageRange,
-      connectionTypes,
-      verifiedOnly,
+    if (optionsState.genders.length && optionsState.intentions.length) {
+      setGenderOptions(
+        optionsState.genders.map((g) => ({
+          id: g.id,
+          label: t(`filters.gender.${g.key}`, g.key),
+          key: g.key,
+        }))
+      );
+      setIntentionOptions(
+        optionsState.intentions.map((i) => ({
+          id: i.id,
+          label: t(`filters.connectionType.${i.key}`, i.key),
+          key: i.key,
+        }))
+      );
+      return;
+    }
+
+    getOnboardingOptions()
+      .then((data) => {
+        setGenderOptions(
+          (data.genders ?? []).map((g) => ({
+            id: g.id,
+            label: t(`screens.onboarding.gender.${g.key}`, g.key),
+            key: g.key,
+          }))
+        );
+        setIntentionOptions(
+          (data.intentions ?? []).map((i) => ({
+            id: i.id,
+            label: t(`filters.connectionType.${i.key}`, i.key),
+            key: i.key,
+          }))
+        );
+      })
+      .catch(() => {});
+  }, [optionsState.genders, optionsState.intentions, t]);
+
+  useEffect(() => {
+    if (!profile || hasProfileSeeded.current) return;
+    setLocalFilters({
+      connectWith: (profile.connectWith ?? []).filter(
+        (v) => typeof v === "number"
+      ) as number[],
+      intentions: (profile.intentions ?? []).filter(
+        (v) => typeof v === "number"
+      ) as number[],
+      ageRangeMin: profile.age_range_min ?? 18,
+      ageRangeMax: profile.age_range_max ?? 100,
     });
-  }, [genderPreferences, ageRange, connectionTypes, verifiedOnly]);
+    hasProfileSeeded.current = true;
+    skipNextSave.current = true; // hydration update should not trigger autosave
+  }, [profile]);
 
-  const toggleConnectionType = (type: string) => {
-    setConnectionTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const getGenderLabel = () => {
-    if (genderPreferences.length === 0) return "";
-    if (genderPreferences.length === GENDER_OPTIONS.length)
-      return t("filters.gender.all");
-    return genderPreferences
-      .map((val) => GENDER_OPTIONS.find((opt) => opt.value === val)?.label)
+  const genderLabel = useMemo(() => {
+    if (!localFilters.connectWith.length) return "";
+    return localFilters.connectWith
+      .map((id) => genderOptions.find((g) => g.id === id)?.label)
+      .filter(Boolean)
       .join(", ");
+  }, [localFilters.connectWith, genderOptions]);
+
+  const toggleConnectionType = (id: number) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      intentions: prev.intentions.includes(id)
+        ? prev.intentions.filter((i) => i !== id)
+        : [...prev.intentions, id],
+    }));
   };
 
-  const handleGenderConfirm = (selection: string[]) => {
-    setGenderPreferences(selection);
+  const handleGenderConfirm = (selection: number[]) => {
+    setLocalFilters((prev) => ({ ...prev, connectWith: selection }));
     bottomSheet?.close();
   };
 
@@ -86,12 +130,70 @@ export default function FiltersScreen() {
     bottomSheet?.expand({
       content: () => (
         <GenderSelectionBottomSheetContent
-          initialSelection={genderPreferences}
-          onConfirm={handleGenderConfirm}
+          initialSelection={localFilters.connectWith}
+          options={genderOptions}
+          onConfirm={(sel) => handleGenderConfirm(sel as number[])}
         />
       ),
     });
   };
+
+  const scheduleSave = (nextFilters: typeof localFilters) => {
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+    }
+    saveTimeout.current = setTimeout(async () => {
+      try {
+        setIsSaving(true);
+        const intentionMapByKey = new Map(
+          intentionOptions.map((opt) => [opt.key, opt.id])
+        );
+        const sanitizedIntentions = nextFilters.intentions
+          .map((val) =>
+            typeof val === "number" ? val : intentionMapByKey.get(String(val))
+          )
+          .filter((v): v is number => typeof v === "number");
+
+        const sanitizedConnectWith = nextFilters.connectWith.filter(
+          (v): v is number => typeof v === "number"
+        );
+
+        await updateProfile({
+          connectWith: sanitizedConnectWith,
+          intentions: sanitizedIntentions,
+          ageRangeMin: nextFilters.ageRangeMin,
+          ageRangeMax: nextFilters.ageRangeMax,
+        });
+        profileActions.setProfile({
+          ...profile,
+          connectWith: sanitizedConnectWith,
+          intentions: sanitizedIntentions,
+          age_range_min: nextFilters.ageRangeMin,
+          age_range_max: nextFilters.ageRangeMax,
+        });
+      } catch (error) {
+        console.error("Auto-save filters failed", error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1000); // debounce auto-save to reduce chatter
+  };
+
+  useEffect(() => {
+    if (profileLoading) return;
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      return;
+    }
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
+    }
+    scheduleSave(localFilters);
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    };
+  }, [localFilters, profileLoading]);
 
   return (
     <BaseTemplateScreen
@@ -132,13 +234,13 @@ export default function FiltersScreen() {
                 styles.selectButtonText,
                 {
                   color:
-                    genderPreferences.length === 0
+                    localFilters.connectWith.length === 0
                       ? colors.textSecondary
                       : colors.text,
                 },
               ]}
             >
-              {getGenderLabel()}
+              {genderLabel}
             </ThemedText>
             <ThemedText style={{ color: colors.textSecondary }}>→</ThemedText>
           </Pressable>
@@ -157,9 +259,15 @@ export default function FiltersScreen() {
           <View style={styles.ageRangeContainer}>
             <AgeRangeSlider
               min={18}
-              max={80}
-              value={ageRange}
-              onValueChange={setAgeRange}
+              max={100}
+              value={[localFilters.ageRangeMin, localFilters.ageRangeMax]}
+              onValueChange={([min, max]) =>
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  ageRangeMin: min,
+                  ageRangeMax: max,
+                }))
+              }
             />
           </View>
         </View>
@@ -175,50 +283,39 @@ export default function FiltersScreen() {
             {t("filters.connectionType.description")}
           </ThemedText>
           <View style={styles.connectionTypesContainer}>
-            {CONNECTION_TYPES.map((type) => (
-              <Button
-                key={type.value}
-                label={type.label}
-                variant={
-                  connectionTypes.includes(type.value) ? "default" : "outline"
-                }
-                size="sm"
-                onPress={() => toggleConnectionType(type.value)}
-              />
+            {intentionOptions.map((type) => (
+              <Pressable
+                key={type.id}
+                onPress={() => toggleConnectionType(type.id)}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: localFilters.intentions.includes(type.id)
+                      ? colors.accent
+                      : colors.surface,
+                  },
+                ]}
+              >
+                <ThemedText
+                  style={[
+                    styles.chipText,
+                    {
+                      color: localFilters.intentions.includes(type.id)
+                        ? "#000"
+                        : colors.text,
+                    },
+                  ]}
+                >
+                  {type.label}
+                </ThemedText>
+              </Pressable>
             ))}
-          </View>
-        </View>
-
-        {/* Section 4: Verified Profiles */}
-        <View style={styles.section}>
-          <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-            {t("filters.verified.title")}
-          </ThemedText>
-          <ThemedText
-            style={[styles.sectionDescription, { color: colors.textSecondary }]}
-          >
-            {t("filters.verified.description")}
-          </ThemedText>
-          <View style={styles.toggleContainer}>
-            <ThemedText style={[styles.toggleLabel, { color: colors.text }]}>
-              {t("filters.verified.title")}
-            </ThemedText>
-            <ToggleSwitch
-              value={verifiedOnly}
-              onValueChange={setVerifiedOnly}
-              colors={colors}
-            />
           </View>
         </View>
       </ThemedView>
     </BaseTemplateScreen>
   );
-}
-
-interface ToggleSwitchProps {
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  colors: ReturnType<typeof useThemeColors>;
 }
 
 const styles = StyleSheet.create({
@@ -254,12 +351,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.sm,
   },
-  toggleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  toggleLabel: {
-    ...typography.body,
+  chipText: {
+    ...typography.caption,
+    fontWeight: "600",
   },
 });

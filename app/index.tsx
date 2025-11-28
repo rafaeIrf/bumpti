@@ -14,6 +14,8 @@ export default function RootIndex() {
   });
   const { currentStep } = useAppSelector((state) => state.onboarding);
 
+  console.log("profile", profile);
+
   // Show loading while checking auth state
   if (isAuthLoading || (isAuthenticated && isProfileLoading)) {
     return (
