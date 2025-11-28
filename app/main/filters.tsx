@@ -11,7 +11,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { updateProfile } from "@/modules/profile/api";
-import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { useAppSelector } from "@/modules/store/hooks";
 import { profileActions } from "@/modules/store/slices/profileActions";
 import { getOnboardingOptions } from "@/modules/supabase/onboarding-service";
 import { router } from "expo-router";
@@ -21,7 +21,6 @@ import { Pressable, StyleSheet, View } from "react-native";
 export default function FiltersScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
-  const dispatch = useAppDispatch();
   const { profile, isLoading: profileLoading } = useProfile();
   const optionsState = useAppSelector((state) => state.options);
 
@@ -39,9 +38,8 @@ export default function FiltersScreen() {
       (v) => typeof v === "number"
     ) as number[],
     ageRangeMin: profile?.age_range_min ?? 18,
-    ageRangeMax: profile?.age_range_max ?? 100,
+    ageRangeMax: profile?.age_range_max ?? 35,
   });
-  const [isSaving, setIsSaving] = useState(false);
   const hasInitialized = useRef(false);
   const hasProfileSeeded = useRef(false);
   const skipNextSave = useRef(false);
@@ -98,7 +96,7 @@ export default function FiltersScreen() {
         (v) => typeof v === "number"
       ) as number[],
       ageRangeMin: profile.age_range_min ?? 18,
-      ageRangeMax: profile.age_range_max ?? 100,
+      ageRangeMax: profile.age_range_max ?? 35,
     });
     hasProfileSeeded.current = true;
     skipNextSave.current = true; // hydration update should not trigger autosave
@@ -144,7 +142,6 @@ export default function FiltersScreen() {
     }
     saveTimeout.current = setTimeout(async () => {
       try {
-        setIsSaving(true);
         const intentionMapByKey = new Map(
           intentionOptions.map((opt) => [opt.key, opt.id])
         );
@@ -174,7 +171,6 @@ export default function FiltersScreen() {
       } catch (error) {
         console.error("Auto-save filters failed", error);
       } finally {
-        setIsSaving(false);
       }
     }, 1000); // debounce auto-save to reduce chatter
   };

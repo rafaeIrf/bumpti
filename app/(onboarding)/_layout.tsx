@@ -2,22 +2,10 @@ import { OnboardingProgressBar } from "@/components/onboarding-progress-bar";
 import { OnboardingProgressProvider } from "@/components/onboarding-progress-context";
 import { useOnboardingSteps } from "@/hooks/use-onboarding-steps";
 import { Stack, usePathname } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 
 export const unstable_settings = {
   initialRouteName: "welcome",
-};
-
-// Map of routes to their step numbers (support multiple formats)
-const ROUTE_STEPS: Record<string, number> = {
-  "/user-name": 1,
-  "/user-age": 2,
-  "/user-gender": 3,
-  "/connect-with": 4,
-  "/intention": 5,
-  "/user-photos": 6,
-  "/location": 7,
-  "/notifications": 8,
 };
 
 // Routes that should NOT show the progress bar
@@ -25,9 +13,23 @@ const ROUTES_WITHOUT_PROGRESS = new Set(["/welcome", "/complete"]);
 
 const OnboardingHeader = React.memo(() => {
   const pathname = usePathname();
-  const { totalSteps } = useOnboardingSteps();
+  const { shouldShowLocation, shouldShowNotifications } = useOnboardingSteps();
 
-  console.log("OnboardingHeader render:", { pathname, totalSteps });
+  const steps = useMemo(() => {
+    const base = [
+      "/user-name",
+      "/user-age",
+      "/user-gender",
+      "/connect-with",
+      "/intention",
+      "/user-photos",
+    ];
+    if (shouldShowLocation) base.push("/location");
+    if (shouldShowNotifications) base.push("/notifications");
+    return base;
+  }, [shouldShowLocation, shouldShowNotifications]);
+
+  console.log("OnboardingHeader render:", { pathname, steps });
 
   // Don't show progress bar on welcome and complete screens
   if (ROUTES_WITHOUT_PROGRESS.has(pathname)) {
@@ -35,7 +37,8 @@ const OnboardingHeader = React.memo(() => {
     return null;
   }
 
-  const currentStep = ROUTE_STEPS[pathname];
+  const currentStep = steps.indexOf(pathname) + 1;
+  const totalSteps = steps.length;
 
   // Don't show if we can't determine the step
   if (!currentStep) {

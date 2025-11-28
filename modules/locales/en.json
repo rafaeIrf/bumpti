@@ -446,7 +446,7 @@
       "description": "Choose who you want to see and connect with. This only affects your feed.",
       "selectAtLeastOne": "Select at least one option",
       "male": "Men",
-      "female": "Woman",
+      "female": "Women",
       "non-binary": "Non-binary"
     },
     "age": {

@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
 import { getProfile } from "@/modules/profile/api";
+import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { profileActions } from "@/modules/store/slices/profileActions";
-import { useAppSelector, useAppDispatch } from "@/modules/store/hooks";
+import { useCallback, useEffect, useState } from "react";
 
 type UseProfileOptions = {
   enabled?: boolean;
@@ -20,20 +20,24 @@ export function useProfile(options: UseProfileOptions = {}) {
       profileActions.setProfileLoading(true);
       setError(undefined);
       const data = await getProfile();
-      profileActions.setProfile({
-        id: data?.id,
-        name: data?.name ?? null,
-        birthdate: data?.birthdate ?? null,
-        gender: data?.gender ?? null,
-        gender_id: data?.gender_id ?? null,
-        age_range_min: data?.age_range_min ?? null,
-        age_range_max: data?.age_range_max ?? null,
-        connectWith: data?.connectWith ?? [],
-        intentions: data?.intentions ?? [],
-        photos: data?.photos ?? [],
-        updatedAt: data?.updated_at ?? null,
-        bio: data?.bio ?? null,
-      });
+      if (!data) {
+        profileActions.setProfile(null);
+      } else {
+        profileActions.setProfile({
+          id: data?.id,
+          name: data?.name ?? null,
+          birthdate: data?.birthdate ?? null,
+          gender: data?.gender ?? null,
+          gender_id: data?.gender_id ?? null,
+          age_range_min: data?.age_range_min ?? null,
+          age_range_max: data?.age_range_max ?? null,
+          connectWith: data?.connectWith ?? [],
+          intentions: data?.intentions ?? [],
+          photos: data?.photos ?? [],
+          updatedAt: data?.updated_at ?? null,
+          bio: data?.bio ?? null,
+        });
+      }
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar seu perfil.");
     } finally {

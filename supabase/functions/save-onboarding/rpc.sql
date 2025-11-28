@@ -15,12 +15,14 @@ set search_path = public
 as $$
 begin
   -- Upsert profile
-  insert into public.profiles as p (id, name, birthdate, gender_id, updated_at)
-  values (p_user_id, p_name, p_birthdate, p_gender_id, now())
+  insert into public.profiles as p (id, name, birthdate, gender_id, age_range_min, age_range_max, updated_at)
+  values (p_user_id, p_name, p_birthdate, p_gender_id, 18, 35, now())
   on conflict (id) do update
     set name = excluded.name,
         birthdate = excluded.birthdate,
         gender_id = excluded.gender_id,
+        age_range_min = coalesce(p.age_range_min, 18),
+        age_range_max = coalesce(p.age_range_max, 35),
         updated_at = now();
 
   -- Replace connect_with

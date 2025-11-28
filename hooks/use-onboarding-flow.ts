@@ -1,6 +1,8 @@
 import { useAppSelector } from "@/modules/store/hooks";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { OnboardingStep } from "@/modules/store/slices/onboardingSlice";
+import { hasLocationPermission } from "@/modules/location";
+import { hasNotificationPermission } from "@/modules/notifications";
 import { useRouter } from "expo-router";
 
 // Define the step order and routes
@@ -49,10 +51,42 @@ export function useOnboardingFlow() {
   };
 
   // Complete the current step and navigate to next
-  const completeCurrentStep = (step: OnboardingStep) => {
+  const resolveNextStep = async (
+    step: OnboardingStep | null
+  ): Promise<OnboardingStep | null> => {
+    let next = step;
+
+    while (next) {
+      if (next === "location") {
+        const granted = await hasLocationPermission();
+        if (granted) {
+          onboardingActions.setLocationPermission(true);
+          onboardingActions.completeStep("location");
+          next = getNextStep("location");
+          continue;
+        }
+      }
+
+      if (next === "notifications") {
+        const granted = await hasNotificationPermission();
+        if (granted) {
+          onboardingActions.setNotificationPermission(true);
+          onboardingActions.completeStep("notifications");
+          next = getNextStep("notifications");
+          continue;
+        }
+      }
+
+      break;
+    }
+
+    return next;
+  };
+
+  const completeCurrentStep = async (step: OnboardingStep) => {
     onboardingActions.completeStep(step);
 
-    const nextStep = getNextStep(step);
+    const nextStep = await resolveNextStep(getNextStep(step));
     if (nextStep) {
       onboardingActions.setCurrentStep(nextStep);
       router.push(STEP_ROUTES[nextStep] as any);
