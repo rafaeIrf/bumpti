@@ -34,7 +34,6 @@ export default function CompleteScreen() {
 
       // Sync profile state in Redux
       const profileResponse = await getProfile();
-      console.log("profileResponse", profileResponse);
       profileActions.setProfile({
         id: profileResponse?.id,
         name: profileResponse?.name ?? null,

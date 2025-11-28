@@ -23,8 +23,6 @@ const initialState: OptionsState = {
   error: undefined,
 };
 
-const TTL_MS = 24 * 60 * 60 * 1000; // 24h
-
 const optionsSlice = createSlice({
   name: "options",
   initialState,
@@ -70,16 +68,6 @@ export const fetchOptions =
     const { options } = getState();
     if (options.isLoading) return;
 
-    const now = Date.now();
-    const hasData =
-      options.genders.length > 0 || options.intentions.length > 0;
-    const isExpired =
-      options.lastFetchedAt === null ||
-      now - options.lastFetchedAt >= TTL_MS;
-    const shouldFetch = force || !hasData || !options.loaded || isExpired;
-
-    if (!shouldFetch) return;
-
     dispatch(setLoading(true));
     dispatch(setError(undefined));
 
@@ -93,7 +81,6 @@ export const fetchOptions =
         })
       );
       dispatch(setLoaded(true));
-      dispatch(setLastFetchedAt(now));
     } catch (err: any) {
       dispatch(
         setError(err?.message || "Não foi possível carregar as opções.")

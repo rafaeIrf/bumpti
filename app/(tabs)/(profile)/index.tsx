@@ -18,9 +18,9 @@ import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useProfile } from "@/hooks/use-profile";
-import { useAppSelector } from "@/modules/store/hooks";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { useAppSelector } from "@/modules/store/hooks";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -125,7 +125,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const bottomSheet = useCustomBottomSheet();
   const { profile } = useProfile();
-  const onboardingUserData = useAppSelector((state) => state.onboarding.userData);
+  const onboardingUserData = useAppSelector(
+    (state) => state.onboarding.userData
+  );
 
   const handleSettingsClick = () => {
     // TODO: Navigate to settings
@@ -179,10 +181,11 @@ export default function ProfileScreen() {
   };
 
   const handlePremiumClick = () => {
-    router.push("/premium-paywall");
+    router.push("/(modals)/premium-paywall");
   };
 
-  const profilePhoto = profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
+  const profilePhoto =
+    profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
   return (
     <BaseTemplateScreen

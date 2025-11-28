@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 import BottomSheetProvider from "@/components/BottomSheetProvider";
+import { OptionsInitializer } from "@/components/options-initializer";
 import { ReduxProvider } from "@/components/redux-provider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import I18nProvider from "@/modules/locales/i18n-provider";
@@ -78,15 +79,8 @@ export default function RootLayout() {
                     animation: "slide_from_bottom",
                   }}
                 />
-                <Stack.Screen
-                  name="premium-paywall"
-                  options={{
-                    presentation: "modal",
-                    headerShown: false,
-                    animation: "slide_from_bottom",
-                  }}
-                />
               </Stack>
+              <OptionsInitializer />
               <StatusBar style="auto" />
             </BottomSheetProvider>
           </GestureHandlerRootView>
