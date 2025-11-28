@@ -61,9 +61,9 @@ export default function CategoryResultsScreen() {
     }
   );
 
-  const { favoriteIds, handleToggle } = useFavoriteToggle();
-  const { favoritePlacesData, favoritePlacesLoading } =
+  const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
+  const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
 
   // Transform API results to PlaceResult format
   const places: PlaceResult[] = favoritesMode

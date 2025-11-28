@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { fetchPlacesByIds } from "../_shared/google-places.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +23,10 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
   if (req.method !== "GET" && req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: corsHeaders,
+    });
   }
 
   const authHeader = req.headers.get("Authorization");
@@ -45,6 +49,15 @@ Deno.serve(async (req) => {
       throw new Error(userError?.message ?? "User not found");
     }
 
+    let requestBody: { lat?: number; lng?: number } = {};
+    if (req.method === "POST") {
+      try {
+        requestBody = (await req.json()) ?? {};
+      } catch {
+        // ignore body parse errors for GET-compat
+      }
+    }
+
     const { data, error } = await supabase
       .from("profile_favorite_places")
       .select("place_id")
@@ -54,7 +67,19 @@ Deno.serve(async (req) => {
 
     const placeIds = (data ?? []).map((row) => row.place_id);
 
-    return new Response(JSON.stringify({ placeIds }), {
+    if (placeIds.length === 0) {
+      return new Response(JSON.stringify({ placeIds, places: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const places = await fetchPlacesByIds({
+      placeIds,
+      lat: requestBody.lat ?? 0,
+      lng: requestBody.lng ?? 0,
+    });
+
+    return new Response(JSON.stringify({ places }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

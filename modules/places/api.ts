@@ -1,7 +1,5 @@
-import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
+import { supabase } from "@/modules/supabase/client";
 import { Place, PlaceType } from "./types";
-
-const firebaseFunctions = getFunctions();
 
 export async function searchPlacesByText(
   input: string,
@@ -10,15 +8,19 @@ export async function searchPlacesByText(
   radius: number = 20000,
   sessionToken?: string
 ): Promise<{ places: Place[] }> {
-  const callable = httpsCallable<any, { places: Place[] }>(
-    firebaseFunctions,
-    "searchPlacesByText"
-  );
-  const payload: any = { input, lat, lng, radius };
-  if (sessionToken) payload.sessionToken = sessionToken;
-  const result = await callable(payload);
+  const { data, error } = await supabase.functions.invoke<{
+    places: Place[];
+  }>("search-places-by-text", {
+    body: { input, lat, lng, radius, sessionToken },
+  });
+
+  if (error) {
+    console.error("search-places-by-text (edge) error:", error);
+    return { places: [] };
+  }
+
   return {
-    places: (result?.data?.places || []) as Place[],
+    places: data?.places || [],
   };
 }
 
@@ -28,70 +30,70 @@ export async function getNearbyPlaces(
   longitude: number,
   types: PlaceType[],
   rankPreference: "POPULARITY" | "DISTANCE" = "POPULARITY",
-  maxResultCount: number = 20
-): Promise<Place[]> {
-  const callable = httpsCallable<any, { places: Place[] }>(
-    firebaseFunctions,
-    "getNearbyPlaces"
-  );
-  const result = await callable({
-    lat: latitude,
-    lng: longitude,
-    types,
-    rankPreference,
-  });
-  console.log("Nearby places result:", result?.data);
-  return (result?.data?.places || []) as Place[];
-}
-
-// Fetch featured places by fixed place IDs (batch)
-export async function getFeaturedPlaces(
-  latitude: number,
-  longitude: number,
-  placeIds: string[]
-): Promise<Place[]> {
-  try {
-    const callable = httpsCallable<any, { places: Place[] }>(
-      firebaseFunctions,
-      "getPlacesByIds"
-    );
-    const result = await callable({
-      placeIds,
-      lat: latitude,
-      lng: longitude,
-    });
-    return (result?.data?.places || []) as Place[];
-  } catch (err) {
-    console.error("Failed to fetch featured places:", err);
-    return [];
-  }
-}
-
-// Search places by text query with pagination support
-export async function searchTextPlaces(
-  lat: number,
-  lng: number,
-  includedType: string,
   radius: number = 20000,
   maxResultCount: number = 20,
-  pageToken?: string
-): Promise<{ places: Place[]; nextPageToken: string | null }> {
-  const callable = httpsCallable<
-    any,
-    { places: Place[]; nextPageToken: string | null }
-  >(firebaseFunctions, "searchTextPlaces");
-
-  const result = await callable({
-    lat,
-    lng,
-    includedType,
-    radius,
-    maxResultCount,
-    ...(pageToken && { pageToken }),
+  keyword?: string
+): Promise<Place[]> {
+  const { data, error } = await supabase.functions.invoke<{
+    places: Place[];
+  }>("get-nearby-places", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+      types,
+      rankPreference,
+      radius,
+      ...(keyword && { keyword }),
+      maxResultCount,
+    },
   });
 
+  if (error) {
+    console.error("Nearby places (edge) error:", error);
+    return [];
+  }
+
+  return data?.places || [];
+}
+
+export async function getFavoritePlaces(
+  latitude?: number,
+  longitude?: number
+): Promise<{ places: Place[] }> {
+  const { data, error } = await supabase.functions.invoke<{
+    places: Place[];
+  }>("get-favorite-places", {
+    body: {
+      ...(latitude != null && { lat: latitude }),
+      ...(longitude != null && { lng: longitude }),
+    },
+  });
+
+  if (error) {
+    console.error("Failed to fetch favorite places (edge):", error);
+    return { places: [] };
+  }
+
   return {
-    places: (result?.data?.places || []) as Place[],
-    nextPageToken: result?.data?.nextPageToken || null,
+    places: data?.places || [],
   };
+}
+
+export async function toggleFavoritePlace({
+  placeId,
+  action,
+}: {
+  placeId: string;
+  action: "add" | "remove";
+}): Promise<{ success: boolean }> {
+  const { error } = await supabase.functions.invoke("toggle-favorite-place", {
+    body: { placeId, action },
+  });
+
+  if (error) {
+    console.error("toggle-favorite-place error:", error);
+    throw error;
+  }
+
+  return { success: true };
 }

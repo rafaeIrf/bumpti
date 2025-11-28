@@ -1,8 +1,6 @@
-import { getFeaturedPlaces } from "@/modules/places/api";
-import { useAppSelector } from "@/modules/store/hooks";
-import { favoritesActions } from "@/modules/store/slices";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { useCachedLocation } from "./use-cached-location";
+import { useGetFavoritePlacesQuery } from "@/modules/places/placesApi";
 
 export interface FavoritePlaceResult {
   id: string;
@@ -13,89 +11,36 @@ export interface FavoritePlaceResult {
 }
 
 export function useFavoritePlacesList(enabled: boolean) {
-  const favoritesState = useAppSelector((state) => state.favorites);
-  const { location: userLocation, loading: locationLoading } =
-      useCachedLocation();
-  const favorites = favoritesState.placeIds;
-  const [favoritePlacesData, setFavoritePlacesData] = useState<
-    FavoritePlaceResult[]
-  >([]);
-  const [favoritePlacesLoading, setFavoritePlacesLoading] = useState(false);
-  const prevFavoritesRef = useRef<string[]>([]);
+  const { location: userLocation } = useCachedLocation();
+  const queryArg = useMemo(
+    () => ({
+      lat: userLocation?.latitude,
+      lng: userLocation?.longitude,
+    }),
+    [userLocation?.latitude, userLocation?.longitude]
+  );
+  const { data, isLoading, isFetching } = useGetFavoritePlacesQuery(queryArg, {
+    skip: !enabled,
+  });
 
-  // Ensure IDs are fetched once
-  useEffect(() => {
-    if (!enabled) return;
-    if (!favoritesState.loaded && !favoritesState.isLoading) {
-      favoritesActions.fetchFavorites();
-    }
-  }, [enabled, favoritesState.isLoading, favoritesState.loaded]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (!userLocation) {
-      // Wait until location is available before fetching
-      setFavoritePlacesLoading(locationLoading);
-      return;
-    }
-
-    const prevFavorites = prevFavoritesRef.current;
-    const removed = prevFavorites.filter((id) => !favorites.includes(id));
-    const added = favorites.filter((id) => !prevFavorites.includes(id));
-
-    // Nothing changed
-    if (removed.length === 0 && added.length === 0) return;
-
-    // Fast-path removals (avoid refetch)
-    if (removed.length > 0 && added.length === 0) {
-      setFavoritePlacesData((prev) =>
-        prev.filter((p) => favorites.includes(p.id))
-      );
-      setFavoritePlacesLoading(false);
-      prevFavoritesRef.current = favorites;
-      return;
-    }
-
-    // No favorites
-    if (favorites.length === 0) {
-      setFavoritePlacesData([]);
-      setFavoritePlacesLoading(false);
-      prevFavoritesRef.current = favorites;
-      return;
-    }
-
-    // Initial load or new favorites: fetch once
-    setFavoritePlacesLoading(true);
-    getFeaturedPlaces(
-      userLocation.latitude,
-      userLocation.longitude,
-      favorites
-    )
-      .then((result) => {
-        const mapped =
-          result?.map((place: any) => ({
-            id: place.placeId || place.id,
-            name: place.name,
-            type: place.type || "",
-            address: place.formattedAddress || place.address || "",
-            distance: place.distance || 0,
-          })) || [];
-        setFavoritePlacesData(mapped);
-      })
-      .finally(() => {
-        setFavoritePlacesLoading(false);
-        prevFavoritesRef.current = favorites;
-      });
-  }, [enabled, favorites, userLocation, locationLoading]);
-
-  const isLoading =
-    favoritesState.isLoading || !favoritesState.loaded || favoritePlacesLoading;
+  const favoritePlacesData = useMemo(
+    () =>
+      data?.places?.map((place: any) => ({
+        id: place.placeId || place.id,
+        name: place.name,
+        type: place.type || "",
+        address: place.formattedAddress || place.address || "",
+        distance: place.distance || 0,
+      })) || [],
+    [data?.places]
+  );
 
   return useMemo(
     () => ({
       favoritePlacesData,
-      favoritePlacesLoading: isLoading,
+      favoritePlacesLoading: isLoading || isFetching,
+      favoriteQueryArg: queryArg,
     }),
-    [favoritePlacesData, isLoading]
+    [favoritePlacesData, isLoading, isFetching, queryArg]
   );
 }
