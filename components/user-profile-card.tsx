@@ -3,15 +3,9 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import {
-  Dimensions,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 export interface UserProfile {
@@ -61,7 +55,14 @@ export function UserProfileCard({
   // Reset photo index when profile changes
   useEffect(() => {
     setCurrentPhotoIndex(0);
-  }, [profile.id]);
+  }, [profile.user_id]);
+
+  // Prefetch photos for smoother swaps
+  useEffect(() => {
+    profile.photos.forEach((uri) => {
+      Image.prefetch?.(uri);
+    });
+  }, [profile.photos]);
 
   const nextPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
@@ -102,9 +103,11 @@ export function UserProfileCard({
           style={styles.imageContainer}
         >
           <Image
-            source={{ uri: profile.photos[currentPhotoIndex] }}
+            source={profile.photos[currentPhotoIndex]}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={0}
           />
         </Animated.View>
 

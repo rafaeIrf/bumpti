@@ -13,7 +13,8 @@ import { SwipeActionButtons } from "@/components/swipe-action-buttons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
-import { UserProfile } from "@/components/user-profile-card";
+import { LoadingView } from "@/components/loading-view";
+import { Image } from "expo-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -54,20 +55,38 @@ export default function PlacePeopleScreen() {
     placeName: string;
     distance?: string;
   }>();
+  const [loading, setLoading] = useState(true);
   const [availableProfiles, setAvailableProfiles] = useState<
     ActiveUserAtPlace[]
   >([]);
 
   useEffect(() => {
-    getActiveUsersAtPlace(params.placeId).then(
-      (response: ActiveUsersResponse | null) => {
-        if (response) {
-          setAvailableProfiles(response.users);
-        } else {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const response: ActiveUsersResponse | null = await getActiveUsersAtPlace(
+          params.placeId
+        );
+        if (!isMounted) return;
+        const users = response?.users ?? [];
+        setAvailableProfiles(users);
+
+        const urls = users.flatMap((u) => u.photos ?? []).filter(Boolean);
+        await Promise.all(urls.map((url) => Image.prefetch(url)));
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to load active users at place", error);
           setAvailableProfiles([]);
         }
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // TODO: Get from API/state
@@ -85,12 +104,12 @@ export default function PlacePeopleScreen() {
     image: "",
   };
 
-  const handleLike = (profile: UserProfile) => {
+  const handleLike = (profile: ActiveUserAtPlace) => {
     console.log("Liked profile:", profile.name);
     // TODO: Implement like logic
   };
 
-  const handlePass = (profile: UserProfile) => {
+  const handlePass = (profile: ActiveUserAtPlace) => {
     console.log("Passed profile:", profile.name);
     // TODO: Implement pass logic
   };
@@ -120,6 +139,27 @@ export default function PlacePeopleScreen() {
   // Parse distance from string to number
   const distanceInKm = Number.parseFloat(place.distance.replace(" km", ""));
   const isFarAway = distanceInKm > 3;
+
+  if (loading) {
+    return (
+      <BaseTemplateScreen
+        isModal
+        TopHeader={
+          <ScreenToolbar
+            leftAction={{
+              icon: ArrowLeftIcon,
+              onClick: handleBack,
+              ariaLabel: t("common.back"),
+              color: colors.icon,
+            }}
+            title={place.name}
+          />
+        }
+      >
+        <LoadingView />
+      </BaseTemplateScreen>
+    );
+  }
 
   // Not at place AND far away (>3km) AND not premium - show premium upsell
   if (!isUserHere && isFarAway && !isPremium) {
