@@ -1,4 +1,5 @@
 import { supabase } from "@/modules/supabase/client";
+import { extractEdgeErrorMessage } from "@/modules/supabase/edge-error";
 
 export type InteractionAction = "like" | "dislike";
 
@@ -24,7 +25,12 @@ export async function interactUser(params: {
 
     if (error) {
       console.error("interactUser (edge) error:", error);
-      throw new Error(error.message || "Failed to interact with user.");
+
+      const message = await extractEdgeErrorMessage(
+        error,
+        "Failed to interact with user."
+      );
+      throw new Error(message);
     }
 
     if (!data) {
@@ -51,7 +57,11 @@ export async function unmatchUser(userId: string): Promise<UnmatchResponse> {
 
     if (error) {
       console.error("unmatchUser (edge) error:", error);
-      throw new Error(error.message || "Failed to unmatch user.");
+      const message = await extractEdgeErrorMessage(
+        error,
+        "Failed to unmatch user."
+      );
+      throw new Error(message);
     }
 
     if (!data) {

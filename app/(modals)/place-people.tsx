@@ -7,22 +7,23 @@ import {
   XIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { LoadingView } from "@/components/loading-view";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { SwipeActionButtons } from "@/components/swipe-action-buttons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
-import { LoadingView } from "@/components/loading-view";
-import { Image } from "expo-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { interactUser } from "@/modules/interactions/api";
 import { t } from "@/modules/locales";
 import {
   ActiveUserAtPlace,
   ActiveUsersResponse,
   getActiveUsersAtPlace,
 } from "@/modules/presence/api";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -64,22 +65,31 @@ export default function PlacePeopleScreen() {
     let isMounted = true;
     const load = async () => {
       try {
-        const response: ActiveUsersResponse | null = await getActiveUsersAtPlace(
-          params.placeId
-        );
+        const response: ActiveUsersResponse | null =
+          await getActiveUsersAtPlace(params.placeId);
         if (!isMounted) return;
         const users = response?.users ?? [];
         setAvailableProfiles(users);
 
         const urls = users.flatMap((u) => u.photos ?? []).filter(Boolean);
-        await Promise.all(urls.map((url) => Image.prefetch(url)));
+        if (urls.length) {
+          Image.prefetch(urls[0]).finally(() => {
+            if (isMounted) setLoading(false);
+          });
+          if (urls.length > 1) {
+            Promise.all(urls.slice(1).map((url) => Image.prefetch(url))).catch(
+              () => {}
+            );
+          }
+        } else {
+          setLoading(false);
+        }
       } catch (error) {
         if (isMounted) {
           console.error("Failed to load active users at place", error);
           setAvailableProfiles([]);
+          setLoading(false);
         }
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
@@ -105,13 +115,23 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
-    console.log("Liked profile:", profile.name);
-    // TODO: Implement like logic
+    interactUser({ toUserId: profile.user_id, action: "like" })
+      .then((response) => {
+        console.log("Liked profile:", profile.name, response);
+      })
+      .catch((error) => {
+        console.error("Failed to like profile:", profile.name, error);
+      });
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
-    console.log("Passed profile:", profile.name);
-    // TODO: Implement pass logic
+    interactUser({ toUserId: profile.user_id, action: "dislike" })
+      .then((response) => {
+        console.log("Disliked profile:", profile.name, response);
+      })
+      .catch((error) => {
+        console.error("Failed to dislike profile:", profile.name, error);
+      });
   };
 
   const handleComplete = () => {

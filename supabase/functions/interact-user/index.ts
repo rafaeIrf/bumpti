@@ -34,19 +34,35 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars");
+      return new Response(
+        JSON.stringify({
+          error: "config_missing",
+          message: "Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
+    const serviceClient = supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey)
+      : null;
+    const dbClient = serviceClient || authClient;
+    if (!serviceClient) {
+      console.warn(
+        "interact-user: SUPABASE_SERVICE_ROLE_KEY not set, falling back to anon client with RLS"
+      );
+    }
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await authClient.auth.getUser();
 
     if (userError || !user?.id) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -83,7 +99,7 @@ Deno.serve(async (req) => {
     if (action === "like") {
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const { error: likeError } = await supabase
+      const { error: likeError } = await dbClient
         .from("user_interactions")
         .upsert(
           {
@@ -105,7 +121,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { data: matchRow, error: matchError } = await supabase
+      const { data: matchRow, error: matchError } = await dbClient
         .from("user_matches")
         .select("id")
         .eq("status", "matched")
@@ -131,7 +147,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { error: dislikeError } = await supabase
+    const { error: dislikeError } = await dbClient
       .from("user_interactions")
       .upsert(
         {
@@ -153,7 +169,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: existingMatch, error: matchLookupError } = await supabase
+    const { data: existingMatch, error: matchLookupError } = await dbClient
       .from("user_matches")
       .select("id,status")
       .or(
@@ -170,7 +186,7 @@ Deno.serve(async (req) => {
     }
 
     if (existingMatch?.id) {
-      const { error: unmatchError } = await supabase
+      const { error: unmatchError } = await dbClient
         .from("user_matches")
         .update({ status: "unmatched", unmatched_at: new Date().toISOString() })
         .eq("id", existingMatch.id);

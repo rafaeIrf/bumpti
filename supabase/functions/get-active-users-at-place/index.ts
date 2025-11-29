@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
         "place_id, user_id, name, age, bio, intentions, photos, entered_at, expires_at"
       )
       .eq("place_id", placeId)
+      .neq("user_id", user.id)
       .order("entered_at", { ascending: false });
 
     if (fetchError) throw fetchError;
@@ -159,13 +160,6 @@ Deno.serve(async (req) => {
       (interactionsToMe.data ?? []).forEach((row) => {
         const candidateId = row.from_user_id;
         if (row.action === "dislike") {
-          excludeIds.add(candidateId);
-        }
-        if (
-          row.action === "like" &&
-          row.action_expires_at &&
-          new Date(row.action_expires_at) > now
-        ) {
           excludeIds.add(candidateId);
         }
       });
