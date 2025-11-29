@@ -24,6 +24,14 @@ export type ChatSummary = {
 
 export type GetChatsResponse = { chats: ChatSummary[] };
 export type GetMessagesResponse = { chat_id: string; messages: Message[] };
+export type MatchSummary = {
+  match_id: string;
+  user_id: string;
+  name: string | null;
+  photo_url: string | null;
+  match_created_at: string | null;
+};
+export type GetMatchesResponse = { matches: MatchSummary[] };
 
 export function subscribeToChatMessages(
   chatId: string,
@@ -135,4 +143,21 @@ export async function sendMessage(params: {
   }
 
   return data;
+}
+
+export async function getMatches(): Promise<GetMatchesResponse> {
+  const { data, error } = await supabase.functions.invoke<GetMatchesResponse>(
+    "get-matches"
+  );
+  console.log("getMatches data:", data);
+
+  if (error) {
+    const message = await extractEdgeErrorMessage(
+      error,
+      "Failed to load matches."
+    );
+    throw new Error(message || "Failed to load matches.");
+  }
+
+  return data ?? { matches: [] };
 }

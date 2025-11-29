@@ -4,6 +4,9 @@
   "discover": "Discover",
   "matches": "Chat",
   "profile": "Profile",
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  },
   "screens": {
     "profile": {
       "title": "Profile",
@@ -346,6 +349,19 @@
           "title": "Wellness & movement",
           "description": "Connections that start during workouts."
         }
+      }
+    },
+    "chat": {
+      "title": "Chat",
+      "messagePlaceholder": "Type a message...",
+      "emptyTitle": "No conversations yet",
+      "emptySubtitle": "Start connecting with people nearby to begin chatting.",
+      "noMessages": "No messages yet",
+      "time": {
+        "now": "Now",
+        "minutes": "{{count}} min",
+        "hours": "{{count}} h",
+        "yesterday": "Yesterday"
       }
     }
   },

@@ -4,6 +4,9 @@
   "discover": "Descubra",
   "matches": "Chat",
   "profile": "Perfil",
+  "errors": {
+    "generic": "Algo deu errado. Tente novamente."
+  },
   "screens": {
     "profile": {
       "title": "Perfil",
@@ -347,6 +350,19 @@
           "title": "Bem-estar & movimento",
           "description": "Conexões que começam no treino."
         }
+      }
+    },
+    "chat": {
+      "title": "Conexões",
+      "messagePlaceholder": "Digite uma mensagem...",
+      "emptyTitle": "Nenhuma conversa ainda",
+      "emptySubtitle": "Comece se conectando com pessoas próximas para iniciar um papo.",
+      "noMessages": "Sem mensagens ainda",
+      "time": {
+        "now": "Agora",
+        "minutes": "{{count}} min",
+        "hours": "{{count}} h",
+        "yesterday": "Ontem"
       }
     }
   },
