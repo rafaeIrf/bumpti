@@ -6,10 +6,10 @@ import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
 import { getProfile } from "@/modules/profile/api";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { profileActions } from "@/modules/store/slices/profileActions";
-import { saveOnboarding } from "@/modules/supabase/onboarding-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -34,7 +34,6 @@ export default function CompleteScreen() {
 
       // Sync profile state in Redux
       const profileResponse = await getProfile();
-      console.log("profileResponse", profileResponse);
       profileActions.setProfile({
         id: profileResponse?.id,
         name: profileResponse?.name ?? null,

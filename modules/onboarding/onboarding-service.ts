@@ -1,6 +1,6 @@
+import { processProfileImage } from "@/modules/media/image-processor";
 import { OnboardingUserData } from "@/modules/store/slices/onboardingSlice";
 import { supabase } from "@/modules/supabase/client";
-import { processProfileImage } from "@/modules/media/image-processor";
 
 export type OnboardingOption = { id: number; key: string };
 
@@ -30,9 +30,13 @@ export async function getOnboardingOptions(): Promise<{
     throw new Error(error.message || "Não foi possível carregar as opções.");
   }
 
+  const payload =
+    (data as Partial<{ genders: OnboardingOption[]; intentions: OnboardingOption[] }>) ??
+    {};
+
   return {
-    genders: data.genders ?? [],
-    intentions: data.intentions ?? [],
+    genders: Array.isArray(payload.genders) ? payload.genders : [],
+    intentions: Array.isArray(payload.intentions) ? payload.intentions : [],
   };
 }
 

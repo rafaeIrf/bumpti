@@ -7,22 +7,21 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { AgeRangeSlider } from "@/components/ui/age-range-slider";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { updateProfile } from "@/modules/profile/api";
-import { useAppSelector } from "@/modules/store/hooks";
 import { profileActions } from "@/modules/store/slices/profileActions";
-import { getOnboardingOptions } from "@/modules/supabase/onboarding-service";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 export default function FiltersScreen() {
   const colors = useThemeColors();
+  const { genders, intentions, isLoading } = useOnboardingOptions();
   const bottomSheet = useCustomBottomSheet();
   const { profile, isLoading: profileLoading } = useProfile();
-  const optionsState = useAppSelector((state) => state.options);
 
   const [genderOptions, setGenderOptions] = useState<
     { id: number; label: string; key: string }[]
@@ -48,43 +47,22 @@ export default function FiltersScreen() {
   // Load options and sync with profile data
   // Load options from store first; fallback to remote fetch
   useEffect(() => {
-    if (optionsState.genders.length && optionsState.intentions.length) {
-      setGenderOptions(
-        optionsState.genders.map((g) => ({
-          id: g.id,
-          label: t(`filters.gender.${g.key}`, g.key),
-          key: g.key,
-        }))
-      );
-      setIntentionOptions(
-        optionsState.intentions.map((i) => ({
-          id: i.id,
-          label: t(`filters.connectionType.${i.key}`, i.key),
-          key: i.key,
-        }))
-      );
-      return;
-    }
-
-    getOnboardingOptions()
-      .then((data) => {
-        setGenderOptions(
-          (data.genders ?? []).map((g) => ({
-            id: g.id,
-            label: t(`screens.onboarding.gender.${g.key}`, g.key),
-            key: g.key,
-          }))
-        );
-        setIntentionOptions(
-          (data.intentions ?? []).map((i) => ({
-            id: i.id,
-            label: t(`filters.connectionType.${i.key}`, i.key),
-            key: i.key,
-          }))
-        );
-      })
-      .catch(() => {});
-  }, [optionsState.genders, optionsState.intentions, t]);
+    if (isLoading) return;
+    setGenderOptions(
+      genders.map((g) => ({
+        id: g.id,
+        label: t(`filters.gender.${g.key}`, g.key),
+        key: g.key,
+      }))
+    );
+    setIntentionOptions(
+      intentions.map((i) => ({
+        id: i.id,
+        label: t(`filters.connectionType.${i.key}`, i.key),
+        key: i.key,
+      }))
+    );
+  }, [isLoading, genders, intentions]);
 
   useEffect(() => {
     if (!profile || hasProfileSeeded.current) return;

@@ -1,4 +1,5 @@
 import { placesApi } from "@/modules/places/placesApi";
+import { messagesApi } from "@/modules/chats/messagesApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -20,12 +21,13 @@ import profileReducer from "./slices/profileSlice";
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile", "options"], // Persist onboarding, profile, options
+  whitelist: ["onboarding", "profile", "options", "messagesApi"], // Persist onboarding, profile, options, messages cache
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
+  [messagesApi.reducerPath]: messagesApi.reducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
   options: optionsReducer,
@@ -41,7 +43,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(placesApi.middleware),
+    }).concat(placesApi.middleware, messagesApi.middleware),
 });
 
 export const persistor = persistStore(store);

@@ -16,6 +16,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 

@@ -7,16 +7,23 @@ import {
   XIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { LoadingView } from "@/components/loading-view";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { SwipeActionButtons } from "@/components/swipe-action-buttons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
-import { UserProfile } from "@/components/user-profile-card";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { interactUser } from "@/modules/interactions/api";
 import { t } from "@/modules/locales";
+import {
+  ActiveUserAtPlace,
+  ActiveUsersResponse,
+  getActiveUsersAtPlace,
+} from "@/modules/presence/api";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -31,86 +38,6 @@ interface Place {
   address: string;
   image: string;
 }
-
-// TODO: Replace with real data from API
-const mockProfiles: UserProfile[] = [
-  {
-    id: "1",
-    name: "Sofia",
-    age: 24,
-    photos: [
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop",
-    ],
-    bio: "Amo música ao vivo, bares tranquilos e boas conversas com amigos ✨",
-    isHereNow: true,
-    visitedPlacesCount: { "1": 5 },
-    favoritePlaces: ["1", "2", "6"],
-    lookingFor: "friends",
-    location: "Vila Madalena",
-  },
-  {
-    id: "2",
-    name: "Lucas",
-    age: 27,
-    photos: [
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=600&fit=crop",
-    ],
-    bio: "Cerveja artesanal e boa conversa são minhas paixões 🍺",
-    isHereNow: true,
-    visitedPlacesCount: { "1": 1 },
-    favoritePlaces: ["1"],
-    lookingFor: "chat",
-    location: "Pinheiros",
-  },
-  {
-    id: "3",
-    name: "Mariana",
-    age: 22,
-    photos: [
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=600&fit=crop",
-    ],
-    bio: "Dancinha e diversão! Adoro conhecer gente nova 💃",
-    isHereNow: true,
-    visitedPlacesCount: { "1": 3 },
-    favoritePlaces: ["1", "4"],
-    lookingFor: "meetpeople",
-    location: "Jardins",
-  },
-  {
-    id: "4",
-    name: "Pedro",
-    age: 25,
-    photos: [
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=600&fit=crop",
-    ],
-    bio: "Sempre aberto a novas amizades e aventuras pela cidade",
-    isHereNow: true,
-    visitedPlacesCount: { "1": 0 },
-    favoritePlaces: ["1"],
-    lookingFor: "friends",
-    location: "Moema",
-  },
-  {
-    id: "5",
-    name: "Ana",
-    age: 26,
-    photos: [
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop",
-    ],
-    bio: "Amo esse lugar! Frequento desde que me mudei pra SP",
-    isHereNow: true,
-    visitedPlacesCount: { "1": 8 },
-    favoritePlaces: ["1", "2"],
-    lookingFor: "chat",
-    location: "Perdizes",
-  },
-];
 
 const mockPlaces = {
   "1": { name: "Bar do João", emoji: "🍸" },
@@ -129,6 +56,48 @@ export default function PlacePeopleScreen() {
     placeName: string;
     distance?: string;
   }>();
+  const [loading, setLoading] = useState(true);
+  const [availableProfiles, setAvailableProfiles] = useState<
+    ActiveUserAtPlace[]
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const response: ActiveUsersResponse | null =
+          await getActiveUsersAtPlace(params.placeId);
+        if (!isMounted) return;
+        const users = response?.users ?? [];
+        setAvailableProfiles(users);
+
+        const urls = users.flatMap((u) => u.photos ?? []).filter(Boolean);
+        if (urls.length) {
+          Image.prefetch(urls[0]).finally(() => {
+            if (isMounted) setLoading(false);
+          });
+          if (urls.length > 1) {
+            Promise.all(urls.slice(1).map((url) => Image.prefetch(url))).catch(
+              () => {}
+            );
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to load active users at place", error);
+          setAvailableProfiles([]);
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // TODO: Get from API/state
   const isUserHere = true;
@@ -145,21 +114,24 @@ export default function PlacePeopleScreen() {
     image: "",
   };
 
-  // Filter profiles based on whether user is at the place
-  const availableProfiles = isUserHere
-    ? mockProfiles.filter((p) => p.isHereNow)
-    : mockProfiles.filter(
-        (p) => p.isHereNow || p.favoritePlaces?.includes(place.id)
-      );
-
-  const handleLike = (profile: UserProfile) => {
-    console.log("Liked profile:", profile.name);
-    // TODO: Implement like logic
+  const handleLike = (profile: ActiveUserAtPlace) => {
+    interactUser({ toUserId: profile.user_id, action: "like", placeId: place.id })
+      .then((response) => {
+        console.log("Liked profile:", profile.name, response);
+      })
+      .catch((error) => {
+        console.error("Failed to like profile:", profile.name, error);
+      });
   };
 
-  const handlePass = (profile: UserProfile) => {
-    console.log("Passed profile:", profile.name);
-    // TODO: Implement pass logic
+  const handlePass = (profile: ActiveUserAtPlace) => {
+    interactUser({ toUserId: profile.user_id, action: "dislike", placeId: place.id })
+      .then((response) => {
+        console.log("Disliked profile:", profile.name, response);
+      })
+      .catch((error) => {
+        console.error("Failed to dislike profile:", profile.name, error);
+      });
   };
 
   const handleComplete = () => {
@@ -187,6 +159,27 @@ export default function PlacePeopleScreen() {
   // Parse distance from string to number
   const distanceInKm = Number.parseFloat(place.distance.replace(" km", ""));
   const isFarAway = distanceInKm > 3;
+
+  if (loading) {
+    return (
+      <BaseTemplateScreen
+        isModal
+        TopHeader={
+          <ScreenToolbar
+            leftAction={{
+              icon: ArrowLeftIcon,
+              onClick: handleBack,
+              ariaLabel: t("common.back"),
+              color: colors.icon,
+            }}
+            title={place.name}
+          />
+        }
+      >
+        <LoadingView />
+      </BaseTemplateScreen>
+    );
+  }
 
   // Not at place AND far away (>3km) AND not premium - show premium upsell
   if (!isUserHere && isFarAway && !isPremium) {

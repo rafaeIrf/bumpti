@@ -9,13 +9,13 @@ const corsHeaders = {
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars");
+if (!supabaseUrl || !serviceKey) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, serviceKey);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         genders: genders ?? [],
         intentions: intentions ?? [],
+        error: gendersError ?? intentionsError ?? null,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

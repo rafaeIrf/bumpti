@@ -4,6 +4,12 @@
   "discover": "Descubrir",
   "matches": "Chat",
   "profile": "Perfil",
+  "common": {
+    "retry": "Reintentar"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Inténtalo de nuevo."
+  },
   "screens": {
     "profile": {
       "title": "Perfil",
@@ -348,6 +354,24 @@
           "description": "Conexiones que comienzan en el entrenamiento."
         }
       }
+    },
+    "chat": {
+      "title": "Chat",
+      "messagePlaceholder": "Escribe un mensaje...",
+      "emptyTitle": "Aún no hay conversaciones",
+      "emptySubtitle": "Empieza a conectar con personas cercanas para comenzar a chatear.",
+      "noMessages": "Sin mensajes todavía",
+      "time": {
+        "now": "Ahora",
+        "minutes": "{{count}} min",
+        "hours": "{{count}} h",
+        "yesterday": "Ayer"
+      }
+    },
+    "chatMessages": {
+      "online": "En línea",
+      "connectedHere": "Se conectaron aquí",
+      "moreActions": "Más acciones"
     }
   },
   "common": {
@@ -417,11 +441,10 @@
     "interest": "INTERÉS",
     "favoritePlaces": "LUGARES FAVORITOS",
     "lookingFor": {
-      "friends": "Hacer nuevas amistades",
-      "chat": "Conversar y conocer personas",
+      "friendship": "Hacer nuevas amistades",
       "networking": "Networking profesional",
-      "meetpeople": "Conocer gente nueva",
-      "dating": "Encontrar a alguien especial"
+      "casual": "Conocer gente nueva",
+      "relationship": "Encontrar a alguien especial"
     }
   },
   "profileSwiper": {

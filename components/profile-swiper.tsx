@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { ActiveUserAtPlace } from "@/modules/presence/api";
 import {
   forwardRef,
   useCallback,
@@ -21,14 +22,14 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { UserProfile, UserProfileCard } from "./user-profile-card";
+import { UserProfileCard } from "./user-profile-card";
 
 interface ProfileSwiperProps {
-  readonly profiles: UserProfile[];
+  readonly profiles: ActiveUserAtPlace[];
   readonly currentPlaceId?: string;
   readonly places?: Record<string, { name: string; emoji: string }>;
-  readonly onLike?: (profile: UserProfile) => void;
-  readonly onPass?: (profile: UserProfile) => void;
+  readonly onLike?: (profile: ActiveUserAtPlace) => void;
+  readonly onPass?: (profile: ActiveUserAtPlace) => void;
   readonly onComplete?: () => void;
   readonly emptyStateTitle?: string;
   readonly emptyStateDescription?: string;

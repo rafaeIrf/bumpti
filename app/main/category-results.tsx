@@ -1,7 +1,6 @@
 import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
-import { ConnectionBottomSheet } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
@@ -20,6 +19,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
+import { enterPlace } from "@/modules/presence/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
@@ -76,37 +76,54 @@ export default function CategoryResultsScreen() {
         address: place.formattedAddress || "",
       })) || [];
 
-  const handlePlaceClick = (place: PlaceResult) => {
-    if (!bottomSheet) return;
+  const handlePlaceClick = useCallback(
+    async (place: PlaceResult) => {
+      if (!bottomSheet) return;
 
-    bottomSheet.expand({
-      content: () => (
-        <ConnectionBottomSheet
-          venueName={place.name}
-          currentVenue="Teste"
-          venueState="active"
-          onConnect={() => {
-            bottomSheet.close();
-            router.push({
-              pathname: "/(modals)/place-people",
-              params: {
-                placeId: place.id,
-                placeName: place.name,
-                distance: "1.2 km", // TODO: Calculate real distance
-              },
-            });
-          }}
-          onCancel={() => {
-            bottomSheet.close();
-          }}
-          onClose={() => {
-            bottomSheet.close();
-          }}
-        />
-      ),
-      draggable: true,
-    });
-  };
+      enterPlace({
+        placeId: place.id,
+        lat: userLocation?.latitude ?? null,
+        lng: userLocation?.longitude ?? null,
+      });
+
+      router.push({
+        pathname: "/(modals)/place-people",
+        params: {
+          placeId: place.id,
+          placeName: place.name,
+          distance: `${place.distance} km`, // TODO: Calculate real distance
+        },
+      });
+      // bottomSheet.expand({
+      //   content: () => (
+      //     <ConnectionBottomSheet
+      //       venueName={place.name}
+      //       currentVenue="Teste"
+      //       venueState="active"
+      //       onConnect={() => {
+      //         bottomSheet.close();
+      //         router.push({
+      //           pathname: "/(modals)/place-people",
+      //           params: {
+      //             placeId: place.id,
+      //             placeName: place.name,
+      //             distance: "1.2 km", // TODO: Calculate real distance
+      //           },
+      //         });
+      //       }}
+      //       onCancel={() => {
+      //         bottomSheet.close();
+      //       }}
+      //       onClose={() => {
+      //         bottomSheet.close();
+      //       }}
+      //     />
+      //   ),
+      //   draggable: true,
+      // });
+    },
+    [bottomSheet, userLocation?.latitude, userLocation?.longitude]
+  );
 
   const handleOpenSearch = () => {
     router.push("/place-search");

@@ -22,6 +22,14 @@ export default function ModalsLayout() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="premium-paywall"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }

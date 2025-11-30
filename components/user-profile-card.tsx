@@ -1,21 +1,11 @@
-import {
-  MapPinIcon,
-  NavigationIcon,
-  StarIcon,
-  UsersIcon,
-} from "@/assets/icons";
+import { NavigationIcon, StarIcon } from "@/assets/icons";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import {
-  Dimensions,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 export interface UserProfile {
@@ -37,7 +27,7 @@ interface PlaceData {
 }
 
 interface UserProfileCardProps {
-  readonly profile: UserProfile;
+  readonly profile: ActiveUserAtPlace;
   readonly currentPlaceId?: string;
   readonly places?: Record<string, PlaceData>;
 }
@@ -47,14 +37,6 @@ const DEFAULT_PLACES: Record<string, PlaceData> = {
   "2": { name: "The Irish Pub", emoji: "🍺" },
   "6": { name: "Café Central", emoji: "☕" },
   "4": { name: "Universidade Central", emoji: "🎓" },
-};
-
-const LOOKING_FOR_LABELS: Record<string, string> = {
-  friends: t("userProfile.lookingFor.friends"),
-  chat: t("userProfile.lookingFor.chat"),
-  networking: t("userProfile.lookingFor.networking"),
-  meetpeople: t("userProfile.lookingFor.meetpeople"),
-  dating: t("userProfile.lookingFor.dating"),
 };
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -73,7 +55,14 @@ export function UserProfileCard({
   // Reset photo index when profile changes
   useEffect(() => {
     setCurrentPhotoIndex(0);
-  }, [profile.id]);
+  }, [profile.user_id]);
+
+  // Prefetch photos for smoother swaps
+  useEffect(() => {
+    profile.photos.forEach((uri) => {
+      Image.prefetch?.(uri);
+    });
+  }, [profile.photos]);
 
   const nextPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
@@ -87,17 +76,12 @@ export function UserProfileCard({
 
   const getVisitCount = () => {
     if (!currentPlaceId || !profile.visitedPlacesCount) return 0;
-    return profile.visitedPlacesCount[currentPlaceId] || 0;
+    return profile.visitedPlacesCount || 0;
   };
 
   const isFavoritePlace = () => {
     if (!currentPlaceId || !profile.favoritePlaces) return false;
     return profile.favoritePlaces.includes(currentPlaceId);
-  };
-
-  const getLookingForLabel = () => {
-    if (!profile.lookingFor) return null;
-    return LOOKING_FOR_LABELS[profile.lookingFor] || null;
   };
 
   return (
@@ -119,9 +103,11 @@ export function UserProfileCard({
           style={styles.imageContainer}
         >
           <Image
-            source={{ uri: profile.photos[currentPhotoIndex] }}
+            source={profile.photos[currentPhotoIndex]}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={0}
           />
         </Animated.View>
 
@@ -161,14 +147,14 @@ export function UserProfileCard({
 
         {/* Status badges */}
         <View style={styles.badgesContainer}>
-          {profile.isHereNow && (
+          {/* {profile.isHereNow && (
             <View
               style={[styles.hereNowBadge, { backgroundColor: colors.accent }]}
             >
               <View style={styles.pulseIndicator} />
               <Text style={styles.hereNowText}>{t("userProfile.hereNow")}</Text>
             </View>
-          )}
+          )} */}
 
           {isFavoritePlace() && (
             <View
@@ -218,7 +204,7 @@ export function UserProfileCard({
           <Text style={[styles.nameAge, { color: colors.text }]}>
             {profile.name}, {profile.age}
           </Text>
-          {profile.location && (
+          {/* {profile.location && (
             <View style={styles.locationRow}>
               <MapPinIcon width={16} height={16} color={colors.textSecondary} />
               <Text
@@ -227,7 +213,7 @@ export function UserProfileCard({
                 {t("userProfile.nearLocation", { location: profile.location })}
               </Text>
             </View>
-          )}
+          )} */}
         </View>
 
         {/* Bio */}
@@ -240,28 +226,28 @@ export function UserProfileCard({
         )}
 
         {/* Looking for */}
-        {getLookingForLabel() && (
-          <View style={styles.section}>
-            <Text
-              style={[styles.sectionTitle, { color: colors.textSecondary }]}
-            >
-              {t("userProfile.interest")}
-            </Text>
-            <View
-              style={[
-                styles.interestBadge,
-                {
-                  backgroundColor: `${colors.accent}1A`,
-                },
-              ]}
-            >
-              <UsersIcon width={12} height={12} color={colors.accent} />
-              <Text style={[styles.interestText, { color: colors.accent }]}>
-                {getLookingForLabel()}
-              </Text>
-            </View>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            {t("userProfile.interest")}
+          </Text>
+          <View style={styles.interestContainer}>
+            {profile.intentions?.map((intention) => (
+              <View
+                key={intention}
+                style={[
+                  styles.interestBadge,
+                  {
+                    backgroundColor: `${colors.accent}1A`,
+                  },
+                ]}
+              >
+                <Text style={[styles.interestText, { color: colors.accent }]}>
+                  {t(`userProfile.lookingFor.${intention}`)}
+                </Text>
+              </View>
+            ))}
           </View>
-        )}
+        </View>
 
         {/* Favorite places */}
         {profile.favoritePlaces && profile.favoritePlaces.length > 0 && (
@@ -450,10 +436,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.5,
   },
+  interestContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
   interestBadge: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: 16,

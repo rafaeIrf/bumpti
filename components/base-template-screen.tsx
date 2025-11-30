@@ -124,26 +124,37 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      <Animated.ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          contentContainerStyle,
-          // Add extra padding bottom if BottomBar exists
-          BottomBar ? styles.contentWithBottomBar : undefined,
-        ]}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        scrollEnabled={scrollEnabled}
-        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          ) : undefined
-        }
-      >
-        {children}
-      </Animated.ScrollView>
+      {scrollEnabled ? (
+        <Animated.ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.contentContainer,
+            contentContainerStyle,
+            BottomBar ? styles.contentWithBottomBar : undefined,
+          ]}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          scrollEnabled={scrollEnabled}
+          showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            ) : undefined
+          }
+        >
+          {children}
+        </Animated.ScrollView>
+      ) : (
+        <View
+          style={[
+            styles.contentContainer,
+            contentContainerStyle,
+            BottomBar ? styles.contentWithBottomBar : undefined,
+          ]}
+        >
+          {children}
+        </View>
+      )}
 
       {/* Bottom Bar - positioned absolutely to stay at bottom */}
       {BottomBar && (

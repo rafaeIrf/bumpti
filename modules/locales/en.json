@@ -4,6 +4,12 @@
   "discover": "Discover",
   "matches": "Chat",
   "profile": "Profile",
+  "common": {
+    "retry": "Retry"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  },
   "screens": {
     "profile": {
       "title": "Profile",
@@ -347,6 +353,24 @@
           "description": "Connections that start during workouts."
         }
       }
+    },
+    "chat": {
+      "title": "Chat",
+      "messagePlaceholder": "Type a message...",
+      "emptyTitle": "No conversations yet",
+      "emptySubtitle": "Start connecting with people nearby to begin chatting.",
+      "noMessages": "No messages yet",
+      "time": {
+        "now": "Now",
+        "minutes": "{{count}} min",
+        "hours": "{{count}} h",
+        "yesterday": "Yesterday"
+      }
+    },
+    "chatMessages": {
+      "online": "Online",
+      "connectedHere": "You connected here",
+      "moreActions": "More actions"
     }
   },
   "common": {
@@ -416,11 +440,10 @@
     "interest": "INTEREST",
     "favoritePlaces": "FAVORITE PLACES",
     "lookingFor": {
-      "friends": "Making new friends",
-      "chat": "Chat and meet people",
+      "friendship": "Making new friends",
       "networking": "Professional networking",
-      "meetpeople": "Meeting new people",
-      "dating": "Find someone special"
+      "casual": "Meeting new people",
+      "relationship": "Find someone special"
     }
   },
   "profileSwiper": {

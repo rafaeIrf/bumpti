@@ -5,20 +5,15 @@ import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
+import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { calculateDistance } from "@/modules/location";
 import { searchPlacesByText as searchPlacesByTextApi } from "@/modules/places/api";
-import * as Location from "expo-location";
+import { enterPlace } from "@/modules/presence/api";
 import { useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -38,47 +33,29 @@ interface SearchResult {
 }
 
 export interface PlaceSearchProps {
-  onPlaceSelect?: (
-    placeId: string,
-    placeName: string,
-    distance?: number
-  ) => void;
   onBack?: () => void;
   isPremium?: boolean;
   autoFocus?: boolean;
 }
 
 export default function PlaceSearch({
-  onPlaceSelect,
   onBack,
   isPremium = false,
   autoFocus = false,
 }: PlaceSearchProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  const { location: userLocation, loading: locationLoading } =
+    useCachedLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [userLocation, setUserLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
   const { favoriteIds, handleToggle } = useFavoriteToggle(
-    userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined
+    userLocation
+      ? { lat: userLocation.latitude, lng: userLocation.longitude }
+      : undefined
   );
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-      const location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-      });
-    })();
-  }, []);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -100,8 +77,8 @@ export default function PlaceSearch({
         try {
           const res: any = await searchPlacesByTextApi(
             query,
-            userLocation.lat,
-            userLocation.lng,
+            userLocation.latitude,
+            userLocation.longitude,
             20000
           );
           setSearchResults(
@@ -109,8 +86,8 @@ export default function PlaceSearch({
               const distance =
                 p.location && userLocation
                   ? calculateDistance(
-                      userLocation.lat,
-                      userLocation.lng,
+                      userLocation.latitude,
+                      userLocation.longitude,
                       p.location.lat,
                       p.location.lng
                     ) / 1000
@@ -133,10 +110,13 @@ export default function PlaceSearch({
     [userLocation]
   );
 
-  const handleResultPress = (result: SearchResult) => {
-    if (onPlaceSelect) {
-      onPlaceSelect(result.placeId, result.name);
-    } else {
+  const handleResultPress = useCallback(
+    (result: SearchResult) => {
+      enterPlace({
+        placeId: result.placeId,
+        lat: userLocation?.latitude ?? null,
+        lng: userLocation?.longitude ?? null,
+      });
       router.push({
         pathname: "/(modals)/place-people",
         params: {
@@ -144,8 +124,9 @@ export default function PlaceSearch({
           placeName: result.name,
         },
       });
-    }
-  };
+    },
+    [router]
+  );
 
   const clearSearch = () => {
     setSearchQuery("");
@@ -207,15 +188,56 @@ export default function PlaceSearch({
     [favoriteIds, handleResultPress, handleToggle]
   );
 
-  return (
-    <BaseTemplateScreen isModal TopHeader={header}>
-      <ThemedView style={{ flex: 1 }}>
-        {searchQuery.trim().length === 0 ? (
-          <Animated.View entering={FadeInDown.delay(150).springify()}>
-            <ThemedView style={styles.emptyState}>
+  // Move ItemSeparatorComponent out of render
+  const ItemSeparator: React.FC = () => <View style={{ height: spacing.sm }} />;
+
+  let content: React.ReactNode;
+  if (searchQuery.trim().length === 0) {
+    content = (
+      <Animated.View entering={FadeInDown.delay(150).springify()}>
+        <ThemedView style={styles.emptyState}>
+          <ThemedView
+            style={[
+              styles.emptyIcon,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <SearchIcon width={40} height={40} color={colors.textSecondary} />
+          </ThemedView>
+          <ThemedText style={{ color: colors.text, fontSize: 18 }}>
+            {t("screens.placeSearch.emptyTitle")}
+          </ThemedText>
+          <ThemedText
+            style={{
+              color: colors.textSecondary,
+              textAlign: "center",
+              maxWidth: 280,
+            }}
+          >
+            {t("screens.placeSearch.emptyDescription")}
+          </ThemedText>
+        </ThemedView>
+        <ThemedView style={styles.suggestions}>
+          <ThemedText
+            style={[styles.suggestionsLabel, { color: colors.textSecondary }]}
+          >
+            {t("screens.placeSearch.suggestionsLabel")}
+          </ThemedText>
+          {["bar", "cafe", "club", "restaurant"].map((suggestion) => (
+            <Pressable
+              key={suggestion}
+              onPress={() =>
+                handleSearch(
+                  t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
+                )
+              }
+            >
               <ThemedView
                 style={[
-                  styles.emptyIcon,
+                  styles.suggestionButton,
                   {
                     backgroundColor: colors.surface,
                     borderColor: colors.border,
@@ -223,121 +245,81 @@ export default function PlaceSearch({
                 ]}
               >
                 <SearchIcon
-                  width={40}
-                  height={40}
+                  width={16}
+                  height={16}
                   color={colors.textSecondary}
                 />
-              </ThemedView>
-              <ThemedText style={{ color: colors.text, fontSize: 18 }}>
-                {t("screens.placeSearch.emptyTitle")}
-              </ThemedText>
-              <ThemedText
-                style={{
-                  color: colors.textSecondary,
-                  textAlign: "center",
-                  maxWidth: 280,
-                }}
-              >
-                {t("screens.placeSearch.emptyDescription")}
-              </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.suggestions}>
-              <ThemedText
-                style={[
-                  styles.suggestionsLabel,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                {t("screens.placeSearch.suggestionsLabel")}
-              </ThemedText>
-              {["bar", "cafe", "club", "restaurant"].map((suggestion) => (
-                <Pressable
-                  key={suggestion}
-                  onPress={() =>
-                    handleSearch(
-                      t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
-                    )
-                  }
-                >
-                  <ThemedView
-                    style={[
-                      styles.suggestionButton,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <SearchIcon
-                      width={16}
-                      height={16}
-                      color={colors.textSecondary}
-                    />
-                    <ThemedText style={{ color: colors.text }}>
-                      {t(
-                        `screens.placeSearch.suggestionsOptions.${suggestion}`
-                      )}
-                    </ThemedText>
-                  </ThemedView>
-                </Pressable>
-              ))}
-            </ThemedView>
-          </Animated.View>
-        ) : isSearching ? (
-          <ThemedView style={{ paddingTop: spacing.xl, alignItems: "center" }}>
-            <ActivityIndicator size="large" color={colors.accent} />
-          </ThemedView>
-        ) : searchResults.length > 0 ? (
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.placeId}
-            ItemSeparatorComponent={() => (
-              <View style={{ height: spacing.sm }} />
-            )}
-            renderItem={renderResult}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: spacing.xl }}
-          />
-        ) : (
-          <ThemedView style={styles.noResults}>
-            <ThemedView
-              style={[
-                styles.emptyIcon,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <MapPinIcon width={40} height={40} color={colors.textSecondary} />
-            </ThemedView>
-            <ThemedText
-              style={{
-                color: colors.text,
-                fontSize: 18,
-                marginBottom: spacing.xs,
-              }}
-            >
-              {t("screens.placeSearch.noResultsTitle")}
-            </ThemedText>
-            <ThemedText
-              style={{
-                color: colors.textSecondary,
-                textAlign: "center",
-                maxWidth: 280,
-              }}
-            >
-              {t("screens.placeSearch.noResultsDescription")}
-            </ThemedText>
-            <Pressable onPress={clearSearch}>
-              <ThemedView
-                style={[styles.clearButton, { backgroundColor: colors.accent }]}
-              >
-                <ThemedText style={{ color: "#000", fontWeight: "600" }}>
-                  {t("screens.placeSearch.clearButton")}
+                <ThemedText style={{ color: colors.text }}>
+                  {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
                 </ThemedText>
               </ThemedView>
             </Pressable>
-          </ThemedView>
-        )}
+          ))}
+        </ThemedView>
+      </Animated.View>
+    );
+  } else if (isSearching || locationLoading) {
+    content = (
+      <ThemedView style={{ paddingTop: spacing.xl, alignItems: "center" }}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </ThemedView>
+    );
+  } else if (searchResults.length > 0) {
+    content = (
+      <FlatList
+        data={searchResults}
+        keyExtractor={(item) => item.placeId}
+        ItemSeparatorComponent={ItemSeparator}
+        renderItem={renderResult}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+      />
+    );
+  } else {
+    content = (
+      <ThemedView style={styles.noResults}>
+        <ThemedView
+          style={[
+            styles.emptyIcon,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <MapPinIcon width={40} height={40} color={colors.textSecondary} />
+        </ThemedView>
+        <ThemedText
+          style={{
+            color: colors.text,
+            fontSize: 18,
+            marginBottom: spacing.xs,
+          }}
+        >
+          {t("screens.placeSearch.noResultsTitle")}
+        </ThemedText>
+        <ThemedText
+          style={{
+            color: colors.textSecondary,
+            textAlign: "center",
+            maxWidth: 280,
+          }}
+        >
+          {t("screens.placeSearch.noResultsDescription")}
+        </ThemedText>
+        <Pressable onPress={clearSearch}>
+          <ThemedView
+            style={[styles.clearButton, { backgroundColor: colors.accent }]}
+          >
+            <ThemedText style={{ color: "#000", fontWeight: "600" }}>
+              {t("screens.placeSearch.clearButton")}
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
+      </ThemedView>
+    );
+  }
+
+  return (
+    <BaseTemplateScreen isModal TopHeader={header}>
+      <ThemedView style={{ flex: 1 }}>{content}</ThemedView>
     </BaseTemplateScreen>
   );
 }

@@ -1,11 +1,11 @@
-import { useEffect } from "react";
 import { useAuthState } from "@/hooks/use-auth-state";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
-import { Redirect } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { Redirect } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export default function RootIndex() {
   const colors = useThemeColors();

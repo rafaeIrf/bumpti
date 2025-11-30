@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { fetchOptions } from "@/modules/store/slices/optionsSlice";
+import { useEffect } from "react";
 
 export function useOnboardingOptions() {
   const dispatch = useAppDispatch();
@@ -11,6 +11,7 @@ export function useOnboardingOptions() {
       options.genders.length > 0 ||
       options.intentions.length > 0;
     if (!hasData || !options.loaded) {
+      console.log('Fetching onboarding options');
       dispatch(fetchOptions());
     }
   }, [dispatch, options.genders.length, options.intentions.length, options.loaded]);
