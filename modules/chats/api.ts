@@ -97,6 +97,7 @@ export async function getMessages(params: {
       },
     }
   );
+  console.log("getMessages data:", data);
 
   if (error) {
     const message = await extractEdgeErrorMessage(

@@ -63,7 +63,6 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const queryChatId = url.searchParams.get("chat_id");
-    const queryLimit = url.searchParams.get("limit");
     const queryBefore = url.searchParams.get("before");
 
     const body =
@@ -75,9 +74,6 @@ Deno.serve(async (req) => {
     const before =
       (body?.before as string | undefined) ??
       (queryBefore ?? undefined);
-    const limitRaw =
-      (body?.limit as number | undefined) ??
-      (queryLimit ? Number(queryLimit) : undefined);
 
     if (!chatId || typeof chatId !== "string") {
       return new Response(JSON.stringify({ error: "invalid_chat_id" }), {
@@ -85,11 +81,6 @@ Deno.serve(async (req) => {
         headers: corsHeaders,
       });
     }
-
-    const limit =
-      Number.isFinite(limitRaw) && limitRaw
-        ? Math.min(Math.max(Math.trunc(limitRaw), 1), 200)
-        : 50;
 
     const { data: chat, error: chatError } = await supabase
       .from("chats")
@@ -146,7 +137,6 @@ Deno.serve(async (req) => {
       .select("id, chat_id, sender_id, content, created_at")
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true })
-      .limit(limit);
 
     if (before) {
       messagesQuery = messagesQuery.lt("created_at", before);
