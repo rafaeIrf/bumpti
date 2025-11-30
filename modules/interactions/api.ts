@@ -12,14 +12,15 @@ export type UnmatchResponse = { status: "unmatched"; match_id: string };
 export async function interactUser(params: {
   toUserId: string;
   action: InteractionAction;
+  placeId: string;
 }): Promise<InteractionResponse> {
-  const { toUserId, action } = params;
+  const { toUserId, action, placeId } = params;
 
   try {
     const { data, error } = await supabase.functions.invoke<InteractionResponse>(
       "interact-user",
       {
-        body: { to_user_id: toUserId, action },
+        body: { to_user_id: toUserId, action, place_id: placeId },
       }
     );
 

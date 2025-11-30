@@ -4,6 +4,9 @@
   "discover": "Descubra",
   "matches": "Chat",
   "profile": "Perfil",
+  "common": {
+    "retry": "Tentar novamente"
+  },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
   },
@@ -364,6 +367,11 @@
         "hours": "{{count}} h",
         "yesterday": "Ontem"
       }
+    },
+    "chatMessages": {
+      "online": "Online",
+      "connectedHere": "Vocês se conectaram aqui",
+      "moreActions": "Mais ações"
     }
   },
   "common": {

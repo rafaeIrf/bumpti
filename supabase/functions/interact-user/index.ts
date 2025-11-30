@@ -74,9 +74,17 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     const toUserId = body?.to_user_id;
     const action = body?.action;
+    const placeId = body?.place_id;
 
     if (!toUserId || typeof toUserId !== "string") {
       return new Response(JSON.stringify({ error: "invalid_to_user_id" }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
+    if (!placeId || typeof placeId !== "string") {
+      return new Response(JSON.stringify({ error: "invalid_place_id" }), {
         status: 400,
         headers: corsHeaders,
       });
@@ -97,6 +105,29 @@ Deno.serve(async (req) => {
     }
 
     if (action === "like") {
+      const { data: activePresence, error: presenceError } = await dbClient
+        .from("user_presences")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("place_id", placeId)
+        .eq("active", true)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (presenceError) {
+        return new Response(
+          JSON.stringify({ error: "place_lookup_failed", message: presenceError.message }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      if (!activePresence) {
+        return new Response(JSON.stringify({ error: "place_not_active_for_user" }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const { error: likeError } = await dbClient
@@ -107,6 +138,7 @@ Deno.serve(async (req) => {
             to_user_id: toUserId,
             action: "like",
             action_expires_at: expiresAt,
+            place_id: placeId,
           },
           {
             onConflict: "from_user_id,to_user_id",
@@ -155,6 +187,7 @@ Deno.serve(async (req) => {
           to_user_id: toUserId,
           action: "dislike",
           action_expires_at: null,
+          place_id: placeId,
         },
         {
           onConflict: "from_user_id,to_user_id",

@@ -12,71 +12,72 @@ export type Message = {
 export type ChatSummary = {
   chat_id: string;
   match_id: string;
+  place_id: string | null;
+  chat_created_at: string | null;
   other_user: {
     id: string;
     name: string | null;
-    bio: string | null;
+    photo_url?: string | null;
   };
-  last_message: Message | null;
-  created_at: string;
-  matched_at: string | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  unread_count?: number;
 };
 
 export type GetChatsResponse = { chats: ChatSummary[] };
 export type GetMessagesResponse = { chat_id: string; messages: Message[] };
 export type MatchSummary = {
   match_id: string;
-  user_id: string;
-  name: string | null;
-  photo_url: string | null;
-  match_created_at: string | null;
+  chat_id: string | null;
+  matched_at: string | null;
+  place_id: string | null;
+  is_new_match: boolean;
+  other_user: {
+    id: string;
+    name: string | null;
+    photo_url: string | null;
+  };
 };
 export type GetMatchesResponse = { matches: MatchSummary[] };
 
-export function subscribeToChatMessages(
-  chatId: string,
-  onMessage: (message: Message) => void
-): () => Promise<"ok" | "error" | "timed_out"> {
-  if (!chatId) {
-    throw new Error("chatId is required to subscribe to messages.");
-  }
-
-  const channel = supabase
-    .channel(`messages-chat-${chatId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `chat_id=eq.${chatId}`,
-      },
-      (payload) => {
-        const message = payload.new as Message;
-        onMessage(message);
-      }
-    )
-    .subscribe();
-
-  return async () => {
-    const result = await supabase.removeChannel(channel);
-    // Map "timed out" to "timed_out" for type compatibility
-    if (result === "timed out") return "timed_out";
-    return result as "ok" | "error" | "timed_out";
-  };
-}
-
 export async function getChats(): Promise<GetChatsResponse> {
-  const { data, error } = await supabase.functions.invoke<GetChatsResponse>(
-    "get-chats"
-  );
+  const { data, error } = await supabase.functions.invoke<{
+    chats: {
+      chat_id: string;
+      match_id: string;
+      place_id: string | null;
+      chat_created_at?: string | null;
+      other_user_id: string;
+      other_user_name: string | null;
+      other_user_photo_url: string | null;
+      last_message: string | null;
+      last_message_at: string | null;
+      unread_count: number | null;
+    }[];
+  }>("get-chats");
 
   if (error) {
     const message = await extractEdgeErrorMessage(error, "Failed to load chats.");
     throw new Error(message || "Failed to load chats.");
   }
 
-  return data ?? { chats: [] };
+  const chats =
+    data?.chats?.map((c) => ({
+      chat_id: c.chat_id,
+      match_id: c.match_id,
+      place_id: c.place_id ?? null,
+      chat_created_at: c.chat_created_at ?? null,
+      other_user: {
+        id: c.other_user_id,
+        name: c.other_user_name,
+        photo_url: c.other_user_photo_url ?? null,
+      },
+      last_message: c.last_message ?? null,
+      last_message_at: c.last_message_at ?? null,
+      unread_count: c.unread_count ?? 0,
+    })) ?? [];
+
+  return { chats };
 }
 
 export async function getMessages(params: {
@@ -150,7 +151,6 @@ export async function getMatches(): Promise<GetMatchesResponse> {
     "get-matches"
   );
   console.log("getMatches data:", data);
-
   if (error) {
     const message = await extractEdgeErrorMessage(
       error,

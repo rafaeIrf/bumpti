@@ -9,6 +9,21 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
+const USER_PHOTOS_BUCKET = Deno.env.get("USER_PHOTOS_BUCKET") || "user_photos";
+const SIGNED_URL_EXPIRES = 3600;
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars");
+}
+
+const authClient = createClient(supabaseUrl, supabaseAnonKey);
+const serviceClient = supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -32,27 +47,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return new Response(
-        JSON.stringify({
-          error: "config_missing",
-          message: "Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars",
-        }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await authClient.auth.getUser(token);
 
     if (userError || !user?.id) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -61,149 +63,91 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: matches, error: matchesError } = await supabase
-      .from("user_matches")
-      .select("id, user_a, user_b, status, matched_at")
-      .eq("status", "active")
-      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`);
+    // Prefer user-scoped client for RLS; fall back to service role if RLS blocks.
+    const reader = serviceClient ?? userClient;
 
-    if (matchesError) {
-      return new Response(
-        JSON.stringify({
-          error: "matches_fetch_failed",
-          message: matchesError.message,
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
+    const { data: rows, error: viewError } = await reader
+      .from("chat_list")
+      .select(
+        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message, last_message_at, user_a_unread, user_b_unread"
+      )
+      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+      .order("last_message_at", { ascending: false });
 
-    const activeMatches = (matches ?? []).filter(
-      (m) => m.status === "active"
-    );
-
-    if (!activeMatches.length) {
-      return new Response(JSON.stringify({ chats: [] }), {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    const matchIds = activeMatches.map((m) => m.id);
-
-    const { data: chats, error: chatsError } = await supabase
-      .from("chats")
-      .select("id, match_id, created_at")
-      .in("match_id", matchIds);
-
-    if (chatsError) {
+    if (viewError) {
       return new Response(
         JSON.stringify({
           error: "chats_fetch_failed",
-          message: chatsError.message,
+          message: viewError.message,
         }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const chatsByMatch = new Map<string, any>();
-    (chats ?? []).forEach((chat) => {
-      if (chat?.match_id) {
-        chatsByMatch.set(chat.match_id, chat);
-      }
-    });
-
-    const otherUserIds = new Set<string>();
-    const chatEntries: {
-      chat: any;
-      match: any;
-      otherUserId: string;
-    }[] = [];
-
-    activeMatches.forEach((match) => {
-      const chat = chatsByMatch.get(match.id);
-      if (!chat) return;
-      const otherUserId = match.user_a === user.id ? match.user_b : match.user_a;
-      otherUserIds.add(otherUserId);
-      chatEntries.push({ chat, match, otherUserId });
-    });
-
-    if (!chatEntries.length) {
-      return new Response(JSON.stringify({ chats: [] }), {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, name, bio")
-      .in("id", Array.from(otherUserIds));
-
-    if (profilesError) {
-      return new Response(
-        JSON.stringify({
-          error: "profiles_fetch_failed",
-          message: profilesError.message,
-        }),
-        { status: 400, headers: corsHeaders }
+    const signedPhotoMap = new Map<string, string | null>();
+    if (serviceClient) {
+      const photoItems = Array.from(
+        new Set(
+          (rows ?? [])
+            .map((r) => {
+              const isUserA = r.user_a === user.id;
+              const path = isUserA ? r.user_b_photo_url : r.user_a_photo_url;
+              const otherId = isUserA ? r.user_b : r.user_a;
+              return path && otherId ? `${otherId}::${path}` : null;
+            })
+            .filter(Boolean) as string[]
+        )
       );
-    }
 
-    const profilesById = new Map<string, any>();
-    (profiles ?? []).forEach((p) => {
-      if (p?.id) profilesById.set(p.id, p);
-    });
-
-    const chatsWithMessages = await Promise.all(
-      chatEntries.map(async ({ chat, match, otherUserId }) => {
-        const { data: lastMsg, error: lastMsgError } = await supabase
-          .from("messages")
-          .select("id, chat_id, sender_id, content, created_at")
-          .eq("chat_id", chat.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (lastMsgError) {
-          return { error: lastMsgError, chatId: chat.id };
+      for (const item of photoItems) {
+        const [otherId, path] = item.split("::");
+        const { data: signed, error: signedError } = await serviceClient.storage
+          .from(USER_PHOTOS_BUCKET)
+          .createSignedUrl(path, SIGNED_URL_EXPIRES);
+        if (!signedError && signed?.signedUrl) {
+          signedPhotoMap.set(otherId, signed.signedUrl);
+        } else {
+          signedPhotoMap.set(otherId, null);
         }
+      }
+    }
+
+    const chats =
+      rows?.map((row: any) => {
+        const isUserA = row.user_a === user.id;
+        const otherUserId = isUserA ? row.user_b : row.user_a;
+        const otherUserName = isUserA ? row.user_b_name : row.user_a_name;
+        const otherPhotoPath = isUserA
+          ? row.user_b_photo_url
+          : row.user_a_photo_url;
+        const unread = isUserA ? row.user_a_unread : row.user_b_unread;
+
+        const otherPhotoUrl =
+          otherPhotoPath == null
+            ? null
+            : signedPhotoMap.get(otherUserId) ?? null;
 
         return {
-          chat_id: chat.id,
-          match_id: match.id,
-          other_user: profilesById.get(otherUserId) ?? {
-            id: otherUserId,
-            name: null,
-            bio: null,
-          },
-          last_message: lastMsg ?? null,
-          created_at: chat.created_at,
-          matched_at: match.matched_at ?? null,
+          chat_id: row.chat_id,
+          match_id: row.match_id,
+          place_id: row.place_id ?? null,
+          other_user_id: otherUserId,
+          other_user_name: otherUserName,
+          other_user_photo_url: otherPhotoUrl,
+          last_message: row.last_message ?? null,
+          last_message_at: row.last_message_at ?? null,
+          unread_count: unread ?? 0,
+          chat_created_at: row.chat_created_at ?? null,
         };
-      })
-    );
+      }) ?? [];
 
-    const errored = chatsWithMessages.find((c) => (c as any).error);
-    if (errored) {
-      return new Response(
-        JSON.stringify({
-          error: "messages_fetch_failed",
-          message: (errored as any).error.message,
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const sortedChats = (chatsWithMessages as any[]).sort((a, b) => {
-      const aTime = a.last_message?.created_at || a.matched_at || a.created_at;
-      const bTime = b.last_message?.created_at || b.matched_at || b.created_at;
-      if (!aTime && !bTime) return 0;
-      if (!aTime) return 1;
-      if (!bTime) return -1;
+    const sorted = chats.sort((a, b) => {
+      const aTime = a.last_message_at || a.chat_created_at || "";
+      const bTime = b.last_message_at || b.chat_created_at || "";
       return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
 
-    return new Response(JSON.stringify({ chats: sortedChats }), {
+    return new Response(JSON.stringify({ chats: sorted }), {
       status: 200,
       headers: corsHeaders,
     });

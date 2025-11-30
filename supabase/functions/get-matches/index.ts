@@ -9,19 +9,16 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-const SIGNED_URL_EXPIRES = 3600;
 const USER_PHOTOS_BUCKET = Deno.env.get("USER_PHOTOS_BUCKET") || "user_photos";
+const SIGNED_URL_EXPIRES = 3600;
+
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-  throw new Error(
-    "Missing SUPABASE_URL, SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY env vars for get-matches"
-  );
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars");
 }
-
-const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -46,151 +43,107 @@ Deno.serve(async (req) => {
       });
     }
 
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
+    const serviceClient = supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey)
+      : null;
 
     const {
       data: { user },
       error: userError,
-    } = await authClient.auth.getUser();
+    } = await userClient.auth.getUser();
 
     if (userError || !user?.id) {
-      console.error("get-matches auth error:", userError);
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: corsHeaders,
       });
     }
 
-    const { data: matchRows, error: matchError } = await serviceClient
-      .from("user_matches")
-      .select("id, user_a, user_b, status, matched_at")
-      .in("status", ["matched", "active"])
+    const selectClient = serviceClient ?? userClient;
+
+    const { data: rows, error: viewError } = await selectClient
+      .from("match_overview")
+      .select(
+        "match_id, chat_id, matched_at, place_id, user_a, user_b, user_a_name, user_b_name, user_a_photo_url, user_b_photo_url, user_a_opened_at, user_b_opened_at"
+      )
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       .order("matched_at", { ascending: false });
 
-    if (matchError) {
-      console.error("get-matches match lookup error:", matchError);
+    if (viewError) {
       return new Response(
         JSON.stringify({
-          error: "match_lookup_failed",
-          message: matchError.message,
+          error: "matches_fetch_failed",
+          message: viewError.message,
         }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const matches = matchRows ?? [];
-    if (!matches.length) {
-      return new Response(JSON.stringify({ matches: [] }), {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    const otherUserIds = Array.from(
-      new Set(
-        matches
-          .map((m) =>
-            m.user_a === user.id ? m.user_b : m.user_b === user.id ? m.user_a : null
-          )
-          .filter((id): id is string => Boolean(id))
-      )
-    );
-
-    const [{ data: profileRows, error: profileError }, { data: photoRows, error: photoError }] =
-      await Promise.all([
-        serviceClient
-          .from("profiles")
-          .select("id, name")
-          .in("id", otherUserIds),
-        serviceClient
-          .from("profile_photos")
-          .select("user_id, url, position")
-          .in("user_id", otherUserIds)
-          .order("position", { ascending: true }),
-      ]);
-
-    if (profileError) {
-      console.error("get-matches profiles fetch error:", profileError);
-      return new Response(
-        JSON.stringify({
-          error: "profiles_fetch_failed",
-          message: profileError.message,
-        }),
-        { status: 400, headers: corsHeaders }
+    const signedPhotoMap = new Map<string, string | null>();
+    if (serviceClient) {
+      const photoItems = Array.from(
+        new Set(
+          (rows ?? [])
+            .map((r) => {
+              const isUserA = r.user_a === user.id;
+              const path =
+                (isUserA ? r.user_b_photo_url : r.user_a_photo_url) ?? null;
+              const otherId = isUserA ? r.user_b : r.user_a;
+              return path && otherId ? `${otherId}::${path}` : null;
+            })
+            .filter(Boolean) as string[]
+        )
       );
-    }
-
-    if (photoError) {
-      console.error("get-matches photos fetch error:", photoError);
-      return new Response(
-        JSON.stringify({
-          error: "photos_fetch_failed",
-          message: photoError.message,
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const profileMap = new Map<string, { name: string | null }>();
-    (profileRows ?? []).forEach((row) => {
-      if (row?.id) {
-        profileMap.set(row.id, { name: row.name ?? null });
-      }
-    });
-
-    const firstPhotoMap = new Map<string, string | null>();
-    for (const row of photoRows ?? []) {
-      if (!row?.user_id || !row?.url) continue;
-      if (!firstPhotoMap.has(row.user_id)) {
-        firstPhotoMap.set(row.user_id, row.url);
-      }
-    }
-
-    const results = [];
-    for (const m of matches) {
-      const otherUser =
-        m.user_a === user.id ? m.user_b : m.user_b === user.id ? m.user_a : null;
-      if (!otherUser) continue;
-
-      const profile = profileMap.get(otherUser);
-      const fileName = firstPhotoMap.get(otherUser);
-      let photoUrl: string | null = null;
-
-      if (fileName) {
+      for (const item of photoItems) {
+        const [otherId, path] = item.split("::");
         const { data: signed, error: signedError } = await serviceClient.storage
           .from(USER_PHOTOS_BUCKET)
-          .createSignedUrl(fileName, SIGNED_URL_EXPIRES);
+          .createSignedUrl(path, SIGNED_URL_EXPIRES);
         if (!signedError && signed?.signedUrl) {
-          photoUrl = signed.signedUrl;
-        } else if (signedError) {
-          console.error("get-matches signed url error:", signedError);
+          signedPhotoMap.set(otherId, signed.signedUrl);
+        } else {
+          signedPhotoMap.set(otherId, null);
         }
       }
-
-      results.push({
-        match_id: m.id,
-        user_id: otherUser,
-        name: profile?.name ?? null,
-        photo_url: photoUrl,
-        match_created_at: m.matched_at ?? null,
-      });
     }
 
-    results.sort((a, b) => {
-      const aTime = a.match_created_at ? new Date(a.match_created_at).getTime() : 0;
-      const bTime = b.match_created_at ? new Date(b.match_created_at).getTime() : 0;
-      return bTime - aTime;
-    });
+    const matches =
+      rows?.map((row: any) => {
+        const isUserA = row.user_a === user.id;
+        const otherUserId = isUserA ? row.user_b : row.user_a;
+        const otherUserName = isUserA ? row.user_b_name : row.user_a_name;
+        const isNewMatch = isUserA
+          ? row.user_a_opened_at === null
+          : row.user_b_opened_at === null;
+        const photoPath =
+          (isUserA ? row.user_b_photo_url : row.user_a_photo_url) ?? null;
+        const photoUrl =
+          photoPath == null
+            ? null
+            : signedPhotoMap.get(otherUserId) ?? null;
 
-    return new Response(JSON.stringify({ matches: results }), {
+        return {
+          match_id: row.match_id,
+          chat_id: row.chat_id,
+          matched_at: row.matched_at,
+          place_id: row.place_id ?? null,
+          is_new_match: Boolean(isNewMatch),
+          other_user: {
+            id: otherUserId,
+            name: otherUserName,
+            photo_url: photoUrl,
+          },
+        };
+      }) ?? [];
+
+    return new Response(JSON.stringify({ matches }), {
       status: 200,
       headers: corsHeaders,
     });
   } catch (err: any) {
-    console.error("get-matches internal error:", err);
     return new Response(
       JSON.stringify({
         error: "internal_error",
