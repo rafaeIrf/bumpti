@@ -17,7 +17,10 @@ import {
 import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useGetNearbyPlacesQuery } from "@/modules/places/placesApi";
+import {
+  useGetNearbyPlacesQuery,
+  useGetTrendingPlacesQuery,
+} from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
 import { router, useLocalSearchParams } from "expo-router";
@@ -33,6 +36,7 @@ export default function CategoryResultsScreen() {
   const categoryName = params.categoryName as string;
   const placeTypes = params.placeTypes as string;
   const favoritesMode = params.favorites === "true";
+  const trendingMode = params.trending === "true";
   const bottomSheet = useCustomBottomSheet();
 
   // Use cached location hook
@@ -45,8 +49,20 @@ export default function CategoryResultsScreen() {
     .map((t) => PlaceType[t.trim() as keyof typeof PlaceType])
     .filter(Boolean);
 
-  // Use RTK Query hook - only runs when userLocation is available
-  const shouldFetchNearby = !favoritesMode && !!userLocation;
+  // Trending places query
+  const { data: trendingData, isLoading: trendingLoading } =
+    useGetTrendingPlacesQuery(
+      {
+        lat: userLocation?.latitude,
+        lng: userLocation?.longitude,
+      },
+      {
+        skip: !trendingMode,
+      }
+    );
+
+  // Use RTK Query hook - only runs when userLocation is available and not in trending mode
+  const shouldFetchNearby = !favoritesMode && !trendingMode && !!userLocation;
 
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
@@ -57,7 +73,7 @@ export default function CategoryResultsScreen() {
       maxResultCount: 20,
     },
     {
-      skip: !shouldFetchNearby, // skip when favorites or missing location
+      skip: !shouldFetchNearby, // skip when favorites, trending or missing location
     }
   );
 
@@ -66,15 +82,29 @@ export default function CategoryResultsScreen() {
   const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
 
   // Transform API results to PlaceResult format
-  const places: PlaceResult[] = favoritesMode
-    ? favoritePlacesData
-    : placesData?.map((place: any) => ({
+  let places: PlaceResult[] = [];
+  if (trendingMode) {
+    places =
+      trendingData?.places?.map((place: any) => ({
+        id: place.place_id,
+        name: place.name,
+        type: place.types?.[0] || "",
+        distance: place.distance || 0,
+        address: place.address || "",
+        active_users: place.active_users,
+      })) || [];
+  } else if (favoritesMode) {
+    places = favoritePlacesData;
+  } else {
+    places =
+      placesData?.map((place: any) => ({
         id: place.placeId,
         name: place.name,
         type: place.type || "",
         distance: place.distance || 0,
         address: place.formattedAddress || "",
       })) || [];
+  }
 
   const handlePlaceClick = useCallback(
     async (place: PlaceResult) => {
@@ -181,7 +211,7 @@ export default function CategoryResultsScreen() {
         image: "",
         distance: item.distance,
         isFavorite: favoriteIds.has(item.id),
-        activeUsers: 0,
+        activeUsers: (item as any).active_users || 0,
       };
 
       return (
@@ -222,11 +252,16 @@ export default function CategoryResultsScreen() {
     [colors.accent, colors.textSecondary, handleOpenSearch, t]
   );
 
-  const isLoadingState = useMemo(
-    () =>
-      favoritesMode ? favoritePlacesLoading : locationLoading || isLoading,
-    [favoritesMode, favoritePlacesLoading, locationLoading, isLoading]
-  );
+  let loadingState: boolean;
+  if (trendingMode) {
+    loadingState = trendingLoading;
+  } else if (favoritesMode) {
+    loadingState = favoritePlacesLoading;
+  } else {
+    loadingState = locationLoading || isLoading;
+  }
+
+  const isLoadingState = useMemo(() => loadingState, [loadingState]);
 
   return (
     <BaseTemplateScreen
@@ -240,7 +275,7 @@ export default function CategoryResultsScreen() {
             }}
             title={categoryName || ""}
             rightActions={
-              favoritesMode
+              favoritesMode || trendingMode
                 ? []
                 : [
                     {
@@ -267,7 +302,7 @@ export default function CategoryResultsScreen() {
 
           return (
             <>
-              {!favoritesMode && (
+              {!favoritesMode && !trendingMode && (
                 <ScreenSectionHeading
                   titleStyle={{ marginTop: 24 }}
                   title="Populares na sua região"
@@ -280,7 +315,9 @@ export default function CategoryResultsScreen() {
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 ListFooterComponent={
-                  favoritesMode ? undefined : listFooterComponent
+                  favoritesMode || trendingMode
+                    ? undefined
+                    : listFooterComponent
                 }
               />
             </>

@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { getExcludedUserIds } from "../_shared/filter-eligible-users.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,77 +105,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const now = new Date();
-
-    let excludeIds = new Set<string>();
-
-    try {
-      const [
-        interactionsFromMe,
-        interactionsToMe,
-        matchesFromMe,
-        matchesToMe,
-      ] = await Promise.all([
-        client
-          .from("user_interactions")
-          .select("to_user_id, action, action_expires_at")
-          .eq("from_user_id", user.id)
-          .in("to_user_id", candidateIds),
-        client
-          .from("user_interactions")
-          .select("from_user_id, action, action_expires_at")
-          .eq("to_user_id", user.id)
-          .in("from_user_id", candidateIds),
-        client
-          .from("user_matches")
-          .select("user_a, user_b, status")
-          .eq("user_a", user.id)
-          .in("user_b", candidateIds)
-          .in("status", ["matched", "active", "unmatched"]),
-        client
-          .from("user_matches")
-          .select("user_a, user_b, status")
-          .eq("user_b", user.id)
-          .in("user_a", candidateIds)
-          .in("status", ["matched", "active", "unmatched"]),
-    ]);
-
-      if (interactionsFromMe.error) throw interactionsFromMe.error;
-      if (interactionsToMe.error) throw interactionsToMe.error;
-      if (matchesFromMe.error) throw matchesFromMe.error;
-      if (matchesToMe.error) throw matchesToMe.error;
-
-      (interactionsFromMe.data ?? []).forEach((row) => {
-        if (row.action === "dislike") {
-          excludeIds.add(row.to_user_id);
-        }
-        if (
-          row.action === "like" &&
-          row.action_expires_at &&
-          new Date(row.action_expires_at) > now
-        ) {
-          excludeIds.add(row.to_user_id);
-        }
-      });
-
-      (interactionsToMe.data ?? []).forEach((row) => {
-        const candidateId = row.from_user_id;
-        if (row.action === "dislike") {
-          excludeIds.add(candidateId);
-        }
-      });
-
-      [...(matchesFromMe.data ?? []), ...(matchesToMe.data ?? [])].forEach(
-        (row) => {
-          const candidateId =
-            row.user_a === user.id ? row.user_b : row.user_a;
-          excludeIds.add(candidateId);
-        }
-      );
-    } catch (filterError) {
-      console.error("get-active-users-at-place filters error:", filterError);
-      excludeIds = new Set<string>();
-    }
+    // Filter out users based on interactions and matches
+    const excludeIds = await getExcludedUserIds(
+      client,
+      user.id,
+      candidateIds
+    );
 
     const filteredRows = (rows ?? []).filter(
       (row) => !excludeIds.has(row.user_id)

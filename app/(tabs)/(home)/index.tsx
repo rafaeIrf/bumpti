@@ -55,7 +55,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.highlighted.description"),
       iconColor: "#FF6B35",
       iconBgColor: "rgba(41, 151, 255, 0.12)",
-      types: ["bar", "night_club"],
+      types: [],
       color: CARD_COLORS.flameOrange,
       illustration: Passion,
     },
@@ -124,6 +124,8 @@ export default function HomeScreen() {
         categoryName: category.title,
         ...(category.id === "favorites"
           ? { favorites: "true" }
+          : category.id === "highlighted"
+          ? { trending: "true" }
           : { placeTypes: category.types.join(",") }),
         isPremium: "false", // TODO: Get from user premium status
       },

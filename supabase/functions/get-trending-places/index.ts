@@ -1,0 +1,222 @@
+/// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { getExcludedUserIds } from "../_shared/filter-eligible-users.ts";
+import { fetchPlacesByIds } from "../_shared/google-places.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return new Response(
+        JSON.stringify({ error: "config_missing" }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    
+    // Service client to bypass RLS for reading presences
+    const serviceSupabase = supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey)
+      : supabase;
+
+    // Verify user authentication
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    // Parse request body for lat/lng
+    let requestBody: { lat?: number; lng?: number } = {};
+    try {
+      requestBody = (await req.json()) ?? {};
+    } catch {
+      // ignore body parse errors
+    }
+
+    const userLat = requestBody.lat ?? 0;
+    const userLng = requestBody.lng ?? 0;
+
+    // Get active presences excluding current user
+    const now = new Date();
+    const nowISO = now.toISOString();
+    
+    // Get active presences excluding current user
+    const { data: presences, error: presencesError } = await serviceSupabase
+      .from("user_presences")
+      .select("place_id, user_id, active, expires_at")
+      .eq("active", true)
+      .neq("user_id", user.id)
+      .gt("expires_at", nowISO);
+
+    if (presencesError) {
+      console.error("Error fetching presences:", presencesError);
+      return new Response(
+        JSON.stringify({ error: "fetch_failed", message: presencesError.message }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    if (!presences || presences.length === 0) {
+      // Fallback: Get places from recent presences (last 7 days) - including current user for trending suggestion
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentPresences } = await serviceSupabase
+        .from("user_presences")
+        .select("place_id")
+        .gte("entered_at", sevenDaysAgo);
+      
+      if (!recentPresences || recentPresences.length === 0) {
+        return new Response(
+          JSON.stringify({ places: [] }),
+          { status: 200, headers: corsHeaders }
+        );
+      }
+      
+      // Count by place_id for popular places
+      const recentPlaceCountMap = new Map<string, number>();
+      recentPresences.forEach((p) => {
+        const count = recentPlaceCountMap.get(p.place_id) || 0;
+        recentPlaceCountMap.set(p.place_id, count + 1);
+      });
+      
+      const topRecentPlaces = Array.from(recentPlaceCountMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+      
+      const placeIds = topRecentPlaces.map(([placeId]) => placeId);
+      const placesData = await fetchPlacesByIds({
+        placeIds,
+        lat: userLat,
+        lng: userLng,
+      });
+      
+      const placesWithZeroActiveUsers = placesData.map((place) => ({
+        place_id: place.placeId,
+        active_users: 0, // No active users right now
+        name: place.name,
+        address: place.formattedAddress || "",
+        distance: place.distance,
+        type: place.type,
+        types: place.types,
+      }));
+      
+      return new Response(
+        JSON.stringify({ places: placesWithZeroActiveUsers }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // Get all candidate user IDs
+    const candidateIds = Array.from(
+      new Set(presences.map((p) => p.user_id).filter(Boolean))
+    );
+
+    // Fetch interactions and matches to exclude users
+    const excludeIds = await getExcludedUserIds(
+      serviceSupabase,
+      user.id,
+      candidateIds
+    );
+
+    // Filter presences by excluded users
+    const filteredPresences = presences.filter(
+      (p) => !excludeIds.has(p.user_id)
+    );
+
+    // Group by place_id and count active users
+    const placeCountMap = new Map<string, number>();
+    filteredPresences.forEach((p) => {
+      const count = placeCountMap.get(p.place_id) || 0;
+      placeCountMap.set(p.place_id, count + 1);
+    });
+
+    // Sort by count descending and take top 10
+    const topPlaces = Array.from(placeCountMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    if (topPlaces.length === 0) {
+      return new Response(
+        JSON.stringify({ places: [] }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // Fetch place details using shared method
+    const placeIds = topPlaces.map(([placeId]) => placeId);
+    const placesData = await fetchPlacesByIds({
+      placeIds,
+      lat: userLat,
+      lng: userLng,
+    });
+
+    // Combine with active_users count
+    const placesWithActiveUsers = placesData.map((place) => {
+      const activeCount = placeCountMap.get(place.placeId) || 0;
+      return {
+        place_id: place.placeId,
+        active_users: activeCount,
+        name: place.name,
+        address: place.formattedAddress || "",
+        distance: place.distance,
+        type: place.type,
+        types: place.types,
+      };
+    });
+
+    return new Response(
+      JSON.stringify({ places: placesWithActiveUsers }),
+      { status: 200, headers: corsHeaders }
+    );
+  } catch (err: any) {
+    console.error("Internal error:", err);
+    return new Response(
+      JSON.stringify({
+        error: "internal_error",
+        message: err?.message ?? "Unexpected error",
+      }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+});

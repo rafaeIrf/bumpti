@@ -56,6 +56,31 @@ export async function getNearbyPlaces(
   return data?.places || [];
 }
 
+export async function getTrendingPlaces(
+  latitude?: number,
+  longitude?: number
+): Promise<{
+  places: (Place & { active_users: number })[];
+}> {
+  const { data, error } = await supabase.functions.invoke<{
+    places: (Place & { active_users: number })[];
+  }>("get-trending-places", {
+    body: {
+      ...(latitude != null && { lat: latitude }),
+      ...(longitude != null && { lng: longitude }),
+    },
+  });
+  
+  if (error) {
+    console.error("Failed to fetch trending places (edge):", error);
+    return { places: [] };
+  }
+
+  return {
+    places: data?.places || [],
+  };
+}
+
 export async function getFavoritePlaces(
   latitude?: number,
   longitude?: number
