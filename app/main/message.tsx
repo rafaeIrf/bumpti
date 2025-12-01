@@ -60,6 +60,9 @@ export default function ChatMessageScreen() {
     chatId ?? "",
     {
       skip: !chatId,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
     }
   );
   const [sendMessage] = useSendMessageMutation();

@@ -2,7 +2,9 @@ CREATE OR REPLACE VIEW chat_list AS
 WITH last_msg AS (
   SELECT DISTINCT ON (chat_id)
     chat_id,
-    content AS last_message,
+    content_enc AS last_message_enc,
+    content_iv AS last_message_iv,
+    content_tag AS last_message_tag,
     created_at AS last_message_at
   FROM messages
   ORDER BY chat_id, created_at DESC
@@ -49,8 +51,10 @@ SELECT
     LIMIT 1
   ) AS user_b_photo_url,
 
-  -- Last message
-  lm.last_message,
+  -- Last message (encrypted)
+  lm.last_message_enc,
+  lm.last_message_iv,
+  lm.last_message_tag,
   lm.last_message_at,
 
   -- Unread count
@@ -64,4 +68,5 @@ JOIN profiles pb ON pb.id = m.user_b
 LEFT JOIN last_msg lm ON lm.chat_id = c.id
 LEFT JOIN unread u ON u.chat_id = c.id
 
-WHERE m.status = 'active' AND c.first_message_at IS NOT NULL;
+WHERE m.status = 'active'
+  AND c.first_message_at IS NOT NULL;

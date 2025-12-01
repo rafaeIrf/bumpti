@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { encryptMessage, getEncryptionKey } from "../_shared/encryption.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,14 +155,41 @@ Deno.serve(async (req) => {
       chatId = newChat.id;
     }
 
+    // Get encryption key from secrets
+    const encryptionKey = await getEncryptionKey();
+    if (!encryptionKey) {
+      return new Response(
+        JSON.stringify({
+          error: "encryption_failed",
+          message: "Unable to retrieve encryption key",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Encrypt the message content
+    const encrypted = await encryptMessage(content, encryptionKey);
+    if (!encrypted) {
+      return new Response(
+        JSON.stringify({
+          error: "encryption_failed",
+          message: "Unable to encrypt message",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Save encrypted message to database
     const { data: message, error: messageError } = await supabase
       .from("messages")
       .insert({
         chat_id: chatId,
         sender_id: user.id,
-        content,
+        content_enc: encrypted.ciphertext,
+        content_iv: encrypted.iv,
+        content_tag: encrypted.tag,
       })
-      .select("id, chat_id, sender_id, content, created_at")
+      .select("id, chat_id, sender_id, created_at")
       .single();
 
     if (messageError || !message) {
@@ -178,7 +206,14 @@ Deno.serve(async (req) => {
       JSON.stringify({
         status: "sent",
         chat_id: chatId,
-        message,
+        message_id: message.id,
+        message: {
+          id: message.id,
+          chat_id: message.chat_id,
+          sender_id: message.sender_id,
+          content: content,
+          created_at: message.created_at,
+        },
       }),
       { status: 200, headers: corsHeaders }
     );
