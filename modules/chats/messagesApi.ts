@@ -204,10 +204,11 @@ export function attachChatRealtime(chatId: string, dispatch: any, userId?: strin
     console.log("[Realtime] New message from other user, fetching decrypted content");
     
     try {
-      const result = await dispatch(
+      const promise = dispatch(
         messagesApi.endpoints.getMessages.initiate(chatId, { forceRefetch: true })
       );
-      result.unsubscribe();
+      await promise;
+      promise.unsubscribe();
     } catch (error) {
       console.error("[Realtime] Failed to fetch new message:", error);
     }
