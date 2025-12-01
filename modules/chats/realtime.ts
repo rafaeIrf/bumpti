@@ -23,6 +23,13 @@ export function subscribeToMatchOverview(
     )
     .on(
       "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "chats" },
+      (payload: RealtimePostgresUpdatePayload<Message>) => {
+        onChange({ type: "refetch" })
+      }
+    )
+    .on(
+      "postgres_changes",
       {
         event: "UPDATE",
         schema: "public",
@@ -51,6 +58,7 @@ export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => v
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "messages" },
       (payload: RealtimePostgresInsertPayload<Message>) => {
+        // TODO: Verificar se é disparado quando outros usuarios trocam mensagens
         onUpdate({ type: "message", message: payload.new });
       }
     )
@@ -62,6 +70,7 @@ export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => v
         table: "messages",
       },
       (payload: RealtimePostgresUpdatePayload<Message>) => {
+        // TODO: Verificar se é disparado quando outros usuarios trocam mensagens
         onUpdate({ type: "message", message: payload.new });
       }
     )

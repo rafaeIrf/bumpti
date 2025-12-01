@@ -64,5 +64,4 @@ JOIN profiles pb ON pb.id = m.user_b
 LEFT JOIN last_msg lm ON lm.chat_id = c.id
 LEFT JOIN unread u ON u.chat_id = c.id
 
-WHERE m.status = 'active' AND lm.last_message IS NOT NULL;
-;
+WHERE m.status = 'active' AND c.first_message_at IS NOT NULL;

@@ -34,4 +34,5 @@ FROM user_matches m
 JOIN chats c ON c.match_id = m.id
 JOIN profiles pa ON pa.id = m.user_a
 JOIN profiles pb ON pb.id = m.user_b
-WHERE m.status = 'active';
+WHERE m.status = 'active' AND c.first_message_at IS NULL;
+;
