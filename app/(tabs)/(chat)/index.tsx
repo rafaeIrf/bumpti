@@ -1,9 +1,12 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ChatListItem } from "@/components/chat/chat-list-item";
+import { MatchAvatar } from "@/components/chat/match-avatar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { updateMatch } from "@/modules/chats/api";
 import {
   ChatSummary,
   MatchSummary,
@@ -11,26 +14,9 @@ import {
   useGetMatchesQuery,
 } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useCallback } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
-
-type ChatListItemProps = {
-  chat: ChatSummary;
-  onPress: () => void;
-};
-
-type MatchAvatarProps = {
-  match: MatchSummary;
-  onPress: () => void;
-};
+import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 
 export default function ChatScreen() {
   const colors = useThemeColors();
@@ -44,6 +30,12 @@ export default function ChatScreen() {
       <MatchAvatar
         match={item}
         onPress={() => {
+          if (item.is_new_match) {
+            updateMatch({
+              matchId: item.match_id,
+              markOpened: true,
+            });
+          }
           const chatId =
             item.chat_id ??
             chats.find((c) => c.match_id === item.match_id)?.chat_id ??
@@ -52,6 +44,7 @@ export default function ChatScreen() {
           router.push({
             pathname: "/main/message",
             params: {
+              matchId: item.match_id,
               chatId,
               otherUserId: item.other_user.id,
               name: item.other_user.name ?? undefined,
@@ -73,11 +66,13 @@ export default function ChatScreen() {
           router.push({
             pathname: "/main/message",
             params: {
+              matchId: item.match_id,
               chatId: item.chat_id,
               otherUserId: item.other_user?.id,
               name: item.other_user?.name ?? undefined,
               photoUrl: item.other_user?.photo_url ?? undefined,
               matchPlace: item.place_id ?? undefined,
+              unreadMessages: item.unread_count ?? undefined,
             },
           })
         }
@@ -109,11 +104,6 @@ export default function ChatScreen() {
                   renderItem={renderMatchItem}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{
-                    paddingHorizontal: spacing.md,
-                    paddingTop: spacing.md,
-                    paddingBottom: spacing.sm,
-                  }}
                   ItemSeparatorComponent={() => (
                     <View style={{ width: spacing.sm }} />
                   )}
@@ -122,11 +112,6 @@ export default function ChatScreen() {
             </View>
           }
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.md,
-            flexGrow: 1,
-          }}
           ListEmptyComponent={
             !loadingChats && !loadingMatches ? (
               <View style={[styles.emptyState, { padding: spacing.lg }]}>
@@ -156,192 +141,14 @@ export default function ChatScreen() {
   );
 }
 
-function ChatListItem({ chat, onPress }: ChatListItemProps) {
-  const colors = useThemeColors();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.chatCard,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          padding: spacing.md,
-        },
-      ]}
-    >
-      <View style={styles.chatRow}>
-        <UserAvatar
-          name={chat.other_user?.name}
-          photoUrl={chat.other_user?.photo_url ?? undefined}
-        />
-        <View style={styles.chatInfo}>
-          <ThemedText style={[typography.body1, { color: colors.text }]}>
-            {chat.other_user?.name ?? t("screens.chat.title")}
-          </ThemedText>
-          {chat.last_message ? (
-            <ThemedText
-              numberOfLines={1}
-              style={[
-                typography.body,
-                { color: colors.textSecondary, marginTop: spacing.xs },
-              ]}
-            >
-              {chat.last_message}
-            </ThemedText>
-          ) : null}
-        </View>
-        <ThemedText
-          style={[typography.caption, { color: colors.textSecondary }]}
-        >
-          {formatTime(chat.last_message_at || chat.chat_created_at)}
-        </ThemedText>
-      </View>
-    </Pressable>
-  );
-}
-
-function MatchAvatar({ match, onPress }: MatchAvatarProps) {
-  const colors = useThemeColors();
-  const initial = match.other_user?.name?.trim()?.[0]?.toUpperCase() ?? "?";
-  return (
-    <Pressable
-      style={{ alignItems: "center" }}
-      accessibilityLabel={match.other_user?.name ?? "Match"}
-      onPress={onPress}
-    >
-      <View
-        style={[
-          styles.matchAvatar,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        {match.other_user?.photo_url ? (
-          <Image
-            source={{ uri: match.other_user.photo_url }}
-            style={styles.matchAvatarImage}
-            contentFit="cover"
-          />
-        ) : (
-          <ThemedText style={[typography.body1, { color: colors.text }]}>
-            {initial}
-          </ThemedText>
-        )}
-      </View>
-      <ThemedText
-        numberOfLines={1}
-        style={[
-          typography.caption,
-          {
-            color: colors.text,
-            marginTop: spacing.xs,
-            maxWidth: 64,
-          },
-        ]}
-      >
-        {match.other_user?.name ?? t("screens.chat.title")}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
-function UserAvatar({
-  name,
-  photoUrl,
-}: {
-  name?: string | null;
-  photoUrl?: string | null;
-}) {
-  const colors = useThemeColors();
-  const initial = name?.trim()?.[0]?.toUpperCase() ?? "?";
-  return (
-    <View
-      style={[
-        styles.avatarWrapper,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      {photoUrl ? (
-        <Image
-          source={{ uri: photoUrl }}
-          style={styles.avatarImage}
-          contentFit="cover"
-        />
-      ) : (
-        <ThemedText style={[typography.body1, { color: colors.text }]}>
-          {initial}
-        </ThemedText>
-      )}
-    </View>
-  );
-}
-
-function formatTime(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes < 1) return t("screens.chat.time.now");
-  if (diffMinutes < 60)
-    return t("screens.chat.time.minutes", { count: diffMinutes });
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return t("screens.chat.time.hours", { count: diffHours });
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return t("screens.chat.time.yesterday");
-  return date.toLocaleDateString("pt-BR");
-}
-
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  chatCard: {
-    borderWidth: 1,
-    borderRadius: spacing.lg,
-  },
-  chatRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chatInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  avatarWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
   },
   loader: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  matchAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  matchAvatarImage: {
-    width: "100%",
-    height: "100%",
   },
   emptyState: {
     alignItems: "center",

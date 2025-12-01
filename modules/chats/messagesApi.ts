@@ -5,11 +5,13 @@ import {
   sendMessage as sendMessageEdge,
 } from "@/modules/chats/api";
 import {
+  ChatListChange,
   subscribeToChatList,
   subscribeToChatMessages,
   subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getCurrentUserId } from "@/modules/store/selectors/profile";
 
 export type ChatMessage = {
   id: string;
@@ -58,7 +60,6 @@ export const messagesApi = createApi({
       queryFn: async () => {
         try {
           const { chats } = await fetchChats();
-          console.log("Fetched chats:", chats);
           return {
             data: chats ?? [],
           };
@@ -78,6 +79,7 @@ export const messagesApi = createApi({
       queryFn: async () => {
         try {
           const { matches } = await fetchMatches();
+          console.log("Fetched matches:", matches);
           return { data: matches ?? [] };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
@@ -95,7 +97,6 @@ export const messagesApi = createApi({
     getMessages: builder.query<ChatMessage[], string>({
       queryFn: async (chatId) => {
         try {
-          console.log("Fetching messages for chatId:", chatId);
           const data = await fetchMessages({ chatId });
           const messages =
             data.messages?.map((m) => ({ ...m, status: "sent" as const })) ??
@@ -109,9 +110,9 @@ export const messagesApi = createApi({
         result
           ? [
               ...result.map((m) => ({ type: "Message" as const, id: m.id })),
-              { type: "Message", id: chatId },
+              { type: "Message", id: chatId }, { type: "Message", id: "LIST" },
             ]
-          : [{ type: "Message", id: chatId }],
+          : [{ type: "Message", id: chatId }, { type: "Message", id: "LIST" }],
     }),
 
     sendMessage: builder.mutation<
@@ -207,11 +208,11 @@ export function attachChatRealtime(chatId: string, dispatch: any, userId?: strin
       messagesApi.util.updateQueryData("getChats", undefined, (draft) => {
         const chat = draft.find((c) => c.chat_id === chatId);
         if (chat) {
-          chat.last_message = { ...message, status: "sent" };
+          chat.last_message = message.content;
         }
         draft.sort((a, b) => {
-          const aTime = a.last_message?.created_at || "";
-          const bTime = b.last_message?.created_at || "";
+          const aTime = a.last_message_at || "";
+          const bTime = b.last_message_at || "";
           return new Date(bTime).getTime() - new Date(aTime).getTime();
         });
       })
@@ -223,19 +224,31 @@ export function attachChatRealtime(chatId: string, dispatch: any, userId?: strin
 
 export function attachMatchOverviewRealtime(dispatch: any) {
   const channel = subscribeToMatchOverview(() => {
-    console.log("Match overview update received, invalidating cache");
     dispatch(messagesApi.util.invalidateTags([{ type: "Match", id: "LIST" }]));
   });
   return channel;
 }
 
 export function attachChatListRealtime(dispatch: any) {
-  const channel = subscribeToChatList(() => {
-    console.log("Chat list update received, invalidating cache");
+  const channel = subscribeToChatList((event: ChatListChange) => {
+    const userId = getCurrentUserId();
+
+    if (event.type === "message") {
+      if (event?.message?.sender_id !== userId) {
+        dispatch(
+          messagesApi.util.invalidateTags([
+            { type: "Message", id: event.message.chat_id },
+          ])
+        );
+      }
+    }
+
+    dispatch(messagesApi.util.invalidateTags([{ type: "Chat", id: "LIST" }]));
     dispatch(
-      messagesApi.util.invalidateTags([
-        { type: "Chat", id: "LIST" },
-      ])
+      messagesApi.endpoints.getChats.initiate(undefined, {
+        forceRefetch: true,
+        subscribe: false,
+      })
     );
   });
   return channel;

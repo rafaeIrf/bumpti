@@ -1,10 +1,11 @@
 import { Message } from "@/modules/chats/api";
 import { supabase } from "@/modules/supabase/client";
+import type { RealtimePostgresInsertPayload, RealtimePostgresUpdatePayload } from "@supabase/supabase-js";
 
 export type MatchOverviewChange = { type: "refetch" };
-export type ChatListChange =
-  | { type: "refetch" }
-  | { type: "message"; message: Message };
+export type ChatListMessageEvent = { type: "message"; message: Message };
+export type ChatListRefetchEvent = { type: "refetch" };
+export type ChatListChange = ChatListMessageEvent | ChatListRefetchEvent;
 
 /**
  * Listen to inserts on user_matches and messages.
@@ -22,8 +23,17 @@ export function subscribeToMatchOverview(
     )
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages" },
-      () => onChange({ type: "refetch" })
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "user_matches",
+      },
+      (payload) => {
+        const newMatch = payload.new
+        if (newMatch.status === "unmatched" || newMatch.user_a_opened_at !== null || newMatch.user_b_opened_at !== null) {
+          onChange({ type: "refetch" });
+        }
+      }
     )
     .subscribe();
 
@@ -34,13 +44,42 @@ export function subscribeToMatchOverview(
  * Listen to inserts on messages to refresh chat list.
  * RLS filters messages for the authenticated user.
  */
-export function subscribeToChatList(onUpdate: (event: ChatListChange) => void) {
+export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => void) {
   const channel = supabase
     .channel(`chat-list-${Date.now()}`)
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "messages" },
-      (payload) => onUpdate({ type: "message", message: payload.new as Message })
+      (payload: RealtimePostgresInsertPayload<Message>) => {
+        onUpdate({ type: "message", message: payload.new });
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "messages",
+      },
+      (payload: RealtimePostgresUpdatePayload<Message>) => {
+        onUpdate({ type: "message", message: payload.new });
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "user_matches",
+      },
+      (payload) => {
+        const newMatch = payload.new;
+        if (
+          newMatch?.status === "unmatched"
+        ) {
+          onUpdate({ type: "refetch" } as any);
+        }
+      }
     )
     .subscribe();
 
@@ -69,9 +108,8 @@ export function subscribeToChatMessages(
         table: "messages",
         filter: `chat_id=eq.${chatId}`,
       },
-      (payload) => {
-        const message = payload.new as Message;
-        onMessage(message);
+      (payload: RealtimePostgresInsertPayload<Message>) => {
+        onMessage(payload.new);
       }
     )
     .subscribe();

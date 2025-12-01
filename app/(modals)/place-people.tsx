@@ -115,7 +115,11 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
-    interactUser({ toUserId: profile.user_id, action: "like", placeId: place.id })
+    interactUser({
+      toUserId: profile.user_id,
+      action: "like",
+      placeId: place.id,
+    })
       .then((response) => {
         console.log("Liked profile:", profile.name, response);
       })
@@ -125,7 +129,11 @@ export default function PlacePeopleScreen() {
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
-    interactUser({ toUserId: profile.user_id, action: "dislike", placeId: place.id })
+    interactUser({
+      toUserId: profile.user_id,
+      action: "dislike",
+      placeId: place.id,
+    })
       .then((response) => {
         console.log("Disliked profile:", profile.name, response);
       })
@@ -294,6 +302,7 @@ export default function PlacePeopleScreen() {
   if (availableProfiles.length === 0) {
     return (
       <BaseTemplateScreen
+        isModal
         TopHeader={
           <ScreenToolbar
             leftAction={{
