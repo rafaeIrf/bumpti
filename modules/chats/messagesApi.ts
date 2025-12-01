@@ -5,12 +5,13 @@ import {
   sendMessage as sendMessageEdge,
 } from "@/modules/chats/api";
 import {
-  ChatListMessageEvent,
+  ChatListChange,
   subscribeToChatList,
   subscribeToChatMessages,
-  subscribeToMatchOverview
+  subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getCurrentUserId } from "@/modules/store/selectors/profile";
 
 export type ChatMessage = {
   id: string;
@@ -223,23 +224,31 @@ export function attachChatRealtime(chatId: string, dispatch: any, userId?: strin
 
 export function attachMatchOverviewRealtime(dispatch: any) {
   const channel = subscribeToMatchOverview(() => {
-    console.log("AAAA")
     dispatch(messagesApi.util.invalidateTags([{ type: "Match", id: "LIST" }]));
   });
   return channel;
 }
 
 export function attachChatListRealtime(dispatch: any) {
-  const channel = subscribeToChatList((event: ChatListMessageEvent) => {
+  const channel = subscribeToChatList((event: ChatListChange) => {
+    const userId = getCurrentUserId();
+
+    if (event.type === "message") {
+      if (event?.message?.sender_id !== userId) {
+        dispatch(
+          messagesApi.util.invalidateTags([
+            { type: "Message", id: event.message.chat_id },
+          ])
+        );
+      }
+    }
+
+    dispatch(messagesApi.util.invalidateTags([{ type: "Chat", id: "LIST" }]));
     dispatch(
-      messagesApi.util.invalidateTags([
-        { type: "Message", id: event.message.chat_id },
-      ])
-    );
-    dispatch(
-      messagesApi.util.invalidateTags([
-        { type: "Chat", id: "LIST" },
-      ])
+      messagesApi.endpoints.getChats.initiate(undefined, {
+        forceRefetch: true,
+        subscribe: false,
+      })
     );
   });
   return channel;

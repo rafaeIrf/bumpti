@@ -5,7 +5,18 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "popular": "Popular",
+    "search": "Buscar",
+    "fromYou": "de ti",
+    "onePerson": "1 persona ahora",
+    "peopleNow": "{{count}} personas ahora",
+    "error": "Error",
+    "min": "mínimo",
+    "max": "máximo"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."
@@ -372,18 +383,15 @@
       "online": "En línea",
       "connectedHere": "Se conectaron aquí",
       "moreActions": "Más acciones"
+    },
+    "report": {
+      "title": "Enviar reporte",
+      "description": "Nuestro equipo revisará tu reporte. El usuario no sabrá que lo reportaste.",
+      "detailsLabel": "Detalles (opcional, pero recomendado)",
+      "placeholder": "Describe lo que pasó...",
+      "submit": "Enviar reporte",
+      "counter": "{{count}}/500"
     }
-  },
-  "common": {
-    "back": "Volver",
-    "popular": "Popular",
-    "search": "Buscar",
-    "fromYou": "de ti",
-    "onePerson": "1 persona ahora",
-    "peopleNow": "{{count}} personas ahora",
-    "error": "Error",
-    "min": "mínima",
-    "max": "máxima"
   },
   "venue": {
     "connection": {
@@ -491,6 +499,37 @@
     "verified": {
       "title": "Perfiles verificados",
       "description": "Mostrar solo perfiles verificados"
+    }
+  },
+  "bottomSheets": {
+    "chatActions": {
+      "unmatchTitle": "Deshacer conexión",
+      "unmatchDescription": "Elimina el match. Ya no podrán enviarse mensajes.",
+      "blockTitle": "Bloquear a {{name}}",
+      "blockDescription": "La persona bloqueada ya no podrá ver tu perfil ni enviar mensajes.",
+      "reportTitle": "Reportar a {{name}}",
+      "reportDescription": "Usa esta opción para reportar comportamiento inapropiado o sospechoso."
+    },
+    "report": {
+      "title": "¿Por qué quieres reportar a {{name}}?",
+      "subtitle": "Selecciona el motivo del reporte",
+      "reasons": {
+        "inappropriate": "Comportamiento inapropiado",
+        "harassment": "Acoso o lenguaje ofensivo",
+        "fake": "Cuenta falsa",
+        "inappropriate_content": "Contenido inapropiado",
+        "other": "Otro motivo"
+      }
+    }
+  },
+  "modals": {
+    "chatActions": {
+      "unmatchTitle": "¿Deshacer conexión?",
+      "unmatchDescription": "Si deshaces la conexión, perderán el match y ya no podrán enviar mensajes.",
+      "unmatchConfirm": "Deshacer conexión",
+      "blockTitle": "¿Bloquear a {{name}}?",
+      "blockDescription": "{{name}} ya no podrá ver tu perfil, enviar mensajes ni interactuar contigo en Bumpti.",
+      "blockConfirm": "Bloquear a {{name}}"
     }
   }
 }

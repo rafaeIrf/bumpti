@@ -1,6 +1,6 @@
 import { Message } from "@/modules/chats/api";
 import { supabase } from "@/modules/supabase/client";
-import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
+import type { RealtimePostgresInsertPayload, RealtimePostgresUpdatePayload } from "@supabase/supabase-js";
 
 export type MatchOverviewChange = { type: "refetch" };
 export type ChatListMessageEvent = { type: "message"; message: Message };
@@ -23,10 +23,16 @@ export function subscribeToMatchOverview(
     )
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages" },
-      () => {
-        console.log("Match overview change: message inserted");
-        onChange({ type: "refetch" });
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "user_matches",
+      },
+      (payload) => {
+        const newMatch = payload.new
+        if (newMatch.status === "unmatched" || newMatch.user_a_opened_at !== null || newMatch.user_b_opened_at !== null) {
+          onChange({ type: "refetch" });
+        }
       }
     )
     .subscribe();
@@ -46,6 +52,33 @@ export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => v
       { event: "INSERT", schema: "public", table: "messages" },
       (payload: RealtimePostgresInsertPayload<Message>) => {
         onUpdate({ type: "message", message: payload.new });
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "messages",
+      },
+      (payload: RealtimePostgresUpdatePayload<Message>) => {
+        onUpdate({ type: "message", message: payload.new });
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "user_matches",
+      },
+      (payload) => {
+        const newMatch = payload.new;
+        if (
+          newMatch?.status === "unmatched"
+        ) {
+          onUpdate({ type: "refetch" } as any);
+        }
       }
     )
     .subscribe();

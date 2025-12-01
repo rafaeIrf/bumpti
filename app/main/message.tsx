@@ -1,10 +1,14 @@
 import { ArrowLeftIcon, EllipsisVerticalIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
+import { ReportReasonsBottomSheet } from "@/components/report-reasons-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { markMessagesRead, updateMatch } from "@/modules/chats/api";
 import {
   ChatMessage,
   attachChatRealtime,
@@ -31,18 +35,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = {
   chatId?: string;
+  matchId?: string;
   name?: string;
   photoUrl?: string;
   matchPlace?: string;
   otherUserId?: string;
+  unreadMessages?: string;
 };
 
 export default function ChatMessageScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams<Params>();
+  const bottomSheet = useCustomBottomSheet();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const chatId = params.chatId;
+  const matchId = params.matchId;
+  const unreadMessages = params.unreadMessages;
   const otherUserId = params.otherUserId;
   const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
@@ -83,6 +92,17 @@ export default function ChatMessageScreen() {
     });
   }, [messages.length]);
 
+  useEffect(() => {
+    console.log("unreadMessages", unreadMessages);
+    if (!chatId || loading || messages.length === 0 || unreadMessages === "0")
+      return;
+    console.log("chamou");
+    // Mark messages as read after they are rendered
+    requestAnimationFrame(() => {
+      markMessagesRead({ chatId }).catch(() => {});
+    });
+  }, [chatId, unreadMessages, loading, messages.length]);
+
   const handleSend = useCallback(async () => {
     if (!chatId || !otherUserId) return;
     const trimmed = newMessage.trim();
@@ -99,6 +119,63 @@ export default function ChatMessageScreen() {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     }
   }, [chatId, newMessage, otherUserId, sendMessage, userId]);
+
+  const handleUnmatchConfirmed = async () => {
+    if (!matchId || !otherUserId) return;
+
+    updateMatch({
+      matchId,
+      status: "unmatched",
+    });
+    router.back();
+  };
+
+  const openReportReasons = () => {
+    if (!bottomSheet) return;
+    bottomSheet.close();
+    setTimeout(() => {
+      bottomSheet.expand({
+        content: () => (
+          <ReportReasonsBottomSheet
+            userName={params.name ?? t("screens.chat.title")}
+            onSelectReason={(reason) => {
+              bottomSheet.close();
+              router.push({
+                pathname: "/(modals)/report",
+                params: {
+                  reason,
+                  name: params.name ?? "",
+                },
+              });
+            }}
+            onClose={() => bottomSheet.close()}
+          />
+        ),
+      });
+    }, 300);
+  };
+
+  const openActionsBottomSheet = () => {
+    if (!bottomSheet) return;
+    bottomSheet.expand({
+      content: () => (
+        <ChatActionsBottomSheet
+          userName={params.name ?? t("screens.chat.title")}
+          onUnmatch={() => {
+            handleUnmatchConfirmed();
+            bottomSheet.close();
+          }}
+          onBlock={() => {
+            bottomSheet.close();
+          }}
+          onReport={() => {
+            openReportReasons();
+          }}
+          onClose={() => bottomSheet.close()}
+        />
+      ),
+    });
+  };
 
   const handleRetry = useCallback(
     async (message: ChatMessage) => {
@@ -154,7 +231,7 @@ export default function ChatMessageScreen() {
       }
       rightActions={{
         icon: EllipsisVerticalIcon,
-        onClick: () => {},
+        onClick: openActionsBottomSheet,
         ariaLabel: t("screens.chatMessages.moreActions"),
         color: colors.text,
       }}

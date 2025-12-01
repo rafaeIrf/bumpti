@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseAnonKey) {
       return new Response(
@@ -45,14 +46,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    if (!supabaseServiceKey) {
+      return new Response(
+        JSON.stringify({
+          error: "config_missing",
+          message: "Missing SUPABASE_SERVICE_ROLE_KEY env var",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await userClient.auth.getUser();
 
     if (userError || !user?.id) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -72,7 +84,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate chat belongs to user via match relation
-    const { data: chatRow, error: chatError } = await supabase
+    const { data: chatRow, error: chatError } = await userClient
       .from("chats")
       .select("match_id")
       .eq("id", chatId)
@@ -92,9 +104,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: matchRow, error: matchError } = await supabase
+    const { data: matchRow, error: matchError } = await userClient
       .from("user_matches")
-      .select("user_a, user_b")
+      .select("user_a, user_b, user_a_opened_at, user_b_opened_at")
       .eq("id", chatRow.match_id)
       .maybeSingle();
 
@@ -112,7 +124,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: updatedRows, error: updateError } = await supabase
+    // Use service role to ensure update passes RLS after validation
+    const { data: updatedRows, error: updateError } = await serviceClient
       .from("messages")
       .update({ read_at: new Date().toISOString() })
       .eq("chat_id", chatId)
@@ -132,47 +145,8 @@ Deno.serve(async (req) => {
 
     const updatedMessages = Array.isArray(updatedRows) ? updatedRows.length : 0;
 
-    let matchOpened = false;
-    if (matchRow.user_a === user.id) {
-      const { error: openedError, data: openedData } = await supabase
-        .from("user_matches")
-        .update({ user_a_opened_at: new Date().toISOString() })
-        .eq("id", chatRow.match_id)
-        .is("user_a_opened_at", null)
-        .select("id")
-        .maybeSingle();
-      if (openedError) {
-        return new Response(
-          JSON.stringify({
-            error: "match_open_update_failed",
-            message: openedError.message,
-          }),
-          { status: 400, headers: corsHeaders }
-        );
-      }
-      matchOpened = Boolean(openedData?.id);
-    } else if (matchRow.user_b === user.id) {
-      const { error: openedError, data: openedData } = await supabase
-        .from("user_matches")
-        .update({ user_b_opened_at: new Date().toISOString() })
-        .eq("id", chatRow.match_id)
-        .is("user_b_opened_at", null)
-        .select("id")
-        .maybeSingle();
-      if (openedError) {
-        return new Response(
-          JSON.stringify({
-            error: "match_open_update_failed",
-            message: openedError.message,
-          }),
-          { status: 400, headers: corsHeaders }
-        );
-      }
-      matchOpened = Boolean(openedData?.id);
-    }
-
     return new Response(
-      JSON.stringify({ updated_messages: updatedMessages, match_opened: matchOpened }),
+      JSON.stringify({ updated_messages: updatedMessages }),
       {
         status: 200,
         headers: corsHeaders,

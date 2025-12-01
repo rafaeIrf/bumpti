@@ -5,7 +5,18 @@
   "matches": "Chat",
   "profile": "Profile",
   "common": {
-    "retry": "Retry"
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "popular": "Popular",
+    "search": "Search",
+    "fromYou": "from you",
+    "onePerson": "1 person now",
+    "peopleNow": "{{count}} people now",
+    "error": "Error",
+    "min": "minimum",
+    "max": "maximum"
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
@@ -371,18 +382,15 @@
       "online": "Online",
       "connectedHere": "You connected here",
       "moreActions": "More actions"
+    },
+    "report": {
+      "title": "Submit report",
+      "description": "Our team will review your report. The user will not know you reported them.",
+      "detailsLabel": "Details (optional, but recommended)",
+      "placeholder": "Describe what happened...",
+      "submit": "Submit report",
+      "counter": "{{count}}/500"
     }
-  },
-  "common": {
-    "back": "Back",
-    "popular": "Popular",
-    "search": "Search",
-    "fromYou": "from you",
-    "onePerson": "1 person now",
-    "peopleNow": "{{count}} people now",
-    "error": "Error",
-    "min": "minimum",
-    "max": "maximum"
   },
   "venue": {
     "connection": {
@@ -490,6 +498,37 @@
     "verified": {
       "title": "Verified profiles",
       "description": "Show only verified profiles"
+    }
+  },
+  "bottomSheets": {
+    "chatActions": {
+      "unmatchTitle": "Unmatch",
+      "unmatchDescription": "Remove the match. You will no longer be able to message.",
+      "blockTitle": "Block {{name}}",
+      "blockDescription": "The blocked person will no longer see your profile or send messages.",
+      "reportTitle": "Report {{name}}",
+      "reportDescription": "Use this option to report inappropriate or suspicious behavior."
+    },
+    "report": {
+      "title": "Why do you want to report {{name}}?",
+      "subtitle": "Select the reason for your report",
+      "reasons": {
+        "inappropriate": "Inappropriate behavior",
+        "harassment": "Harassment or offensive language",
+        "fake": "Fake account",
+        "inappropriate_content": "Inappropriate content",
+        "other": "Other reason"
+      }
+    }
+  },
+  "modals": {
+    "chatActions": {
+      "unmatchTitle": "Unmatch?",
+      "unmatchDescription": "If you unmatch, you will lose the match and won’t be able to message anymore.",
+      "unmatchConfirm": "Unmatch",
+      "blockTitle": "Block {{name}}?",
+      "blockDescription": "{{name}} will no longer see your profile, send messages, or interact with you on Bumpti.",
+      "blockConfirm": "Block {{name}}"
     }
   }
 }

@@ -5,7 +5,18 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Tentar novamente"
+    "retry": "Tentar novamente",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "popular": "Popular",
+    "search": "Buscar",
+    "fromYou": "de você",
+    "onePerson": "1 pessoa agora",
+    "peopleNow": "{{count}} pessoas agora",
+    "error": "Erro",
+    "min": "mínima",
+    "max": "máxima"
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
@@ -372,18 +383,15 @@
       "online": "Online",
       "connectedHere": "Vocês se conectaram aqui",
       "moreActions": "Mais ações"
+    },
+    "report": {
+      "title": "Enviar denúncia",
+      "description": "A equipe do Bumpti analisará sua denúncia. O usuário não saberá que você reportou.",
+      "detailsLabel": "Detalhes (opcional, mas recomendado)",
+      "placeholder": "Descreva o que aconteceu...",
+      "submit": "Enviar denúncia",
+      "counter": "{{count}}/500"
     }
-  },
-  "common": {
-    "back": "Voltar",
-    "popular": "Popular",
-    "search": "Buscar",
-    "fromYou": "de você",
-    "onePerson": "1 pessoa agora",
-    "peopleNow": "{{count}} pessoas agora",
-    "error": "Erro",
-    "min": "mínima",
-    "max": "máxima"
   },
   "venue": {
     "connection": {
@@ -491,6 +499,37 @@
     "verified": {
       "title": "Perfis verificados",
       "description": "Mostrar apenas perfis verificados"
+    }
+  },
+  "bottomSheets": {
+    "chatActions": {
+      "unmatchTitle": "Desfazer conexão",
+      "unmatchDescription": "Remova o match. Vocês deixarão de poder trocar mensagens.",
+      "blockTitle": "Bloquear {{name}}",
+      "blockDescription": "A pessoa bloqueada não poderá mais ver seu perfil ou enviar mensagens.",
+      "reportTitle": "Denunciar {{name}}",
+      "reportDescription": "Use esta opção para reportar comportamento inadequado ou suspeito."
+    },
+    "report": {
+      "title": "Por que você quer denunciar {{name}}?",
+      "subtitle": "Selecione o motivo da denúncia",
+      "reasons": {
+        "inappropriate": "Comportamento inadequado",
+        "harassment": "Assédio ou linguagem ofensiva",
+        "fake": "Conta falsa",
+        "inappropriate_content": "Conteúdo impróprio",
+        "other": "Outro motivo"
+      }
+    }
+  },
+  "modals": {
+    "chatActions": {
+      "unmatchTitle": "Desfazer conexão?",
+      "unmatchDescription": "Se você desfizer a conexão, vocês perderão o match e não poderão mais trocar mensagens.",
+      "unmatchConfirm": "Desfazer conexão",
+      "blockTitle": "Bloquear {{name}}?",
+      "blockDescription": "{{name}} não poderá mais ver seu perfil, enviar mensagens ou interagir com você no Bumpti.",
+      "blockConfirm": "Bloquear {{name}}"
     }
   }
 }
