@@ -13,7 +13,7 @@ import { calculateDistance } from "@/modules/location";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { enterPlace } from "@/modules/presence/api";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -56,11 +56,12 @@ export default function PlaceSearch({
   );
 
   // Use RTK Query lazy query
-  const [triggerSearch, { data: searchData, isFetching }] = useLazySearchPlacesByTextQuery();
+  const [triggerSearch, { data: searchData, isFetching }] =
+    useLazySearchPlacesByTextQuery();
 
   const searchResults: SearchResult[] = useMemo(() => {
     if (!searchData?.places || !userLocation) return [];
-    
+
     return searchData.places.map((p: any) => {
       const distance =
         p.location && userLocation
