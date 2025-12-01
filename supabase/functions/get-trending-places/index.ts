@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { getExcludedUserIds } from "../_shared/filter-eligible-users.ts";
 import { fetchPlacesByIds } from "../_shared/google-places.ts";
 
 const corsHeaders = {
@@ -147,33 +146,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get all candidate user IDs
-    const candidateIds = Array.from(
-      new Set(presences.map((p) => p.user_id).filter(Boolean))
+    // Get unique place_ids from active presences
+    const uniquePlaceIds = Array.from(
+      new Set(presences.map((p) => p.place_id).filter(Boolean))
     );
 
-    // Fetch interactions and matches to exclude users
-    const excludeIds = await getExcludedUserIds(
-      serviceSupabase,
-      user.id,
-      candidateIds
-    );
+    // Call RPC to get available people count per place (filters out viewer, dislikes, unexpired likes)
+    const { data: placeCounts, error: rpcError } = await serviceSupabase
+      .rpc("get_available_people_count", {
+        place_ids: uniquePlaceIds,
+        viewer_id: user.id,
+      });
 
-    // Filter presences by excluded users
-    const filteredPresences = presences.filter(
-      (p) => !excludeIds.has(p.user_id)
-    );
+    if (rpcError) {
+      console.error("RPC error:", rpcError);
+      return new Response(
+        JSON.stringify({ error: "rpc_error", message: rpcError.message }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
-    // Group by place_id and count active users
-    const placeCountMap = new Map<string, number>();
-    filteredPresences.forEach((p) => {
-      const count = placeCountMap.get(p.place_id) || 0;
-      placeCountMap.set(p.place_id, count + 1);
-    });
+    if (!placeCounts || placeCounts.length === 0) {
+      return new Response(
+        JSON.stringify({ places: [] }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
 
-    // Sort by count descending and take top 10
-    const topPlaces = Array.from(placeCountMap.entries())
-      .sort((a, b) => b[1] - a[1])
+    // Sort by people_count descending and take top 10 places with at least 1 person
+    const topPlaces = placeCounts
+      .filter((pc: { place_id: string; people_count: number }) => pc.people_count > 0)
+      .sort((a: { people_count: number }, b: { people_count: number }) => b.people_count - a.people_count)
       .slice(0, 10);
 
     if (topPlaces.length === 0) {
@@ -184,16 +187,21 @@ Deno.serve(async (req) => {
     }
 
     // Fetch place details using shared method
-    const placeIds = topPlaces.map(([placeId]) => placeId);
+    const placeIds = topPlaces.map((pc: { place_id: string }) => pc.place_id);
     const placesData = await fetchPlacesByIds({
       placeIds,
       lat: userLat,
       lng: userLng,
     });
 
-    // Combine with active_users count
+    // Create a map for quick lookup of people_count
+    const countMap = new Map(
+      topPlaces.map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
+    );
+
+    // Combine with active_users count from RPC
     const placesWithActiveUsers = placesData.map((place) => {
-      const activeCount = placeCountMap.get(place.placeId) || 0;
+      const activeCount = countMap.get(place.placeId) || 0;
       return {
         place_id: place.placeId,
         active_users: activeCount,

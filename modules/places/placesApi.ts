@@ -89,7 +89,7 @@ export const placesApi = createApi({
 
     // Search places by text input
     searchPlacesByText: builder.query<
-      { places: Place[] },
+      { places: (Place & { active_users?: number })[] },
       {
         input: string;
         lat: number;
@@ -108,7 +108,7 @@ export const placesApi = createApi({
             sessionToken
           );
 
-          return { data: { places: places as Place[] } };
+          return { data: { places } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }

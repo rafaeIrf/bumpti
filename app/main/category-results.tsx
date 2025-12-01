@@ -103,6 +103,7 @@ export default function CategoryResultsScreen() {
         type: place.type || "",
         distance: place.distance || 0,
         address: place.formattedAddress || "",
+        active_users: place.active_users,
       })) || [];
   }
 

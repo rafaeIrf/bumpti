@@ -1,6 +1,6 @@
+import { useGetFavoritePlacesQuery } from "@/modules/places/placesApi";
 import { useMemo } from "react";
 import { useCachedLocation } from "./use-cached-location";
-import { useGetFavoritePlacesQuery } from "@/modules/places/placesApi";
 
 export interface FavoritePlaceResult {
   id: string;
@@ -31,6 +31,7 @@ export function useFavoritePlacesList(enabled: boolean) {
         type: place.type || "",
         address: place.formattedAddress || place.address || "",
         distance: place.distance || 0,
+        active_users: place.active_users || 0,
       })) || [],
     [data?.places]
   );

@@ -10,6 +10,7 @@ export type Place = {
   distance: number; // in km
   type?: PlaceType | null;
   types?: string[]; // Para autocomplete
+  active_users?: number; // Optional: number of active users currently at the place
 };
 
 export type NearbyPlacesResponse = { places: Place[] };

@@ -7,7 +7,9 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.0
  * - Users the current user disliked
  * - Users the current user liked (and like hasn't expired)
  * - Users who disliked the current user
- * - Users with active or unmatched matches with the current user
+ * - Users with active matches with the current user
+ * 
+ * Note: Users with unmatched status are NOT excluded - they can see each other and match again
  * 
  * @param supabase - Supabase client (should use service role for reading all data)
  * @param userId - Current user ID
@@ -44,13 +46,13 @@ export async function getExcludedUserIds(
         .select("user_a, user_b, status")
         .eq("user_a", userId)
         .in("user_b", candidateIds)
-        .in("status", ["active", "unmatched"]),
+        .eq("status", "active"),
       supabase
         .from("user_matches")
         .select("user_a, user_b, status")
         .eq("user_b", userId)
         .in("user_a", candidateIds)
-        .in("status", ["active", "unmatched"]),
+        .eq("status", "active"),
     ]);
 
     if (interactionsFromMe.error) throw interactionsFromMe.error;
@@ -80,7 +82,7 @@ export async function getExcludedUserIds(
       }
     });
 
-    // Exclude all matched/unmatched users
+    // Exclude users with active matches only (unmatched users can see each other again)
     [...(matchesFromMe.data ?? []), ...(matchesToMe.data ?? [])].forEach(
       (row) => {
         const candidateId = row.user_a === userId ? row.user_b : row.user_a;
