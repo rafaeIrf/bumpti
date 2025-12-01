@@ -10,8 +10,8 @@ import {
   subscribeToChatMessages,
   subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCurrentUserId } from "@/modules/store/selectors/profile";
+import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export type ChatMessage = {
   id: string;
