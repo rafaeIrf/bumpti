@@ -100,10 +100,15 @@ export default function ChatMessageScreen() {
 
   useEffect(() => {
     if (!chatId || !userId) return;
-    console.log('[Realtime] Attaching realtime for chatId:', chatId, 'userId:', userId);
+    console.log(
+      "[Realtime] Attaching realtime for chatId:",
+      chatId,
+      "userId:",
+      userId
+    );
     const unsub = attachChatRealtime(chatId, dispatch, userId);
     return () => {
-      console.log('[Realtime] Detaching realtime for chatId:', chatId);
+      console.log("[Realtime] Detaching realtime for chatId:", chatId);
       unsub?.().catch(() => {});
     };
   }, [chatId, dispatch, userId]);
