@@ -18,7 +18,10 @@
     "peopleNow": "{{count}} people now",
     "error": "Error",
     "min": "minimum",
-    "max": "maximum"
+    "max": "maximum",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago"
   },
   "errors": {
     "generic": "Something went wrong. Please try again."

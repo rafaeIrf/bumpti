@@ -91,7 +91,7 @@ export async function getActiveUsersAtPlace(
         body: { place_id: placeId },
       }
     );
-    console.log("getActiveUsersAtPlace data:", data?.users[0]);
+    console.log("getActiveUsersAtPlace data:", data);
 
     if (error) {
       console.error("get-active-users-at-place (edge) error:", error);

@@ -5,7 +5,7 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Intentar de nuevo",
+    "retry": "Intentar nuevamente",
     "resend": "Reenviar",
     "delete": "Eliminar",
     "cancel": "Cancelar",
@@ -17,8 +17,11 @@
     "onePerson": "1 persona ahora",
     "peopleNow": "{{count}} personas ahora",
     "error": "Error",
-    "min": "mínimo",
-    "max": "máximo"
+    "min": "mínima",
+    "max": "máxima",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "hace {{count}} días"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."

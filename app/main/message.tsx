@@ -3,6 +3,7 @@ import {
   ArrowRightIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
+  MapPinIcon,
   SendHorizontalIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
@@ -58,6 +59,7 @@ type Params = {
   name?: string;
   photoUrl?: string;
   matchPlace?: string;
+  matchedAt?: string;
   otherUserId?: string;
   unreadMessages?: string;
 };
@@ -363,15 +365,33 @@ export default function ChatMessageScreen() {
               </ThemedText>
             )}
           </View>
-          <ThemedText
-            style={[
-              typography.body1,
-              { color: colors.text, marginLeft: spacing.sm },
-            ]}
-            numberOfLines={1}
-          >
-            {params.name ?? t("screens.chat.title")}
-          </ThemedText>
+          <View style={{ flex: 1, marginLeft: spacing.sm }}>
+            <ThemedText
+              style={[typography.body1, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {params.name ?? t("screens.chat.title")}
+            </ThemedText>
+            {messages.length > 0 && params.matchPlace && (
+              <Animated.View entering={FadeInUp.duration(300).delay(200)}>
+                <View style={styles.toolbarPlaceRow}>
+                  <MapPinIcon width={12} height={12} color={colors.accent} />
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      {
+                        color: colors.textSecondary,
+                        marginLeft: spacing.xs / 2,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {params.matchPlace}
+                  </ThemedText>
+                </View>
+              </Animated.View>
+            )}
+          </View>
         </View>
       }
       rightActions={{
@@ -405,21 +425,30 @@ export default function ChatMessageScreen() {
           onEndReachedThreshold={0.5}
           inverted
           keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets
           onScroll={(event) => {
             const offsetY = event.nativeEvent.contentOffset.y;
             setShowScrollToLatest(offsetY > spacing.xxl);
           }}
           scrollEventThrottle={16}
           ListFooterComponent={
-            params.matchPlace ? (
-              <View>
-                <MatchPlaceCard placeName={params.matchPlace} />
-                {isLoadingMore && <LoadingView size="small" />}
-              </View>
-            ) : (
-              <View style={{ height: spacing.md }} />
-            )
+            <View>
+              {messages.length === 0 && params.matchPlace && (
+                <Animated.View
+                  entering={FadeInUp.duration(400)}
+                  exiting={FadeOutDown.duration(500).easing(
+                    Easing.out(Easing.cubic)
+                  )}
+                >
+                  <MatchPlaceCard
+                    placeName={params.matchPlace}
+                    matchedAt={params.matchedAt}
+                    photoUrl={params.photoUrl}
+                  />
+                </Animated.View>
+              )}
+              {isLoadingMore && <LoadingView size="small" />}
+              {messages.length > 0 && <View style={{ height: spacing.md }} />}
+            </View>
           }
           contentContainerStyle={{
             paddingHorizontal: spacing.md,
@@ -701,6 +730,12 @@ const styles = StyleSheet.create({
   toolbarTitle: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+  },
+  toolbarPlaceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs / 2,
   },
   headerInfo: {
     flexDirection: "row",

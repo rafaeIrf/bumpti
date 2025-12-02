@@ -4,51 +4,84 @@ import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { StyleSheet, Text, View } from "react-native";
+import { getRelativeDate } from "@/utils/date";
+import { Image } from "expo-image";
+import { StyleSheet, View } from "react-native";
 
 type MatchPlaceCardProps = {
   placeName: string;
+  matchedAt?: string;
+  photoUrl?: string;
 };
 
-export function MatchPlaceCard({ placeName }: MatchPlaceCardProps) {
+export function MatchPlaceCard({
+  placeName,
+  matchedAt,
+  photoUrl,
+}: MatchPlaceCardProps) {
   const colors = useThemeColors();
+  const relativeDate = getRelativeDate(matchedAt);
 
   return (
     <View style={styles.container}>
-      <ThemedView
-        style={[
-          styles.card,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-          },
-        ]}
-      >
-        <View style={styles.titleRow}>
-          <ThemedText
-            style={[
-              typography.body,
-              {
-                color: colors.text,
-              },
-            ]}
-          >
-            <MapPinIcon width={12} height={12} color={colors.accent} />{" "}
-            <Text>{placeName}</Text>
-          </ThemedText>
-        </View>
+      <ThemedView style={[styles.card]}>
+        {/* Título */}
         <ThemedText
           style={[
-            typography.caption,
+            typography.body,
             {
               color: colors.textSecondary,
               textAlign: "center",
-              marginTop: spacing.xs,
+              marginBottom: spacing.sm,
             },
           ]}
         >
           {t("screens.chatMessages.connectedHere")}
         </ThemedText>
+
+        {/* Local com ícone */}
+        <View style={styles.placeRow}>
+          <MapPinIcon width={16} height={16} color={colors.accent} />
+          <ThemedText
+            style={[
+              typography.body1,
+              {
+                color: colors.text,
+                marginLeft: spacing.xs,
+              },
+            ]}
+          >
+            {placeName}
+          </ThemedText>
+        </View>
+
+        {/* Data */}
+        {relativeDate && (
+          <ThemedText
+            style={[
+              typography.caption,
+              {
+                color: colors.textSecondary,
+                textAlign: "center",
+                marginTop: spacing.xs,
+              },
+            ]}
+          >
+            {relativeDate}
+          </ThemedText>
+        )}
+
+        {/* Foto do usuário */}
+        {photoUrl && (
+          <View style={styles.photoContainer}>
+            <Image
+              source={{ uri: photoUrl }}
+              style={[styles.photo, { borderColor: colors.border }]}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+          </View>
+        )}
       </ThemedView>
     </View>
   );
@@ -61,15 +94,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   card: {
-    borderRadius: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    width: "100%",
-  },
-  titleRow: {
-    flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
+  },
+  placeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoContainer: {
+    marginTop: spacing.md,
+  },
+  photo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
   },
 });

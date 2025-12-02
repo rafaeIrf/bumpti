@@ -60,7 +60,7 @@ export default function PlacePeopleScreen() {
   const [availableProfiles, setAvailableProfiles] = useState<
     ActiveUserAtPlace[]
   >([]);
-  
+
   // Get interact mutation
   const [interactUser] = useInteractUserMutation();
 

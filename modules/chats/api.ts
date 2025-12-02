@@ -13,6 +13,8 @@ export type ChatSummary = {
   chat_id: string;
   match_id: string;
   place_id: string | null;
+  place_name: string | null;
+  matched_at: string | null;
   chat_created_at: string | null;
   other_user: {
     id: string;

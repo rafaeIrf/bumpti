@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Insert block record
     const { error: insertError } = await serviceClient
       .from("user_blocks")
       .upsert(
@@ -109,6 +110,25 @@ Deno.serve(async (req) => {
         }),
         { status: 400, headers: corsHeaders }
       );
+    }
+
+    // Unmatch any active match between blocker and blocked user
+    const now = new Date().toISOString();
+    const { error: unmatchError } = await serviceClient
+      .from("user_matches")
+      .update({
+        status: "unmatched",
+        unmatched_at: now,
+        unmatched_by: user.id,
+      })
+      .eq("status", "active")
+      .or(
+        `and(user_a.eq.${user.id},user_b.eq.${blockedUserId}),and(user_a.eq.${blockedUserId},user_b.eq.${user.id})`
+      );
+
+    if (unmatchError) {
+      console.error("block-user unmatch error:", unmatchError);
+      // Continue even if unmatch fails - block is more important
     }
 
     return new Response(JSON.stringify({ status: "ok" }), {
