@@ -108,6 +108,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Sort by distance (ascending - closest first)
+    placesWithActiveUsers.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
     return new Response(JSON.stringify({ places: placesWithActiveUsers }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

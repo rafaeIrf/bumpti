@@ -37,6 +37,7 @@ export type ChatSummary = {
   last_message: string | null;
   last_message_at: string | null;
   unread_count?: number;
+  first_message_at: string | null;
 };
 
 export type MatchSummary = {

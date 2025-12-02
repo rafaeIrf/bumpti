@@ -115,6 +115,7 @@ export default function ChatScreen() {
               matchPlace: item.place_name ?? undefined,
               matchedAt: item.chat_created_at ?? undefined,
               unreadMessages: item.unread_count ?? undefined,
+              firstMessageAt: item.first_message_at ?? undefined,
             },
           })
         }

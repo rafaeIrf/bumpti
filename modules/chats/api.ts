@@ -14,7 +14,6 @@ export type ChatSummary = {
   match_id: string;
   place_id: string | null;
   place_name: string | null;
-  matched_at: string | null;
   chat_created_at: string | null;
   other_user: {
     id: string;
@@ -24,6 +23,7 @@ export type ChatSummary = {
   last_message: string | null;
   last_message_at: string | null;
   unread_count?: number;
+  first_message_at: string | null;
 };
 
 export type GetChatsResponse = { chats: ChatSummary[] };
@@ -62,6 +62,7 @@ export async function getChats(): Promise<GetChatsResponse> {
       last_message: string | null;
       last_message_at: string | null;
       unread_count: number | null;
+      first_message_at: string | null;
     }[];
   }>("get-chats");
   console.log("getChats data:", data);
@@ -86,6 +87,7 @@ export async function getChats(): Promise<GetChatsResponse> {
       last_message: c.last_message ?? null,
       last_message_at: c.last_message_at ?? null,
       unread_count: c.unread_count ?? 0,
+      first_message_at: c.first_message_at ?? null,
     })) ?? [];
 
   return { chats };

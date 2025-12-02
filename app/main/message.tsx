@@ -62,6 +62,7 @@ type Params = {
   matchedAt?: string;
   otherUserId?: string;
   unreadMessages?: string;
+  firstMessageAt?: string;
 };
 
 export default function ChatMessageScreen() {
@@ -372,8 +373,8 @@ export default function ChatMessageScreen() {
             >
               {params.name ?? t("screens.chat.title")}
             </ThemedText>
-            {messages.length > 0 && params.matchPlace && (
-              <Animated.View entering={FadeInUp.duration(300).delay(200)}>
+            {params.matchPlace &&
+              (params.firstMessageAt || messages.length > 0) && (
                 <View style={styles.toolbarPlaceRow}>
                   <MapPinIcon width={12} height={12} color={colors.accent} />
                   <ThemedText
@@ -389,8 +390,7 @@ export default function ChatMessageScreen() {
                     {params.matchPlace}
                   </ThemedText>
                 </View>
-              </Animated.View>
-            )}
+              )}
           </View>
         </View>
       }
