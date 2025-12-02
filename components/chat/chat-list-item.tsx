@@ -82,6 +82,9 @@ function UserAvatar({
           source={{ uri: photoUrl }}
           style={styles.avatarImage}
           contentFit="cover"
+          cachePolicy="memory-disk"
+          priority="high"
+          transition={200}
         />
       ) : (
         <ThemedText style={[typography.body1, { color: colors.text }]}>
