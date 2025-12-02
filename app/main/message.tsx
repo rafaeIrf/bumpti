@@ -3,6 +3,7 @@ import {
   ArrowRightIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
+  SendHorizontalIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
@@ -496,7 +497,11 @@ export default function ChatMessageScreen() {
                 },
               ]}
             >
-              <ThemedText style={{ color: colors.textPrimary }}>➤</ThemedText>
+              <SendHorizontalIcon
+                width={20}
+                height={20}
+                color={colors.textPrimary}
+              />
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -516,7 +521,7 @@ function MessageBubble({
 }) {
   const colors = useThemeColors();
   const isFailed = message.status === "failed";
-  const isSending = message.status === "sending";
+  // const isSending = message.status === "sending";
   const bubbleColor = isMe ? colors.accent : colors.surface;
   const borderColor = isMe ? colors.accent : colors.border;
   const textColor = isMe ? colors.textPrimary : colors.text;
