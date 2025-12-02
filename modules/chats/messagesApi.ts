@@ -145,11 +145,24 @@ export const messagesApi = createApi({
           status: "sending",
         };
 
-        dispatch(
-          messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-            draft.push(optimisticMessage);
-          })
-        );
+        // If retrying, update existing failed message to sending status
+        // Otherwise, add new optimistic message
+        if (tempId) {
+          dispatch(
+            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+              const msg = draft.find((m) => m.tempId === tempId || m.id === tempId);
+              if (msg) {
+                msg.status = "sending";
+              }
+            })
+          );
+        } else {
+          dispatch(
+            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+              draft.push(optimisticMessage);
+            })
+          );
+        }
 
         // Trigger backend send in background
         try {
@@ -159,17 +172,20 @@ export const messagesApi = createApi({
           if (result?.message) {
             dispatch(
               messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-                const idx = draft.findIndex((m) => m.tempId === optimisticId);
+                const idx = draft.findIndex((m) => m.tempId === optimisticId || m.id === optimisticId);
                 if (idx >= 0) {
-                  draft[idx] = { ...result.message, status: "sent" };
+                  // Remove optimistic message
+                  draft.splice(idx, 1);
                 }
+                // Add real message from server
+                draft.push({ ...result.message, status: "sent" });
               })
             );
           }
         } catch (error) {
           dispatch(
             messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-              const msg = draft.find((m) => m.tempId === optimisticId);
+              const msg = draft.find((m) => m.tempId === optimisticId || m.id === optimisticId);
               if (msg) {
                 msg.status = "failed";
               }

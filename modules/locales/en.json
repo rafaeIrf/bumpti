@@ -5,7 +5,9 @@
   "matches": "Chat",
   "profile": "Profile",
   "common": {
-    "retry": "Retry",
+    "retry": "Try again",
+    "resend": "Resend",
+    "delete": "Delete",
     "cancel": "Cancel",
     "close": "Close",
     "back": "Back",
@@ -381,7 +383,9 @@
     "chatMessages": {
       "online": "Online",
       "connectedHere": "You connected here",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "notSent": "Not sent",
+      "messageNotSent": "Message not sent"
     },
     "report": {
       "title": "Submit report",

@@ -6,6 +6,8 @@
   "profile": "Perfil",
   "common": {
     "retry": "Tentar novamente",
+    "resend": "Reenviar",
+    "delete": "Deletar",
     "cancel": "Cancelar",
     "close": "Fechar",
     "back": "Voltar",
@@ -382,7 +384,9 @@
     "chatMessages": {
       "online": "Online",
       "connectedHere": "Vocês se conectaram aqui",
-      "moreActions": "Mais ações"
+      "moreActions": "Mais ações",
+      "notSent": "Não enviada",
+      "messageNotSent": "Mensagem não enviada"
     },
     "report": {
       "title": "Enviar denúncia",
