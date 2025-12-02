@@ -399,7 +399,19 @@
       "successTitle": "Reporte enviado",
       "successMessage": "Gracias por avisarnos. Revisaremos esto pronto.",
       "submitErrorTitle": "No se pudo enviar",
-      "submitError": "Intenta nuevamente en unos instantes."
+      "submitError": "Intenta nuevamente en unos instantes.",
+      "detailsRequired": "Agrega detalles antes de enviar.",
+      "detailsHelper": "Agrega una breve descripción para enviar."
+    },
+    "chatBlock": {
+      "blockSuccessTitle": "Usuario bloqueado",
+      "blockSuccessMessage": "No recibirás mensajes de este usuario.",
+      "blockErrorTitle": "No se pudo bloquear al usuario",
+      "blockError": "Intenta nuevamente en unos instantes."
+    },
+    "chatUnmatch": {
+      "unmatchErrorTitle": "No se pudo deshacer el match",
+      "unmatchError": "Intenta nuevamente en unos instantes."
     }
   },
   "venue": {

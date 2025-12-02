@@ -1,10 +1,9 @@
 import { FlagIcon, HeartCrackIcon, ShieldAlertIcon } from "@/assets/icons";
-import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
 type ActionId = "unmatch" | "block" | "report";
@@ -16,8 +15,6 @@ interface ChatActionsBottomSheetProps {
   readonly onReport: () => void;
   readonly onClose?: () => void;
   readonly containerStyle?: ViewStyle;
-  readonly onConfirmUnmatch?: () => void;
-  readonly onConfirmBlock?: () => void;
 }
 
 const actions: {
@@ -53,28 +50,27 @@ export function ChatActionsBottomSheet({
   onReport,
   onClose,
   containerStyle,
-  onConfirmUnmatch,
-  onConfirmBlock,
 }: ChatActionsBottomSheetProps) {
   const colors = useThemeColors();
-  const [showUnmatchModal, setShowUnmatchModal] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
 
   const handleAction = (id: ActionId) => {
-    switch (id) {
-      case "unmatch":
-        setShowUnmatchModal(true);
-        break;
-      case "block":
-        setShowBlockModal(true);
-        break;
-      case "report":
-        onReport();
-        break;
-      default:
-        break;
-    }
     onClose?.();
+    // Aguarda a bottom sheet fechar antes de executar a ação
+    setTimeout(() => {
+      switch (id) {
+        case "unmatch":
+          onUnmatch();
+          break;
+        case "block":
+          onBlock();
+          break;
+        case "report":
+          onReport();
+          break;
+        default:
+          break;
+      }
+    }, 300);
   };
 
   return (
@@ -133,38 +129,6 @@ export function ChatActionsBottomSheet({
         })}
         <View style={{ height: spacing.md }} />
       </View>
-
-      <ConfirmationModal
-        isOpen={showUnmatchModal}
-        onClose={() => setShowUnmatchModal(false)}
-        onConfirm={() => {
-          setShowUnmatchModal(false);
-          onConfirmUnmatch?.();
-          onUnmatch();
-        }}
-        title={t("modals.chatActions.unmatchTitle")}
-        description={t("modals.chatActions.unmatchDescription")}
-        confirmText={t("modals.chatActions.unmatchConfirm")}
-        cancelText={t("common.cancel")}
-        isDangerous
-      />
-
-      <ConfirmationModal
-        isOpen={showBlockModal}
-        onClose={() => setShowBlockModal(false)}
-        onConfirm={() => {
-          setShowBlockModal(false);
-          onConfirmBlock?.();
-          onBlock();
-        }}
-        title={t("modals.chatActions.blockTitle", { name: userName })}
-        description={t("modals.chatActions.blockDescription", {
-          name: userName,
-        })}
-        confirmText={t("modals.chatActions.blockConfirm", { name: userName })}
-        cancelText={t("common.cancel")}
-        isDangerous
-      />
     </View>
   );
 }

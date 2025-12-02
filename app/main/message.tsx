@@ -18,6 +18,7 @@ import { ThemedView } from "@/components/themed-view";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { blockUser } from "@/modules/block/api";
 import { markMessagesRead, updateMatch } from "@/modules/chats/api";
 import {
   ChatMessage,
@@ -29,11 +30,13 @@ import {
 import { t } from "@/modules/locales";
 import { useAppDispatch } from "@/modules/store/hooks";
 import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -73,7 +76,11 @@ export default function ChatMessageScreen() {
   const [newMessage, setNewMessage] = useState("");
   const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [isUnmatching, setIsUnmatching] = useState(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [showUnmatchModal, setShowUnmatchModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const inputRef = useRef<TextInput>(null);
   const {
@@ -109,7 +116,7 @@ export default function ChatMessageScreen() {
 
   useEffect(() => {
     if (!chatId || !userId) return;
-    console.log(
+    logger.log(
       "[Realtime] Attaching realtime for chatId:",
       chatId,
       "userId:",
@@ -117,7 +124,7 @@ export default function ChatMessageScreen() {
     );
     const unsub = attachChatRealtime(chatId, dispatch, userId);
     return () => {
-      console.log("[Realtime] Detaching realtime for chatId:", chatId);
+      logger.log("[Realtime] Detaching realtime for chatId:", chatId);
       unsub?.().catch(() => {});
     };
   }, [chatId, dispatch, userId]);
@@ -126,10 +133,10 @@ export default function ChatMessageScreen() {
   // Não precisa de scrollToEnd
 
   useEffect(() => {
-    console.log("unreadMessages", unreadMessages);
+    logger.log("unreadMessages", unreadMessages);
     if (!chatId || loading || messages.length === 0 || unreadMessages === "0")
       return;
-    console.log("chamou");
+    logger.log("chamou");
     // Mark messages as read after they are rendered
     requestAnimationFrame(() => {
       markMessagesRead({ chatId }).catch(() => {});
@@ -169,15 +176,57 @@ export default function ChatMessageScreen() {
     });
   }, []);
 
-  const handleUnmatchConfirmed = async () => {
-    if (!matchId || !otherUserId) return;
+  const handleUnmatch = useCallback(() => {
+    setShowUnmatchModal(true);
+  }, []);
 
-    updateMatch({
-      matchId,
-      status: "unmatched",
-    });
-    router.back();
+  const handleUnmatchConfirmed = async () => {
+    if (!matchId || !otherUserId || isUnmatching) return;
+
+    try {
+      setIsUnmatching(true);
+      await updateMatch({
+        matchId,
+        status: "unmatched",
+      });
+      setShowUnmatchModal(false);
+      router.back();
+    } catch (err) {
+      logger.error("Unmatch error:", err);
+      Alert.alert(
+        t("screens.chatUnmatch.unmatchErrorTitle"),
+        t("screens.chatUnmatch.unmatchError")
+      );
+    } finally {
+      setIsUnmatching(false);
+    }
   };
+
+  const handleBlock = useCallback(() => {
+    setShowBlockModal(true);
+  }, []);
+
+  const handleBlockConfirmed = useCallback(async () => {
+    if (!otherUserId || isBlocking) return;
+    try {
+      setIsBlocking(true);
+      await blockUser({ blockedUserId: otherUserId });
+      setShowBlockModal(false);
+      Alert.alert(
+        t("screens.chatBlock.blockSuccessTitle"),
+        t("screens.chatBlock.blockSuccessMessage")
+      );
+      router.back();
+    } catch (err) {
+      logger.error("Block user error:", err);
+      Alert.alert(
+        t("screens.chatBlock.blockErrorTitle"),
+        t("screens.chatBlock.blockError")
+      );
+    } finally {
+      setIsBlocking(false);
+    }
+  }, [isBlocking, otherUserId, t]);
 
   const openReportReasons = () => {
     if (!bottomSheet) return;
@@ -211,16 +260,9 @@ export default function ChatMessageScreen() {
       content: () => (
         <ChatActionsBottomSheet
           userName={params.name ?? t("screens.chat.title")}
-          onUnmatch={() => {
-            handleUnmatchConfirmed();
-            bottomSheet.close();
-          }}
-          onBlock={() => {
-            bottomSheet.close();
-          }}
-          onReport={() => {
-            openReportReasons();
-          }}
+          onUnmatch={handleUnmatch}
+          onBlock={handleBlock}
+          onReport={openReportReasons}
           onClose={() => bottomSheet.close()}
         />
       ),
@@ -276,7 +318,7 @@ export default function ChatMessageScreen() {
   }, []);
 
   useEffect(() => {
-    console.log("isLoadingMore changed:", isLoadingMore);
+    logger.log("isLoadingMore changed:", isLoadingMore);
   }, [isLoadingMore]);
 
   const handleLoadMore = useCallback(async () => {
@@ -292,7 +334,7 @@ export default function ChatMessageScreen() {
         )
       ).unwrap();
     } catch (err) {
-      console.error("Failed to load more messages:", err);
+      logger.error("Failed to load more messages:", err);
     } finally {
       setIsLoadingMore(false);
     }
@@ -393,6 +435,52 @@ export default function ChatMessageScreen() {
 
   return (
     <>
+      <ConfirmationModal
+        isOpen={showUnmatchModal}
+        onClose={() => setShowUnmatchModal(false)}
+        title={t("modals.chatActions.unmatchTitle")}
+        description={t("modals.chatActions.unmatchDescription")}
+        actions={[
+          {
+            label: t("modals.chatActions.unmatchConfirm"),
+            onPress: handleUnmatchConfirmed,
+            variant: "destructive",
+            loading: isUnmatching,
+            disabled: isUnmatching,
+          },
+          {
+            label: t("common.cancel"),
+            onPress: () => setShowUnmatchModal(false),
+            variant: "secondary",
+            disabled: isUnmatching,
+          },
+        ]}
+      />
+      <ConfirmationModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        title={t("modals.chatActions.blockTitle", { name: params.name ?? "" })}
+        description={t("modals.chatActions.blockDescription", {
+          name: params.name ?? "",
+        })}
+        actions={[
+          {
+            label: t("modals.chatActions.blockConfirm", {
+              name: params.name ?? "",
+            }),
+            onPress: handleBlockConfirmed,
+            variant: "destructive",
+            loading: isBlocking,
+            disabled: isBlocking,
+          },
+          {
+            label: t("common.cancel"),
+            onPress: () => setShowBlockModal(false),
+            variant: "secondary",
+            disabled: isBlocking,
+          },
+        ]}
+      />
       <ConfirmationModal
         isOpen={!!failedMessage}
         onClose={handleCloseFailedModal}

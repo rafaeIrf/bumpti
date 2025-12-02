@@ -69,9 +69,30 @@ import { t } from "@/modules/locales";
 
 - Prefer strict TypeScript (explicit types for props and returns).
 - Functional components with hooks; avoid classes.
-- Follow existing ESLint/Prettier configs (don’t reformat unrelated code).
+- Follow existing ESLint/Prettier configs (don't reformat unrelated code).
 - Avoid unnecessary dependencies; prefer Expo/React Native APIs already present.
-- Handle errors safely and quietly when appropriate (concise logs, don’t break UI).
+- Handle errors safely and quietly when appropriate (concise logs, don't break UI).
+
+## Logging
+
+- **Always use the logger utility** instead of `console.log`, `console.error`, `console.warn`, etc.
+- Import: `import { logger } from "@/utils/logger";`
+- Available methods: `logger.log()`, `logger.info()`, `logger.warn()`, `logger.error()`, `logger.debug()`
+- The logger automatically disables all logs in production builds via `__DEV__` check.
+- **Never use console.\* directly** - always use logger methods.
+
+### Logging Examples:
+
+```tsx
+// ❌ Don't - Direct console usage
+console.log("User logged in:", user);
+console.error("Failed to fetch data:", error);
+
+// ✅ Do - Use logger utility
+import { logger } from "@/utils/logger";
+logger.log("User logged in:", user);
+logger.error("Failed to fetch data:", error);
+```
 
 ## Navigation (Expo Router)
 
@@ -213,6 +234,26 @@ const colors = useThemeColors();
 
 When creating or modifying ANY screen or component, you MUST:
 
+0. **Logging - ALWAYS REQUIRED:**
+
+   - ❌ NEVER use `console.log`, `console.error`, `console.warn`, `console.info`, or `console.debug` directly
+   - ✅ ALWAYS use the logger utility from `@/utils/logger`
+   - ✅ Import: `import { logger } from "@/utils/logger";`
+   - ✅ Use appropriate method: `logger.log()`, `logger.error()`, `logger.warn()`, `logger.info()`, `logger.debug()`
+   - The logger is automatically disabled in production builds
+   - Example:
+
+     ```tsx
+     // ❌ WRONG - Direct console usage
+     console.log("Fetching data...");
+     console.error("API error:", error);
+
+     // ✅ CORRECT - Using logger
+     import { logger } from "@/utils/logger";
+     logger.log("Fetching data...");
+     logger.error("API error:", error);
+     ```
+
 1. **i18n (Internationalization) - ALWAYS REQUIRED:**
 
    - ❌ NEVER hardcode user-facing text in any language (PT, EN, ES, etc.)
@@ -286,7 +327,9 @@ When creating or modifying ANY screen or component, you MUST:
 
 **IF YOU VIOLATE THESE RULES, THE CODE WILL BE REJECTED. NO EXCEPTIONS.**
 
-## Quick Do/Don’t
+**REMINDER: NEVER use console.log/error/warn - ALWAYS use logger from @/utils/logger**
+
+## Quick Do/Don't
 
 - Do: use `@/` for internal imports, type routes/params, keep style consistency.
 - Do: create new route groups with `_layout.tsx` when needed.

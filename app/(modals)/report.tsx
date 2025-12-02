@@ -10,14 +10,7 @@ import { t } from "@/modules/locales";
 import { submitReport } from "@/modules/report/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = {
@@ -31,6 +24,7 @@ export default function ReportModalScreen() {
   const params = useLocalSearchParams<Params>();
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const insets = useSafeAreaInsets();
 
   const reasonLabel = useMemo(() => {
@@ -48,12 +42,20 @@ export default function ReportModalScreen() {
 
   const handleSubmit = async () => {
     if (!params.reportedUserId) {
-      Alert.alert(t("errors.generic"));
+      setSubmitError(t("errors.generic"));
       return;
     }
 
+    const detailsText = details.trim();
+    if (!detailsText) {
+      setSubmitError(t("screens.report.detailsRequired"));
+      return;
+    }
+
+    setSubmitError("");
     const reasonText =
-      details.trim() || reasonLabel || t("bottomSheets.report.reasons.other");
+      (reasonLabel ? `${reasonLabel} - ${detailsText}` : detailsText) ||
+      t("bottomSheets.report.reasons.other");
 
     try {
       setIsSubmitting(true);
@@ -62,16 +64,9 @@ export default function ReportModalScreen() {
         category: params.reason,
         reason: reasonText,
       });
-      Alert.alert(
-        t("screens.report.successTitle"),
-        t("screens.report.successMessage")
-      );
       router.back();
     } catch (err) {
-      Alert.alert(
-        t("screens.report.submitErrorTitle"),
-        t("screens.report.submitError")
-      );
+      setSubmitError(t("screens.report.submitError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -142,6 +137,28 @@ export default function ReportModalScreen() {
             >
               {t("screens.report.counter", { count: details.length })}
             </ThemedText>
+            {!details.trim() ? (
+              <ThemedText
+                style={[
+                  typography.caption,
+                  styles.helperText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {t("screens.report.detailsHelper")}
+              </ThemedText>
+            ) : null}
+            {submitError ? (
+              <ThemedText
+                style={[
+                  typography.caption,
+                  styles.errorText,
+                  { color: colors.error },
+                ]}
+              >
+                {submitError}
+              </ThemedText>
+            ) : null}
           </View>
 
           <View
@@ -156,7 +173,7 @@ export default function ReportModalScreen() {
               size="lg"
               fullWidth
               variant="default"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !details.trim()}
               loading={isSubmitting}
             />
           </View>
@@ -196,6 +213,14 @@ const styles = StyleSheet.create({
   counter: {
     alignSelf: "flex-end",
     marginTop: -spacing.sm,
+  },
+  helperText: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs / 2,
+  },
+  errorText: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs / 2,
   },
   footer: {
     paddingVertical: spacing.md,

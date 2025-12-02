@@ -399,7 +399,19 @@
       "successTitle": "Denúncia enviada",
       "successMessage": "Obrigado por avisar. Vamos revisar em breve.",
       "submitErrorTitle": "Não foi possível enviar",
-      "submitError": "Tente novamente em instantes."
+      "submitError": "Tente novamente em instantes.",
+      "detailsRequired": "Adicione detalhes antes de enviar.",
+      "detailsHelper": "Adicione uma breve descrição para enviar."
+    },
+    "chatBlock": {
+      "blockSuccessTitle": "Usuário bloqueado",
+      "blockSuccessMessage": "Você não receberá mensagens desse usuário.",
+      "blockErrorTitle": "Não foi possível bloquear",
+      "blockError": "Tente novamente em instantes."
+    },
+    "chatUnmatch": {
+      "unmatchErrorTitle": "Não foi possível desfazer o match",
+      "unmatchError": "Tente novamente em instantes."
     }
   },
   "venue": {
