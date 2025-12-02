@@ -1,7 +1,13 @@
-import { ArrowLeftIcon, EllipsisVerticalIcon } from "@/assets/icons";
+import {
+  ArrowLeftIcon,
+  EllipsisVerticalIcon,
+  ExclamationCircleIcon,
+  MapPinIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ReportReasonsBottomSheet } from "@/components/report-reasons-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -12,6 +18,7 @@ import { markMessagesRead, updateMatch } from "@/modules/chats/api";
 import {
   ChatMessage,
   attachChatRealtime,
+  messagesApi,
   useGetMessagesQuery,
   useSendMessageMutation,
 } from "@/modules/chats/messagesApi";
@@ -28,6 +35,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from "react-native";
@@ -55,11 +63,16 @@ export default function ChatMessageScreen() {
   const otherUserId = params.otherUserId;
   const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const inputRef = useRef<TextInput>(null);
   const { data: messages = [], isLoading: loading } = useGetMessagesQuery(
     chatId ?? "",
     {
       skip: !chatId,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
     }
   );
   const [sendMessage] = useSendMessageMutation();
@@ -115,6 +128,10 @@ export default function ChatMessageScreen() {
         senderId: userId ?? undefined,
       });
       setNewMessage("");
+      // Manter foco no input após enviar
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     }
@@ -195,6 +212,32 @@ export default function ChatMessageScreen() {
     [chatId, otherUserId, sendMessage, userId]
   );
 
+  const handleDeleteMessage = useCallback(
+    (message: ChatMessage) => {
+      if (!chatId) return;
+      // Remove mensagem falhada do cache
+      dispatch(
+        messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+          const idx = draft.findIndex(
+            (m) => m.tempId === message.tempId || m.id === message.id
+          );
+          if (idx >= 0) {
+            draft.splice(idx, 1);
+          }
+        })
+      );
+    },
+    [chatId, dispatch]
+  );
+
+  const handleFailedMessagePress = useCallback((message: ChatMessage) => {
+    setFailedMessage(message);
+  }, []);
+
+  const handleCloseFailedModal = useCallback(() => {
+    setFailedMessage(null);
+  }, []);
+
   const header = (
     <ScreenToolbar
       leftAction={{
@@ -253,7 +296,7 @@ export default function ChatMessageScreen() {
             <MessageBubble
               message={item}
               isMe={Boolean(otherUserId && item.sender_id !== otherUserId)}
-              onRetry={handleRetry}
+              onFailedPress={handleFailedMessagePress}
             />
           )}
           ListHeaderComponent={
@@ -270,9 +313,19 @@ export default function ChatMessageScreen() {
                 >
                   <View style={styles.matchTitleRow}>
                     <ThemedText
-                      style={[typography.body, { color: colors.text }]}
+                      style={[
+                        typography.body,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
                     >
-                      🔥 {params.matchPlace}
+                      <MapPinIcon
+                        width={12}
+                        height={12}
+                        color={colors.accent}
+                      />{" "}
+                      <Text>{params.matchPlace}</Text>
                     </ThemedText>
                   </View>
                   <ThemedText
@@ -311,98 +364,134 @@ export default function ChatMessageScreen() {
   );
 
   return (
-    <BaseTemplateScreen
-      TopHeader={header}
-      scrollEnabled={false}
-      contentContainerStyle={{
-        flexGrow: 1,
-        paddingHorizontal: 0,
-        paddingBottom: 0,
-      }}
-    >
-      {error ? (
-        <View style={[styles.errorBanner, { backgroundColor: colors.surface }]}>
-          <ThemedText style={[typography.body, { color: colors.text }]}>
-            {error}
-          </ThemedText>
-        </View>
-      ) : null}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" ? insets.top + spacing.xl : 0
-        }
-      >
-        <ThemedView style={styles.flex}>{content}</ThemedView>
-        <View
-          style={[
-            styles.inputRow,
-            {
-              borderTopColor: colors.border,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
-              paddingBottom: spacing.sm + insets.bottom,
-              backgroundColor: colors.background,
+    <>
+      <ConfirmationModal
+        isOpen={!!failedMessage}
+        onClose={handleCloseFailedModal}
+        title={t("screens.chatMessages.messageNotSent")}
+        buttonSize="md"
+        actions={[
+          {
+            label: t("common.resend"),
+            onPress: () => {
+              if (failedMessage) handleRetry(failedMessage);
+              handleCloseFailedModal();
             },
-          ]}
+            variant: "default",
+          },
+          {
+            label: t("common.delete"),
+            onPress: () => {
+              if (failedMessage) handleDeleteMessage(failedMessage);
+              handleCloseFailedModal();
+            },
+            variant: "destructive",
+          },
+          {
+            label: t("common.cancel"),
+            onPress: handleCloseFailedModal,
+            variant: "secondary",
+          },
+        ]}
+      />
+      <BaseTemplateScreen
+        TopHeader={header}
+        scrollEnabled={false}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 0,
+          paddingBottom: 0,
+        }}
+      >
+        {error ? (
+          <View
+            style={[styles.errorBanner, { backgroundColor: colors.surface }]}
+          >
+            <ThemedText style={[typography.body, { color: colors.text }]}>
+              {error}
+            </ThemedText>
+          </View>
+        ) : null}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={
+            Platform.OS === "ios" ? insets.top + spacing.xl : 0
+          }
         >
-          <TextInput
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder={t("screens.chat.messagePlaceholder")}
-            placeholderTextColor={colors.textSecondary}
+          <ThemedView style={styles.flex}>{content}</ThemedView>
+          <View
             style={[
-              styles.input,
+              styles.inputRow,
               {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                color: colors.text,
+                borderTopColor: colors.border,
                 paddingHorizontal: spacing.md,
-              },
-            ]}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-          />
-          <Pressable
-            onPress={handleSend}
-            disabled={!newMessage.trim()}
-            style={[
-              styles.sendButton,
-              {
-                backgroundColor: !newMessage.trim()
-                  ? colors.disabledBG
-                  : colors.accent,
+                paddingVertical: spacing.sm,
+                paddingBottom: spacing.sm + insets.bottom,
+                backgroundColor: colors.background,
               },
             ]}
           >
-            <ThemedText style={{ color: colors.textPrimary }}>➤</ThemedText>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </BaseTemplateScreen>
+            <TextInput
+              ref={inputRef}
+              value={newMessage}
+              onChangeText={setNewMessage}
+              placeholder={t("screens.chat.messagePlaceholder")}
+              placeholderTextColor={colors.textSecondary}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  color: colors.text,
+                  paddingHorizontal: spacing.md,
+                  paddingTop: spacing.sm + 2,
+                  paddingBottom: spacing.sm + 2,
+                },
+              ]}
+              multiline
+              numberOfLines={6}
+              maxLength={500}
+              blurOnSubmit={false}
+              textAlignVertical="center"
+            />
+            <Pressable
+              onPress={handleSend}
+              disabled={!newMessage.trim()}
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor: !newMessage.trim()
+                    ? colors.disabledBG
+                    : colors.accent,
+                },
+              ]}
+            >
+              <ThemedText style={{ color: colors.textPrimary }}>➤</ThemedText>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </BaseTemplateScreen>
+    </>
   );
 }
 
 function MessageBubble({
   message,
   isMe,
-  onRetry,
+  onFailedPress,
 }: {
   message: ChatMessage;
   isMe: boolean;
-  onRetry: (message: ChatMessage) => void;
+  onFailedPress: (message: ChatMessage) => void;
 }) {
   const colors = useThemeColors();
-  const showStatus = isMe && message.status;
   const isFailed = message.status === "failed";
+  const isSending = message.status === "sending";
   const bubbleColor = isMe ? colors.accent : colors.surface;
   const borderColor = isMe ? colors.accent : colors.border;
-  const textColor = isFailed
-    ? colors.error
-    : isMe
-    ? colors.textPrimary
-    : colors.text;
+  const textColor = isMe ? colors.textPrimary : colors.text;
+
   return (
     <View
       style={[
@@ -410,48 +499,68 @@ function MessageBubble({
         { justifyContent: isMe ? "flex-end" : "flex-start" },
       ]}
     >
-      <View
-        style={[
-          styles.messageBubble,
-          {
-            backgroundColor: bubbleColor,
-            borderColor: borderColor,
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.sm,
-          },
-        ]}
-      >
-        <ThemedText style={[typography.body, { color: textColor }]}>
-          {message.content}
-        </ThemedText>
-        {showStatus ? (
-          <View style={styles.statusRow}>
-            {message.status === "sending" && (
-              <View
-                style={[
-                  styles.statusDot,
-                  { backgroundColor: colors.textSecondary },
-                ]}
+      <View style={{ gap: spacing.xs, maxWidth: "85%" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: spacing.sm,
+          }}
+        >
+          <Pressable
+            disabled={!isFailed}
+            onPress={() => isFailed && onFailedPress(message)}
+            style={[
+              styles.messageBubble,
+              {
+                backgroundColor: bubbleColor,
+                borderColor: borderColor,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                maxWidth: isFailed ? "90%" : "100%",
+              },
+            ]}
+          >
+            <ThemedText style={[typography.body, { color: textColor }]}>
+              {message.content}
+            </ThemedText>
+          </Pressable>
+          {isFailed && (
+            <Pressable onPress={() => onFailedPress(message)} hitSlop={8}>
+              <ExclamationCircleIcon
+                width={18}
+                height={18}
+                color={colors.error}
               />
-            )}
-            {message.status === "failed" && (
-              <Pressable onPress={() => onRetry(message)}>
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    {
-                      color: colors.error,
-                      marginLeft: spacing.xs,
-                      textDecorationLine: "underline",
-                    },
-                  ]}
-                >
-                  {t("common.retry")}
-                </ThemedText>
-              </Pressable>
-            )}
+            </Pressable>
+          )}
+        </View>
+
+        {isMe && isSending && (
+          <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: colors.textSecondary },
+              ]}
+            />
           </View>
-        ) : null}
+        )}
+
+        {isMe && isFailed && (
+          <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
+            <ThemedText
+              style={[
+                typography.caption,
+                {
+                  color: colors.textSecondary,
+                },
+              ]}
+            >
+              {t("screens.chatMessages.notSent")}
+            </ThemedText>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -505,7 +614,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    columnGap: spacing.xs,
   },
   messageRow: {
     flexDirection: "row",
@@ -513,18 +621,24 @@ const styles = StyleSheet.create({
   messageBubble: {
     borderRadius: spacing.lg,
     borderWidth: 1,
-    maxWidth: "80%",
+  },
+  statusRowBelow: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.xs,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   inputRow: {
     flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
+    alignItems: "flex-end",
     columnGap: spacing.sm,
   },
   input: {
     flex: 1,
-    height: 46,
-    borderRadius: 999,
+    borderRadius: spacing.md,
     borderWidth: 1,
     ...typography.body,
   },

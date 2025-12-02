@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     const placeIds = (data ?? []).map((row) => row.place_id);
 
     if (placeIds.length === 0) {
-      return new Response(JSON.stringify({ placeIds, places: [] }), {
+      return new Response(JSON.stringify({ places: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -79,7 +79,36 @@ Deno.serve(async (req) => {
       lng: requestBody.lng ?? 0,
     });
 
-    return new Response(JSON.stringify({ places }), {
+    // Get active user counts for these places using RPC
+    let placesWithActiveUsers = places.map(p => ({ ...p, active_users: 0 }));
+
+    if (placeIds.length > 0) {
+      const { data: placeCounts, error: rpcError } = await supabase
+        .rpc("get_available_people_count", {
+          place_ids: placeIds,
+          viewer_id: user.id,
+        });
+
+      if (!rpcError && placeCounts) {
+        // Create a map for quick lookup
+        const countMap = new Map(
+          placeCounts.map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
+        );
+
+        // Add active_users count to each place
+        placesWithActiveUsers = places.map(place => ({
+          placeId: place.placeId,
+          name: place.name,
+          distance: place.distance,
+          type: place.type,
+          types: place.types,
+          formattedAddress: place.formattedAddress,
+          active_users: countMap.get(place.placeId) || 0,
+        }));
+      }
+    }
+
+    return new Response(JSON.stringify({ places: placesWithActiveUsers }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -10,7 +10,7 @@ import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { calculateDistance } from "@/modules/location";
-import { searchPlacesByText as searchPlacesByTextApi } from "@/modules/places/api";
+import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { enterPlace } from "@/modules/presence/api";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -48,8 +48,6 @@ export default function PlaceSearch({
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { favoriteIds, handleToggle } = useFavoriteToggle(
     userLocation
@@ -57,57 +55,52 @@ export default function PlaceSearch({
       : undefined
   );
 
+  // Use RTK Query lazy query
+  const [triggerSearch, { data: searchData, isFetching }] =
+    useLazySearchPlacesByTextQuery();
+
+  const searchResults: SearchResult[] = useMemo(() => {
+    if (!searchData?.places || !userLocation) return [];
+
+    return searchData.places.map((p: any) => {
+      const distance =
+        p.location && userLocation
+          ? calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              p.location.lat,
+              p.location.lng
+            ) / 1000
+          : null;
+      return {
+        ...p,
+        types: p.types ?? [],
+        location: p.location,
+        distanceKm: distance,
+        active_users: p.active_users || 0,
+      };
+    });
+  }, [searchData, userLocation]);
+
   const handleSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
       if (debounceTimeout.current) {
         clearTimeout(debounceTimeout.current);
       }
-      debounceTimeout.current = setTimeout(async () => {
-        if (query.trim().length < 2) {
-          setSearchResults([]);
-          setIsSearching(false);
+      debounceTimeout.current = setTimeout(() => {
+        if (query.trim().length < 2 || !userLocation) {
           return;
         }
-        if (!userLocation) {
-          setIsSearching(false);
-          return;
-        }
-        setIsSearching(true);
-        try {
-          const res: any = await searchPlacesByTextApi(
-            query,
-            userLocation.latitude,
-            userLocation.longitude,
-            20000
-          );
-          setSearchResults(
-            (res.places || []).map((p: any) => {
-              const distance =
-                p.location && userLocation
-                  ? calculateDistance(
-                      userLocation.latitude,
-                      userLocation.longitude,
-                      p.location.lat,
-                      p.location.lng
-                    ) / 1000
-                  : null;
-              return {
-                ...p,
-                types: p.types ?? [],
-                location: p.location,
-                distanceKm: distance,
-              };
-            })
-          );
-        } catch {
-          setSearchResults([]);
-        } finally {
-          setIsSearching(false);
-        }
+        triggerSearch({
+          input: query,
+          lat: userLocation.latitude,
+          lng: userLocation.longitude,
+          radius: 20000,
+        });
       }, 400);
     },
-    [userLocation]
+    [userLocation, triggerSearch]
   );
 
   const handleResultPress = useCallback(
@@ -128,10 +121,9 @@ export default function PlaceSearch({
     [router]
   );
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchQuery("");
-    setSearchResults([]);
-  };
+  }, []);
 
   const header = useMemo(
     () => (
@@ -176,7 +168,7 @@ export default function PlaceSearch({
             address:
               item.formattedAddress ?? t("screens.placeSearch.addressFallback"),
             distance: item.distanceKm ?? 0,
-            activeUsers: 0,
+            activeUsers: (item as any).active_users || 0,
             isFavorite: favoriteIds.has(item.placeId),
             tag,
           }}
@@ -258,7 +250,7 @@ export default function PlaceSearch({
         </ThemedView>
       </Animated.View>
     );
-  } else if (isSearching || locationLoading) {
+  } else if (isFetching || locationLoading) {
     content = (
       <ThemedView style={{ paddingTop: spacing.xl, alignItems: "center" }}>
         <ActivityIndicator size="large" color={colors.accent} />

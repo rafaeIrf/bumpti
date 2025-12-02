@@ -12,6 +12,7 @@ export { default as CompassIcon } from "./compass.svg";
 export { default as CrownIcon } from "./crown.svg";
 export { default as DumbbellIcon } from "./dumbbell.svg";
 export { default as EllipsisVerticalIcon } from "./ellipsis-vertical.svg";
+export { default as ExclamationCircleIcon } from "./exclamation-circle.svg";
 export { default as FlagIcon } from "./flag.svg";
 export { default as FlameIcon } from "./flame.svg";
 export { default as HeartCrackIcon } from "./heart-crack.svg";
@@ -40,3 +41,4 @@ export { default as UserRoundIcon } from "./user-round.svg";
 export { default as UsersIcon } from "./users.svg";
 export { default as UtensilsCrossedIcon } from "./utensils-crossed.svg";
 export { default as XIcon } from "./x.svg";
+

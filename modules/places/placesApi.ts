@@ -1,10 +1,11 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
   getFavoritePlaces as getFavoritePlacesApi,
   getNearbyPlaces as getNearbyPlacesApi,
+  getTrendingPlaces as getTrendingPlacesApi,
   searchPlacesByText as searchPlacesByTextApi,
   toggleFavoritePlace as toggleFavoritePlaceApi,
 } from "@/modules/places/api";
+import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Place, PlaceType } from "./types";
 
 // TTL configurations (in seconds)
@@ -14,6 +15,7 @@ const CACHE_TIME = {
   NEARBY_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - Google's maximum allowed cache time
   SEARCH_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - search results cache
   FAVORITE_PLACES: __DEV__ ? 30 : 5 * 60, // shorter cache; keep fresh
+  TRENDING_PLACES: __DEV__ ? 10 : 30, // 30 seconds - very short cache for real-time updates
 };
 
 // Round coordinates to create cache grid (approximately 200m precision)
@@ -28,6 +30,7 @@ export const placesApi = createApi({
   tagTypes: [
     "NearbyPlaces",
     "SearchPlaces",
+    "TrendingPlaces",
     "FavoritePlaces",
   ],
   endpoints: (builder) => ({
@@ -86,7 +89,7 @@ export const placesApi = createApi({
 
     // Search places by text input
     searchPlacesByText: builder.query<
-      { places: Place[] },
+      { places: (Place & { active_users?: number })[] },
       {
         input: string;
         lat: number;
@@ -105,7 +108,7 @@ export const placesApi = createApi({
             sessionToken
           );
 
-          return { data: { places: places as Place[] } };
+          return { data: { places } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }
@@ -116,7 +119,23 @@ export const placesApi = createApi({
       keepUnusedDataFor: CACHE_TIME.SEARCH_PLACES,
     }),
 
-    // Favorites: single call returning hydrated places
+    // Trending places: returns places with active users count
+    getTrendingPlaces: builder.query<
+      { places: (Place & { active_users: number })[] },
+      { lat?: number; lng?: number } | void
+    >({
+      queryFn: async (args) => {
+        try {
+          const { places } = await getTrendingPlacesApi(args?.lat, args?.lng);
+          return { data: { places } };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: [{ type: "TrendingPlaces", id: "list" }],
+      keepUnusedDataFor: CACHE_TIME.TRENDING_PLACES,
+    }),
+
     getFavoritePlaces: builder.query<
       { places: Place[] },
       { lat?: number; lng?: number } | void
@@ -182,6 +201,7 @@ export const placesApi = createApi({
 export const {
   useGetNearbyPlacesQuery,
   useSearchPlacesByTextQuery,
+  useGetTrendingPlacesQuery,
   useGetFavoritePlacesQuery,
   useToggleFavoritePlaceMutation,
   useLazyGetNearbyPlacesQuery,

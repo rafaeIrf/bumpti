@@ -31,6 +31,7 @@ export type MatchSummary = {
   chat_id: string | null;
   matched_at: string | null;
   place_id: string | null;
+  place_name: string | null;
   is_new_match: boolean;
   other_user: {
     id: string;
@@ -46,6 +47,7 @@ export async function getChats(): Promise<GetChatsResponse> {
       chat_id: string;
       match_id: string;
       place_id: string | null;
+      place_name: string | null;
       chat_created_at?: string | null;
       other_user_id: string;
       other_user_name: string | null;
@@ -67,6 +69,7 @@ export async function getChats(): Promise<GetChatsResponse> {
       chat_id: c.chat_id,
       match_id: c.match_id,
       place_id: c.place_id ?? null,
+      place_name: c.place_name ?? null,
       chat_created_at: c.chat_created_at ?? null,
       other_user: {
         id: c.other_user_id,

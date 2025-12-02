@@ -1,40 +1,67 @@
 import { XIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps, ButtonSize } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React from "react";
 import { Modal, Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
+export interface ConfirmationModalAction {
+  readonly label: string;
+  readonly onPress: () => void;
+  readonly variant?: ButtonProps["variant"];
+}
+
 export interface ConfirmationModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly onConfirm: () => void;
   readonly title: string;
-  readonly description: string;
-  readonly confirmText: string;
+  readonly description?: string;
+  readonly actions?: ConfirmationModalAction[];
+  readonly buttonSize?: ButtonSize;
+  readonly containerStyle?: ViewStyle;
+  // Legacy props for backward compatibility
+  readonly onConfirm?: () => void;
+  readonly confirmText?: string;
   readonly cancelText?: string;
   readonly isDangerous?: boolean;
-  readonly containerStyle?: ViewStyle;
 }
 
 /**
  * Generic confirmation modal using native Modal.
- * Provide already-localized title/description/confirmText via props.
+ * Provide already-localized title/description via props.
+ * Supports custom actions or legacy confirm/cancel pattern.
  */
 export function ConfirmationModal({
   isOpen,
   onClose,
-  onConfirm,
   title,
   description,
+  actions,
+  buttonSize = "lg",
+  containerStyle,
+  // Legacy props
+  onConfirm,
   confirmText,
   cancelText = t("common.cancel"),
   isDangerous = false,
-  containerStyle,
 }: ConfirmationModalProps) {
   const colors = useThemeColors();
+
+  // Use custom actions if provided, otherwise fall back to legacy confirm/cancel
+  const finalActions: ConfirmationModalAction[] = actions || [
+    {
+      label: confirmText!,
+      onPress: onConfirm!,
+      variant: isDangerous ? "destructive" : "default",
+    },
+    {
+      label: cancelText,
+      onPress: onClose,
+      variant: "secondary",
+    },
+  ];
 
   return (
     <Modal
@@ -70,36 +97,37 @@ export function ConfirmationModal({
             <ThemedText
               style={[
                 typography.subheading,
-                { color: colors.text, marginBottom: spacing.sm },
+                {
+                  color: colors.text,
+                  marginBottom: description ? spacing.sm : spacing.lg,
+                },
               ]}
             >
               {title}
             </ThemedText>
 
-            <ThemedText
-              style={[
-                typography.body,
-                { color: colors.textSecondary, marginBottom: spacing.lg },
-              ]}
-            >
-              {description}
-            </ThemedText>
+            {description && (
+              <ThemedText
+                style={[
+                  typography.body,
+                  { color: colors.textSecondary, marginBottom: spacing.lg },
+                ]}
+              >
+                {description}
+              </ThemedText>
+            )}
 
             <View style={styles.actions}>
-              <Button
-                label={confirmText}
-                onPress={onConfirm}
-                size="lg"
-                fullWidth
-                variant={isDangerous ? "destructive" : "default"}
-              />
-              <Button
-                label={cancelText}
-                onPress={onClose}
-                size="lg"
-                fullWidth
-                variant="secondary"
-              />
+              {finalActions.map((action, index) => (
+                <Button
+                  key={index}
+                  label={action.label}
+                  onPress={action.onPress}
+                  size={buttonSize}
+                  fullWidth
+                  variant={action.variant || "default"}
+                />
+              ))}
             </View>
           </View>
         </View>

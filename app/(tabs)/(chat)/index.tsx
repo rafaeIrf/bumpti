@@ -49,7 +49,7 @@ export default function ChatScreen() {
               otherUserId: item.other_user.id,
               name: item.other_user.name ?? undefined,
               photoUrl: item.other_user.photo_url ?? undefined,
-              matchPlace: item.place_id ?? undefined,
+              matchPlace: item.place_name ?? undefined,
             },
           });
         }}
@@ -71,7 +71,7 @@ export default function ChatScreen() {
               otherUserId: item.other_user?.id,
               name: item.other_user?.name ?? undefined,
               photoUrl: item.other_user?.photo_url ?? undefined,
-              matchPlace: item.place_id ?? undefined,
+              matchPlace: item.place_name ?? undefined,
               unreadMessages: item.unread_count ?? undefined,
             },
           })

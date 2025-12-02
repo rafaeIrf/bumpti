@@ -1,5 +1,6 @@
 import { placesApi } from "@/modules/places/placesApi";
 import { messagesApi } from "@/modules/chats/messagesApi";
+import { interactionsApi } from "@/modules/interactions/interactionsApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -28,6 +29,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   [messagesApi.reducerPath]: messagesApi.reducer,
+  [interactionsApi.reducerPath]: interactionsApi.reducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
   options: optionsReducer,
@@ -43,7 +45,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(placesApi.middleware, messagesApi.middleware),
+    }).concat(placesApi.middleware, messagesApi.middleware, interactionsApi.middleware),
 });
 
 export const persistor = persistStore(store);

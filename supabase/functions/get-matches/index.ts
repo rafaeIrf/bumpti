@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { fetchPlacesByIds } from "../_shared/google-places.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +111,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch place names from Google Places API
+    const placeIds = Array.from(
+      new Set(
+        (rows ?? [])
+          .map((r) => r.place_id)
+          .filter(Boolean) as string[]
+      )
+    );
+    
+    const placesMap = new Map<string, string>();
+    if (placeIds.length > 0) {
+      try {
+        const places = await fetchPlacesByIds({ placeIds });
+        places.forEach((place) => {
+          placesMap.set(place.placeId, place.name);
+        });
+      } catch (error) {
+        console.error("Failed to fetch place names:", error);
+      }
+    }
+
     const matches =
       rows?.map((row: any) => {
         const isUserA = row.user_a === user.id;
@@ -130,6 +152,7 @@ Deno.serve(async (req) => {
           chat_id: row.chat_id,
           matched_at: row.matched_at,
           place_id: row.place_id ?? null,
+          place_name: row.place_id ? placesMap.get(row.place_id) ?? null : null,
           is_new_match: Boolean(isNewMatch),
           other_user: {
             id: otherUserId,

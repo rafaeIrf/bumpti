@@ -16,7 +16,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { interactUser } from "@/modules/interactions/api";
+import { useInteractUserMutation } from "@/modules/interactions/interactionsApi";
 import { t } from "@/modules/locales";
 import {
   ActiveUserAtPlace,
@@ -60,6 +60,9 @@ export default function PlacePeopleScreen() {
   const [availableProfiles, setAvailableProfiles] = useState<
     ActiveUserAtPlace[]
   >([]);
+  
+  // Get interact mutation
+  const [interactUser] = useInteractUserMutation();
 
   useEffect(() => {
     let isMounted = true;
@@ -120,6 +123,7 @@ export default function PlacePeopleScreen() {
       action: "like",
       placeId: place.id,
     })
+      .unwrap()
       .then((response) => {
         console.log("Liked profile:", profile.name, response);
       })
@@ -134,6 +138,7 @@ export default function PlacePeopleScreen() {
       action: "dislike",
       placeId: place.id,
     })
+      .unwrap()
       .then((response) => {
         console.log("Disliked profile:", profile.name, response);
       })

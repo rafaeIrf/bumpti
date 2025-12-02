@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { decryptMessage, getEncryptionKey } from "../_shared/encryption.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
 
     let messagesQuery = supabase
       .from("messages")
-      .select("id, chat_id, sender_id, content, created_at")
+      .select("id, chat_id, sender_id, content_enc, content_iv, content_tag, created_at, read_at")
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true })
 
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
       messagesQuery = messagesQuery.lt("created_at", before);
     }
 
-    const { data: messages, error: messagesError } = await messagesQuery;
+    const { data: encryptedMessages, error: messagesError } = await messagesQuery;
 
     if (messagesError) {
       return new Response(
@@ -154,10 +155,70 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get encryption key from secrets
+    const encryptionKey = await getEncryptionKey();
+    if (!encryptionKey) {
+      return new Response(
+        JSON.stringify({
+          error: "decryption_failed",
+          message: "Unable to retrieve encryption key",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Decrypt all messages
+    const messages = await Promise.all(
+      (encryptedMessages ?? []).map(async (msg: any) => {
+        // If any of the encryption fields are missing, return error placeholder
+        if (!msg.content_enc || !msg.content_iv || !msg.content_tag) {
+          return {
+            id: msg.id,
+            chat_id: msg.chat_id,
+            sender_id: msg.sender_id,
+            content: "[unable_to_decrypt]",
+            created_at: msg.created_at,
+            read_at: msg.read_at,
+            error: "missing_encryption_data",
+          };
+        }
+
+        // Decrypt the message
+        const decrypted = await decryptMessage(
+          msg.content_enc,
+          msg.content_iv,
+          msg.content_tag,
+          encryptionKey
+        );
+
+        if (!decrypted) {
+          // If decryption fails, return error placeholder
+          return {
+            id: msg.id,
+            chat_id: msg.chat_id,
+            sender_id: msg.sender_id,
+            content: "[unable_to_decrypt]",
+            created_at: msg.created_at,
+            read_at: msg.read_at,
+            error: "decryption_failed",
+          };
+        }
+
+        return {
+          id: msg.id,
+          chat_id: msg.chat_id,
+          sender_id: msg.sender_id,
+          content: decrypted,
+          created_at: msg.created_at,
+          read_at: msg.read_at,
+        };
+      })
+    );
+
     return new Response(
       JSON.stringify({
         chat_id: chatId,
-        messages: messages ?? [],
+        messages,
       }),
       { status: 200, headers: corsHeaders }
     );

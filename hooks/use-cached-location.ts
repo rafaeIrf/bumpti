@@ -1,4 +1,3 @@
-import { getUserPosition } from "@/modules/places";
 import { useEffect, useState } from "react";
 
 // Cache the user location globally
@@ -16,31 +15,9 @@ export const useCachedLocation = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       const now = Date.now();
+      setLoading(false)
+      return setLocation({ latitude: -25.4030362166611, longitude: -49.2732849121094 }); // TODO: remove this line
 
-      // If we have cached location and it's less than 5 minutes old, use it
-      if (cachedLocation && now - lastFetchTime < LOCATION_CACHE_TIME) {
-        console.log("Using cached location:", cachedLocation);
-        setLocation(cachedLocation);
-        setLoading(false);
-        return;
-      }
-
-      // Otherwise, fetch fresh location
-      try {
-        console.log("Fetching fresh location...");
-        const { latitude, longitude } = await getUserPosition();
-        const newLocation = { latitude, longitude };
-
-        cachedLocation = newLocation;
-        lastFetchTime = now;
-
-        console.log("Fresh location obtained:", newLocation);
-        setLocation(newLocation);
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to get user location:", error);
-        setLoading(false);
-      }
     };
 
     fetchLocation();

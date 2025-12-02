@@ -1,5 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { decryptMessage, getEncryptionKey } from "../_shared/encryption.ts";
+import { fetchPlacesByIds } from "../_shared/google-places.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,7 +71,7 @@ Deno.serve(async (req) => {
     const { data: rows, error: viewError } = await reader
       .from("chat_list")
       .select(
-        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message, last_message_at, user_a_unread, user_b_unread"
+        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message_enc, last_message_iv, last_message_tag, last_message_at, user_a_unread, user_b_unread"
       )
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       .order("last_message_at", { ascending: false });
@@ -112,8 +114,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    const chats =
-      rows?.map((row: any) => {
+    // Get encryption key once for all messages
+    const encryptionKey = await getEncryptionKey();
+
+    // Fetch place names from Google Places API
+    const placeIds = Array.from(
+      new Set(
+        (rows ?? [])
+          .map((r) => r.place_id)
+          .filter(Boolean) as string[]
+      )
+    );
+    
+    const placesMap = new Map<string, string>();
+    if (placeIds.length > 0) {
+      try {
+        const places = await fetchPlacesByIds({ placeIds });
+        places.forEach((place) => {
+          placesMap.set(place.placeId, place.name);
+        });
+      } catch (error) {
+        console.error("Failed to fetch place names:", error);
+      }
+    }
+
+    const chatsPromises =
+      rows?.map(async (row: any) => {
         const isUserA = row.user_a === user.id;
         const otherUserId = isUserA ? row.user_b : row.user_a;
         const otherUserName = isUserA ? row.user_b_name : row.user_a_name;
@@ -127,19 +153,38 @@ Deno.serve(async (req) => {
             ? null
             : signedPhotoMap.get(otherUserId) ?? null;
 
+        // Decrypt last message if available
+        let lastMessage: string | null = null;
+        if (row.last_message_enc && row.last_message_iv && row.last_message_tag && encryptionKey) {
+          try {
+            lastMessage = await decryptMessage(
+              row.last_message_enc,
+              row.last_message_iv,
+              row.last_message_tag,
+              encryptionKey
+            );
+          } catch (error) {
+            console.error("Failed to decrypt last message:", error);
+            lastMessage = null;
+          }
+        }
+
         return {
           chat_id: row.chat_id,
           match_id: row.match_id,
           place_id: row.place_id ?? null,
+          place_name: row.place_id ? placesMap.get(row.place_id) ?? null : null,
           other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_photo_url: otherPhotoUrl,
-          last_message: row.last_message ?? null,
+          last_message: lastMessage,
           last_message_at: row.last_message_at ?? null,
           unread_count: unread ?? 0,
           chat_created_at: row.chat_created_at ?? null,
         };
       }) ?? [];
+
+    const chats = await Promise.all(chatsPromises);
 
     const sorted = chats.sort((a, b) => {
       const aTime = a.last_message_at || a.chat_created_at || "";

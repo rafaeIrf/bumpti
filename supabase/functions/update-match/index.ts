@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const { data: matchRow, error: matchError } = await serviceClient
       .from("user_matches")
       .select(
-        "id, user_a, user_b, status, unmatched_at, user_a_opened_at, user_b_opened_at"
+        "id, user_a, user_b, status, unmatched_at, unmatched_by, user_a_opened_at, user_b_opened_at"
       )
       .eq("id", matchId)
       .single();
@@ -119,7 +119,13 @@ Deno.serve(async (req) => {
 
     if (status) {
       updates.status = status;
-      updates.unmatched_at = status === "unmatched" ? new Date().toISOString() : null;
+      if (status === "unmatched") {
+        updates.unmatched_at = new Date().toISOString();
+        updates.unmatched_by = user.id;
+      } else {
+        updates.unmatched_at = null;
+        updates.unmatched_by = null;
+      }
     }
 
     if (markOpened) {
@@ -141,7 +147,7 @@ Deno.serve(async (req) => {
       .update(updates)
       .eq("id", matchId)
       .select(
-        "id, user_a, user_b, status, matched_at, unmatched_at, user_a_opened_at, user_b_opened_at, place_id"
+        "id, user_a, user_b, status, matched_at, unmatched_at, unmatched_by, user_a_opened_at, user_b_opened_at, place_id"
       )
       .single();
 

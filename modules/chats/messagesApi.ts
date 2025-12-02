@@ -10,8 +10,8 @@ import {
   subscribeToChatMessages,
   subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCurrentUserId } from "@/modules/store/selectors/profile";
+import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export type ChatMessage = {
   id: string;
@@ -27,6 +27,7 @@ export type ChatSummary = {
   chat_id: string;
   match_id: string;
   place_id: string | null;
+  place_name: string | null;
   chat_created_at: string | null;
   other_user: {
     id: string;
@@ -43,6 +44,7 @@ export type MatchSummary = {
   chat_id: string | null;
   matched_at: string | null;
   place_id: string | null;
+  place_name: string | null;
   is_new_match: boolean;
   other_user: {
     id: string;
@@ -139,25 +141,53 @@ export const messagesApi = createApi({
           id: optimisticId,
           tempId: optimisticId,
           chat_id: chatId,
-          sender_id: senderId ?? "me",
+          sender_id: senderId ?? "",
           content,
           created_at: new Date().toISOString(),
           status: "sending",
         };
 
-        dispatch(
-          messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-            draft.push(optimisticMessage);
-          })
-        );
+        // If retrying, update existing failed message to sending status
+        // Otherwise, add new optimistic message
+        if (tempId) {
+          dispatch(
+            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+              const msg = draft.find((m) => m.tempId === tempId || m.id === tempId);
+              if (msg) {
+                msg.status = "sending";
+              }
+            })
+          );
+        } else {
+          dispatch(
+            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+              draft.push(optimisticMessage);
+            })
+          );
+        }
 
         // Trigger backend send in background
         try {
-          await sendMessageEdge({ toUserId, content });
+          const result = await sendMessageEdge({ toUserId, content });
+          
+          // Replace optimistic message with real one from API (already decrypted)
+          if (result?.message) {
+            dispatch(
+              messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
+                const idx = draft.findIndex((m) => m.tempId === optimisticId || m.id === optimisticId);
+                if (idx >= 0) {
+                  // Remove optimistic message
+                  draft.splice(idx, 1);
+                }
+                // Add real message from server
+                draft.push({ ...result.message, status: "sent" });
+              })
+            );
+          }
         } catch (error) {
           dispatch(
             messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-              const msg = draft.find((m) => m.tempId === optimisticId);
+              const msg = draft.find((m) => m.tempId === optimisticId || m.id === optimisticId);
               if (msg) {
                 msg.status = "failed";
               }
@@ -180,43 +210,26 @@ export const {
 // Realtime integration
 export function attachChatRealtime(chatId: string, dispatch: any, userId?: string) {
   if (!chatId) return () => Promise.resolve("ok" as const);
-  const unsubscribe = subscribeToChatMessages(chatId, (message) => {
-    dispatch(
-      messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-        // Replace optimistic if matches content+sender_id and status sending
-        const idx = draft.findIndex(
-          (m) =>
-            m.status === "sending" &&
-            m.content === message.content &&
-            m.sender_id === message.sender_id
-        );
-        if (idx >= 0) {
-          draft[idx] = { ...message, status: "sent" };
-        } else if (!draft.some((m) => m.id === message.id)) {
-          draft.push({ ...message, status: "sent" });
-        }
-        draft.sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
-        );
-      })
-    );
-
-    // Update chat preview and ordering
-    dispatch(
-      messagesApi.util.updateQueryData("getChats", undefined, (draft) => {
-        const chat = draft.find((c) => c.chat_id === chatId);
-        if (chat) {
-          chat.last_message = message.content;
-        }
-        draft.sort((a, b) => {
-          const aTime = a.last_message_at || "";
-          const bTime = b.last_message_at || "";
-          return new Date(bTime).getTime() - new Date(aTime).getTime();
-        });
-      })
-    );
+  
+  const unsubscribe = subscribeToChatMessages(chatId, async (message) => {
+    // If this message is from me, it was already handled by the optimistic update
+    if (userId && message.sender_id === userId) {
+      console.log("[Realtime] Skipping own message (already handled optimistically)");
+      return;
+    }
+    
+    // Message from another user - fetch to get decrypted content
+    console.log("[Realtime] New message from other user, fetching decrypted content");
+    
+    try {
+      const promise = dispatch(
+        messagesApi.endpoints.getMessages.initiate(chatId, { forceRefetch: true })
+      );
+      await promise;
+      promise.unsubscribe();
+    } catch (error) {
+      console.error("[Realtime] Failed to fetch new message:", error);
+    }
   });
 
   return unsubscribe;
