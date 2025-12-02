@@ -2,12 +2,13 @@ import {
   ArrowLeftIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
-  MapPinIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { LoadingView } from "@/components/loading-view";
+import { MatchPlaceCard } from "@/components/match-place-card";
 import { ReportReasonsBottomSheet } from "@/components/report-reasons-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -35,7 +36,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -64,10 +64,15 @@ export default function ChatMessageScreen() {
   const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const inputRef = useRef<TextInput>(null);
-  const { data: messages = [], isLoading: loading } = useGetMessagesQuery(
-    chatId ?? "",
+  const {
+    data,
+    isLoading: loading,
+    refetch,
+  } = useGetMessagesQuery(
+    { chatId: chatId ?? "", cursor: undefined },
     {
       skip: !chatId,
       refetchOnMountOrArgChange: false,
@@ -75,6 +80,9 @@ export default function ChatMessageScreen() {
       refetchOnReconnect: false,
     }
   );
+  const messages = data?.messages ?? [];
+  const hasMore = data?.hasMore ?? false;
+  const nextCursor = data?.nextCursor ?? null;
   const [sendMessage] = useSendMessageMutation();
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -91,19 +99,17 @@ export default function ChatMessageScreen() {
   }, []);
 
   useEffect(() => {
-    if (!chatId) return;
-    const unsub = attachChatRealtime(chatId, dispatch, userId ?? undefined);
+    if (!chatId || !userId) return;
+    console.log('[Realtime] Attaching realtime for chatId:', chatId, 'userId:', userId);
+    const unsub = attachChatRealtime(chatId, dispatch, userId);
     return () => {
+      console.log('[Realtime] Detaching realtime for chatId:', chatId);
       unsub?.().catch(() => {});
     };
   }, [chatId, dispatch, userId]);
 
-  useEffect(() => {
-    if (!listRef.current) return;
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToEnd({ animated: false });
-    });
-  }, [messages.length]);
+  // Com inverted, a lista já mostra mensagens mais recentes no topo
+  // Não precisa de scrollToEnd
 
   useEffect(() => {
     console.log("unreadMessages", unreadMessages);
@@ -217,14 +223,18 @@ export default function ChatMessageScreen() {
       if (!chatId) return;
       // Remove mensagem falhada do cache
       dispatch(
-        messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-          const idx = draft.findIndex(
-            (m) => m.tempId === message.tempId || m.id === message.id
-          );
-          if (idx >= 0) {
-            draft.splice(idx, 1);
+        messagesApi.util.updateQueryData(
+          "getMessages",
+          { chatId, cursor: undefined },
+          (draft) => {
+            const idx = draft.messages.findIndex(
+              (m) => m.tempId === message.tempId || m.id === message.id
+            );
+            if (idx >= 0) {
+              draft.messages.splice(idx, 1);
+            }
           }
-        })
+        )
       );
     },
     [chatId, dispatch]
@@ -237,6 +247,39 @@ export default function ChatMessageScreen() {
   const handleCloseFailedModal = useCallback(() => {
     setFailedMessage(null);
   }, []);
+
+  useEffect(() => {
+    console.log("isLoadingMore changed:", isLoadingMore);
+  }, [isLoadingMore]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!chatId || !hasMore || !nextCursor || isLoadingMore || loading) {
+      console.log("Skipping load more:", {
+        chatId,
+        hasMore,
+        nextCursor,
+        isLoadingMore,
+        loading,
+      });
+      return;
+    }
+
+    console.log("Loading more messages...", { hasMore, nextCursor });
+    setIsLoadingMore(true);
+    try {
+      await dispatch(
+        messagesApi.endpoints.getMessages.initiate(
+          { chatId, cursor: nextCursor },
+          { forceRefetch: true }
+        )
+      ).unwrap();
+      console.log("Loaded more messages successfully");
+    } catch (err) {
+      console.error("Failed to load more messages:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [chatId, hasMore, nextCursor, isLoadingMore, loading, dispatch]);
 
   const header = (
     <ScreenToolbar
@@ -290,8 +333,8 @@ export default function ChatMessageScreen() {
       ) : (
         <FlatList
           ref={listRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
+          data={[...messages].reverse()}
+          keyExtractor={(item) => item.tempId || item.id}
           renderItem={({ item }) => (
             <MessageBubble
               message={item}
@@ -299,48 +342,16 @@ export default function ChatMessageScreen() {
               onFailedPress={handleFailedMessagePress}
             />
           )}
-          ListHeaderComponent={
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          inverted
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          ListFooterComponent={
             params.matchPlace ? (
-              <View style={styles.matchCardContainer}>
-                <ThemedView
-                  style={[
-                    styles.matchCard,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                >
-                  <View style={styles.matchTitleRow}>
-                    <ThemedText
-                      style={[
-                        typography.body,
-                        {
-                          color: colors.text,
-                        },
-                      ]}
-                    >
-                      <MapPinIcon
-                        width={12}
-                        height={12}
-                        color={colors.accent}
-                      />{" "}
-                      <Text>{params.matchPlace}</Text>
-                    </ThemedText>
-                  </View>
-                  <ThemedText
-                    style={[
-                      typography.caption,
-                      {
-                        color: colors.textSecondary,
-                        textAlign: "center",
-                        marginTop: spacing.xs,
-                      },
-                    ]}
-                  >
-                    {t("screens.chatMessages.connectedHere")}
-                  </ThemedText>
-                </ThemedView>
+              <View>
+                <MatchPlaceCard placeName={params.matchPlace} />
+                {isLoadingMore && <LoadingView size="small" />}
               </View>
             ) : (
               <View style={{ height: spacing.md }} />
@@ -353,11 +364,6 @@ export default function ChatMessageScreen() {
           }}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() =>
-            requestAnimationFrame(() => {
-              listRef.current?.scrollToEnd({ animated: false });
-            })
-          }
         />
       )}
     </View>
@@ -414,10 +420,8 @@ export default function ChatMessageScreen() {
         ) : null}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={
-            Platform.OS === "ios" ? insets.top + spacing.xl : 0
-          }
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
           <ThemedView style={styles.flex}>{content}</ThemedView>
           <View
@@ -597,23 +601,6 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: "100%",
     height: "100%",
-  },
-  matchCardContainer: {
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  matchCard: {
-    borderRadius: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    width: "100%",
-  },
-  matchTitleRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
   },
   messageRow: {
     flexDirection: "row",

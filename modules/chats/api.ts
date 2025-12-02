@@ -25,7 +25,12 @@ export type ChatSummary = {
 };
 
 export type GetChatsResponse = { chats: ChatSummary[] };
-export type GetMessagesResponse = { chat_id: string; messages: Message[] };
+export type GetMessagesResponse = { 
+  chat_id: string; 
+  messages: Message[];
+  has_more: boolean;
+  next_cursor: string | null;
+};
 export type MatchSummary = {
   match_id: string;
   chat_id: string | null;
