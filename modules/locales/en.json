@@ -394,7 +394,11 @@
       "detailsLabel": "Details (optional, but recommended)",
       "placeholder": "Describe what happened...",
       "submit": "Submit report",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Report submitted",
+      "successMessage": "Thanks for letting us know. We'll review this shortly.",
+      "submitErrorTitle": "Could not submit report",
+      "submitError": "Please try again in a moment."
     }
   },
   "venue": {

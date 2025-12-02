@@ -194,6 +194,7 @@ export default function ChatMessageScreen() {
                 params: {
                   reason,
                   name: params.name ?? "",
+                  reportedUserId: otherUserId ?? "",
                 },
               });
             }}

@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { submitReport } from "@/modules/report/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -21,24 +23,58 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Params = {
   reason?: string;
   name?: string;
+  reportedUserId?: string;
 };
 
 export default function ReportModalScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams<Params>();
   const [details, setDetails] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const reasonLabel = useMemo(() => params.reason ?? "", [params.reason]);
+  const reasonLabel = useMemo(() => {
+    if (!params.reason) return "";
+    const reasonKeyMap: Record<string, string> = {
+      inappropriate: "bottomSheets.report.reasons.inappropriate",
+      harassment: "bottomSheets.report.reasons.harassment",
+      fake: "bottomSheets.report.reasons.fake",
+      inappropriate_content: "bottomSheets.report.reasons.inappropriate_content",
+      other: "bottomSheets.report.reasons.other",
+    };
+    const labelKey = reasonKeyMap[params.reason] ?? params.reason;
+    return t(labelKey);
+  }, [params.reason]);
 
-  const handleSubmit = () => {
-    // TODO: integrate with report submission edge function
-    console.log("report submit", {
-      reason: reasonLabel,
-      details,
-      name: params.name,
-    });
-    router.back();
+  const handleSubmit = async () => {
+    if (!params.reportedUserId) {
+      Alert.alert(t("errors.generic"));
+      return;
+    }
+
+    const reasonText =
+      details.trim() || reasonLabel || t("bottomSheets.report.reasons.other");
+
+    try {
+      setIsSubmitting(true);
+      await submitReport({
+        reportedUserId: params.reportedUserId,
+        category: params.reason,
+        reason: reasonText,
+      });
+      Alert.alert(
+        t("screens.report.successTitle"),
+        t("screens.report.successMessage")
+      );
+      router.back();
+    } catch (err) {
+      Alert.alert(
+        t("screens.report.submitErrorTitle"),
+        t("screens.report.submitError")
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const header = (
@@ -120,6 +156,8 @@ export default function ReportModalScreen() {
               size="lg"
               fullWidth
               variant="default"
+              disabled={isSubmitting}
+              loading={isSubmitting}
             />
           </View>
         </ThemedView>

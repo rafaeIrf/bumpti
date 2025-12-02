@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: spacing.xl,
     padding: spacing.lg,
-    borderWidth: 1,
   },
   closeButton: {
     position: "absolute",

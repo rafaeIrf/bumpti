@@ -395,7 +395,11 @@
       "detailsLabel": "Detalles (opcional, pero recomendado)",
       "placeholder": "Describe lo que pasó...",
       "submit": "Enviar reporte",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Reporte enviado",
+      "successMessage": "Gracias por avisarnos. Revisaremos esto pronto.",
+      "submitErrorTitle": "No se pudo enviar",
+      "submitError": "Intenta nuevamente en unos instantes."
     }
   },
   "venue": {

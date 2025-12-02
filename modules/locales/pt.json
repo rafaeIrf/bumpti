@@ -395,7 +395,11 @@
       "detailsLabel": "Detalhes (opcional, mas recomendado)",
       "placeholder": "Descreva o que aconteceu...",
       "submit": "Enviar denúncia",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Denúncia enviada",
+      "successMessage": "Obrigado por avisar. Vamos revisar em breve.",
+      "submitErrorTitle": "Não foi possível enviar",
+      "submitError": "Tente novamente em instantes."
     }
   },
   "venue": {
