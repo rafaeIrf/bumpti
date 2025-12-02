@@ -27,6 +27,7 @@ export type ChatSummary = {
   chat_id: string;
   match_id: string;
   place_id: string | null;
+  place_name: string | null;
   chat_created_at: string | null;
   other_user: {
     id: string;
@@ -43,6 +44,7 @@ export type MatchSummary = {
   chat_id: string | null;
   matched_at: string | null;
   place_id: string | null;
+  place_name: string | null;
   is_new_match: boolean;
   other_user: {
     id: string;

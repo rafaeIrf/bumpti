@@ -2,6 +2,7 @@ import {
   ArrowLeftIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
+  MapPinIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
@@ -34,6 +35,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from "react-native";
@@ -311,9 +313,19 @@ export default function ChatMessageScreen() {
                 >
                   <View style={styles.matchTitleRow}>
                     <ThemedText
-                      style={[typography.body, { color: colors.text }]}
+                      style={[
+                        typography.body,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
                     >
-                      🔥 {params.matchPlace}
+                      <MapPinIcon
+                        width={12}
+                        height={12}
+                        color={colors.accent}
+                      />{" "}
+                      <Text>{params.matchPlace}</Text>
                     </ThemedText>
                   </View>
                   <ThemedText
@@ -602,7 +614,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    columnGap: spacing.xs,
   },
   messageRow: {
     flexDirection: "row",
