@@ -1,5 +1,6 @@
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
 } from "@/assets/icons";
@@ -13,6 +14,7 @@ import { ReportReasonsBottomSheet } from "@/components/report-reasons-bottom-she
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { markMessagesRead, updateMatch } from "@/modules/chats/api";
@@ -39,6 +41,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  FadeInUp,
+  FadeOutDown,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = {
@@ -65,6 +72,7 @@ export default function ChatMessageScreen() {
   const [newMessage, setNewMessage] = useState("");
   const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showScrollToLatest, setShowScrollToLatest] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const inputRef = useRef<TextInput>(null);
   const {
@@ -132,12 +140,17 @@ export default function ChatMessageScreen() {
     const trimmed = newMessage.trim();
     if (!trimmed) return;
     try {
-      await sendMessage({
+      const sendPromise = sendMessage({
         chatId,
         toUserId: otherUserId,
         content: trimmed,
         senderId: userId ?? undefined,
       });
+      // Garantir que a nova mensagem fique visível mesmo se o usuário estiver no meio do scroll
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      });
+      await sendPromise;
       setNewMessage("");
       // Manter foco no input após enviar
       requestAnimationFrame(() => {
@@ -147,6 +160,13 @@ export default function ChatMessageScreen() {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     }
   }, [chatId, newMessage, otherUserId, sendMessage, userId]);
+
+  const handleScrollToLatest = useCallback(() => {
+    setShowScrollToLatest(false);
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+  }, []);
 
   const handleUnmatchConfirmed = async () => {
     if (!matchId || !otherUserId) return;
@@ -259,17 +279,8 @@ export default function ChatMessageScreen() {
 
   const handleLoadMore = useCallback(async () => {
     if (!chatId || !hasMore || !nextCursor || isLoadingMore || loading) {
-      console.log("Skipping load more:", {
-        chatId,
-        hasMore,
-        nextCursor,
-        isLoadingMore,
-        loading,
-      });
       return;
     }
-
-    console.log("Loading more messages...", { hasMore, nextCursor });
     setIsLoadingMore(true);
     try {
       await dispatch(
@@ -278,7 +289,6 @@ export default function ChatMessageScreen() {
           { forceRefetch: true }
         )
       ).unwrap();
-      console.log("Loaded more messages successfully");
     } catch (err) {
       console.error("Failed to load more messages:", err);
     } finally {
@@ -352,6 +362,11 @@ export default function ChatMessageScreen() {
           inverted
           keyboardDismissMode="interactive"
           automaticallyAdjustKeyboardInsets
+          onScroll={(event) => {
+            const offsetY = event.nativeEvent.contentOffset.y;
+            setShowScrollToLatest(offsetY > spacing.xxl);
+          }}
+          scrollEventThrottle={16}
           ListFooterComponent={
             params.matchPlace ? (
               <View>
@@ -380,7 +395,6 @@ export default function ChatMessageScreen() {
         isOpen={!!failedMessage}
         onClose={handleCloseFailedModal}
         title={t("screens.chatMessages.messageNotSent")}
-        buttonSize="md"
         actions={[
           {
             label: t("common.resend"),
@@ -428,7 +442,13 @@ export default function ChatMessageScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
-          <ThemedView style={styles.flex}>{content}</ThemedView>
+          <ThemedView style={styles.flex}>
+            {content}
+            <ScrollToLatestButton
+              visible={showScrollToLatest}
+              onPress={handleScrollToLatest}
+            />
+          </ThemedView>
           <View
             style={[
               styles.inputRow,
@@ -545,7 +565,7 @@ function MessageBubble({
           )}
         </View>
 
-        {isMe && isSending && (
+        {/* {isMe && isSending && (
           <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
             <View
               style={[
@@ -554,7 +574,7 @@ function MessageBubble({
               ]}
             />
           </View>
-        )}
+        )} */}
 
         {isMe && isFailed && (
           <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
@@ -645,4 +665,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
+  scrollToLatestButton: {
+    position: "absolute",
+    zIndex: 1,
+  },
 });
+
+function ScrollToLatestButton({
+  visible,
+  onPress,
+  bottomInset,
+}: {
+  visible: boolean;
+  onPress: () => void;
+}) {
+  const colors = useThemeColors();
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View
+      entering={FadeInUp.duration(220)
+        .easing(Easing.out(Easing.cubic))
+        .withInitialValues({
+          opacity: 0,
+          transform: [{ translateY: spacing.xxl }],
+        })}
+      exiting={FadeOutDown.duration(170)
+        .easing(Easing.in(Easing.cubic))
+        .withInitialValues({
+          opacity: 1,
+          transform: [{ translateY: 0 }],
+        })}
+      style={[
+        styles.scrollToLatestButton,
+        {
+          right: spacing.md,
+          bottom: spacing.md,
+        },
+      ]}
+    >
+      <Button
+        accessibilityLabel={t("screens.chatMessages.scrollToLatest")}
+        onPress={onPress}
+        variant="secondary"
+        size="icon"
+      >
+        <ArrowRightIcon
+          width={18}
+          height={18}
+          color={colors.textPrimary}
+          style={{ transform: [{ rotate: "90deg" }] }}
+        />
+      </Button>
+    </Animated.View>
+  );
+}

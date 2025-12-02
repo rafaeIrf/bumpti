@@ -386,7 +386,8 @@
       "connectedHere": "Se conectaron aquí",
       "moreActions": "Más acciones",
       "notSent": "No enviado",
-      "messageNotSent": "Mensaje no enviado"
+      "messageNotSent": "Mensaje no enviado",
+      "scrollToLatest": "Ir a los mensajes recientes"
     },
     "report": {
       "title": "Enviar reporte",

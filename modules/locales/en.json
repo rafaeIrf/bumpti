@@ -385,7 +385,8 @@
       "connectedHere": "You connected here",
       "moreActions": "More actions",
       "notSent": "Not sent",
-      "messageNotSent": "Message not sent"
+      "messageNotSent": "Message not sent",
+      "scrollToLatest": "Scroll to latest messages"
     },
     "report": {
       "title": "Submit report",

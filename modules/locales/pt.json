@@ -386,7 +386,8 @@
       "connectedHere": "Vocês se conectaram aqui",
       "moreActions": "Mais ações",
       "notSent": "Não enviada",
-      "messageNotSent": "Mensagem não enviada"
+      "messageNotSent": "Mensagem não enviada",
+      "scrollToLatest": "Ir para mensagens recentes"
     },
     "report": {
       "title": "Enviar denúncia",
