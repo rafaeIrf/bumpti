@@ -5,7 +5,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React, { useState } from "react";
-import { FlatList, Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
 type ActionId = "unmatch" | "block" | "report";
 
@@ -86,54 +86,53 @@ export function ChatActionsBottomSheet({
         />
       </View>
 
-      <FlatList
-        data={actions}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-        renderItem={({ item }) => {
+      <View style={styles.listContent}>
+        {actions.map((item, index) => {
           const Icon = item.icon;
           return (
-            <Pressable
-              onPress={() => handleAction(item.id)}
-              style={styles.actionRow}
-              accessibilityRole="button"
-              accessibilityLabel={t(item.titleKey, { name: userName })}
-            >
-              <View
-                style={[
-                  styles.iconWrapper,
-                  {
-                    backgroundColor: `${colors.textSecondary}15`,
-                    borderColor: colors.border,
-                  },
-                ]}
+            <View key={item.id}>
+              {index > 0 && <View style={{ height: spacing.md }} />}
+              <Pressable
+                onPress={() => handleAction(item.id)}
+                style={styles.actionRow}
+                accessibilityRole="button"
+                accessibilityLabel={t(item.titleKey, { name: userName })}
               >
-                <Icon width={20} height={20} color={colors.textSecondary} />
-              </View>
-              <View style={styles.textContainer}>
-                <ThemedText
+                <View
                   style={[
-                    typography.body1,
-                    { color: colors.text, marginBottom: spacing.xs / 2 },
+                    styles.iconWrapper,
+                    {
+                      backgroundColor: `${colors.textSecondary}15`,
+                      borderColor: colors.border,
+                    },
                   ]}
                 >
-                  {t(item.titleKey, { name: userName })}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    { color: colors.textSecondary, lineHeight: 18 },
-                  ]}
-                >
-                  {t(item.descriptionKey, { name: userName })}
-                </ThemedText>
-              </View>
-            </Pressable>
+                  <Icon width={20} height={20} color={colors.textSecondary} />
+                </View>
+                <View style={styles.textContainer}>
+                  <ThemedText
+                    style={[
+                      typography.body1,
+                      { color: colors.text, marginBottom: spacing.xs / 2 },
+                    ]}
+                  >
+                    {t(item.titleKey, { name: userName })}
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      { color: colors.textSecondary, lineHeight: 18 },
+                    ]}
+                  >
+                    {t(item.descriptionKey, { name: userName })}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            </View>
           );
-        }}
-        ListFooterComponent={<View style={{ height: spacing.md }} />}
-      />
+        })}
+        <View style={{ height: spacing.md }} />
+      </View>
 
       <ConfirmationModal
         isOpen={showUnmatchModal}

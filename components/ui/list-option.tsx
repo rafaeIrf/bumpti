@@ -29,7 +29,7 @@ export function ListOption({ label, Icon, onPress, testID }: ListOptionProps) {
       accessibilityLabel={label}
       testID={testID}
     >
-      <ThemedText style={[typography.body1, { color: colors.text, flex: 1 }]}>
+      <ThemedText style={[typography.body, { color: colors.text, flex: 1 }]}>
         {label}
       </ThemedText>
       <View
@@ -49,11 +49,11 @@ export function ListOption({ label, Icon, onPress, testID }: ListOptionProps) {
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderRadius: spacing.lg,
-    padding: spacing.md,
+    borderRadius: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
   },
   iconWrapper: {
     width: 32,

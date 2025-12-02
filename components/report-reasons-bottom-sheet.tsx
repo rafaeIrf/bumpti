@@ -5,7 +5,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React from "react";
-import { FlatList, StyleSheet, View, ViewStyle } from "react-native";
+import { StyleSheet, View, ViewStyle } from "react-native";
 
 type ReportReasonId =
   | "inappropriate"
@@ -72,20 +72,19 @@ export function ReportReasonsBottomSheet({
         </ThemedText>
       </View>
 
-      <FlatList
-        data={reportReasons}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        renderItem={({ item }) => (
-          <ListOption
-            label={t(item.labelKey)}
-            onPress={() => onSelectReason(item.id)}
-            Icon={ArrowRightIcon}
-          />
-        )}
-        ListFooterComponent={<View style={{ height: spacing.md }} />}
-      />
+      <View style={styles.listContent}>
+        {reportReasons.map((item, index) => (
+          <View key={item.id}>
+            {index > 0 && <View style={{ height: spacing.sm }} />}
+            <ListOption
+              label={t(item.labelKey)}
+              onPress={() => onSelectReason(item.id)}
+              Icon={ArrowRightIcon}
+            />
+          </View>
+        ))}
+        <View style={{ height: spacing.md }} />
+      </View>
     </View>
   );
 }

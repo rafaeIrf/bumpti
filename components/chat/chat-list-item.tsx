@@ -114,7 +114,6 @@ function formatTime(value?: string | null) {
 
 const styles = StyleSheet.create({
   chatCard: {
-    borderWidth: 1,
     borderRadius: spacing.md,
   },
   chatRow: {
