@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     const { data: rows, error: viewError } = await reader
       .from("chat_list")
       .select(
-        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message_enc, last_message_iv, last_message_tag, last_message_at, user_a_unread, user_b_unread"
+        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message_enc, last_message_iv, last_message_tag, last_message_at, user_a_unread, user_b_unread, first_message_at"
       )
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       .order("last_message_at", { ascending: false });
@@ -181,6 +181,7 @@ Deno.serve(async (req) => {
           last_message_at: row.last_message_at ?? null,
           unread_count: unread ?? 0,
           chat_created_at: row.chat_created_at ?? null,
+          first_message_at: row.first_message_at ?? null,
         };
       }) ?? [];
 

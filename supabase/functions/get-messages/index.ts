@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const queryChatId = url.searchParams.get("chat_id");
     const queryBefore = url.searchParams.get("before");
+    const queryLimit = url.searchParams.get("limit");
 
     const body =
       req.method === "POST" ? await req.json().catch(() => null) : null;
@@ -75,6 +76,11 @@ Deno.serve(async (req) => {
     const before =
       (body?.before as string | undefined) ??
       (queryBefore ?? undefined);
+    const limit = parseInt(
+      (body?.limit as string | undefined) ??
+      (queryLimit ?? "50"),
+      10
+    );
 
     if (!chatId || typeof chatId !== "string") {
       return new Response(JSON.stringify({ error: "invalid_chat_id" }), {
@@ -82,6 +88,9 @@ Deno.serve(async (req) => {
         headers: corsHeaders,
       });
     }
+
+    // Validate limit
+    const pageSize = Math.min(Math.max(limit, 1), 100); // Between 1 and 100
 
     const { data: chat, error: chatError } = await supabase
       .from("chats")
@@ -133,17 +142,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch one extra message to determine if there are more
+    const fetchLimit = pageSize + 1;
+
     let messagesQuery = supabase
       .from("messages")
       .select("id, chat_id, sender_id, content_enc, content_iv, content_tag, created_at, read_at")
       .eq("chat_id", chatId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false }) // Descending to get most recent first
+      .limit(fetchLimit);
 
     if (before) {
+      // For pagination, get messages older than this timestamp
       messagesQuery = messagesQuery.lt("created_at", before);
     }
 
     const { data: encryptedMessages, error: messagesError } = await messagesQuery;
+    
+    // Check if there are more messages
+    const hasMore = (encryptedMessages?.length ?? 0) > pageSize;
+    
+    // Remove the extra message if we fetched one
+    const messagesToProcess = hasMore
+      ? encryptedMessages?.slice(0, pageSize)
+      : encryptedMessages;
 
     if (messagesError) {
       return new Response(
@@ -169,7 +191,7 @@ Deno.serve(async (req) => {
 
     // Decrypt all messages
     const messages = await Promise.all(
-      (encryptedMessages ?? []).map(async (msg: any) => {
+      (messagesToProcess ?? []).map(async (msg: any) => {
         // If any of the encryption fields are missing, return error placeholder
         if (!msg.content_enc || !msg.content_iv || !msg.content_tag) {
           return {
@@ -215,10 +237,20 @@ Deno.serve(async (req) => {
       })
     );
 
+    // Reverse to maintain chronological order (oldest first)
+    const sortedMessages = messages.reverse();
+    
+    // Get cursor for next page (oldest message timestamp)
+    const nextCursor = sortedMessages.length > 0 
+      ? sortedMessages[0].created_at 
+      : null;
+
     return new Response(
       JSON.stringify({
         chat_id: chatId,
-        messages,
+        messages: sortedMessages,
+        has_more: hasMore,
+        next_cursor: hasMore ? nextCursor : null,
       }),
       { status: 200, headers: corsHeaders }
     );

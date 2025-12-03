@@ -11,6 +11,8 @@ export interface ConfirmationModalAction {
   readonly label: string;
   readonly onPress: () => void;
   readonly variant?: ButtonProps["variant"];
+  readonly loading?: boolean;
+  readonly disabled?: boolean;
 }
 
 export interface ConfirmationModalProps {
@@ -126,6 +128,8 @@ export function ConfirmationModal({
                   size={buttonSize}
                   fullWidth
                   variant={action.variant || "default"}
+                  loading={action.loading}
+                  disabled={action.disabled}
                 />
               ))}
             </View>
@@ -153,7 +157,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: spacing.xl,
     padding: spacing.lg,
-    borderWidth: 1,
   },
   closeButton: {
     position: "absolute",

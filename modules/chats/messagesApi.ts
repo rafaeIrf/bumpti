@@ -37,6 +37,7 @@ export type ChatSummary = {
   last_message: string | null;
   last_message_at: string | null;
   unread_count?: number;
+  first_message_at: string | null;
 };
 
 export type MatchSummary = {
@@ -96,22 +97,63 @@ export const messagesApi = createApi({
           : [{ type: "Match", id: "LIST" }],
     }),
 
-    getMessages: builder.query<ChatMessage[], string>({
-      queryFn: async (chatId) => {
+    getMessages: builder.query<
+      { messages: ChatMessage[]; hasMore: boolean; nextCursor: string | null },
+      { chatId: string; cursor?: string }
+    >({
+      queryFn: async ({ chatId, cursor }) => {
         try {
-          const data = await fetchMessages({ chatId });
+          const data = await fetchMessages({ 
+            chatId,
+            limit: 50,
+            before: cursor 
+          });
           const messages =
             data.messages?.map((m) => ({ ...m, status: "sent" as const })) ??
             [];
-          return { data: messages };
+          return { 
+            data: { 
+              messages,
+              hasMore: data.has_more,
+              nextCursor: data.next_cursor
+            } 
+          };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }
       },
-      providesTags: (result, _error, chatId) =>
+      serializeQueryArgs: ({ queryArgs }) => {
+        // Only use chatId for cache key, ignore cursor
+        return queryArgs.chatId;
+      },
+      merge: (currentCache, newResponse, { arg }) => {
+        // If cursor exists, we're loading more - prepend old messages
+        if (arg.cursor) {
+          const combinedMessages = [...newResponse.messages, ...currentCache.messages];
+          // Deduplicate by id (keep first occurrence)
+          const seen = new Set<string>();
+          const uniqueMessages = combinedMessages.filter((msg) => {
+            if (seen.has(msg.id)) return false;
+            seen.add(msg.id);
+            return true;
+          });
+          return {
+            messages: uniqueMessages,
+            hasMore: newResponse.hasMore,
+            nextCursor: newResponse.nextCursor,
+          };
+        }
+        // Initial load or refresh
+        return newResponse;
+      },
+      forceRefetch: ({ currentArg, previousArg }) => {
+        // Force refetch when cursor changes
+        return currentArg?.cursor !== previousArg?.cursor;
+      },
+      providesTags: (result, _error, { chatId }) =>
         result
           ? [
-              ...result.map((m) => ({ type: "Message" as const, id: m.id })),
+              ...result.messages.map((m) => ({ type: "Message" as const, id: m.id })),
               { type: "Message", id: chatId }, { type: "Message", id: "LIST" },
             ]
           : [{ type: "Message", id: chatId }, { type: "Message", id: "LIST" }],
@@ -151,8 +193,8 @@ export const messagesApi = createApi({
         // Otherwise, add new optimistic message
         if (tempId) {
           dispatch(
-            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-              const msg = draft.find((m) => m.tempId === tempId || m.id === tempId);
+            messagesApi.util.updateQueryData("getMessages", { chatId, cursor: undefined }, (draft) => {
+              const msg = draft.messages.find((m) => m.tempId === tempId || m.id === tempId);
               if (msg) {
                 msg.status = "sending";
               }
@@ -160,8 +202,8 @@ export const messagesApi = createApi({
           );
         } else {
           dispatch(
-            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-              draft.push(optimisticMessage);
+            messagesApi.util.updateQueryData("getMessages", { chatId, cursor: undefined }, (draft) => {
+              draft.messages.push(optimisticMessage);
             })
           );
         }
@@ -173,21 +215,21 @@ export const messagesApi = createApi({
           // Replace optimistic message with real one from API (already decrypted)
           if (result?.message) {
             dispatch(
-              messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-                const idx = draft.findIndex((m) => m.tempId === optimisticId || m.id === optimisticId);
+              messagesApi.util.updateQueryData("getMessages", { chatId, cursor: undefined }, (draft) => {
+                const idx = draft.messages.findIndex((m) => m.tempId === optimisticId || m.id === optimisticId);
                 if (idx >= 0) {
                   // Remove optimistic message
-                  draft.splice(idx, 1);
+                  draft.messages.splice(idx, 1);
                 }
                 // Add real message from server
-                draft.push({ ...result.message, status: "sent" });
+                draft.messages.push({ ...result.message, status: "sent" });
               })
             );
           }
         } catch (error) {
           dispatch(
-            messagesApi.util.updateQueryData("getMessages", chatId, (draft) => {
-              const msg = draft.find((m) => m.tempId === optimisticId || m.id === optimisticId);
+            messagesApi.util.updateQueryData("getMessages", { chatId, cursor: undefined }, (draft) => {
+              const msg = draft.messages.find((m) => m.tempId === optimisticId || m.id === optimisticId);
               if (msg) {
                 msg.status = "failed";
               }
@@ -208,12 +250,15 @@ export const {
 } = messagesApi;
 
 // Realtime integration
-export function attachChatRealtime(chatId: string, dispatch: any, userId?: string) {
-  if (!chatId) return () => Promise.resolve("ok" as const);
+export function attachChatRealtime(chatId: string, dispatch: any, userId: string) {
+  if (!chatId || !userId) {
+    console.warn('[Realtime] Cannot attach realtime without chatId and userId');
+    return () => Promise.resolve("ok" as const);
+  }
   
   const unsubscribe = subscribeToChatMessages(chatId, async (message) => {
     // If this message is from me, it was already handled by the optimistic update
-    if (userId && message.sender_id === userId) {
+    if (message.sender_id === userId) {
       console.log("[Realtime] Skipping own message (already handled optimistically)");
       return;
     }
@@ -223,7 +268,7 @@ export function attachChatRealtime(chatId: string, dispatch: any, userId?: strin
     
     try {
       const promise = dispatch(
-        messagesApi.endpoints.getMessages.initiate(chatId, { forceRefetch: true })
+        messagesApi.endpoints.getMessages.initiate({ chatId, cursor: undefined }, { forceRefetch: true })
       );
       await promise;
       promise.unsubscribe();

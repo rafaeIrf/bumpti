@@ -5,7 +5,7 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Intentar de nuevo",
+    "retry": "Intentar nuevamente",
     "resend": "Reenviar",
     "delete": "Eliminar",
     "cancel": "Cancelar",
@@ -17,8 +17,11 @@
     "onePerson": "1 persona ahora",
     "peopleNow": "{{count}} personas ahora",
     "error": "Error",
-    "min": "mínimo",
-    "max": "máximo"
+    "min": "mínima",
+    "max": "máxima",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "hace {{count}} días"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."
@@ -386,7 +389,8 @@
       "connectedHere": "Se conectaron aquí",
       "moreActions": "Más acciones",
       "notSent": "No enviado",
-      "messageNotSent": "Mensaje no enviado"
+      "messageNotSent": "Mensaje no enviado",
+      "scrollToLatest": "Ir a los mensajes recientes"
     },
     "report": {
       "title": "Enviar reporte",
@@ -394,7 +398,23 @@
       "detailsLabel": "Detalles (opcional, pero recomendado)",
       "placeholder": "Describe lo que pasó...",
       "submit": "Enviar reporte",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Reporte enviado",
+      "successMessage": "Gracias por avisarnos. Revisaremos esto pronto.",
+      "submitErrorTitle": "No se pudo enviar",
+      "submitError": "Intenta nuevamente en unos instantes.",
+      "detailsRequired": "Agrega detalles antes de enviar.",
+      "detailsHelper": "Agrega una breve descripción para enviar."
+    },
+    "chatBlock": {
+      "blockSuccessTitle": "Usuario bloqueado",
+      "blockSuccessMessage": "No recibirás mensajes de este usuario.",
+      "blockErrorTitle": "No se pudo bloquear al usuario",
+      "blockError": "Intenta nuevamente en unos instantes."
+    },
+    "chatUnmatch": {
+      "unmatchErrorTitle": "No se pudo deshacer el match",
+      "unmatchError": "Intenta nuevamente en unos instantes."
     }
   },
   "venue": {

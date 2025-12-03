@@ -18,7 +18,10 @@
     "peopleNow": "{{count}} pessoas agora",
     "error": "Erro",
     "min": "mínima",
-    "max": "máxima"
+    "max": "máxima",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "daysAgo": "{{count}} dias atrás"
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
@@ -386,7 +389,8 @@
       "connectedHere": "Vocês se conectaram aqui",
       "moreActions": "Mais ações",
       "notSent": "Não enviada",
-      "messageNotSent": "Mensagem não enviada"
+      "messageNotSent": "Mensagem não enviada",
+      "scrollToLatest": "Ir para mensagens recentes"
     },
     "report": {
       "title": "Enviar denúncia",
@@ -394,7 +398,23 @@
       "detailsLabel": "Detalhes (opcional, mas recomendado)",
       "placeholder": "Descreva o que aconteceu...",
       "submit": "Enviar denúncia",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Denúncia enviada",
+      "successMessage": "Obrigado por avisar. Vamos revisar em breve.",
+      "submitErrorTitle": "Não foi possível enviar",
+      "submitError": "Tente novamente em instantes.",
+      "detailsRequired": "Adicione detalhes antes de enviar.",
+      "detailsHelper": "Adicione uma breve descrição para enviar."
+    },
+    "chatBlock": {
+      "blockSuccessTitle": "Usuário bloqueado",
+      "blockSuccessMessage": "Você não receberá mensagens desse usuário.",
+      "blockErrorTitle": "Não foi possível bloquear",
+      "blockError": "Tente novamente em instantes."
+    },
+    "chatUnmatch": {
+      "unmatchErrorTitle": "Não foi possível desfazer o match",
+      "unmatchError": "Tente novamente em instantes."
     }
   },
   "venue": {

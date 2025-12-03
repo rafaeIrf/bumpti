@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Sort by people_count descending and take top 10 places with at least 1 person
+    // Filter places with at least 1 person and sort by people_count descending
     const topPlaces = placeCounts
       .filter((pc: { place_id: string; people_count: number }) => pc.people_count > 0)
       .sort((a: { people_count: number }, b: { people_count: number }) => b.people_count - a.people_count)
@@ -199,19 +199,22 @@ Deno.serve(async (req) => {
       topPlaces.map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
     );
 
-    // Combine with active_users count from RPC
-    const placesWithActiveUsers = placesData.map((place) => {
-      const activeCount = countMap.get(place.placeId) || 0;
-      return {
-        place_id: place.placeId,
-        active_users: activeCount,
-        name: place.name,
-        address: place.formattedAddress || "",
-        distance: place.distance,
-        type: place.type,
-        types: place.types,
-      };
-    });
+    // Combine with active_users count from RPC and filter out places with 0 users
+    const placesWithActiveUsers = placesData
+      .map((place) => {
+        const activeCount = countMap.get(place.placeId) || 0;
+        return {
+          place_id: place.placeId,
+          active_users: activeCount,
+          name: place.name,
+          address: place.formattedAddress || "",
+          distance: place.distance,
+          type: place.type,
+          types: place.types,
+        };
+      })
+      .filter((place) => place.active_users > 0) // Remove places with 0 active users
+      .sort((a, b) => b.active_users - a.active_users); // Sort by active_users descending
 
     return new Response(
       JSON.stringify({ places: placesWithActiveUsers }),

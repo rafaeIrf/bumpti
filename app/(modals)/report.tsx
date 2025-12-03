@@ -1,4 +1,4 @@
-import { ArrowLeftIcon } from "@/assets/icons";
+import { XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -7,117 +7,192 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { submitReport } from "@/modules/report/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = {
   reason?: string;
   name?: string;
+  reportedUserId?: string;
 };
 
 export default function ReportModalScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams<Params>();
   const [details, setDetails] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const insets = useSafeAreaInsets();
 
-  const reasonLabel = useMemo(() => params.reason ?? "", [params.reason]);
+  const reasonLabel = useMemo(() => {
+    if (!params.reason) return "";
+    const reasonKeyMap: Record<string, string> = {
+      inappropriate: "bottomSheets.report.reasons.inappropriate",
+      harassment: "bottomSheets.report.reasons.harassment",
+      fake: "bottomSheets.report.reasons.fake",
+      inappropriate_content: "bottomSheets.report.reasons.inappropriate_content",
+      other: "bottomSheets.report.reasons.other",
+    };
+    const labelKey = reasonKeyMap[params.reason] ?? params.reason;
+    return t(labelKey);
+  }, [params.reason]);
 
-  const handleSubmit = () => {
-    // TODO: integrate with report submission edge function
-    console.log("report submit", {
-      reason: reasonLabel,
-      details,
-      name: params.name,
-    });
-    router.back();
+  const handleSubmit = async () => {
+    if (!params.reportedUserId) {
+      setSubmitError(t("errors.generic"));
+      return;
+    }
+
+    const detailsText = details.trim();
+    if (!detailsText) {
+      setSubmitError(t("screens.report.detailsRequired"));
+      return;
+    }
+
+    setSubmitError("");
+    const reasonText =
+      (reasonLabel ? `${reasonLabel} - ${detailsText}` : detailsText) ||
+      t("bottomSheets.report.reasons.other");
+
+    try {
+      setIsSubmitting(true);
+      await submitReport({
+        reportedUserId: params.reportedUserId,
+        category: params.reason,
+        reason: reasonText,
+      });
+      router.back();
+    } catch (err) {
+      setSubmitError(t("screens.report.submitError"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const header = (
     <ScreenToolbar
       title={t("screens.report.title")}
-      leftAction={{
-        icon: ArrowLeftIcon,
+      rightActions={{
+        icon: XIcon,
         onClick: () => router.back(),
-        ariaLabel: t("common.back"),
+        ariaLabel: t("common.close"),
       }}
     />
   );
 
   return (
-    <BaseTemplateScreen TopHeader={header} isModal>
-      <ThemedView style={styles.container}>
-        <ThemedText
-          style={[
-            typography.body,
-            styles.description,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("screens.report.description", { name: params.name ?? "" })}
-        </ThemedText>
+    <BaseTemplateScreen TopHeader={header} isModal scrollEnabled={false}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 0}
+      >
+        <ThemedView style={styles.container}>
+          <View style={styles.content}>
+            <ThemedText
+              style={[
+                typography.body,
+                styles.description,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {t("screens.report.description", { name: params.name ?? "" })}
+            </ThemedText>
 
-        <ThemedText
-          style={[typography.caption, styles.label, { color: colors.text }]}
-        >
-          {t("screens.report.detailsLabel")}
-        </ThemedText>
+            <ThemedText
+              style={[typography.caption, styles.label, { color: colors.text }]}
+            >
+              {t("screens.report.detailsLabel")}
+            </ThemedText>
 
-        <View
-          style={[
-            styles.textAreaWrapper,
-            { borderColor: colors.border, backgroundColor: colors.surface },
-          ]}
-        >
-          <TextInput
-            value={details}
-            onChangeText={setDetails}
-            placeholder={t("screens.report.placeholder")}
-            placeholderTextColor={colors.textSecondary}
-            multiline
-            maxLength={500}
-            textAlignVertical="top"
+            <View
+              style={[
+                styles.textAreaWrapper,
+                { borderColor: colors.border, backgroundColor: colors.surface },
+              ]}
+            >
+              <TextInput
+                value={details}
+                onChangeText={setDetails}
+                placeholder={t("screens.report.placeholder")}
+                placeholderTextColor={colors.textSecondary}
+                multiline
+                maxLength={500}
+                textAlignVertical="top"
+                style={[
+                  styles.textArea,
+                  { color: colors.text, ...typography.body },
+                ]}
+              />
+            </View>
+            <ThemedText
+              style={[
+                typography.caption,
+                styles.counter,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {t("screens.report.counter", { count: details.length })}
+            </ThemedText>
+            {!details.trim() ? (
+              <ThemedText
+                style={[
+                  typography.caption,
+                  styles.helperText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {t("screens.report.detailsHelper")}
+              </ThemedText>
+            ) : null}
+            {submitError ? (
+              <ThemedText
+                style={[
+                  typography.caption,
+                  styles.errorText,
+                  { color: colors.error },
+                ]}
+              >
+                {submitError}
+              </ThemedText>
+            ) : null}
+          </View>
+
+          <View
             style={[
-              styles.textArea,
-              { color: colors.text, ...typography.body },
+              styles.footer,
+              { paddingBottom: Math.max(insets.bottom, spacing.lg) },
             ]}
-          />
-        </View>
-        <ThemedText
-          style={[
-            typography.caption,
-            styles.counter,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {t("screens.report.counter", { count: details.length })}
-        </ThemedText>
-
-        <View style={styles.actions}>
-          <Button
-            label={t("screens.report.submit")}
-            onPress={handleSubmit}
-            size="lg"
-            fullWidth
-            variant="default"
-          />
-          <Button
-            label={t("common.cancel")}
-            onPress={() => router.back()}
-            size="lg"
-            fullWidth
-            variant="secondary"
-          />
-        </View>
-      </ThemedView>
+          >
+            <Button
+              label={t("screens.report.submit")}
+              onPress={handleSubmit}
+              size="lg"
+              fullWidth
+              variant="default"
+              disabled={isSubmitting || !details.trim()}
+              loading={isSubmitting}
+            />
+          </View>
+        </ThemedView>
+      </KeyboardAvoidingView>
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingHorizontal: spacing.md,
+  },
+  content: {
+    flex: 1,
     paddingTop: spacing.lg,
     gap: spacing.md,
   },
@@ -129,7 +204,7 @@ const styles = StyleSheet.create({
   },
   textAreaWrapper: {
     borderWidth: 1,
-    borderRadius: spacing.lg,
+    borderRadius: spacing.md,
     padding: spacing.md,
   },
   textArea: {
@@ -139,8 +214,16 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     marginTop: -spacing.sm,
   },
-  actions: {
-    marginTop: spacing.lg,
-    rowGap: spacing.sm,
+  helperText: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs / 2,
+  },
+  errorText: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs / 2,
+  },
+  footer: {
+    paddingVertical: spacing.md,
+    paddingBottom: spacing.lg,
   },
 });

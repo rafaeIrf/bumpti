@@ -39,6 +39,9 @@ export function MatchAvatar({ match, onPress }: Props) {
             source={{ uri: match.other_user.photo_url }}
             style={styles.matchAvatarImage}
             contentFit="cover"
+            cachePolicy="memory-disk"
+            priority="high"
+            transition={200}
           />
         ) : (
           <ThemedText style={[typography.body1, { color: colors.text }]}>

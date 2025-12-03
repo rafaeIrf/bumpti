@@ -18,7 +18,10 @@
     "peopleNow": "{{count}} people now",
     "error": "Error",
     "min": "minimum",
-    "max": "maximum"
+    "max": "maximum",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago"
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
@@ -385,7 +388,8 @@
       "connectedHere": "You connected here",
       "moreActions": "More actions",
       "notSent": "Not sent",
-      "messageNotSent": "Message not sent"
+      "messageNotSent": "Message not sent",
+      "scrollToLatest": "Scroll to latest messages"
     },
     "report": {
       "title": "Submit report",
@@ -393,7 +397,23 @@
       "detailsLabel": "Details (optional, but recommended)",
       "placeholder": "Describe what happened...",
       "submit": "Submit report",
-      "counter": "{{count}}/500"
+      "counter": "{{count}}/500",
+      "successTitle": "Report submitted",
+      "successMessage": "Thanks for letting us know. We'll review this shortly.",
+      "submitErrorTitle": "Could not submit report",
+      "submitError": "Please try again in a moment.",
+      "detailsRequired": "Please add details before submitting.",
+      "detailsHelper": "Add a short description to submit."
+    },
+    "chatBlock": {
+      "blockSuccessTitle": "User blocked",
+      "blockSuccessMessage": "You won't receive messages from this user.",
+      "blockErrorTitle": "Could not block",
+      "blockError": "Try again in a moment."
+    },
+    "chatUnmatch": {
+      "unmatchErrorTitle": "Could not unmatch",
+      "unmatchError": "Try again in a moment."
     }
   },
   "venue": {

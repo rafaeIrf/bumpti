@@ -59,7 +59,8 @@ SELECT
 
   -- Unread count
   u.user_a_unread,
-  u.user_b_unread
+  u.user_b_unread,
+  c.first_message_at
 
 FROM chats c
 JOIN user_matches m ON m.id = c.match_id

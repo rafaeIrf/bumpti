@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   type PressableProps,
   type StyleProp,
@@ -38,6 +39,8 @@ export interface ButtonProps extends Omit<PressableProps, "style"> {
   textStyle?: StyleProp<TextStyle>;
   /** Apply full width */
   fullWidth?: boolean;
+  /** Show loading indicator and disable interactions */
+  loading?: boolean;
 }
 
 function getVariantStyles(C: any, variant: ButtonVariant, pressed: boolean) {
@@ -150,6 +153,7 @@ export function Button({
   textStyle,
   disabled,
   fullWidth,
+  loading,
   ...props
 }: ButtonProps) {
   const scheme = useColorScheme() ?? "light";
@@ -157,7 +161,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled}
+      disabled={disabled || loading}
       style={({ pressed }) => {
         const v = getVariantStyles(C, variant, pressed);
         const s = getSizeStyles(size, fullWidth);
@@ -177,7 +181,16 @@ export function Button({
         const content = typeof children === "string" ? children : label;
         return (
           <View style={styles.contentRow}>
-            {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
+            {loading ? (
+              <View style={styles.icon}>
+                <ActivityIndicator
+                  size="small"
+                  color={(v.text.color as string) ?? undefined}
+                />
+              </View>
+            ) : leftIcon ? (
+              <View style={styles.icon}>{leftIcon}</View>
+            ) : null}
             {content ? (
               <Text numberOfLines={1} style={[v.text, s.text, textStyle]}>
                 {content}

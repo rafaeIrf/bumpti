@@ -147,6 +147,7 @@ export function BaseTemplateScreen({
       ) : (
         <View
           style={[
+            { flex: 1 },
             styles.contentContainer,
             contentContainerStyle,
             BottomBar ? styles.contentWithBottomBar : undefined,

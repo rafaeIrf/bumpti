@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { getExcludedUserIds } from "../_shared/filter-eligible-users.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,22 +78,18 @@ Deno.serve(async (req) => {
 
     const client = serviceSupabase;
 
-    const { data: rows, error: fetchError } = await client
-      .from("active_users_per_place")
-      .select(
-        "place_id, user_id, name, age, bio, intentions, photos, entered_at, expires_at"
-      )
-      .eq("place_id", placeId)
-      .neq("user_id", user.id)
-      .order("entered_at", { ascending: false });
+    // Use RPC to get filtered users directly from database
+    const { data: rows, error: fetchError } = await client.rpc(
+      "get_available_users_at_place",
+      {
+        p_place_id: placeId,
+        viewer_id: user.id,
+      }
+    );
 
     if (fetchError) throw fetchError;
 
-    const candidateIds = Array.from(
-      new Set((rows ?? []).map((row) => row.user_id).filter(Boolean))
-    );
-
-    if (!candidateIds.length) {
+    if (!rows || rows.length === 0) {
       return new Response(
         JSON.stringify({
           place_id: placeId,
@@ -105,16 +100,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Filter out users based on interactions and matches
-    const excludeIds = await getExcludedUserIds(
-      client,
-      user.id,
-      candidateIds
-    );
-
-    const filteredRows = (rows ?? []).filter(
-      (row) => !excludeIds.has(row.user_id)
-    );
+    const filteredRows = rows;
 
     const users =
       await Promise.all(

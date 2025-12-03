@@ -31,6 +31,7 @@ export function ChatListItem({ chat, onPress }: Props) {
         <UserAvatar
           name={chat.other_user?.name}
           photoUrl={chat.other_user?.photo_url ?? undefined}
+          hasUnread={chat.unread_count ? chat.unread_count > 0 : false}
         />
         <View style={styles.chatInfo}>
           <ThemedText style={[typography.body1, { color: colors.text }]}>
@@ -61,32 +62,44 @@ export function ChatListItem({ chat, onPress }: Props) {
 function UserAvatar({
   name,
   photoUrl,
+  hasUnread = false,
 }: {
   name?: string | null;
   photoUrl?: string | null;
+  hasUnread?: boolean;
 }) {
   const colors = useThemeColors();
   const initial = name?.trim()?.[0]?.toUpperCase() ?? "?";
   return (
-    <View
-      style={[
-        styles.avatarWrapper,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      {photoUrl ? (
-        <Image
-          source={{ uri: photoUrl }}
-          style={styles.avatarImage}
-          contentFit="cover"
+    <View style={styles.avatarContainer}>
+      <View
+        style={[
+          styles.avatarWrapper,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {photoUrl ? (
+          <Image
+            source={{ uri: photoUrl }}
+            style={styles.avatarImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            priority="high"
+            transition={200}
+          />
+        ) : (
+          <ThemedText style={[typography.body1, { color: colors.text }]}>
+            {initial}
+          </ThemedText>
+        )}
+      </View>
+      {hasUnread && (
+        <View
+          style={[styles.unreadBadge, { backgroundColor: colors.accent }]}
         />
-      ) : (
-        <ThemedText style={[typography.body1, { color: colors.text }]}>
-          {initial}
-        </ThemedText>
       )}
     </View>
   );
@@ -111,7 +124,6 @@ function formatTime(value?: string | null) {
 
 const styles = StyleSheet.create({
   chatCard: {
-    borderWidth: 1,
     borderRadius: spacing.md,
   },
   chatRow: {
@@ -121,6 +133,9 @@ const styles = StyleSheet.create({
   chatInfo: {
     flex: 1,
     marginLeft: spacing.md,
+  },
+  avatarContainer: {
+    position: "relative",
   },
   avatarWrapper: {
     width: 48,
@@ -134,5 +149,13 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: "100%",
     height: "100%",
+  },
+  unreadBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
 });

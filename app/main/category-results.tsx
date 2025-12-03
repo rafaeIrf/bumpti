@@ -110,7 +110,6 @@ export default function CategoryResultsScreen() {
   const handlePlaceClick = useCallback(
     async (place: PlaceResult) => {
       if (!bottomSheet) return;
-
       enterPlace({
         placeId: place.id,
         lat: userLocation?.latitude ?? null,
