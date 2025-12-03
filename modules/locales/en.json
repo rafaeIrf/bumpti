@@ -33,7 +33,7 @@
       "completeProfile": "Complete profile",
       "yearsOld": "{{age}} years old",
       "turbo": {
-        "title": "Turbo+",
+        "title": "Connect+",
         "subtitle": "Highlight your profile"
       },
       "pings": {
@@ -41,7 +41,7 @@
         "subtitle": "Send special notifications"
       },
       "earlyCheckin": {
-        "title": "Early Checkin",
+        "title": "Check-in+",
         "subtitle": "Connect before arriving"
       },
       "premium": {
@@ -59,19 +59,19 @@
         "unlimitedRewind": "Unlimited rewind",
         "visibilityControl": "Visibility control",
         "seeWhoViewedYou": "See who viewed you at venue",
-        "turboWeekly": "Turbo+ (5/week)",
-        "earlyCheckinWeekly": "Early Checkin (5/week)",
+        "turboWeekly": "Connect+ (5/week)",
+        "earlyCheckinWeekly": "Check-in+ (5/week)",
         "pingsWeekly": "Pings (5/week)"
       },
       "powerUps": {
         "earlyCheckin": {
-          "title": "Early Checkin",
+          "title": "Check-in+",
           "subtitle": "Show up at the venue before you arrive.",
-          "premiumHint": "Unlimited Early Checkin with Bumpti Premium.",
-          "purchaseCta": "Buy {{quantity}} Early Checkin",
+          "premiumHint": "Unlimited Check-in+ with Bumpti Premium.",
+          "purchaseCta": "Buy {{quantity}} Check-in+",
           "upgradeCta": "Subscribe to Premium",
           "close": "Close",
-          "optionLabel": "{{quantity}} Early Checkin",
+          "optionLabel": "{{quantity}} Check-in+",
           "options": {
             "single": {
               "price": "R$ 9.90",
@@ -117,13 +117,13 @@
           }
         },
         "turbo": {
-          "title": "Turbo+",
+          "title": "Connect+",
           "subtitle": "Boost your profile to the top of the venue.",
-          "premiumHint": "Turbo+ packs included weekly in Premium.",
-          "purchaseCta": "Buy {{quantity}} Turbo+",
+          "premiumHint": "Connect+ packs included weekly in Premium.",
+          "purchaseCta": "Buy {{quantity}} Connect+",
           "upgradeCta": "Subscribe to Premium",
           "close": "Close",
-          "optionLabel": "{{quantity}} Turbo+",
+          "optionLabel": "{{quantity}} Connect+",
           "options": {
             "single": {
               "price": "R$ 14.90",
@@ -188,12 +188,12 @@
           "subtitle": "Discover who crossed paths with you at bars, cafes, parties and other places."
         },
         "turboIncluded": {
-          "title": "Turbo+ included (5 per week)",
-          "subtitle": "Stand out more at venues and gain instant visibility when you need it."
+          "title": "Connect+ included (5 per week)",
+          "subtitle": "Stand out more at the venue and gain instant visibility when you need it."
         },
         "earlyCheckin": {
-          "title": "Early Checkin (5 per week)",
-          "subtitle": "Show up at venues before arriving and increase your chances of being discovered."
+          "title": "Check-in+ (5 per week)",
+          "subtitle": "Show up at the venue before you arrive and increase your chances of being discovered."
         },
         "pings": {
           "title": "Pings unlocked (5 per week)",

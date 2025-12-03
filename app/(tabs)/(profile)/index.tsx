@@ -26,7 +26,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SvgProps } from "react-native-svg";
+import Svg, { Circle, SvgProps } from "react-native-svg";
 
 interface BenefitRow {
   labelKey: string;
@@ -129,6 +129,8 @@ export default function ProfileScreen() {
     (state) => state.onboarding.userData
   );
 
+  const [profileProgress, setProfileProgress] = React.useState<number>(0.65);
+
   const handleSettingsClick = () => {
     // TODO: Navigate to settings
     console.log("Settings clicked");
@@ -187,6 +189,15 @@ export default function ProfileScreen() {
   const profilePhoto =
     profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
+  // Update progress from profile data
+  React.useEffect(() => {
+    if (typeof profile?.completion === "number") {
+      setProfileProgress(Math.max(0, Math.min(1, profile.completion)));
+    }
+  }, [profile?.completion]);
+
+  const completionText = `${Math.round(profileProgress * 100)}%`;
+
   return (
     <BaseTemplateScreen
       TopHeader={
@@ -210,17 +221,67 @@ export default function ProfileScreen() {
         >
           {/* Profile Photo */}
           <View style={styles.photoContainer}>
-            <View style={[styles.photoRing, { borderColor: colors.accent }]}>
-              {profilePhoto ? (
-                <Image source={{ uri: profilePhoto }} style={styles.photo} />
-              ) : (
-                <View
-                  style={[
-                    styles.photoPlaceholder,
-                    { backgroundColor: colors.surface },
-                  ]}
+            <View style={styles.photoRing}>
+              <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
+                {/* Background circle */}
+                <Circle
+                  cx="40"
+                  cy="40"
+                  r="37"
+                  stroke={(colors as any).border ?? colors.surface}
+                  strokeWidth="5"
+                  fill="none"
                 />
-              )}
+                {/* Progress circle */}
+                <Circle
+                  cx="40"
+                  cy="40"
+                  r="37"
+                  stroke={(colors as any).premiumBlue ?? colors.accent}
+                  strokeWidth="5"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 37}`}
+                  strokeDashoffset={`${
+                    2 * Math.PI * 37 * (1 - profileProgress)
+                  }`}
+                  strokeLinecap="round"
+                  rotation="-90"
+                  origin="40, 40"
+                />
+              </Svg>
+              <View
+                style={[
+                  styles.photoTrack,
+                  { backgroundColor: colors.background },
+                ]}
+              >
+                {profilePhoto ? (
+                  <Image source={{ uri: profilePhoto }} style={styles.photo} />
+                ) : (
+                  <View
+                    style={[
+                      styles.photoPlaceholder,
+                      { backgroundColor: colors.surface },
+                    ]}
+                  />
+                )}
+              </View>
+            </View>
+            <View
+              style={[
+                styles.progressBadge,
+                {
+                  backgroundColor:
+                    (colors as any).cardGradientStart ?? colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <ThemedText
+                style={[typography.captionBold, { color: colors.text }]}
+              >
+                {completionText}
+              </ThemedText>
             </View>
           </View>
 
@@ -266,10 +327,18 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(200)}>
           <Pressable onPress={handlePremiumClick}>
             <LinearGradient
-              colors={["#2997FF", "#0A0A0A"]}
+              colors={[
+                (colors as any).premiumBlue ?? colors.accent,
+                (colors as any).premiumBlueDark ?? colors.surface,
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.premiumCard}
+              style={[
+                styles.premiumCard,
+                {
+                  shadowColor: (colors as any).premiumBlue ?? colors.accent,
+                },
+              ]}
             >
               <View style={styles.premiumHeader}>
                 <View
@@ -294,7 +363,15 @@ export default function ProfileScreen() {
                   </ThemedText>
                 </View>
               </View>
-              <View style={styles.premiumButton}>
+              <View
+                style={[
+                  styles.premiumButton,
+                  {
+                    backgroundColor:
+                      (colors as any).cardGradientStart ?? colors.surface,
+                  },
+                ]}
+              >
                 <ThemedText
                   style={[typography.captionBold, { color: colors.text }]}
                 >
@@ -308,7 +385,10 @@ export default function ProfileScreen() {
         {/* Benefits Table */}
         <Animated.View entering={FadeInDown.duration(400).delay(300)}>
           <LinearGradient
-            colors={["#1C1C1C", "#0F0F0F"]}
+            colors={[
+              (colors as any).cardGradientStart ?? colors.surface,
+              (colors as any).cardGradientEnd ?? colors.surface,
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.benefitsCard}
@@ -400,13 +480,12 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: spacing.lg,
-    paddingTop: spacing.md,
+    gap: 16,
   },
   profileHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   photoContainer: {
     flexShrink: 0,
@@ -415,40 +494,65 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    borderWidth: 2.5,
-    padding: 0,
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoTrack: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   photo: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 37.5,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   photoPlaceholder: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 37.5,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   profileInfo: {
     flex: 1,
   },
   profileButton: {
     alignSelf: "flex-start",
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   actionCardsContainer: {
     flexDirection: "row",
-    gap: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    alignItems: "stretch",
+  },
+  progressBadge: {
+    position: "absolute",
+    bottom: -spacing.sm,
+    alignSelf: "center",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: spacing.lg,
+    borderWidth: 1,
   },
   premiumCard: {
     borderRadius: 16,
-    padding: spacing.lg,
-    minHeight: 140,
+    padding: spacing.xl,
+    minHeight: 160,
+    gap: spacing.sm,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   premiumHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   premiumTextContainer: {
     flex: 1,
@@ -462,15 +566,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   premiumButton: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
-    backgroundColor: "#000000",
-    borderRadius: 20,
+    backgroundColor: undefined,
+    borderRadius: spacing.lg,
     alignSelf: "flex-start",
   },
   benefitsCard: {
     borderRadius: 16,
-    padding: spacing.lg,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   tableHeader: {
     flexDirection: "row",

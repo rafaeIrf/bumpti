@@ -33,7 +33,7 @@
       "completeProfile": "Completar perfil",
       "yearsOld": "{{age}} años",
       "turbo": {
-        "title": "Turbo+",
+        "title": "Connect+",
         "subtitle": "Destaca tu perfil"
       },
       "pings": {
@@ -41,7 +41,7 @@
         "subtitle": "Envía notificaciones especiales"
       },
       "earlyCheckin": {
-        "title": "Early Checkin",
+        "title": "Check-in+",
         "subtitle": "Conéctate antes de llegar"
       },
       "premium": {
@@ -59,19 +59,19 @@
         "unlimitedRewind": "Rebobinar ilimitado",
         "visibilityControl": "Control de visibilidad",
         "seeWhoViewedYou": "Ve quién te vio en el lugar",
-        "turboWeekly": "Turbo+ (5/semana)",
-        "earlyCheckinWeekly": "Early Checkin (5/semana)",
+        "turboWeekly": "Connect+ (5/semana)",
+        "earlyCheckinWeekly": "Check-in+ (5/semana)",
         "pingsWeekly": "Pings (5/semana)"
       },
       "powerUps": {
         "earlyCheckin": {
-          "title": "Early Checkin",
+          "title": "Check-in+",
           "subtitle": "Aparece en el lugar antes de llegar.",
-          "premiumHint": "Early Checkin ilimitado en Bumpti Premium.",
-          "purchaseCta": "Comprar {{quantity}} Early Checkin",
+          "premiumHint": "Check-in+ ilimitado en Bumpti Premium.",
+          "purchaseCta": "Comprar {{quantity}} Check-in+",
           "upgradeCta": "Suscribirse a Premium",
           "close": "Cerrar",
-          "optionLabel": "{{quantity}} Early Checkin",
+          "optionLabel": "{{quantity}} Check-in+",
           "options": {
             "single": {
               "price": "R$ 9,90",
@@ -117,13 +117,13 @@
           }
         },
         "turbo": {
-          "title": "Turbo+",
-          "subtitle": "Impulsa tu perfil a la cima del lugar.",
-          "premiumHint": "Paquetes Turbo+ incluidos cada semana en Premium.",
-          "purchaseCta": "Comprar {{quantity}} Turbo+",
+          "title": "Connect+",
+          "subtitle": "Impulsa tu perfil a lo más alto del lugar.",
+          "premiumHint": "Paquetes Connect+ incluidos cada semana en Premium.",
+          "purchaseCta": "Comprar {{quantity}} Connect+",
           "upgradeCta": "Suscribirse a Premium",
           "close": "Cerrar",
-          "optionLabel": "{{quantity}} Turbo+",
+          "optionLabel": "{{quantity}} Connect+",
           "options": {
             "single": {
               "price": "R$ 14,90",
@@ -188,12 +188,12 @@
           "subtitle": "Descubre quién se cruzó contigo en bares, cafés, fiestas y otros lugares."
         },
         "turboIncluded": {
-          "title": "Turbo+ incluido (5 por semana)",
-          "subtitle": "Destácate más en el lugar y gana visibilidad instantánea cuando lo necesites."
+          "title": "Connect+ incluido (5 por semana)",
+          "subtitle": "Destaca más en el lugar y gana visibilidad instantánea cuando la necesites."
         },
         "earlyCheckin": {
-          "title": "Early Checkin (5 por semana)",
-          "subtitle": "Aparece en el lugar antes de llegar y aumenta tus chances de ser descubierto."
+          "title": "Check-in+ (5 por semana)",
+          "subtitle": "Aparece en el lugar antes de llegar y aumenta tus posibilidades de ser descubierto."
         },
         "pings": {
           "title": "Pings desbloqueados (5 por semana)",

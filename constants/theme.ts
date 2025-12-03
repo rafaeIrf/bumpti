@@ -38,6 +38,11 @@ export const Colors = {
     plansBlue: "#00A8E8",
     premiumGold: "#FFD700",
     premiumOrange: "#FFA500",
+    premiumBlue: "#2997FF",
+    premiumBlueDark: "#003E7F",
+    cardGradientStart: "#1C1C1C",
+    cardGradientEnd: "#0F0F0F",
+    accentBorderFaint: "rgba(41, 151, 255, 0.15)",
 
     // Chart colors
     chart1: "#1D9BF0",
@@ -85,6 +90,11 @@ export const Colors = {
     plansBlue: "#00A8E8",
     premiumGold: "#FFD700",
     premiumOrange: "#FFA500",
+    premiumBlue: "#2997FF",
+    premiumBlueDark: "#003E7F",
+    cardGradientStart: "#1C1C1C",
+    cardGradientEnd: "#0F0F0F",
+    accentBorderFaint: "rgba(41, 151, 255, 0.15)",
 
     // Chart colors
     chart1: "#1D9BF0",
