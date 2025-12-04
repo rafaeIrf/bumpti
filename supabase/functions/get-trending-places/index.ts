@@ -98,49 +98,9 @@ Deno.serve(async (req) => {
     }
 
     if (!presences || presences.length === 0) {
-      // Fallback: Get places from recent presences (last 7 days) - including current user for trending suggestion
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: recentPresences } = await serviceSupabase
-        .from("user_presences")
-        .select("place_id")
-        .gte("entered_at", sevenDaysAgo);
-      
-      if (!recentPresences || recentPresences.length === 0) {
-        return new Response(
-          JSON.stringify({ places: [] }),
-          { status: 200, headers: corsHeaders }
-        );
-      }
-      
-      // Count by place_id for popular places
-      const recentPlaceCountMap = new Map<string, number>();
-      recentPresences.forEach((p) => {
-        const count = recentPlaceCountMap.get(p.place_id) || 0;
-        recentPlaceCountMap.set(p.place_id, count + 1);
-      });
-      
-      const topRecentPlaces = Array.from(recentPlaceCountMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-      
-      const placeIds = topRecentPlaces.map(([placeId]) => placeId);
-      const placesData = await getPlaceDetails({
-        fsq_ids: placeIds,
-        userLat,
-        userLng,
-      });
-      
-      const placesWithZeroActiveUsers = placesData.map((place) => ({
-        place_id: place.fsq_id,
-        active_users: 0, // No active users right now
-        name: place.name,
-        address: place.formatted_address || "",
-        distance: place.distance,
-        types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
-      }));
-      
+      // No active users currently, return empty array
       return new Response(
-        JSON.stringify({ places: placesWithZeroActiveUsers }),
+        JSON.stringify({ places: [] }),
         { status: 200, headers: corsHeaders }
       );
     }

@@ -55,7 +55,7 @@ export async function getPlaceDetails({
     throw new Error("FS_PLACES_API_KEY not configured");
   }
 
-  if (!fsq_ids || fsq_ids.length === 0 || !userLat || !userLng) {
+  if (!fsq_ids || fsq_ids.length === 0 || userLat === undefined || userLng === undefined) {
     throw new Error("Missing required parameters: fsq_ids (non-empty array), userLat, userLng");
   }
 

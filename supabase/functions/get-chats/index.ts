@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       new Set(
         (rows ?? [])
           .map((r) => r.place_id)
-          .filter(Boolean) as string[]
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
       )
     );
     
@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
         places.forEach((place) => {
           placesMap.set(place.fsq_id, place.name);
         });
+        
       } catch (error) {
         console.error("Failed to fetch place names:", error);
       }
@@ -177,7 +178,7 @@ Deno.serve(async (req) => {
           chat_id: row.chat_id,
           match_id: row.match_id,
           place_id: row.place_id ?? null,
-          place_name: row.place_id ? placesMap.get(row.place_id) ?? null : null,
+          place_name: row.place_id ? (placesMap.get(row.place_id) ?? null) : null,
           other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_photo_url: otherPhotoUrl,
