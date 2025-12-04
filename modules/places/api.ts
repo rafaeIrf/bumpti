@@ -71,6 +71,8 @@ export async function getTrendingPlaces(
       ...(longitude != null && { lng: longitude }),
     },
   });
+
+  console.log("getTrendingPlaces data:", data);
   
   if (error) {
     console.error("Failed to fetch trending places (edge):", error);
