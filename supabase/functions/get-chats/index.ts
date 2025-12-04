@@ -138,12 +138,6 @@ Deno.serve(async (req) => {
           placesMap.set(place.fsq_id, place.name);
         });
         
-        // Log place IDs that weren't found
-        const foundIds = new Set(places.map(p => p.fsq_id));
-        const missingIds = placeIds.filter(id => !foundIds.has(id));
-        if (missingIds.length > 0) {
-          console.log("Place IDs not found in Foursquare:", missingIds);
-        }
       } catch (error) {
         console.error("Failed to fetch place names:", error);
       }
@@ -184,7 +178,7 @@ Deno.serve(async (req) => {
           chat_id: row.chat_id,
           match_id: row.match_id,
           place_id: row.place_id ?? null,
-          place_name: row.place_id ? (placesMap.get(row.place_id) ?? "Unknown Place") : null,
+          place_name: row.place_id ? (placesMap.get(row.place_id) ?? null) : null,
           other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_photo_url: otherPhotoUrl,
