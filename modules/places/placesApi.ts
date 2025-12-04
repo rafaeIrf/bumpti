@@ -6,7 +6,7 @@ import {
   toggleFavoritePlace as toggleFavoritePlaceApi,
 } from "@/modules/places/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Place, PlaceType } from "./types";
+import { Place } from "./types";
 
 // TTL configurations (in seconds)
 // Google Places API allows caching lat/lng for up to 30 days
@@ -40,7 +40,7 @@ export const placesApi = createApi({
       {
         latitude: number;
         longitude: number;
-        types: PlaceType[];
+        types: string[]; // Foursquare category IDs
         rankPreference?: "POPULARITY" | "DISTANCE";
         radius?: number;
         maxResultCount?: number;

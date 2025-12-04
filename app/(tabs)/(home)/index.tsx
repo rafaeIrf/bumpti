@@ -25,6 +25,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { PlaceType } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
@@ -38,7 +39,7 @@ interface Category {
   description: string;
   iconColor: string;
   iconBgColor: string;
-  types: string[];
+  types: PlaceType[];
   color: string;
   illustration?: React.ComponentType<SvgProps>;
 }
@@ -77,7 +78,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.nightlife.description"),
       iconColor: "#FF8A33",
       iconBgColor: "rgba(255, 138, 51, 0.12)",
-      types: ["bar", "night_club"],
+      types: [PlaceType.bar, PlaceType.nightclub],
       color: CARD_COLORS.heatBurst,
       illustration: Toast,
     },
@@ -88,7 +89,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.cafes.description"),
       iconColor: "#9B6C4A",
       iconBgColor: "rgba(155, 108, 74, 0.12)",
-      types: ["cafe"],
+      types: [PlaceType.cafe],
       color: CARD_COLORS.apricotPastel,
       illustration: Cocoa,
     },
@@ -99,7 +100,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.university.description"),
       iconColor: "#3DAAFF",
       iconBgColor: "rgba(61, 170, 255, 0.12)",
-      types: ["university"],
+      types: [PlaceType.university],
       color: CARD_COLORS.azurePop,
       illustration: Graduation,
     },
@@ -110,7 +111,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.fitness.description"),
       iconColor: "#1DB954",
       iconBgColor: "rgba(29, 185, 84, 0.12)",
-      types: ["gym"],
+      types: [PlaceType.gym],
       color: CARD_COLORS.vitalGreen,
       illustration: Weight,
     },
@@ -126,7 +127,9 @@ export default function HomeScreen() {
           ? { favorites: "true" }
           : category.id === "highlighted"
           ? { trending: "true" }
-          : { placeTypes: category.types.join(",") }),
+          : {
+              placeTypes: category.types.join(","), // Pass Foursquare IDs directly
+            }),
         isPremium: "false", // TODO: Get from user premium status
       },
     });

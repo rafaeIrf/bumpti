@@ -1,7 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { fetchNearbyPlaces } from "../_shared/google-places.ts";
+import { searchNearbyPlaces } from "../_shared/foursquare/searchNearby.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,12 +52,15 @@ Deno.serve(async (req) => {
     const {
       lat,
       lng,
-      radius = 20000,
       types,
-      keyword,
-      rankPreference = "POPULARITY",
-      maxResultCount = 20,
+      radius = 20000,
+      limit = 50,
     } = await req.json();
+
+    console.log("=== GET NEARBY PLACES DEBUG ===");
+    console.log("Received types:", types);
+    console.log("Types type:", typeof types);
+    console.log("Is array:", Array.isArray(types));
 
     if (typeof lat !== "number" || typeof lng !== "number") {
       return new Response(JSON.stringify({ error: "invalid_coordinates" }), {
@@ -66,25 +69,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!Array.isArray(types) || types.length === 0) {
-      return new Response(JSON.stringify({ error: "types_required" }), {
+    if (!types || !Array.isArray(types) || types.length === 0) {
+      return new Response(JSON.stringify({ error: "missing_or_invalid_types" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const places = await fetchNearbyPlaces({
-      lat,
-      lng,
+    const places = await searchNearbyPlaces({
+      userLat: lat,
+      userLng: lng,
       radius,
-      types,
-      keyword,
-      rankPreference,
-      maxResultCount,
+      limit,
+      categories: types, // Pass types as categories to Foursquare API
+      openNow: true, // Only show places that are currently open
     });
 
+    console.log("Places returned:", places.length);
+    if (places.length > 0) {
+      console.log("First place:", {
+        name: places[0].name,
+        categories: places[0].categories?.map(c => c.name),
+        category_ids: places[0].categories?.map(c => c.fsq_category_id)
+      });
+    }
+
     // Get active user counts for these places using RPC
-    const placeIds = places.map(p => p.placeId);
+    const placeIds = places.map(p => p.fsq_id);
     
     let placesWithActiveUsers = places.map(p => ({ ...p, active_users: 0 }));
 
@@ -104,7 +115,7 @@ Deno.serve(async (req) => {
         // Add active_users count to each place
         placesWithActiveUsers = places.map(place => ({
           ...place,
-          active_users: countMap.get(place.placeId) || 0,
+          active_users: countMap.get(place.fsq_id) || 0,
         }));
       }
     }
@@ -112,7 +123,21 @@ Deno.serve(async (req) => {
     // Sort by distance (ascending - closest first)
     placesWithActiveUsers.sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
-    return new Response(JSON.stringify({ places: placesWithActiveUsers }), {
+    // Map to frontend expected format
+    const formattedPlaces = placesWithActiveUsers.map(place => ({
+      placeId: place.fsq_id,
+      name: place.name,
+      formattedAddress: place.formatted_address,
+      distance: place.distance,
+      types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
+      categories: place.categories,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      active_users: place.active_users,
+      popularity: place.popularity,
+    }));
+
+    return new Response(JSON.stringify({ places: formattedPlaces }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

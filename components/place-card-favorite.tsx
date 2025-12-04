@@ -29,7 +29,7 @@ const GRADIENTS: Record<string, [string, string]> = {
   restaurant: ["#E74C3C", "#C0392B"],
   bar: ["#F39C12", "#D35400"],
   cafe: ["#8E6E53", "#5C4033"],
-  night_club: ["#8E44AD", "#2C3E50"],
+  nightclub: ["#8E44AD", "#2C3E50"],
   gym: ["#27AE60", "#145A32"],
   default: ["#1D9BF0", "#16181C"],
 };
@@ -136,7 +136,7 @@ function getIconForType(type: string): string {
     restaurant: "fork.knife",
     bar: "wineglass",
     cafe: "cup.and.saucer.fill",
-    night_club: "music.note.house.fill",
+    nightclub: "music.note.house.fill",
     gym: "figure.walk",
     park: "tree.fill",
     shopping_mall: "bag.fill",
