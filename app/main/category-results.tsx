@@ -21,7 +21,6 @@ import {
   useGetNearbyPlacesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
-import { PlaceType } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
@@ -43,11 +42,8 @@ export default function CategoryResultsScreen() {
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
 
-  // Parse place types
-  const typesList = placeTypes?.split(",") || [];
-  const typesEnum = typesList
-    .map((t) => PlaceType[t.trim() as keyof typeof PlaceType])
-    .filter(Boolean);
+  // Parse place types - Already Foursquare category IDs from URL
+  const typesEnum = (placeTypes?.split(",").filter(Boolean) || []) as string[];
 
   // Trending places query
   const { data: trendingData, isLoading: trendingLoading } =
@@ -63,7 +59,6 @@ export default function CategoryResultsScreen() {
 
   // Use RTK Query hook - only runs when userLocation is available and not in trending mode
   const shouldFetchNearby = !favoritesMode && !trendingMode && !!userLocation;
-
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
@@ -100,7 +95,7 @@ export default function CategoryResultsScreen() {
       placesData?.map((place: any) => ({
         id: place.placeId,
         name: place.name,
-        type: place.type || "",
+        type: place.types?.[0] || "",
         distance: place.distance || 0,
         address: place.formattedAddress || "",
         active_users: place.active_users,
@@ -205,13 +200,11 @@ export default function CategoryResultsScreen() {
       const placeData = {
         id: item.id,
         name: item.name,
-        type: item.type,
-        category: item.type,
         address: item.address,
-        image: "",
         distance: item.distance,
         isFavorite: favoriteIds.has(item.id),
         activeUsers: (item as any).active_users || 0,
+        tag: item.type || undefined,
       };
 
       return (

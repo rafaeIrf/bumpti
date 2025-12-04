@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { fetchPlacesByIds } from "../_shared/google-places.ts";
+import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,40 +73,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    const places = await fetchPlacesByIds({
-      placeIds,
-      lat: requestBody.lat ?? 0,
-      lng: requestBody.lng ?? 0,
+    const userLat = requestBody.lat ?? 0;
+    const userLng = requestBody.lng ?? 0;
+
+    // Fetch place details from Foursquare
+    const places = await getPlaceDetails({
+      fsq_ids: placeIds,
+      userLat,
+      userLng,
     });
 
     // Get active user counts for these places using RPC
-    let placesWithActiveUsers = places.map(p => ({ ...p, active_users: 0 }));
+    const { data: placeCounts, error: rpcError } = await supabase
+      .rpc("get_available_people_count", {
+        place_ids: placeIds,
+        viewer_id: user.id,
+      });
 
-    if (placeIds.length > 0) {
-      const { data: placeCounts, error: rpcError } = await supabase
-        .rpc("get_available_people_count", {
-          place_ids: placeIds,
-          viewer_id: user.id,
-        });
+    // Create a map for quick lookup
+    const countMap = new Map(
+      (placeCounts || []).map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
+    );
 
-      if (!rpcError && placeCounts) {
-        // Create a map for quick lookup
-        const countMap = new Map(
-          placeCounts.map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
-        );
-
-        // Add active_users count to each place
-        placesWithActiveUsers = places.map(place => ({
-          placeId: place.placeId,
-          name: place.name,
-          distance: place.distance,
-          type: place.type,
-          types: place.types,
-          formattedAddress: place.formattedAddress,
-          active_users: countMap.get(place.placeId) || 0,
-        }));
-      }
-    }
+    // Map places with active users count
+    const placesWithActiveUsers = places.map(place => ({
+      placeId: place.fsq_id,
+      name: place.name,
+      distance: place.distance,
+      formattedAddress: place.formatted_address,
+      types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
+      latitude: place.latitude,
+      longitude: place.longitude,
+      active_users: countMap.get(place.fsq_id) || 0,
+    }));
 
     // Sort by distance (ascending - closest first)
     placesWithActiveUsers.sort((a, b) => (a.distance || 0) - (b.distance || 0));

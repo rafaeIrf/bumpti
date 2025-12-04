@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { fetchPlacesByIds } from "../_shared/google-places.ts";
+import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch place names from Google Places API
+    // Fetch place names from Foursquare API
     const placeIds = Array.from(
       new Set(
         (rows ?? [])
@@ -123,9 +123,13 @@ Deno.serve(async (req) => {
     const placesMap = new Map<string, string>();
     if (placeIds.length > 0) {
       try {
-        const places = await fetchPlacesByIds({ placeIds });
+        const places = await getPlaceDetails({ 
+          fsq_ids: placeIds,
+          userLat: 0,
+          userLng: 0
+        });
         places.forEach((place) => {
-          placesMap.set(place.placeId, place.name);
+          placesMap.set(place.fsq_id, place.name);
         });
       } catch (error) {
         console.error("Failed to fetch place names:", error);

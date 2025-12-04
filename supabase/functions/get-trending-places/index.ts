@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { fetchPlacesByIds } from "../_shared/google-places.ts";
+import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,20 +124,19 @@ Deno.serve(async (req) => {
         .slice(0, 10);
       
       const placeIds = topRecentPlaces.map(([placeId]) => placeId);
-      const placesData = await fetchPlacesByIds({
-        placeIds,
-        lat: userLat,
-        lng: userLng,
+      const placesData = await getPlaceDetails({
+        fsq_ids: placeIds,
+        userLat,
+        userLng,
       });
       
       const placesWithZeroActiveUsers = placesData.map((place) => ({
-        place_id: place.placeId,
+        place_id: place.fsq_id,
         active_users: 0, // No active users right now
         name: place.name,
-        address: place.formattedAddress || "",
+        address: place.formatted_address || "",
         distance: place.distance,
-        type: place.type,
-        types: place.types,
+        types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
       }));
       
       return new Response(
@@ -186,12 +185,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch place details using shared method
+    // Fetch place details using Foursquare
     const placeIds = topPlaces.map((pc: { place_id: string }) => pc.place_id);
-    const placesData = await fetchPlacesByIds({
-      placeIds,
-      lat: userLat,
-      lng: userLng,
+    const placesData = await getPlaceDetails({
+      fsq_ids: placeIds,
+      userLat,
+      userLng,
     });
 
     // Create a map for quick lookup of people_count
@@ -202,15 +201,14 @@ Deno.serve(async (req) => {
     // Combine with active_users count from RPC and filter out places with 0 users
     const placesWithActiveUsers = placesData
       .map((place) => {
-        const activeCount = countMap.get(place.placeId) || 0;
+        const activeCount = countMap.get(place.fsq_id) || 0;
         return {
-          place_id: place.placeId,
+          place_id: place.fsq_id,
           active_users: activeCount,
           name: place.name,
-          address: place.formattedAddress || "",
+          address: place.formatted_address || "",
           distance: place.distance,
-          type: place.type,
-          types: place.types,
+          types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
         };
       })
       .filter((place) => place.active_users > 0) // Remove places with 0 active users

@@ -28,7 +28,7 @@ export function useFavoritePlacesList(enabled: boolean) {
       data?.places?.map((place: any) => ({
         id: place.placeId || place.id,
         name: place.name,
-        type: place.type || "",
+        type: place.types?.[0] || "",
         address: place.formattedAddress || place.address || "",
         distance: place.distance || 0,
         active_users: place.active_users || 0,

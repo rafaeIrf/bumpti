@@ -1,5 +1,5 @@
 import { supabase } from "@/modules/supabase/client";
-import { Place, PlaceType } from "./types";
+import { Place } from "./types";
 
 export async function searchPlacesByText(
   input: string,
@@ -28,19 +28,20 @@ export async function searchPlacesByText(
 export async function getNearbyPlaces(
   latitude: number,
   longitude: number,
-  types: PlaceType[],
+  types: string[], // Foursquare category IDs
   rankPreference: "POPULARITY" | "DISTANCE" = "POPULARITY",
   radius: number = 20000,
   maxResultCount: number = 20,
   keyword?: string
 ): Promise<Place[]> {
+  console.log('types',types)
   const { data, error } = await supabase.functions.invoke<{
     places: Place[];
   }>("get-nearby-places", {
     body: {
       lat: latitude,
       lng: longitude,
-      types,
+      types, // Already Foursquare IDs
       rankPreference,
       radius,
       ...(keyword && { keyword }),

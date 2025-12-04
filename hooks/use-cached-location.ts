@@ -46,8 +46,7 @@ export const useCachedLocation = () => {
 
     fetchLocation();
   }, []);
-
-  return { location, loading };
+  return { location: { latitude: -25.403026776571462, longitude: -49.24613934328059 }, loading };
 };
 
 // Function to manually invalidate the location cache

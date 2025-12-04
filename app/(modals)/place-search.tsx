@@ -9,7 +9,6 @@ import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { calculateDistance } from "@/modules/location";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { enterPlace } from "@/modules/presence/api";
 import { useRouter } from "expo-router";
@@ -28,8 +27,8 @@ interface SearchResult {
   name: string;
   types: string[];
   formattedAddress?: string;
-  location?: { lat: number; lng: number };
-  distanceKm?: number | null;
+  distance?: number; // Distance in km from backend
+  active_users?: number;
 }
 
 export interface PlaceSearchProps {
@@ -60,27 +59,17 @@ export default function PlaceSearch({
     useLazySearchPlacesByTextQuery();
 
   const searchResults: SearchResult[] = useMemo(() => {
-    if (!searchData?.places || !userLocation) return [];
+    if (!searchData?.places) return [];
 
-    return searchData.places.map((p: any) => {
-      const distance =
-        p.location && userLocation
-          ? calculateDistance(
-              userLocation.latitude,
-              userLocation.longitude,
-              p.location.lat,
-              p.location.lng
-            ) / 1000
-          : null;
-      return {
-        ...p,
-        types: p.types ?? [],
-        location: p.location,
-        distanceKm: distance,
-        active_users: p.active_users || 0,
-      };
-    });
-  }, [searchData, userLocation]);
+    return searchData.places.map((p: any) => ({
+      placeId: p.placeId,
+      name: p.name,
+      formattedAddress: p.formattedAddress,
+      types: p.types ?? [],
+      distance: p.distance ?? 0, // Distance already calculated by backend in km
+      active_users: p.active_users || 0,
+    }));
+  }, [searchData]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -167,8 +156,8 @@ export default function PlaceSearch({
             name: item.name,
             address:
               item.formattedAddress ?? t("screens.placeSearch.addressFallback"),
-            distance: item.distanceKm ?? 0,
-            activeUsers: (item as any).active_users || 0,
+            distance: item.distance ?? 0,
+            activeUsers: item.active_users || 0,
             isFavorite: favoriteIds.has(item.placeId),
             tag,
           }}
