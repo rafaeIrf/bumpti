@@ -1,6 +1,7 @@
 export type Coordinates = {
   latitude: number;
   longitude: number;
+  accuracy?: number; // horizontal accuracy in meters
 };
 
 export type Place = {
@@ -8,6 +9,8 @@ export type Place = {
   name: string;
   formattedAddress?: string;
   distance: number; // in km
+  latitude: number;
+  longitude: number;
   type?: PlaceType | null;
   types?: string[]; // Para autocomplete
   active_users?: number; // Optional: number of active users currently at the place

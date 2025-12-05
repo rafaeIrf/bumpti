@@ -1,4 +1,6 @@
 import {
+  detectPlace as detectPlaceApi,
+  type DetectPlaceResult,
   getFavoritePlaces as getFavoritePlacesApi,
   getNearbyPlaces as getNearbyPlacesApi,
   getTrendingPlaces as getTrendingPlacesApi,
@@ -32,8 +34,35 @@ export const placesApi = createApi({
     "SearchPlaces",
     "TrendingPlaces",
     "FavoritePlaces",
+    "DetectedPlace",
   ],
   endpoints: (builder) => ({
+    // Detect place based on user location
+    detectPlace: builder.query<
+      DetectPlaceResult | null,
+      {
+        latitude: number;
+        longitude: number;
+        hacc?: number;
+        limit?: number;
+      }
+    >({
+      queryFn: async ({ latitude, longitude, hacc, limit }) => {
+        try {
+          const result = await detectPlaceApi(latitude, longitude, hacc, limit);
+          return { data: result };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, arg) => [
+        {
+          type: "DetectedPlace",
+          id: `${roundToGrid(arg.latitude)}_${roundToGrid(arg.longitude)}`,
+        },
+      ],
+      keepUnusedDataFor: 60, // Cache for 1 minute only
+    }),
     // Get nearby places by types
     getNearbyPlaces: builder.query<
       Place[],
@@ -199,6 +228,7 @@ export const placesApi = createApi({
 });
 
 export const {
+  useDetectPlaceQuery,
   useGetNearbyPlacesQuery,
   useSearchPlacesByTextQuery,
   useGetTrendingPlacesQuery,

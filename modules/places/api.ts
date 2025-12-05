@@ -125,3 +125,51 @@ export async function toggleFavoritePlace({
 
   return { success: true };
 }
+
+export interface DetectedPlace {
+  fsq_place_id: string;
+  name: string;
+  formatted_address?: string;
+  categories: {
+    fsq_category_id: string;
+    name: string;
+  }[];
+  latitude: number;
+  longitude: number;
+  distance: number;
+}
+
+export interface DetectPlaceResult {
+  suggested: DetectedPlace | null;
+}
+
+export async function detectPlace(
+  latitude: number,
+  longitude: number,
+  hacc?: number,
+  limit?: number
+): Promise<DetectPlaceResult | null> {
+  const { data, error } = await supabase.functions.invoke<{
+    data: DetectPlaceResult | null;
+    error: string | null;
+  }>("detect-place", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+      ...(hacc != null && { hacc }),
+      ...(limit != null && { limit }),
+    },
+  });
+
+  if (error) {
+    console.error("detect-place error:", error);
+    return null;
+  }
+
+  if (data?.error) {
+    console.error("detect-place API error:", data.error);
+    return null;
+  }
+
+  return data?.data || null;
+}

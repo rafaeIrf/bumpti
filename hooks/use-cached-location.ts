@@ -3,7 +3,7 @@ import { logger } from "@/utils/logger";
 import { useEffect, useState } from "react";
 
 // Cache the user location globally
-let cachedLocation: { latitude: number; longitude: number } | null = null;
+let cachedLocation: { latitude: number; longitude: number; accuracy?: number } | null = null;
 let lastFetchTime = 0;
 const LOCATION_CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -11,6 +11,7 @@ export const useCachedLocation = () => {
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
+    accuracy?: number;
   } | null>(cachedLocation);
   const [loading, setLoading] = useState(!cachedLocation);
 
@@ -28,8 +29,8 @@ export const useCachedLocation = () => {
       // Otherwise, fetch fresh location
       try {
         logger.info("Fetching fresh location...");
-        const { latitude, longitude } = await getUserPosition();
-        const newLocation = { latitude, longitude };
+        const { latitude, longitude, accuracy } = await getUserPosition();
+        const newLocation = { latitude, longitude, accuracy };
 
         cachedLocation = newLocation;
         lastFetchTime = now;
@@ -46,7 +47,7 @@ export const useCachedLocation = () => {
 
     fetchLocation();
   }, []);
-  return { location: { latitude: -25.403026776571462, longitude: -49.24613934328059 }, loading };
+  return { location, loading };
 };
 
 // Function to manually invalidate the location cache

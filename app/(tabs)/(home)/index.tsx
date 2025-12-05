@@ -23,11 +23,13 @@ import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
@@ -46,8 +48,28 @@ interface Category {
 
 export default function HomeScreen() {
   const colors = useThemeColors();
+  const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Detect place when location is available
+  const { data: detectedPlaceResult } = useDetectPlaceQuery(
+    {
+      latitude: location?.latitude ?? 0,
+      longitude: location?.longitude ?? 0,
+      hacc: location?.accuracy,
+    },
+    {
+      skip: !location?.latitude || !location?.longitude,
+    }
+  );
+
+  useEffect(() => {
+    if (detectedPlaceResult) {
+      console.log("Detected place:", detectedPlaceResult);
+    }
+  }, [detectedPlaceResult]);
+
   const categories: Category[] = [
     {
       id: "highlighted",

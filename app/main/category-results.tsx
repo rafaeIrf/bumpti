@@ -1,6 +1,10 @@
 import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import {
+  ConnectionBottomSheet,
+  VenueState,
+} from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
@@ -10,10 +14,7 @@ import { ThemedView } from "@/components/themed-view";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
-import {
-  useFavoritePlacesList,
-  type FavoritePlaceResult,
-} from "@/hooks/use-favorite-places-list";
+import { useFavoritePlacesList } from "@/hooks/use-favorite-places-list";
 import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -21,13 +22,12 @@ import {
   useGetNearbyPlacesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
+import { Place } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
-
-type PlaceResult = FavoritePlaceResult;
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
@@ -76,78 +76,98 @@ export default function CategoryResultsScreen() {
     useFavoritePlacesList(favoritesMode);
   const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
 
-  // Transform API results to PlaceResult format
-  let places: PlaceResult[] = [];
+  // Transform API results to Place format
+  let places: Place[] = [];
   if (trendingMode) {
     places =
       trendingData?.places?.map((place: any) => ({
-        id: place.place_id,
+        placeId: place.place_id,
         name: place.name,
-        type: place.types?.[0] || "",
+        type: place.types?.[0] || undefined,
+        types: place.types || [],
         distance: place.distance || 0,
-        address: place.address || "",
+        formattedAddress: place.address || "",
+        latitude: place.latitude,
+        longitude: place.longitude,
         active_users: place.active_users,
       })) || [];
   } else if (favoritesMode) {
+    console.log("favoritePlacesData", favoritePlacesData);
     places = favoritePlacesData;
   } else {
-    places =
-      placesData?.map((place: any) => ({
-        id: place.placeId,
-        name: place.name,
-        type: place.types?.[0] || "",
-        distance: place.distance || 0,
-        address: place.formattedAddress || "",
-        active_users: place.active_users,
-      })) || [];
+    places = placesData || [];
   }
 
-  const handlePlaceClick = useCallback(
-    async (place: PlaceResult) => {
-      if (!bottomSheet) return;
-      enterPlace({
-        placeId: place.id,
-        lat: userLocation?.latitude ?? null,
-        lng: userLocation?.longitude ?? null,
+  const handleConnectionBottomSheet = useCallback(
+    (place: Place, venueState: VenueState) => {
+      console.log("venueState", venueState);
+      bottomSheet?.expand({
+        content: () => (
+          <ConnectionBottomSheet
+            venueName={place.name}
+            venueState={venueState}
+            onConnect={() => {
+              bottomSheet.close();
+              router.push({
+                pathname: "/(modals)/place-people",
+                params: {
+                  placeId: place.placeId,
+                  placeName: place.name,
+                  distance: "1.2 km", // TODO: Calculate real distance
+                },
+              });
+            }}
+            onCancel={() => {
+              bottomSheet.close();
+            }}
+            onClose={() => {
+              bottomSheet.close();
+            }}
+          />
+        ),
+        draggable: true,
       });
+    },
+    [bottomSheet]
+  );
+
+  const handlePlaceClick = useCallback(
+    async (place: Place) => {
+      if (!bottomSheet) return;
+
+      if (!userLocation?.latitude || !userLocation?.longitude) {
+        handleConnectionBottomSheet(place, "locked");
+        return;
+      }
+
+      const result = await enterPlace({
+        placeId: place.placeId,
+        userLat: userLocation.latitude,
+        userLng: userLocation.longitude,
+        placeLat: place.latitude,
+        placeLng: place.longitude,
+      });
+
+      if (!result) {
+        handleConnectionBottomSheet(place, "locked");
+        return;
+      }
 
       router.push({
         pathname: "/(modals)/place-people",
         params: {
-          placeId: place.id,
+          placeId: place.placeId,
           placeName: place.name,
           distance: `${place.distance} km`, // TODO: Calculate real distance
         },
       });
-      // bottomSheet.expand({
-      //   content: () => (
-      //     <ConnectionBottomSheet
-      //       venueName={place.name}
-      //       currentVenue="Teste"
-      //       venueState="active"
-      //       onConnect={() => {
-      //         bottomSheet.close();
-      //         router.push({
-      //           pathname: "/(modals)/place-people",
-      //           params: {
-      //             placeId: place.id,
-      //             placeName: place.name,
-      //             distance: "1.2 km", // TODO: Calculate real distance
-      //           },
-      //         });
-      //       }}
-      //       onCancel={() => {
-      //         bottomSheet.close();
-      //       }}
-      //       onClose={() => {
-      //         bottomSheet.close();
-      //       }}
-      //     />
-      //   ),
-      //   draggable: true,
-      // });
     },
-    [bottomSheet, userLocation?.latitude, userLocation?.longitude]
+    [
+      bottomSheet,
+      userLocation?.latitude,
+      userLocation?.longitude,
+      handleConnectionBottomSheet,
+    ]
   );
 
   const handleOpenSearch = () => {
@@ -196,13 +216,13 @@ export default function CategoryResultsScreen() {
     </Animated.View>
   );
   const renderPlaceItem = useCallback(
-    ({ item, index }: { item: PlaceResult; index: number }) => {
+    ({ item, index }: { item: Place; index: number }) => {
       const placeData = {
-        id: item.id,
+        id: item.placeId,
         name: item.name,
-        address: item.address,
+        address: item.formattedAddress ?? "",
         distance: item.distance,
-        isFavorite: favoriteIds.has(item.id),
+        isFavorite: favoriteIds.has(item.placeId),
         activeUsers: (item as any).active_users || 0,
         tag: item.type || undefined,
       };
@@ -303,7 +323,7 @@ export default function CategoryResultsScreen() {
               )}
               <FlatList
                 data={places}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.placeId}
                 renderItem={renderPlaceItem}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}

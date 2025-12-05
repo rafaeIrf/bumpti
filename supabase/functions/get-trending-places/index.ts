@@ -166,9 +166,11 @@ Deno.serve(async (req) => {
           place_id: place.fsq_id,
           active_users: activeCount,
           name: place.name,
-          address: place.formatted_address || "",
+          formattedAddress: place.formatted_address || "",
           distance: place.distance,
           types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
+          latitude: place.latitude,
+          longitude: place.longitude,
         };
       })
       .filter((place) => place.active_users > 0) // Remove places with 0 active users
