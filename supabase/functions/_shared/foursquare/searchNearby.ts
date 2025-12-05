@@ -75,9 +75,9 @@ export async function searchNearbyPlaces({
     url.searchParams.set("fsq_category_ids", categoriesParam);
 
     // Filter only open places
-    if (openNow) {
-      url.searchParams.set("open_now", "true");
-    }
+    // if (openNow) {
+    //   url.searchParams.set("open_now", "true");
+    // }
 
     console.log("=== FOURSQUARE API CALL ===");
     console.log("Categories IDs:", categories);

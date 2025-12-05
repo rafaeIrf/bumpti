@@ -8,11 +8,14 @@ import {
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
+  UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
   Cocoa,
   Graduation,
   Heart,
+  Location,
+  Park,
   Passion,
   Toast,
   Weight,
@@ -27,7 +30,7 @@ import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useDetectPlaceQuery } from "@/modules/places/placesApi";
-import { PlaceType } from "@/modules/places/types";
+import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet } from "react-native";
@@ -41,7 +44,7 @@ interface Category {
   description: string;
   iconColor: string;
   iconBgColor: string;
-  types: PlaceType[];
+  category?: PlaceCategory; // General category name for backend
   color: string;
   illustration?: React.ComponentType<SvgProps>;
 }
@@ -84,8 +87,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.highlighted.description"),
       iconColor: "#FF6B35",
       iconBgColor: "rgba(41, 151, 255, 0.12)",
-      types: [],
-      color: CARD_COLORS.flameOrange,
+      color: CARD_COLORS.bloodOrange,
       illustration: Passion,
     },
     {
@@ -95,18 +97,17 @@ export default function HomeScreen() {
       description: t("screens.home.categories.favorites.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(41, 151, 255, 0.12)",
-      types: [],
       color: CARD_COLORS.red,
       illustration: Heart,
     },
     {
-      id: "nightlife",
+      id: "bars",
       icon: BeerIcon,
       title: t("screens.home.categories.nightlife.title"),
       description: t("screens.home.categories.nightlife.description"),
       iconColor: "#FF8A33",
       iconBgColor: "rgba(255, 138, 51, 0.12)",
-      types: [PlaceType.bar, PlaceType.nightclub],
+      category: "bars",
       color: CARD_COLORS.heatBurst,
       illustration: Toast,
     },
@@ -117,7 +118,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.cafes.description"),
       iconColor: "#9B6C4A",
       iconBgColor: "rgba(155, 108, 74, 0.12)",
-      types: [PlaceType.cafe],
+      category: "cafes",
       color: CARD_COLORS.apricotPastel,
       illustration: Cocoa,
     },
@@ -128,7 +129,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.university.description"),
       iconColor: "#3DAAFF",
       iconBgColor: "rgba(61, 170, 255, 0.12)",
-      types: [PlaceType.university],
+      category: "university",
       color: CARD_COLORS.azurePop,
       illustration: Graduation,
     },
@@ -139,9 +140,31 @@ export default function HomeScreen() {
       description: t("screens.home.categories.fitness.description"),
       iconColor: "#1DB954",
       iconBgColor: "rgba(29, 185, 84, 0.12)",
-      types: [PlaceType.gym],
-      color: CARD_COLORS.vitalGreen,
+      category: "fitness",
+      color: CARD_COLORS.aquaPastel,
       illustration: Weight,
+    },
+    {
+      id: "parks",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.parks.title"),
+      description: t("screens.home.categories.parks.description"),
+      iconColor: "#34C759",
+      iconBgColor: "rgba(52, 199, 89, 0.12)",
+      category: "parks",
+      color: CARD_COLORS.neonMint,
+      illustration: Park,
+    },
+    {
+      id: "restaurants",
+      icon: UtensilsCrossedIcon,
+      title: t("screens.home.categories.restaurants.title"),
+      description: t("screens.home.categories.restaurants.description"),
+      iconColor: "#FF6B35",
+      iconBgColor: "rgba(255, 107, 53, 0.12)",
+      category: "restaurants",
+      color: CARD_COLORS.twilightRose,
+      illustration: Location,
     },
   ];
 
@@ -156,7 +179,7 @@ export default function HomeScreen() {
           : category.id === "highlighted"
           ? { trending: "true" }
           : {
-              placeTypes: category.types.join(","), // Pass Foursquare IDs directly
+              category: category.category, // Pass general category name
             }),
         isPremium: "false", // TODO: Get from user premium status
       },

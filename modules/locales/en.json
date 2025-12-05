@@ -371,6 +371,14 @@
         "fitness": {
           "title": "Wellness & movement",
           "description": "Connections that start during workouts."
+        },
+        "parks": {
+          "title": "Parks & outdoors",
+          "description": "Outdoor meetings in nature."
+        },
+        "restaurants": {
+          "title": "Restaurants",
+          "description": "Connections that start at the table."
         }
       }
     },
@@ -379,6 +387,10 @@
       "messagePlaceholder": "Type a message...",
       "emptyTitle": "No conversations yet",
       "emptySubtitle": "Start connecting with people nearby to begin chatting.",
+      "potentialConnections": {
+        "title": "Potential Connections",
+        "cta": "See who wants to connect"
+      },
       "noMessages": "No messages yet",
       "time": {
         "now": "Now",
