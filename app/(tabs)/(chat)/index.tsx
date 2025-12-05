@@ -1,6 +1,7 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ChatListItem } from "@/components/chat/chat-list-item";
 import { MatchAvatar } from "@/components/chat/match-avatar";
+import { PotentialConnectionsBanner } from "@/components/potential-connections-banner";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -124,6 +125,10 @@ export default function ChatScreen() {
     []
   );
 
+  const handleOpenPaywall = useCallback(() => {
+    router.push("/(modals)/premium-paywall");
+  }, []);
+
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
   return (
@@ -139,18 +144,26 @@ export default function ChatScreen() {
             keyExtractor={(item) => item.chat_id}
             renderItem={renderChatItem}
             ListHeaderComponent={
-              matches.length > 0 ? (
-                <FlatList
-                  data={matches}
-                  keyExtractor={(item) => item.match_id}
-                  renderItem={renderMatchItem}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  ItemSeparatorComponent={() => (
-                    <View style={{ width: spacing.sm }} />
-                  )}
+              <>
+                <PotentialConnectionsBanner
+                  count={12}
+                  onPress={handleOpenPaywall}
+                  style={styles.banner}
                 />
-              ) : null
+                {matches.length > 0 ? (
+                  <FlatList
+                    data={matches}
+                    keyExtractor={(item) => item.match_id}
+                    renderItem={renderMatchItem}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    ItemSeparatorComponent={() => (
+                      <View style={{ width: spacing.sm }} />
+                    )}
+                    style={styles.matchesList}
+                  />
+                ) : null}
+              </>
             }
             ItemSeparatorComponent={() => (
               <View style={{ height: spacing.sm }} />
@@ -195,5 +208,11 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  banner: {
+    marginBottom: spacing.md,
+  },
+  matchesList: {
+    marginTop: spacing.md,
   },
 });

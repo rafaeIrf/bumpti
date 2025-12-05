@@ -58,6 +58,7 @@ export const Colors = {
 
     // Legacy/compat
     tint: "#1D9BF0",
+    white: "#E7E9EA",
   },
   dark: {
     // Main palette
@@ -110,6 +111,7 @@ export const Colors = {
 
     // Legacy/compat
     tint: "#1D9BF0",
+    white: "#E7E9EA",
   },
 };
 

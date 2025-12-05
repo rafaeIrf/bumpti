@@ -7,6 +7,7 @@ export { default as Graduation } from "./graduation.svg";
 export { default as Heart } from "./heart.svg";
 export { default as Location } from "./location.svg";
 export { default as Location2 } from "./location2.svg";
+export { default as Park } from "./park.svg";
 export { default as Passion } from "./passion.svg";
 export { default as Pin } from "./pin.svg";
 export { default as Placeholder } from "./placeholder.svg";
@@ -16,3 +17,4 @@ export { default as RoastChicken } from "./roast-chicken.svg";
 export { default as School } from "./school.svg";
 export { default as Toast } from "./toast.svg";
 export { default as Weight } from "./weight.svg";
+

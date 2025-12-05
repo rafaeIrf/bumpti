@@ -372,6 +372,14 @@
         "fitness": {
           "title": "Bem-estar & movimento",
           "description": "Conexões que começam no treino."
+        },
+        "parks": {
+          "title": "Parques & ar livre",
+          "description": "Encontros ao ar livre e na natureza."
+        },
+        "restaurants": {
+          "title": "Restaurantes",
+          "description": "Conexões que começam à mesa."
         }
       }
     },
@@ -380,6 +388,10 @@
       "messagePlaceholder": "Digite uma mensagem...",
       "emptyTitle": "Nenhuma conversa ainda",
       "emptySubtitle": "Comece se conectando com pessoas próximas para iniciar um papo.",
+      "potentialConnections": {
+        "title": "Potenciais Conexões",
+        "cta": "Veja quem quer se conectar"
+      },
       "noMessages": "Sem mensagens ainda",
       "time": {
         "now": "Agora",

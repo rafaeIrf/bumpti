@@ -8,12 +8,15 @@ import {
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
+  UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
   Cocoa,
   Graduation,
   Heart,
+  Park,
   Passion,
+  Restaurant,
   Toast,
   Weight,
 } from "@/assets/illustrations";
@@ -142,6 +145,28 @@ export default function HomeScreen() {
       types: [PlaceType.gym],
       color: CARD_COLORS.vitalGreen,
       illustration: Weight,
+    },
+    {
+      id: "parks",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.parks.title"),
+      description: t("screens.home.categories.parks.description"),
+      iconColor: "#34C759",
+      iconBgColor: "rgba(52, 199, 89, 0.12)",
+      types: [PlaceType.park],
+      color: CARD_COLORS.vitalGreen,
+      illustration: Park,
+    },
+    {
+      id: "restaurants",
+      icon: UtensilsCrossedIcon,
+      title: t("screens.home.categories.restaurants.title"),
+      description: t("screens.home.categories.restaurants.description"),
+      iconColor: "#FF6B35",
+      iconBgColor: "rgba(255, 107, 53, 0.12)",
+      types: [PlaceType.restaurant],
+      color: CARD_COLORS.flameOrange,
+      illustration: Restaurant,
     },
   ];
 
