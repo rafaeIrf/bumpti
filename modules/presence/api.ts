@@ -33,19 +33,25 @@ export type ActiveUsersResponse = {
 
 export async function enterPlace(params: {
   placeId: string;
-  lat?: number | null;
-  lng?: number | null;
+  userLat: number;
+  userLng: number;
+  placeLat: number;
+  placeLng: number;
 }): Promise<PresenceRecord | null> {
   try {
-    const { placeId, lat, lng } = params;
+    const { placeId, userLat, userLng, placeLat, placeLng } = params;
+
+    console.log("enterPlace params:", params)
 
     const { data, error } = await supabase.functions.invoke<{
       presence: PresenceRecord;
     }>("enter-place", {
       body: {
         place_id: placeId,
-        ...(typeof lat === "number" ? { lat } : {}),
-        ...(typeof lng === "number" ? { lng } : {}),
+        userLat,
+        userLng,
+        place_lat: placeLat,
+        place_lng: placeLng,
       },
     });
 

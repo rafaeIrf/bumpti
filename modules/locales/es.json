@@ -336,6 +336,10 @@
       "addressFallback": "Dirección no disponible"
     },
     "home": {
+      "placeDetected": {
+        "title": "Lugar detectado",
+        "message": "¿Estás en {{placeName}}?"
+      },
       "heroTitle": "¿Dónde quieres conectar hoy?",
       "heroSubtitle": "Elige el tipo de lugar y descubre quién está por ahí.",
       "toolbar": {

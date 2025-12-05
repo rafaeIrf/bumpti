@@ -335,6 +335,10 @@
       "addressFallback": "Address unavailable"
     },
     "home": {
+      "placeDetected": {
+        "title": "Place detected",
+        "message": "Are you at {{placeName}}?"
+      },
       "heroTitle": "Where do you want to connect today?",
       "heroSubtitle": "Pick the vibe and discover who's already there.",
       "toolbar": {

@@ -10,6 +10,6 @@ export const getUserPosition = async (): Promise<Coordinates> => {
   const position = await Location.getCurrentPositionAsync({
     accuracy: Location.Accuracy.Balanced,
   });
-  const { latitude, longitude } = position.coords;
-  return { latitude, longitude };
+  const { latitude, longitude, accuracy } = position.coords;
+  return { latitude, longitude, accuracy: accuracy ?? undefined };
 };

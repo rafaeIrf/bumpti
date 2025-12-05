@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { haversineDistance } from "../_shared/haversine.ts";
 import { refreshPresenceForPlace } from "../_shared/refresh-presence.ts";
 
 const corsHeaders = {
@@ -61,14 +62,40 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     const place_id = body?.place_id;
-    const lat = typeof body?.lat === "number" ? body.lat : null;
-    const lng = typeof body?.lng === "number" ? body.lng : null;
+    const userLat = typeof body?.userLat === "number" ? body.userLat : null;
+    const userLng = typeof body?.userLng === "number" ? body.userLng : null;
+    const place_lat = typeof body?.place_lat === "number" ? body.place_lat : null;
+    const place_lng = typeof body?.place_lng === "number" ? body.place_lng : null;
 
     if (!place_id || typeof place_id !== "string") {
       return new Response(JSON.stringify({ error: "invalid_place_id" }), {
         status: 400,
         headers: corsHeaders,
       });
+    }
+
+    // Validate distance if user and place coordinates are provided
+    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
+      const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
+      const MAX_DISTANCE_METERS = 80;
+
+      if (distanceInMeters > MAX_DISTANCE_METERS) {
+        console.warn(`User too far from place: ${distanceInMeters.toFixed(0)}m (max: ${MAX_DISTANCE_METERS}m)`);
+        return new Response(
+          JSON.stringify({ 
+            error: "too_far_from_place",
+            message: `You must be within ${MAX_DISTANCE_METERS}m of the place to enter. Current distance: ${Math.round(distanceInMeters)}m`
+          }), 
+          {
+            status: 400,
+            headers: corsHeaders,
+          }
+        );
+      }
+
+      console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
+    } else {
+      console.warn("Distance validation skipped - missing coordinates");
     }
 
     const existingPresence = await refreshPresenceForPlace(
@@ -89,8 +116,8 @@ Deno.serve(async (req) => {
       .insert({
         user_id: user.id,
         place_id,
-        lat,
-        lng,
+        lat: userLat,
+        lng: userLng,
         active: true,
       })
       .select()
