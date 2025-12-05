@@ -138,8 +138,8 @@ export default function CategoryResultsScreen() {
 
       const result = await enterPlace({
         placeId: place.placeId,
-        userLat: place.latitude,
-        userLng: place.longitude,
+        userLat: userLocation.latitude,
+        userLng: userLocation.longitude,
         placeLat: place.latitude,
         placeLng: place.longitude,
       });
