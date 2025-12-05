@@ -24,28 +24,20 @@ export async function searchPlacesByText(
   };
 }
 
-// Fetch nearby places for given coordinates and included types
+// Fetch nearby places for given category
 export async function getNearbyPlaces(
   latitude: number,
   longitude: number,
-  types: string[], // Foursquare category IDs
-  rankPreference: "POPULARITY" | "DISTANCE" = "POPULARITY",
-  radius: number = 20000,
-  maxResultCount: number = 20,
-  keyword?: string
+  category: string // General category name (bars, cafes, etc.)
 ): Promise<Place[]> {
-  console.log('types',types)
+  console.log('category', category)
   const { data, error } = await supabase.functions.invoke<{
     places: Place[];
   }>("get-nearby-places", {
     body: {
       lat: latitude,
       lng: longitude,
-      types, // Already Foursquare IDs
-      rankPreference,
-      radius,
-      ...(keyword && { keyword }),
-      maxResultCount,
+      category,
     },
   });
   

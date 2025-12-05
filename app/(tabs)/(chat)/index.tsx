@@ -15,6 +15,7 @@ import {
   useGetMatchesQuery,
 } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
+import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -131,6 +132,13 @@ export default function ChatScreen() {
 
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
+  const { data: pendingData, isLoading: loadingPending } =
+    useGetPendingLikesQuery(undefined, {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    });
+  const pendingCount = pendingData?.count ?? 0;
+
   return (
     <BaseTemplateScreen TopHeader={header} scrollEnabled={false}>
       <ThemedView style={styles.flex}>
@@ -145,11 +153,14 @@ export default function ChatScreen() {
             renderItem={renderChatItem}
             ListHeaderComponent={
               <>
-                <PotentialConnectionsBanner
-                  count={12}
-                  onPress={handleOpenPaywall}
-                  style={styles.banner}
-                />
+                {!loadingPending && pendingCount > 0 ? (
+                  <PotentialConnectionsBanner
+                    count={pendingCount}
+                    onPress={handleOpenPaywall}
+                    style={styles.banner}
+                  />
+                ) : null}
+
                 {matches.length > 0 ? (
                   <FlatList
                     data={matches}

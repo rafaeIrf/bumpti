@@ -1,6 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { CATEGORY_TO_IDS, type PlaceCategory } from "../_shared/foursquare/categories.ts";
 import { searchNearbyPlaces } from "../_shared/foursquare/searchNearby.ts";
 
 const corsHeaders = {
@@ -52,15 +53,13 @@ Deno.serve(async (req) => {
     const {
       lat,
       lng,
-      types,
+      category,
       radius = 20000,
       limit = 50,
     } = await req.json();
 
     console.log("=== GET NEARBY PLACES DEBUG ===");
-    console.log("Received types:", types);
-    console.log("Types type:", typeof types);
-    console.log("Is array:", Array.isArray(types));
+    console.log("Received category:", category);
 
     if (typeof lat !== "number" || typeof lng !== "number") {
       return new Response(JSON.stringify({ error: "invalid_coordinates" }), {
@@ -69,20 +68,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!types || !Array.isArray(types) || types.length === 0) {
-      return new Response(JSON.stringify({ error: "missing_or_invalid_types" }), {
+    if (!category || typeof category !== "string") {
+      return new Response(JSON.stringify({ error: "missing_or_invalid_category" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Convert category to Foursquare IDs
+    const foursquareIds = CATEGORY_TO_IDS[category as PlaceCategory];
+    if (!foursquareIds) {
+      return new Response(JSON.stringify({ error: "invalid_category" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Category "${category}" mapped to ${foursquareIds.length} Foursquare IDs`);
 
     const places = await searchNearbyPlaces({
       userLat: lat,
       userLng: lng,
       radius,
       limit,
-      categories: types, // Pass types as categories to Foursquare API
-      openNow: true, // Only show places that are currently open
+      categories: foursquareIds,
+      openNow: true,
     });
 
     console.log("Places returned:", places.length);

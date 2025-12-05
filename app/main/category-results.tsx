@@ -33,7 +33,7 @@ export default function CategoryResultsScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams();
   const categoryName = params.categoryName as string;
-  const placeTypes = params.placeTypes as string;
+  const category = params.category as string;
   const favoritesMode = params.favorites === "true";
   const trendingMode = params.trending === "true";
   const bottomSheet = useCustomBottomSheet();
@@ -41,9 +41,6 @@ export default function CategoryResultsScreen() {
   // Use cached location hook
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
-
-  // Parse place types - Already Foursquare category IDs from URL
-  const typesEnum = (placeTypes?.split(",").filter(Boolean) || []) as string[];
 
   // Trending places query
   const { data: trendingData, isLoading: trendingLoading } =
@@ -58,17 +55,16 @@ export default function CategoryResultsScreen() {
     );
 
   // Use RTK Query hook - only runs when userLocation is available and not in trending mode
-  const shouldFetchNearby = !favoritesMode && !trendingMode && !!userLocation;
+  const shouldFetchNearby =
+    !favoritesMode && !trendingMode && !!userLocation && !!category;
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
       longitude: userLocation?.longitude ?? 0,
-      types: typesEnum,
-      rankPreference: "POPULARITY",
-      maxResultCount: 20,
+      category: category,
     },
     {
-      skip: !shouldFetchNearby, // skip when favorites, trending or missing location
+      skip: !shouldFetchNearby, // skip when favorites, trending or missing location/category
     }
   );
 
@@ -142,8 +138,8 @@ export default function CategoryResultsScreen() {
 
       const result = await enterPlace({
         placeId: place.placeId,
-        userLat: userLocation.latitude,
-        userLng: userLocation.longitude,
+        userLat: place.latitude,
+        userLng: place.longitude,
         placeLat: place.latitude,
         placeLng: place.longitude,
       });
@@ -217,6 +213,7 @@ export default function CategoryResultsScreen() {
   );
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: Place; index: number }) => {
+      console.log(item);
       const placeData = {
         id: item.placeId,
         name: item.name,
@@ -224,7 +221,7 @@ export default function CategoryResultsScreen() {
         distance: item.distance,
         isFavorite: favoriteIds.has(item.placeId),
         activeUsers: (item as any).active_users || 0,
-        tag: item.type || undefined,
+        tag: item.types?.[0] || undefined,
       };
 
       return (

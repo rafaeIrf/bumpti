@@ -63,37 +63,25 @@ export const placesApi = createApi({
       ],
       keepUnusedDataFor: 60, // Cache for 1 minute only
     }),
-    // Get nearby places by types
+    // Get nearby places by category
     getNearbyPlaces: builder.query<
       Place[],
       {
         latitude: number;
         longitude: number;
-        types: string[]; // Foursquare category IDs
-        rankPreference?: "POPULARITY" | "DISTANCE";
-        radius?: number;
-        maxResultCount?: number;
-        keyword?: string;
+        category: string; // General category name (bars, cafes, etc.)
       }
     >({
       queryFn: async ({
         latitude,
         longitude,
-        types,
-        rankPreference = "POPULARITY",
-        radius = 20000,
-        maxResultCount = 20,
-        keyword,
+        category,
       }) => {
         try {
           const places = await getNearbyPlacesApi(
             latitude,
             longitude,
-            types,
-            rankPreference,
-            radius,
-            maxResultCount,
-            keyword
+            category
           );
           return { data: places as Place[] };
         } catch (error) {
@@ -107,9 +95,7 @@ export const placesApi = createApi({
         return [
           {
             type: "NearbyPlaces",
-            id: `${lat}_${lng}_${arg.types.join(",")}_${arg.radius ?? 20000}_${
-              arg.keyword ?? "none"
-            }`,
+            id: `${lat}_${lng}_${arg.category}`,
           },
         ];
       },
