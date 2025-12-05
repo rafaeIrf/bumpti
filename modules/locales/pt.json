@@ -338,6 +338,10 @@
     "home": {
       "heroTitle": "Onde você quer se conectar hoje?",
       "heroSubtitle": "Escolha o tipo de lugar e descubra quem está por lá.",
+      "placeDetected": {
+        "title": "Local detectado",
+        "message": "Você está em {{placeName}}?"
+      },
       "toolbar": {
         "filters": "Filtros",
         "search": "Pesquisar"

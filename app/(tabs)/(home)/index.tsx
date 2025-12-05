@@ -30,7 +30,7 @@ import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { PlaceType } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet } from "react-native";
+import { Alert, FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -65,8 +65,14 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    if (detectedPlaceResult) {
+    if (detectedPlaceResult?.suggested) {
       console.log("Detected place:", detectedPlaceResult);
+      Alert.alert(
+        t("screens.home.placeDetected.title"),
+        t("screens.home.placeDetected.message", {
+          placeName: detectedPlaceResult.suggested.name,
+        })
+      );
     }
   }, [detectedPlaceResult]);
 
