@@ -23,6 +23,7 @@ const OnboardingHeader = React.memo(() => {
       "/connect-with",
       "/intention",
       "/user-photos",
+      "/favorite-places",
     ];
     if (shouldShowLocation) base.push("/location");
     if (shouldShowNotifications) base.push("/notifications");
@@ -77,6 +78,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="connect-with" />
         <Stack.Screen name="intention" />
         <Stack.Screen name="user-photos" />
+        <Stack.Screen name="favorite-places" />
         <Stack.Screen name="location" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="complete" />

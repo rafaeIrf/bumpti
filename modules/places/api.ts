@@ -1,5 +1,5 @@
 import { supabase } from "@/modules/supabase/client";
-import { Place } from "./types";
+import { Place, PlaceCategory } from "./types";
 
 export async function searchPlacesByText(
   input: string,
@@ -96,6 +96,42 @@ export async function getFavoritePlaces(
 
   return {
     places: data?.places || [],
+  };
+}
+
+export interface PlacesByCategory {
+  category: string;
+  places: Place[];
+}
+
+/**
+ * Fetch suggested places grouped by categories for onboarding
+ * Makes a single API call to get multiple categories at once
+ */
+export async function getSuggestedPlacesByCategories(
+  latitude: number,
+  longitude: number,
+  categories: PlaceCategory[],
+  limitPerCategory: number = 10
+): Promise<{ data: PlacesByCategory[] }> {
+  const { data, error } = await supabase.functions.invoke<{
+    data: PlacesByCategory[];
+  }>("get-suggested-places", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+      categories,
+      limitPerCategory,
+    },
+  });
+
+  if (error) {
+    console.error("Failed to fetch suggested places (edge):", error);
+    return { data: [] };
+  }
+
+  return {
+    data: data?.data || [],
   };
 }
 

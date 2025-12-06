@@ -7,7 +7,8 @@ create or replace function public.save_onboarding_txn(
   p_connect_ids int[],
   p_intention_ids int[],
   p_photo_urls text[] default array[]::text[],
-  p_photo_positions int[] default array[]::int[]
+  p_photo_positions int[] default array[]::int[],
+  p_favorite_place_ids text[] default array[]::text[]
 ) returns void
 language plpgsql
 security definer
@@ -46,6 +47,13 @@ begin
     insert into public.profile_photos (user_id, url, position)
     select p_user_id, url, position
     from unnest(p_photo_urls, p_photo_positions) as t(url, position);
+  end if;
+
+  -- Replace favorite places when provided
+  delete from public.profile_favorite_places where user_id = p_user_id;
+  if array_length(p_favorite_place_ids, 1) is not null then
+    insert into public.profile_favorite_places (user_id, place_id)
+    select p_user_id, unnest(p_favorite_place_ids);
   end if;
 end;
 $$;

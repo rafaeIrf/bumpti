@@ -1,6 +1,8 @@
 import { MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { PlaceCard } from "@/components/place-card";
+import { PlaceCardSelection } from "@/components/place-card-selection";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -11,7 +13,8 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { enterPlace } from "@/modules/presence/api";
-import { useRouter } from "expo-router";
+import { logger } from "@/utils/logger";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,15 +38,46 @@ export interface PlaceSearchProps {
   onBack?: () => void;
   isPremium?: boolean;
   autoFocus?: boolean;
+  // Multi-select mode for onboarding
+  multiSelectMode?: boolean;
+  selectedPlaceIds?: string[];
+  onPlaceToggle?: (placeId: string, placeName: string) => void;
+  onSelectionComplete?: () => void;
 }
 
 export default function PlaceSearch({
   onBack,
   isPremium = false,
   autoFocus = false,
+  multiSelectMode: multiSelectModeProp = false,
+  selectedPlaceIds: selectedPlaceIdsProp = [],
+  onPlaceToggle,
+  onSelectionComplete,
 }: PlaceSearchProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    multiSelectMode?: string;
+    initialSelection?: string;
+  }>();
+
+  const multiSelectMode =
+    multiSelectModeProp || params.multiSelectMode === "true";
+
+  const initialSelection = React.useMemo(() => {
+    if (!params.initialSelection) return [];
+
+    try {
+      return JSON.parse(params.initialSelection) as {
+        id: string;
+        name: string;
+      }[];
+    } catch (error) {
+      logger.error("[PlaceSearch] Invalid initialSelection:", error);
+      return [];
+    }
+  }, [params.initialSelection]);
+
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +86,17 @@ export default function PlaceSearch({
     userLocation
       ? { lat: userLocation.latitude, lng: userLocation.longitude }
       : undefined
+  );
+
+  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(
+    initialSelection.map((p) => p.id)
+  );
+
+  const selectedPlacesMapRef = useRef<Record<string, string>>(
+    initialSelection.reduce(
+      (acc, p) => ({ ...acc, [p.id]: p.name }),
+      {} as Record<string, string>
+    )
   );
 
   // Use RTK Query lazy query
@@ -94,20 +139,37 @@ export default function PlaceSearch({
 
   const handleResultPress = useCallback(
     (result: SearchResult) => {
-      enterPlace({
-        placeId: result.placeId,
-        lat: userLocation?.latitude ?? null,
-        lng: userLocation?.longitude ?? null,
-      });
-      router.push({
-        pathname: "/(modals)/place-people",
-        params: {
+      if (multiSelectMode) {
+        const isSelected = localSelectedIds.includes(result.placeId);
+
+        if (isSelected) {
+          setLocalSelectedIds((prev) =>
+            prev.filter((id) => id !== result.placeId)
+          );
+          delete selectedPlacesMapRef.current[result.placeId];
+        } else {
+          setLocalSelectedIds((prev) => [...prev, result.placeId]);
+          selectedPlacesMapRef.current[result.placeId] = result.name;
+        }
+
+        onPlaceToggle?.(result.placeId, result.name);
+      } else {
+        enterPlace({
           placeId: result.placeId,
-          placeName: result.name,
-        },
-      });
+          lat: userLocation?.latitude ?? null,
+          lng: userLocation?.longitude ?? null,
+        });
+
+        router.push({
+          pathname: "/(modals)/place-people",
+          params: {
+            placeId: result.placeId,
+            placeName: result.name,
+          },
+        });
+      }
     },
-    [router]
+    [router, multiSelectMode, onPlaceToggle, localSelectedIds, userLocation]
   );
 
   const clearSearch = useCallback(() => {
@@ -149,6 +211,20 @@ export default function PlaceSearch({
         ?.replace(/_/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
+      const isSelected = localSelectedIds.includes(item.placeId);
+
+      if (multiSelectMode) {
+        return (
+          <PlaceCardSelection
+            placeId={item.placeId}
+            name={item.name}
+            category={tag}
+            isSelected={isSelected}
+            onToggle={() => handleResultPress(item)}
+          />
+        );
+      }
+
       return (
         <PlaceCard
           place={{
@@ -166,7 +242,13 @@ export default function PlaceSearch({
         />
       );
     },
-    [favoriteIds, handleResultPress, handleToggle]
+    [
+      favoriteIds,
+      handleResultPress,
+      handleToggle,
+      multiSelectMode,
+      localSelectedIds,
+    ]
   );
 
   // Move ItemSeparatorComponent out of render
@@ -298,8 +380,72 @@ export default function PlaceSearch({
     );
   }
 
+  const handleDone = useCallback(() => {
+    if (onSelectionComplete) {
+      onSelectionComplete();
+      return;
+    }
+
+    // Call global callback (used by onboarding flow)
+    // @ts-ignore
+    const callback = globalThis.__favoritePlacesCallback;
+
+    if (typeof callback === "function") {
+      const selectedPlaces = localSelectedIds.map((id) => ({
+        id,
+        name: selectedPlacesMapRef.current[id] || "",
+      }));
+
+      logger.log("[PlaceSearch] Returning", selectedPlaces.length, "places");
+      callback(selectedPlaces);
+
+      // @ts-ignore
+      delete globalThis.__favoritePlacesCallback;
+    }
+
+    router.back();
+  }, [onSelectionComplete, router, localSelectedIds]);
   return (
-    <BaseTemplateScreen isModal TopHeader={header}>
+    <BaseTemplateScreen
+      isModal
+      TopHeader={header}
+      BottomBar={
+        multiSelectMode && localSelectedIds.length > 0 ? (
+          <ScreenBottomBar variant="custom" showBorder>
+            <View style={styles.bottomBarContent}>
+              <View style={styles.bottomBarText}>
+                <ThemedText
+                  style={[
+                    styles.bottomBarLabel,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t("common.selected")}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.bottomBarCount, { color: colors.text }]}
+                >
+                  {localSelectedIds.length}{" "}
+                  {localSelectedIds.length === 1 ? "lugar" : "lugares"}
+                </ThemedText>
+              </View>
+              <Pressable
+                onPress={handleDone}
+                style={({ pressed }) => [
+                  styles.doneButton,
+                  { backgroundColor: colors.accent },
+                  pressed && styles.doneButtonPressed,
+                ]}
+              >
+                <ThemedText style={styles.doneButtonText}>
+                  {t("common.done")}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </ScreenBottomBar>
+        ) : undefined
+      }
+    >
       <ThemedView style={{ flex: 1 }}>{content}</ThemedView>
     </BaseTemplateScreen>
   );
@@ -346,5 +492,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: 999,
+  },
+  bottomBarContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    width: "100%",
+  },
+  bottomBarText: {
+    flex: 1,
+  },
+  bottomBarLabel: {
+    fontFamily: "Poppins",
+    fontWeight: "400",
+    fontSize: 13,
+  },
+  bottomBarCount: {
+    fontFamily: "Poppins",
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  doneButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 24,
+  },
+  doneButtonPressed: {
+    opacity: 0.8,
+  },
+  doneButtonText: {
+    fontFamily: "Poppins",
+    fontWeight: "600",
+    fontSize: 15,
+    color: "#FFFFFF",
   },
 });

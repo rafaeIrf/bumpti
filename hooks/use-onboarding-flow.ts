@@ -1,8 +1,8 @@
+import { hasLocationPermission } from "@/modules/location";
+import { hasNotificationPermission } from "@/modules/notifications";
 import { useAppSelector } from "@/modules/store/hooks";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { OnboardingStep } from "@/modules/store/slices/onboardingSlice";
-import { hasLocationPermission } from "@/modules/location";
-import { hasNotificationPermission } from "@/modules/notifications";
 import { useRouter } from "expo-router";
 
 // Define the step order and routes
@@ -15,6 +15,7 @@ const STEP_ORDER: OnboardingStep[] = [
   "connect-with",
   "intention",
   "user-photos",
+  "favorite-places",
   "location",
   "notifications",
   "complete",
@@ -30,6 +31,7 @@ const STEP_ROUTES: Record<OnboardingStep, string> = {
   "connect-with": "/(onboarding)/connect-with",
   intention: "/(onboarding)/intention",
   "user-photos": "/(onboarding)/user-photos",
+  "favorite-places": "/(onboarding)/favorite-places",
   location: "/(onboarding)/location",
   notifications: "/(onboarding)/notifications",
   complete: "/(onboarding)/complete",

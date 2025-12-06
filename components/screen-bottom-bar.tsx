@@ -21,6 +21,9 @@ interface ScreenBottomBarProps {
   // For custom content
   children?: React.ReactNode;
 
+  // Content to display above buttons
+  topContent?: React.ReactNode;
+
   // Styling
   style?: ViewStyle;
   showBorder?: boolean;
@@ -70,6 +73,7 @@ export function ScreenBottomBar({
   secondaryDisabled = false,
   variant = "single",
   children,
+  topContent,
   style,
   showBorder = false,
   backgroundColor,
@@ -89,13 +93,19 @@ export function ScreenBottomBar({
 
   // Custom content variant
   if (variant === "custom") {
-    return <View style={containerStyle}>{children}</View>;
+    return (
+      <View style={containerStyle}>
+        {topContent}
+        {children}
+      </View>
+    );
   }
 
   // Dual button variant
   if (variant === "dual") {
     return (
       <View style={containerStyle}>
+        {topContent && <View style={styles.topContent}>{topContent}</View>}
         <View style={styles.dualButtonRow}>
           {secondaryLabel && onSecondaryPress && (
             <View style={styles.dualButton}>
@@ -130,6 +140,7 @@ export function ScreenBottomBar({
   // Single button variant (default)
   return (
     <View style={containerStyle}>
+      {topContent && <View style={styles.topContent}>{topContent}</View>}
       {primaryLabel && onPrimaryPress && (
         <Button
           onPress={onPrimaryPress}
@@ -149,6 +160,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     borderTopWidth: 1,
+  },
+  topContent: {
+    marginBottom: spacing.sm,
   },
   dualButtonRow: {
     flexDirection: "row",

@@ -112,6 +112,10 @@ Deno.serve(async (req) => {
       (formData.get("intentions") as string | null)?.length
         ? JSON.parse(formData.get("intentions") as string)
         : [];
+    const favoritePlaces =
+      (formData.get("favoritePlaces") as string | null)?.length
+        ? JSON.parse(formData.get("favoritePlaces") as string)
+        : [];
     const photos = formData.getAll("photos").filter((f): f is File => f instanceof File);
 
     const {
@@ -190,6 +194,7 @@ Deno.serve(async (req) => {
       p_intention_ids: intentionIds,
       p_photo_urls: photoPaths,
       p_photo_positions: photoPositions,
+      p_favorite_place_ids: favoritePlaces,
     });
 
     if (rpcError) {

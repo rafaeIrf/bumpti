@@ -9,6 +9,7 @@ export type OnboardingStep =
   | "connect-with"
   | "intention"
   | "user-photos"
+  | "favorite-places"
   | "location"
   | "notifications"
   | "complete";
@@ -20,6 +21,7 @@ export interface OnboardingUserData {
   connectWith?: string[];
   intentions?: string[];
   photoUris?: string[];
+  favoritePlaces?: string[];
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
 }
@@ -68,6 +70,9 @@ const onboardingSlice = createSlice({
     setPhotoUris: (state, action: PayloadAction<string[]>) => {
       state.userData.photoUris = action.payload;
     },
+    setFavoritePlaces: (state, action: PayloadAction<string[]>) => {
+      state.userData.favoritePlaces = action.payload;
+    },
     setLocationPermission: (state, action: PayloadAction<boolean>) => {
       state.userData.hasLocationPermission = action.payload;
     },
@@ -91,6 +96,7 @@ export const {
   setConnectWith,
   setIntentions,
   setPhotoUris,
+  setFavoritePlaces,
   setLocationPermission,
   setNotificationPermission,
   completeOnboarding,

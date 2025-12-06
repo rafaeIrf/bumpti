@@ -1,0 +1,427 @@
+import { SearchIcon } from "@/assets/icons";
+import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { MultiSelectSheet } from "@/components/multi-select-sheet";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { spacing, typography } from "@/constants/theme";
+import { useCachedLocation } from "@/hooks/use-cached-location";
+import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { t } from "@/modules/locales";
+import {
+  getSuggestedPlacesByCategories,
+  PlacesByCategory,
+} from "@/modules/places/api";
+import { PlaceCategory } from "@/modules/places/types";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { logger } from "@/utils/logger";
+import { router } from "expo-router";
+import React from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+
+const CATEGORY_LABELS: Record<PlaceCategory, string> = {
+  bars: "Bares",
+  nightlife: "Baladas",
+  cafes: "Cafés",
+  restaurants: "Restaurantes",
+  fitness: "Academias",
+  university: "Universidades",
+  parks: "Parques",
+};
+
+const CATEGORIES: PlaceCategory[] = [
+  "bars",
+  "nightlife",
+  "cafes",
+  "restaurants",
+  "fitness",
+  "university",
+  "parks",
+];
+
+const MAX_SELECTIONS = 12;
+
+export default function FavoritePlacesScreen() {
+  const colors = useThemeColors();
+  const { completeCurrentStep, userData } = useOnboardingFlow();
+  const { location: userLocation, loading: locationLoading } =
+    useCachedLocation();
+  
+  // Load persisted favorite places from Redux
+  const persistedFavoritePlaces = userData.favoritePlaces || [];
+
+  // UI State
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
+  // Selection State
+  const [selectedPlaceIds, setSelectedPlaceIds] = React.useState<string[]>(
+    persistedFavoritePlaces
+  );
+  const [placesMap, setPlacesMap] = React.useState<Record<string, string>>({});
+
+  // API State
+  const [suggestedPlaces, setSuggestedPlaces] = React.useState<
+    PlacesByCategory[]
+  >([]);
+  const [isLoadingPlaces, setIsLoadingPlaces] = React.useState(false);
+  const hasFetchedRef = React.useRef(false);
+
+  // Fetch suggested places once when location is available
+  React.useEffect(() => {
+    if (!userLocation || hasFetchedRef.current) return;
+
+    const fetchSuggestedPlaces = async () => {
+      hasFetchedRef.current = true;
+      setIsLoadingPlaces(true);
+
+      try {
+        const { data } = await getSuggestedPlacesByCategories(
+          userLocation.latitude,
+          userLocation.longitude,
+          CATEGORIES,
+          15
+        );
+        setSuggestedPlaces(data);
+        
+        // Build placesMap from suggested places for persisted selections
+        const newPlacesMap: Record<string, string> = {};
+        data.forEach((categoryGroup) => {
+          categoryGroup.places.forEach((place) => {
+            if (persistedFavoritePlaces.includes(place.id)) {
+              newPlacesMap[place.id] = place.name;
+            }
+          });
+        });
+        setPlacesMap((prev) => ({ ...prev, ...newPlacesMap }));
+        
+        logger.log("[FavoritePlaces] Fetched suggested places:", data.length);
+        logger.log("[FavoritePlaces] Restored persisted places:", Object.keys(newPlacesMap).length);
+      } catch (error) {
+        logger.error("[FavoritePlaces] Error fetching places:", error);
+        hasFetchedRef.current = false; // Allow retry on error
+      } finally {
+        setIsLoadingPlaces(false);
+      }
+    };
+
+    fetchSuggestedPlaces();
+  }, [userLocation, persistedFavoritePlaces]);
+
+  // Handle places selected from search screen
+  const handlePlacesFromSearch = React.useCallback(
+    (places: { id: string; name: string }[]) => {
+      const newIds = places.map((p) => p.id);
+      const newPlacesMap = places.reduce(
+        (acc, p) => ({ ...acc, [p.id]: p.name }),
+        {} as Record<string, string>
+      );
+
+      setSelectedPlaceIds((prev) => Array.from(new Set([...prev, ...newIds])));
+      setPlacesMap((prev) => ({ ...prev, ...newPlacesMap }));
+
+      // Ensure sheet stays collapsed when returning from search
+      setIsExpanded(false);
+
+      logger.log(
+        "[FavoritePlaces] Updated selection:",
+        places.length,
+        "places"
+      );
+    },
+    []
+  );
+
+  const togglePlace = (placeId: string, placeName: string) => {
+    const isSelected = selectedPlaceIds.includes(placeId);
+
+    if (isSelected) {
+      setSelectedPlaceIds((prev) => prev.filter((id) => id !== placeId));
+      setPlacesMap((prev) => {
+        const { [placeId]: _, ...rest } = prev;
+        return rest;
+      });
+    } else if (selectedPlaceIds.length < MAX_SELECTIONS) {
+      setSelectedPlaceIds((prev) => [...prev, placeId]);
+      setPlacesMap((prev) => ({ ...prev, [placeId]: placeName }));
+    }
+  };
+
+  const removePlace = (item: { id: string }) => {
+    setSelectedPlaceIds((prev) => prev.filter((id) => id !== item.id));
+    setPlacesMap((prev) => {
+      const { [item.id]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleContinue = () => {
+    if (selectedPlaceIds.length >= 1) {
+      onboardingActions.setFavoritePlaces(selectedPlaceIds);
+      completeCurrentStep("favorite-places");
+    }
+  };
+
+  const handleOpenSearch = () => {
+    // Store callback globally (Expo Router limitation - can't pass functions via params)
+    // @ts-ignore
+    globalThis.__favoritePlacesCallback = handlePlacesFromSearch;
+
+    const initialSelection = selectedPlaceIds
+      .filter((id) => placesMap[id])
+      .map((id) => ({ id, name: placesMap[id] }));
+
+    router.push({
+      pathname: "/(modals)/place-search",
+      params: {
+        multiSelectMode: "true",
+        initialSelection: JSON.stringify(initialSelection),
+      },
+    });
+  };
+
+  const getPlacesByCategory = (category: PlaceCategory) => {
+    return suggestedPlaces.find((c) => c.category === category)?.places || [];
+  };
+
+  const allSelectedPlaces = selectedPlaceIds.map((id) => ({
+    id,
+    name: placesMap[id] || "...", // Placeholder while loading place names
+    category: "",
+  }));
+
+  const totalSelectedCount = selectedPlaceIds.length;
+
+  return (
+    <BaseTemplateScreen
+      hasStackHeader
+      BottomBar={
+        <ScreenBottomBar
+          primaryLabel={t("common.continue")}
+          onPrimaryPress={handleContinue}
+          primaryDisabled={totalSelectedCount < 1}
+          topContent={
+            totalSelectedCount > 0 ? (
+              <MultiSelectSheet
+                selectedItems={allSelectedPlaces}
+                getItemId={(item) => item.id}
+                getItemLabel={(item) => item.name}
+                isExpanded={isExpanded}
+                onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                onRemoveItem={removePlace}
+              />
+            ) : undefined
+          }
+        />
+      }
+    >
+      <Pressable
+        style={styles.container}
+        onPress={() => isExpanded && setIsExpanded(false)}
+        disabled={!isExpanded}
+      >
+        <ThemedView style={styles.innerContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <ThemedText style={styles.title}>
+              {t("screens.onboarding.favoritePlaces.title")}
+            </ThemedText>
+            <ThemedText
+              style={[styles.subtitle, { color: colors.textSecondary }]}
+            >
+              {t("screens.onboarding.favoritePlaces.subtitle")}
+            </ThemedText>
+          </View>
+
+          {/* Search Input */}
+          <Pressable
+            onPress={handleOpenSearch}
+            style={({ pressed }) => [
+              styles.searchButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              pressed && styles.searchButtonPressed,
+            ]}
+          >
+            <SearchIcon width={20} height={20} color={colors.accent} />
+            <ThemedText
+              style={[
+                styles.searchPlaceholder,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {t("screens.onboarding.favoritePlaces.searchPlaceholder")}
+            </ThemedText>
+          </Pressable>
+
+          {/* Suggested Places by Category */}
+          {isLoadingPlaces || locationLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <ThemedText
+                style={[styles.loadingText, { color: colors.textSecondary }]}
+              >
+                {t("common.loading")}
+              </ThemedText>
+            </View>
+          ) : (
+            <ScrollView
+              style={styles.categoriesScroll}
+              contentContainerStyle={styles.categoriesContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {CATEGORIES.map((category) => {
+                const places = getPlacesByCategory(category);
+                if (places.length === 0) return null;
+
+                return (
+                  <View key={category} style={styles.categorySection}>
+                    {/* Category Label */}
+                    <ThemedText
+                      style={[
+                        styles.categoryLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {CATEGORY_LABELS[category]}
+                    </ThemedText>
+
+                    {/* Place Cards */}
+                    <View style={styles.placeCards}>
+                      {places.map((place) => {
+                        const isSelected = selectedPlaceIds.includes(
+                          place.placeId
+                        );
+                        return (
+                          <Pressable
+                            key={place.placeId}
+                            onPress={() =>
+                              togglePlace(place.placeId, place.name)
+                            }
+                            style={({ pressed }) => [
+                              styles.placeCard,
+                              {
+                                backgroundColor: isSelected
+                                  ? colors.accent
+                                  : colors.surface,
+                                borderColor: isSelected
+                                  ? colors.accent
+                                  : colors.border,
+                                borderWidth: isSelected ? 2 : 1,
+                              },
+                              pressed && styles.placeCardPressed,
+                            ]}
+                          >
+                            <ThemedText style={styles.placeCardText}>
+                              {place.name}
+                            </ThemedText>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          )}
+        </ThemedView>
+      </Pressable>
+    </BaseTemplateScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    paddingTop: spacing.lg,
+  },
+  header: {
+    marginBottom: spacing.xl,
+  },
+  title: {
+    ...typography.heading,
+    fontSize: 28,
+    marginBottom: spacing.sm,
+    color: "#FFFFFF",
+  },
+  subtitle: {
+    fontFamily: "Poppins",
+    fontWeight: "400",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  searchButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+  },
+  searchButtonPressed: {
+    opacity: 0.7,
+  },
+  searchPlaceholder: {
+    fontFamily: "Poppins",
+    fontWeight: "400",
+    fontSize: 15,
+  },
+  categoriesScroll: {
+    flex: 1,
+  },
+  categoriesContent: {
+    paddingBottom: spacing.md,
+  },
+  categorySection: {
+    marginBottom: spacing.lg,
+  },
+  categoryLabel: {
+    fontFamily: "Poppins",
+    fontWeight: "600",
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+    paddingHorizontal: 2,
+  },
+  placeCards: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  placeCard: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 16,
+  },
+  placeCardPressed: {
+    opacity: 0.7,
+  },
+  placeCardText: {
+    fontFamily: "Poppins",
+    fontWeight: "500",
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: spacing.xxl,
+    gap: spacing.md,
+  },
+  loadingText: {
+    fontFamily: "Poppins",
+    fontWeight: "400",
+    fontSize: 15,
+  },
+});

@@ -11,6 +11,7 @@
     "cancel": "Cancelar",
     "close": "Fechar",
     "back": "Voltar",
+    "continue": "Continuar",
     "popular": "Popular",
     "search": "Buscar",
     "fromYou": "de você",
@@ -21,7 +22,10 @@
     "max": "máxima",
     "today": "Hoje",
     "yesterday": "Ontem",
-    "daysAgo": "{{count}} dias atrás"
+    "daysAgo": "{{count}} dias atrás",
+    "selected": "Selecionados",
+    "done": "Pronto",
+    "loading": "Carregando..."
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
@@ -284,6 +288,12 @@
       "photosMinimum": "Mínimo de 3 necessárias",
       "photosAddMore": "Adicione pelo menos {{count}} foto",
       "photosAddMorePlural": "Adicione pelo menos {{count}} fotos",
+      "favoritePlaces": {
+        "title": "Quais são seus spots preferidos?",
+        "subtitle": "Aumente suas conexões escolhendo seus spots favoritos.",
+        "searchPlaceholder": "Buscar lugar...",
+        "selectAtLeastOne": "Selecione pelo menos 1 spot"
+      },
       "locationTitle": "Permitir localização",
       "locationSubtitle": "Para encontrar pessoas e lugares perto de você, precisamos da sua localização. Você pode desativar isso a qualquer momento",
       "locationEnable": "Permitir localização",

@@ -1,18 +1,19 @@
 import { store } from "@/modules/store";
 import {
-  completeOnboarding as completeOnboardingAction,
-  completeStep as completeStepAction,
-  OnboardingStep,
-  resetOnboarding as resetOnboardingAction,
-  setConnectWith as setConnectWithAction,
-  setCurrentStep as setCurrentStepAction,
-  setIntentions as setIntentionsAction,
-  setLocationPermission as setLocationPermissionAction,
-  setNotificationPermission as setNotificationPermissionAction,
-  setPhotoUris as setPhotoUrisAction,
-  setUserBirthdate as setUserBirthdateAction,
-  setUserGender as setUserGenderAction,
-  setUserName as setUserNameAction,
+    completeOnboarding as completeOnboardingAction,
+    completeStep as completeStepAction,
+    OnboardingStep,
+    resetOnboarding as resetOnboardingAction,
+    setConnectWith as setConnectWithAction,
+    setCurrentStep as setCurrentStepAction,
+    setFavoritePlaces as setFavoritePlacesAction,
+    setIntentions as setIntentionsAction,
+    setLocationPermission as setLocationPermissionAction,
+    setNotificationPermission as setNotificationPermissionAction,
+    setPhotoUris as setPhotoUrisAction,
+    setUserBirthdate as setUserBirthdateAction,
+    setUserGender as setUserGenderAction,
+    setUserName as setUserNameAction,
 } from "./onboardingSlice";
 
 // Action creators that encapsulate dispatch
@@ -47,6 +48,10 @@ export const onboardingActions = {
 
   setPhotoUris: (photoUris: string[]) => {
     store.dispatch(setPhotoUrisAction(photoUris));
+  },
+
+  setFavoritePlaces: (favoritePlaces: string[]) => {
+    store.dispatch(setFavoritePlacesAction(favoritePlaces));
   },
 
   setLocationPermission: (hasPermission: boolean) => {
