@@ -140,8 +140,8 @@ export default function CategoryResultsScreen() {
         placeId: place.placeId,
         userLat: userLocation.latitude,
         userLng: userLocation.longitude,
-        placeLat: userLocation.latitude,
-        placeLng: userLocation.longitude,
+        placeLat: place.latitude,
+        placeLng: place.longitude,
       });
 
       if (!result) {
