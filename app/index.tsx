@@ -3,7 +3,6 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import { supabase } from "@/modules/supabase/client";
 import { Redirect } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -18,7 +17,6 @@ export default function RootIndex() {
   const onboardingState = useAppSelector((state) => state.onboarding);
 
   useEffect(() => {
-    supabase.auth.signOut();
     if (
       isAuthenticated &&
       !isProfileLoading &&
