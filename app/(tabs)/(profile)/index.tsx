@@ -8,6 +8,7 @@ import {
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { LoadingView } from "@/components/loading-view";
 import {
   PowerUpBottomSheet,
   PowerUpOptionConfig,
@@ -21,6 +22,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
+import { prefetchImage } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -130,6 +132,7 @@ export default function ProfileScreen() {
   );
 
   const [profileProgress, setProfileProgress] = React.useState<number>(0.65);
+  const [isLoadingImage, setIsLoadingImage] = React.useState(true);
 
   const handleSettingsClick = () => {
     // TODO: Navigate to settings
@@ -189,6 +192,17 @@ export default function ProfileScreen() {
   const profilePhoto =
     profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
+  // Prefetch profile photo
+  React.useEffect(() => {
+    if (profilePhoto) {
+      prefetchImage(profilePhoto)
+        .then(() => setIsLoadingImage(false))
+        .catch(() => setIsLoadingImage(false));
+    } else {
+      setIsLoadingImage(false);
+    }
+  }, [profilePhoto]);
+
   // Update progress from profile data
   React.useEffect(() => {
     if (typeof profile?.completion === "number") {
@@ -197,6 +211,27 @@ export default function ProfileScreen() {
   }, [profile?.completion]);
 
   const completionText = `${Math.round(profileProgress * 100)}%`;
+
+  if (isLoadingImage) {
+    return (
+      <BaseTemplateScreen
+        TopHeader={
+          <ScreenToolbar
+            title={t("screens.profile.title")}
+            rightActions={[
+              {
+                icon: SettingsIcon,
+                onClick: handleSettingsClick,
+                ariaLabel: t("screens.profile.settings"),
+              },
+            ]}
+          />
+        }
+      >
+        <LoadingView />
+      </BaseTemplateScreen>
+    );
+  }
 
   return (
     <BaseTemplateScreen
