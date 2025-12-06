@@ -20,6 +20,8 @@ interface PlacesByCategory {
   }[];
 }
 
+const LIMIT_PLACES_PER_CATEGORY = 10;
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,7 +56,6 @@ Deno.serve(async (req: Request) => {
       lat,
       lng,
       categories,
-      limitPerCategory = 15,
     } = await req.json();
 
     if (!lat || !lng || !categories || !Array.isArray(categories)) {
@@ -69,6 +70,7 @@ Deno.serve(async (req: Request) => {
 
     // Fetch places for each category
     const results: PlacesByCategory[] = [];
+    const seenPlaceIds = new Set<string>();
 
     for (const category of categories) {
       const categoryIds = CATEGORY_TO_IDS[category];
@@ -81,23 +83,32 @@ Deno.serve(async (req: Request) => {
         userLat: lat,
         userLng: lng,
         categories: categoryIds,
-        limit: limitPerCategory,
+        limit: LIMIT_PLACES_PER_CATEGORY,
         radius: 20000, // 20km radius
         sort: FoursquareSortOrder.DISTANCE,
         openNow: false,
       });
 
-      const places = fsqPlaces.map((place) => ({
-        placeId: place.fsq_id,
-        name: place.name,
-        formattedAddress: place.formatted_address || "Endereço não disponível",
-        types: place.categories.map((cat) => cat.name),
-        distance: Number(place.distance.toFixed(2)),
-      }));
+      // Filter out places already seen in other categories
+      const uniquePlaces = fsqPlaces
+        .filter((place) => {
+          if (seenPlaceIds.has(place.fsq_id)) {
+            return false;
+          }
+          seenPlaceIds.add(place.fsq_id);
+          return true;
+        })
+        .map((place) => ({
+          placeId: place.fsq_id,
+          name: place.name,
+          formattedAddress: place.formatted_address || "Endereço não disponível",
+          types: place.categories.map((cat) => cat.name),
+          distance: Number(place.distance.toFixed(2)),
+        }));
 
       results.push({
         category,
-        places,
+        places: uniquePlaces,
       });
     }
 

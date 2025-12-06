@@ -157,7 +157,7 @@ export function ScreenBottomBar({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
   },

@@ -112,7 +112,6 @@ export async function getSuggestedPlacesByCategories(
   latitude: number,
   longitude: number,
   categories: PlaceCategory[],
-  limitPerCategory: number = 10
 ): Promise<{ data: PlacesByCategory[] }> {
   const { data, error } = await supabase.functions.invoke<{
     data: PlacesByCategory[];
@@ -121,7 +120,6 @@ export async function getSuggestedPlacesByCategories(
       lat: latitude,
       lng: longitude,
       categories,
-      limitPerCategory,
     },
   });
 

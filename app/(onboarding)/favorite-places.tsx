@@ -50,20 +50,16 @@ const MAX_SELECTIONS = 12;
 
 export default function FavoritePlacesScreen() {
   const colors = useThemeColors();
-  const { completeCurrentStep, userData } = useOnboardingFlow();
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
-  
   // Load persisted favorite places from Redux
-  const persistedFavoritePlaces = userData.favoritePlaces || [];
 
   // UI State
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const { completeCurrentStep } = useOnboardingFlow();
 
   // Selection State
-  const [selectedPlaceIds, setSelectedPlaceIds] = React.useState<string[]>(
-    persistedFavoritePlaces
-  );
+  const [selectedPlaceIds, setSelectedPlaceIds] = React.useState<string[]>([]);
   const [placesMap, setPlacesMap] = React.useState<Record<string, string>>({});
 
   // API State
@@ -85,24 +81,11 @@ export default function FavoritePlacesScreen() {
         const { data } = await getSuggestedPlacesByCategories(
           userLocation.latitude,
           userLocation.longitude,
-          CATEGORIES,
-          15
+          CATEGORIES
         );
         setSuggestedPlaces(data);
-        
-        // Build placesMap from suggested places for persisted selections
-        const newPlacesMap: Record<string, string> = {};
-        data.forEach((categoryGroup) => {
-          categoryGroup.places.forEach((place) => {
-            if (persistedFavoritePlaces.includes(place.id)) {
-              newPlacesMap[place.id] = place.name;
-            }
-          });
-        });
-        setPlacesMap((prev) => ({ ...prev, ...newPlacesMap }));
-        
+
         logger.log("[FavoritePlaces] Fetched suggested places:", data.length);
-        logger.log("[FavoritePlaces] Restored persisted places:", Object.keys(newPlacesMap).length);
       } catch (error) {
         logger.error("[FavoritePlaces] Error fetching places:", error);
         hasFetchedRef.current = false; // Allow retry on error
@@ -112,7 +95,7 @@ export default function FavoritePlacesScreen() {
     };
 
     fetchSuggestedPlaces();
-  }, [userLocation, persistedFavoritePlaces]);
+  }, [userLocation]);
 
   // Handle places selected from search screen
   const handlePlacesFromSearch = React.useCallback(
@@ -248,7 +231,7 @@ export default function FavoritePlacesScreen() {
               pressed && styles.searchButtonPressed,
             ]}
           >
-            <SearchIcon width={20} height={20} color={colors.accent} />
+            <SearchIcon width={18} height={18} color={colors.textSecondary} />
             <ThemedText
               style={[
                 styles.searchPlaceholder,
@@ -312,7 +295,7 @@ export default function FavoritePlacesScreen() {
                                 borderColor: isSelected
                                   ? colors.accent
                                   : colors.border,
-                                borderWidth: isSelected ? 2 : 1,
+                                borderWidth: 1,
                               },
                               pressed && styles.placeCardPressed,
                             ]}
@@ -362,8 +345,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
     borderWidth: 1,
     marginBottom: spacing.lg,
   },
@@ -371,9 +355,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   searchPlaceholder: {
-    fontFamily: "Poppins",
-    fontWeight: "400",
-    fontSize: 15,
+    ...typography.body,
   },
   categoriesScroll: {
     flex: 1,
