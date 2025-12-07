@@ -5,12 +5,13 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Intentar nuevamente",
+    "retry": "Intentar de nuevo",
     "resend": "Reenviar",
     "delete": "Eliminar",
     "cancel": "Cancelar",
     "close": "Cerrar",
     "back": "Volver",
+    "continue": "Continuar",
     "popular": "Popular",
     "search": "Buscar",
     "fromYou": "de ti",
@@ -21,7 +22,10 @@
     "max": "máxima",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "daysAgo": "hace {{count}} días"
+    "daysAgo": "Hace {{count}} días",
+    "selected": "Seleccionados",
+    "done": "Listo",
+    "loading": "Cargando..."
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."
@@ -284,6 +288,12 @@
       "photosMinimum": "Mínimo de 3 requeridas",
       "photosAddMore": "Agrega al menos {{count}} foto",
       "photosAddMorePlural": "Agrega al menos {{count}} fotos",
+      "favoritePlaces": {
+        "title": "¿Cuáles son tus spots favoritos?",
+        "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",
+        "searchPlaceholder": "Buscar lugar...",
+        "selectAtLeastOne": "Selecciona al menos 1 spot"
+      },
       "locationTitle": "Permitir ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
       "locationEnable": "Permitir ubicación",

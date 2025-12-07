@@ -23,7 +23,7 @@ import {
   ActiveUsersResponse,
   getActiveUsersAtPlace,
 } from "@/modules/presence/api";
-import { Image } from "expo-image";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -76,14 +76,9 @@ export default function PlacePeopleScreen() {
 
         const urls = users.flatMap((u) => u.photos ?? []).filter(Boolean);
         if (urls.length) {
-          Image.prefetch(urls[0]).finally(() => {
+          prefetchImages(urls).finally(() => {
             if (isMounted) setLoading(false);
           });
-          if (urls.length > 1) {
-            Promise.all(urls.slice(1).map((url) => Image.prefetch(url))).catch(
-              () => {}
-            );
-          }
         } else {
           setLoading(false);
         }

@@ -11,6 +11,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "back": "Back",
+    "continue": "Continue",
     "popular": "Popular",
     "search": "Search",
     "fromYou": "from you",
@@ -21,7 +22,10 @@
     "max": "maximum",
     "today": "Today",
     "yesterday": "Yesterday",
-    "daysAgo": "{{count}} days ago"
+    "daysAgo": "{{count}} days ago",
+    "selected": "Selected",
+    "done": "Done",
+    "loading": "Loading..."
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
@@ -284,6 +288,12 @@
       "photosMinimum": "Minimum of 3 required",
       "photosAddMore": "Add at least {{count}} photo",
       "photosAddMorePlural": "Add at least {{count}} photos",
+      "favoritePlaces": {
+        "title": "What are your favorite spots?",
+        "subtitle": "Increase your connections by choosing your favorite spots.",
+        "searchPlaceholder": "Search place...",
+        "selectAtLeastOne": "Select at least 1 spot"
+      },
       "locationTitle": "Allow location",
       "locationSubtitle": "To find people and places near you, we need your location. You can turn this off anytime",
       "locationEnable": "Allow location",

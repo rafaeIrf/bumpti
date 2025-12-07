@@ -16,7 +16,7 @@ import {
 } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
-import { Image } from "expo-image";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
@@ -50,17 +50,12 @@ export default function ChatScreen() {
 
     // Prefetch all images in parallel with cache policy
     if (imageUrls.length > 0) {
-      Promise.all(
-        imageUrls.map((url) =>
-          Image.prefetch(url, { cachePolicy: "memory-disk" })
-        )
-      )
+      prefetchImages(imageUrls)
         .then(() => {
           setIsLoading(false);
         })
         .catch(() => {
           setIsLoading(false);
-          // Silently fail - images will load normally if prefetch fails
         });
     } else {
       setIsLoading(false);
