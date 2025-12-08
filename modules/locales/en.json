@@ -27,7 +27,9 @@
     "done": "Done",
     "save": "Save",
     "skip": "Skip",
-    "loading": "Loading..."
+    "select": "Select",
+    "loading": "Loading...",
+    "select": "Select"
   },
   "errors": {
     "generic": "Something went wrong. Please try again."

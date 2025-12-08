@@ -27,7 +27,9 @@
     "done": "Listo",
     "save": "Guardar",
     "skip": "Saltar",
-    "loading": "Cargando..."
+    "select": "Seleccionar",
+    "loading": "Cargando...",
+    "select": "Seleccionar"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."

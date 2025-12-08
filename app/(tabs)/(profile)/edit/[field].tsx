@@ -13,10 +13,26 @@ import {
   getNextMissingField,
   PROFILE_FIELDS_ORDER,
 } from "@/utils/profile-flow";
+import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, TextInput, View } from "react-native";
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const HEIGHT_OPTIONS = [
+  { label: "< 91 cm", value: 90 },
+  ...Array.from({ length: 130 }, (_, i) => ({
+    label: `${i + 91} cm`,
+    value: i + 91,
+  })),
+  { label: "> 220 cm", value: 221 },
+];
 
 const EDUCATION_OPTIONS = [
   { id: "", label: "Prefiro não informar" },
@@ -172,22 +188,42 @@ export default function EditFieldScreen() {
 
       case "height":
         return (
-          <TextInput
-            style={[
-              styles.input,
-              {
+          <View
+            style={{
+              overflow: "hidden",
+              justifyContent: "center",
+              ...(Platform.OS === "ios" && { height: 200 }),
+            }}
+          >
+            <Picker
+              selectedValue={value === "" ? null : value}
+              onValueChange={(itemValue) => setValue(itemValue)}
+              style={{
                 color: colors.text,
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-            value={value?.toString()}
-            onChangeText={(text) => setValue(Number(text))}
-            placeholder="cm"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            autoFocus
-          />
+                ...(Platform.OS === "android" && { height: 56 }),
+              }}
+              itemStyle={{
+                color: colors.text,
+                fontSize: 18,
+              }}
+              dropdownIconColor={colors.text}
+              mode="dropdown"
+            >
+              <Picker.Item
+                label={t("common.select")}
+                value={null}
+                color={colors.textSecondary}
+              />
+              {HEIGHT_OPTIONS.map((option) => (
+                <Picker.Item
+                  key={option.value}
+                  label={option.label}
+                  value={option.value}
+                  color={colors.text}
+                />
+              ))}
+            </Picker>
+          </View>
         );
 
       case "education":
@@ -265,6 +301,7 @@ export default function EditFieldScreen() {
   return (
     <BaseTemplateScreen
       isModal
+      scrollEnabled={field !== "height"}
       TopHeader={
         <ScreenToolbar
           title={getTitle()}

@@ -27,7 +27,9 @@
     "done": "Pronto",
     "save": "Salvar",
     "skip": "Pular",
-    "loading": "Carregando..."
+    "select": "Selecione",
+    "loading": "Carregando...",
+    "select": "Selecione"
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
