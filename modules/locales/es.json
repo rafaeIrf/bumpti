@@ -581,5 +581,14 @@
       "blockDescription": "{{name}} ya no podrá ver tu perfil, enviar mensajes ni interactuar contigo en Bumpti.",
       "blockConfirm": "Bloquear a {{name}}"
     }
+  },
+  "components": {
+    "userPhotoGrid": {
+      "removeTitle": "Eliminar foto",
+      "removeMessage": "¿Desea eliminar esta foto?",
+      "removeAction": "Eliminar",
+      "permissionDenied": "Necesitamos permiso para acceder a tus fotos",
+      "addPhotoError": "No se pudo agregar la foto"
+    }
   }
 }
