@@ -25,6 +25,8 @@
     "daysAgo": "Hace {{count}} días",
     "selected": "Seleccionados",
     "done": "Listo",
+    "save": "Guardar",
+    "skip": "Saltar",
     "loading": "Cargando..."
   },
   "errors": {
@@ -46,7 +48,48 @@
       },
       "earlyCheckin": {
         "title": "Check-in+",
-        "subtitle": "Conéctate antes de llegar"
+        "subtitle": "Conecta antes de llegar"
+      },
+      "profileEdit": {
+        "title": "Editar perfil",
+        "photos": {
+          "title": "Fotos",
+          "subtitle": "Añade fotos que muestren tu personalidad"
+        },
+        "profile": {
+          "title": "Tu perfil",
+          "subtitle": "Cuéntale a la gente quién eres",
+          "bio": "Biografía",
+          "bioPlaceholder": "Añade una biografía"
+        },
+        "personalInfo": {
+          "title": "Información personal",
+          "subtitle": "Detalles sobre ti",
+          "gender": "Género",
+          "relationshipStatus": "Estado civil",
+          "height": "Altura"
+        },
+        "lifestyle": {
+          "title": "Estilo de vida",
+          "subtitle": "Cómo vives tu día a día",
+          "profession": "Profesión",
+          "smoking": "Fumar"
+        },
+        "interests": {
+          "title": "Intereses",
+          "subtitle": "Lugares que te gusta frecuentar",
+          "spots": "Lugares favoritos",
+          "spotsPlaceholder": "Añadir lugares"
+        },
+        "more": {
+          "title": "Más sobre ti",
+          "subtitle": "Información adicional (opcional)",
+          "education": "Educación",
+          "hometown": "Ciudad natal",
+          "languages": "Idiomas",
+          "zodiac": "Signo"
+        },
+        "add": "Añadir"
       },
       "premium": {
         "title": "Hazte Premium",
@@ -589,6 +632,12 @@
       "removeAction": "Eliminar",
       "permissionDenied": "Necesitamos permiso para acceder a tus fotos",
       "addPhotoError": "No se pudo agregar la foto"
+    },
+    "photoActions": {
+      "title": "¿Reemplazar o eliminar?",
+      "replace": "Reemplazar foto",
+      "remove": "Eliminar foto",
+      "add": "Añadir nueva foto"
     }
   }
 }

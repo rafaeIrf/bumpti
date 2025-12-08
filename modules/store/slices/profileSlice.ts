@@ -13,6 +13,15 @@ export type ProfileData = {
   photos?: { url: string; position: number }[];
   updatedAt?: string | null;
   bio?: string | null;
+  height?: number | null;
+  profession?: string | null;
+  smoking?: string | null;
+  education?: string | null;
+  hometown?: string | null;
+  languages?: string[] | null;
+  zodiac?: string | null;
+  relationshipStatus?: string | null;
+  favoritePlaces?: any[] | null;
 };
 
 export interface ProfileState {

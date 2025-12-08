@@ -1,4 +1,6 @@
 import { XIcon } from "@/assets/icons";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { PhotoActionsBottomSheet } from "@/components/photo-actions-bottom-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
@@ -32,6 +34,7 @@ export function UserPhotoGrid({
 }: UserPhotoGridProps) {
   const colors = useThemeColors();
   const { isLoading, pickFromLibrary } = useImagePicker();
+  const { expand, close } = useCustomBottomSheet();
 
   const remainingPhotos = Math.max(0, minPhotos - photos.length);
 
@@ -66,22 +69,54 @@ export function UserPhotoGrid({
     }
   };
 
-  const handleRemovePhoto = (index: number) => {
-    Alert.alert(
-      t("components.userPhotoGrid.removeTitle"),
-      t("components.userPhotoGrid.removeMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("components.userPhotoGrid.removeAction"),
-          style: "destructive",
-          onPress: () => {
+  const handleReplacePhoto = async (index: number) => {
+    try {
+      // Small delay to ensure bottom sheet is closed before opening picker
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const result = await pickFromLibrary({
+        aspect: [3, 4],
+        quality: 0.8,
+        allowsEditing: true,
+        allowsMultipleSelection: false,
+      });
+
+      if (result.success) {
+        const newUri = result.uri || (result.uris && result.uris[0]);
+        if (newUri) {
+          const newPhotos = [...photos];
+          newPhotos[index] = newUri;
+          onPhotosChange(newPhotos);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao substituir foto:", error);
+    }
+  };
+
+  const handlePhotoAction = (index: number) => {
+    const canRemove = photos.length > minPhotos;
+
+    expand({
+      content: () => (
+        <PhotoActionsBottomSheet
+          canRemove={canRemove}
+          onReplace={() => {
+            close();
+            handleReplacePhoto(index);
+          }}
+          onRemove={() => {
+            close();
             onPhotosChange(photos.filter((_, i) => i !== index));
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+          }}
+          onAdd={() => {
+            close();
+            handleAddPhoto();
+          }}
+          onCancel={() => close()}
+        />
+      ),
+    });
   };
 
   const slots = Array(maxPhotos).fill(null);
@@ -92,34 +127,40 @@ export function UserPhotoGrid({
         {slots.map((_, index) => (
           <View key={index} style={styles.photoSlot}>
             {photos[index] ? (
-              <View style={styles.photoContainer}>
-                <Image
-                  source={{ uri: photos[index] }}
-                  style={styles.photo}
-                  resizeMode="cover"
-                />
-                {index === 0 && (
-                  <View
-                    style={[
-                      styles.mainBadge,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  >
-                    <ThemedText style={styles.mainBadgeText}>
-                      {t("screens.onboarding.photosMainLabel")}
-                    </ThemedText>
-                  </View>
-                )}
+              <>
+                <View style={styles.photoContainer}>
+                  <Image
+                    source={{ uri: photos[index] }}
+                    style={styles.photo}
+                    resizeMode="cover"
+                  />
+                  {index === 0 && (
+                    <View
+                      style={[
+                        styles.mainBadge,
+                        { backgroundColor: colors.accent },
+                      ]}
+                    >
+                      <ThemedText style={styles.mainBadgeText}>
+                        {t("screens.onboarding.photosMainLabel")}
+                      </ThemedText>
+                    </View>
+                  )}
+                </View>
                 <Pressable
-                  onPress={() => handleRemovePhoto(index)}
                   style={[
                     styles.removeButton,
-                    { backgroundColor: colors.error },
+                    {
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                    },
                   ]}
+                  onPress={() => handlePhotoAction(index)}
                 >
                   <XIcon width={20} height={20} color="#FFFFFF" />
                 </Pressable>
-              </View>
+              </>
             ) : (
               <Pressable
                 onPress={handleAddPhoto}
@@ -223,11 +264,11 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     position: "absolute",
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    top: -8,
+    right: -8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -235,6 +276,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    zIndex: 10,
   },
   addPhotoButton: {
     width: "100%",

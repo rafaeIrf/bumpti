@@ -1,7 +1,9 @@
+import { ArrowLeftIcon } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import React from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 
 interface ScreenBottomBarProps {
@@ -9,14 +11,18 @@ interface ScreenBottomBarProps {
   primaryLabel?: string;
   onPrimaryPress?: () => void;
   primaryDisabled?: boolean;
+  primaryIcon?: React.ReactNode;
 
   // Secondary action button (optional)
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   secondaryDisabled?: boolean;
 
+  // Wizard specific
+  onBackPress?: () => void;
+
   // Layout options
-  variant?: "single" | "dual" | "custom";
+  variant?: "single" | "dual" | "custom" | "wizard";
 
   // For custom content
   children?: React.ReactNode;
@@ -28,6 +34,7 @@ interface ScreenBottomBarProps {
   style?: ViewStyle;
   showBorder?: boolean;
   backgroundColor?: string;
+  compact?: boolean;
 }
 
 /**
@@ -68,23 +75,30 @@ export function ScreenBottomBar({
   primaryLabel,
   onPrimaryPress,
   primaryDisabled = false,
+  primaryIcon,
   secondaryLabel,
   onSecondaryPress,
   secondaryDisabled = false,
+  onBackPress,
   variant = "single",
   children,
   topContent,
   style,
   showBorder = false,
   backgroundColor,
+  compact = false,
 }: ScreenBottomBarProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
 
+  const paddingBottom = compact
+    ? spacing.md
+    : Math.max(spacing.xl, insets.bottom + spacing.md);
+
   const containerStyle = [
     styles.container,
     {
-      paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md),
+      paddingBottom,
       backgroundColor: backgroundColor || colors.background,
       borderTopColor: showBorder ? colors.border : "transparent",
     },
@@ -137,6 +151,58 @@ export function ScreenBottomBar({
     );
   }
 
+  // Wizard variant
+  if (variant === "wizard") {
+    return (
+      <View style={containerStyle}>
+        {topContent && <View style={styles.topContent}>{topContent}</View>}
+        <View style={styles.wizardRow}>
+          {/* Left: Back Button */}
+          <View style={styles.wizardLeft}>
+            {onBackPress && (
+              <Button
+                onPress={onBackPress}
+                variant="secondary"
+                size="icon"
+                style={styles.fab}
+              >
+                <ArrowLeftIcon width={24} height={24} color="#FFF" />
+              </Button>
+            )}
+          </View>
+
+          {/* Center: Skip Link */}
+          <View style={styles.wizardCenter}>
+            {secondaryLabel && onSecondaryPress && (
+              <Button
+                variant="ghost"
+                label={secondaryLabel}
+                onPress={onSecondaryPress}
+                disabled={secondaryDisabled}
+                textStyle={{ color: colors.textSecondary }}
+              />
+            )}
+          </View>
+
+          {/* Right: Primary Action (FAB-like) */}
+          <View style={styles.wizardRight}>
+            {onPrimaryPress && (
+              <Button
+                onPress={onPrimaryPress}
+                disabled={primaryDisabled}
+                variant="secondary"
+                size="icon"
+                style={styles.fab}
+              >
+                {primaryIcon}
+              </Button>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   // Single button variant (default)
   return (
     <View style={containerStyle}>
@@ -170,5 +236,40 @@ const styles = StyleSheet.create({
   },
   dualButton: {
     flex: 1,
+  },
+  wizardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 56, // Match FAB height
+  },
+  wizardLeft: {
+    flex: 1,
+    alignItems: "flex-start",
+  },
+  wizardCenter: {
+    flex: 2,
+    alignItems: "center",
+  },
+  wizardRight: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  iconButton: {
+    padding: spacing.xs,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    overflow: "visible",
   },
 });

@@ -1,3 +1,4 @@
+import { ArrowLeftIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import {
   FavoritePlacesContent,
@@ -5,13 +6,18 @@ import {
 } from "@/components/favorite-places-manager";
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
-import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { ScreenToolbar } from "@/components/screen-toolbar";
 import { t } from "@/modules/locales";
-import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { setProfile } from "@/modules/store/slices/profileSlice";
+import { navigateToNextProfileField } from "@/utils/profile-flow";
+import { useRouter } from "expo-router";
 import React from "react";
 
-export default function FavoritePlacesScreen() {
-  const { completeCurrentStep } = useOnboardingFlow();
+export default function EditFavoritePlacesScreen() {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.profile.data);
 
   const {
     selectedPlaceIds,
@@ -25,12 +31,26 @@ export default function FavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
-  } = useFavoritePlaces({});
+  } = useFavoritePlaces({
+    initialSelectedIds: profile?.favoritePlaces?.map((p: any) => p.id) || [],
+    initialPlacesMap:
+      profile?.favoritePlaces?.reduce(
+        (acc: any, p: any) => ({ ...acc, [p.id]: p.name }),
+        {}
+      ) || {},
+  });
 
   const handleSave = () => {
-    if (selectedPlaceIds.length >= 1) {
-      onboardingActions.setFavoritePlaces(selectedPlaceIds);
-      completeCurrentStep("favorite-places");
+    if (profile) {
+      const favoritePlaces = selectedPlaceIds.map((id) => ({
+        id,
+        name: placesMap[id] || "Unknown Place",
+      }));
+      const updatedProfile = { ...profile, favoritePlaces };
+      dispatch(setProfile(updatedProfile));
+      navigateToNextProfileField("spots", updatedProfile);
+    } else {
+      router.back();
     }
   };
 
@@ -42,10 +62,20 @@ export default function FavoritePlacesScreen() {
 
   return (
     <BaseTemplateScreen
-      hasStackHeader
+      isModal
+      TopHeader={
+        <ScreenToolbar
+          title={t("screens.profile.profileEdit.interests.spots")}
+          leftAction={{
+            icon: ArrowLeftIcon,
+            onClick: () => router.back(),
+            ariaLabel: t("common.back"),
+          }}
+        />
+      }
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("common.continue")}
+          primaryLabel={t("common.save")}
           onPrimaryPress={handleSave}
           primaryDisabled={selectedPlaceIds.length < 1}
           topContent={

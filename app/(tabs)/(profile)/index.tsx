@@ -140,8 +140,7 @@ export default function ProfileScreen() {
   };
 
   const handleCompleteProfile = () => {
-    // TODO: Navigate to profile completion
-    console.log("Complete profile clicked");
+    router.push("/(tabs)/(profile)/edit");
   };
 
   const handlePowerUpPurchase = (type: PowerUpType, quantity: number) => {

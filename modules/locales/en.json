@@ -25,6 +25,8 @@
     "daysAgo": "{{count}} days ago",
     "selected": "Selected",
     "done": "Done",
+    "save": "Save",
+    "skip": "Skip",
     "loading": "Loading..."
   },
   "errors": {
@@ -46,7 +48,48 @@
       },
       "earlyCheckin": {
         "title": "Check-in+",
-        "subtitle": "Connect before arriving"
+        "subtitle": "Connect before you arrive"
+      },
+      "profileEdit": {
+        "title": "Edit Profile",
+        "photos": {
+          "title": "Photos",
+          "subtitle": "Add photos that show your personality"
+        },
+        "profile": {
+          "title": "Your Profile",
+          "subtitle": "Tell people who you are",
+          "bio": "Bio",
+          "bioPlaceholder": "Add a bio"
+        },
+        "personalInfo": {
+          "title": "Personal Info",
+          "subtitle": "Details about you",
+          "gender": "Gender",
+          "relationshipStatus": "Relationship Status",
+          "height": "Height"
+        },
+        "lifestyle": {
+          "title": "Lifestyle",
+          "subtitle": "How you live your daily life",
+          "profession": "Profession",
+          "smoking": "Smoking"
+        },
+        "interests": {
+          "title": "Interests",
+          "subtitle": "Places you like to go",
+          "spots": "Favorite Spots",
+          "spotsPlaceholder": "Add spots"
+        },
+        "more": {
+          "title": "More About You",
+          "subtitle": "Additional info (optional)",
+          "education": "Education",
+          "hometown": "Hometown",
+          "languages": "Languages",
+          "zodiac": "Zodiac"
+        },
+        "add": "Add"
       },
       "premium": {
         "title": "Go Premium",
@@ -588,6 +631,12 @@
       "removeAction": "Remove",
       "permissionDenied": "We need permission to access your photos",
       "addPhotoError": "Could not add photo"
+    },
+    "photoActions": {
+      "title": "Replace or remove?",
+      "replace": "Replace photo",
+      "remove": "Remove photo",
+      "add": "Add new photo"
     }
   }
 }
