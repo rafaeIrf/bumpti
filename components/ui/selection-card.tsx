@@ -8,6 +8,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 export interface SelectionCardProps {
   readonly label: string;
+  readonly description?: string;
   readonly isSelected: boolean;
   readonly onPress: () => void;
   readonly testID?: string;
@@ -15,6 +16,7 @@ export interface SelectionCardProps {
 
 export function SelectionCard({
   label,
+  description,
   isSelected,
   onPress,
   testID,
@@ -34,20 +36,35 @@ export function SelectionCard({
       ]}
     >
       <View style={styles.content}>
-        <ThemedText
-          style={[
-            styles.label,
-            {
-              color: isSelected ? colors.text : colors.textSecondary,
-            },
-          ]}
-        >
-          {label}
-        </ThemedText>
+        <View style={{ flex: 1 }}>
+          <ThemedText
+            style={[
+              styles.label,
+              {
+                color: isSelected ? colors.text : colors.textSecondary,
+              },
+            ]}
+          >
+            {label}
+          </ThemedText>
+          {description && (
+            <ThemedText
+              style={[
+                typography.caption,
+                {
+                  color: colors.textSecondary,
+                  marginTop: 2,
+                },
+              ]}
+            >
+              {description}
+            </ThemedText>
+          )}
+        </View>
         {isSelected && (
           <Animated.View
             entering={FadeIn.duration(200)}
-            style={{ marginLeft: "auto" }}
+            style={{ marginLeft: spacing.sm }}
           >
             <CheckIcon width={20} height={20} color={colors.accent} />
           </Animated.View>

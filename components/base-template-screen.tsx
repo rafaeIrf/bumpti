@@ -108,7 +108,9 @@ export function BaseTemplateScreen({
         styles.wrapper,
         containerStyle,
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
-        hasStackHeader || isModal ? undefined : { paddingTop: insets.top },
+        hasStackHeader || isModal
+          ? { paddingTop: 16 }
+          : { paddingTop: insets.top },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}

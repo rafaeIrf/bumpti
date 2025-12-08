@@ -2814,6 +2814,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNCPicker (2.11.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNDateTimePicker (8.5.0):
     - boost
     - DoubleConversion
@@ -3304,6 +3332,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
@@ -3559,6 +3588,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCPicker:
+    :path: "../node_modules/@react-native-picker/picker"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
   RNFBApp:
@@ -3711,6 +3742,7 @@ SPEC CHECKSUMS:
   ReactCommon: e9ab32f1d1482d207867b4fdd139361302b9dcc6
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RNCAsyncStorage: fd44f4b03e007e642e98df6726737bc66e9ba609
+  RNCPicker: 70fd0622147f0ca1b9c5e1be2069a4fb2e8ec461
   RNDateTimePicker: 8247b87ac4e5225c54de856ff29b7f51538b80ad
   RNFBApp: 255fa19a91d6c1309e021ee75d5d209754e5961b
   RNFBAuth: 7123a71a1fc8dec4aa4e6cb656562661b3ece9f7
