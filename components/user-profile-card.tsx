@@ -4,12 +4,14 @@ import {
   EDUCATION_OPTIONS,
   RELATIONSHIP_OPTIONS,
   SMOKING_OPTIONS,
+  ZODIAC_OPTIONS,
 } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
@@ -87,6 +89,11 @@ export function UserProfileCard({
     );
     return option ? t(option.labelKey) : profile.education_key;
   }, [profile.education_key]);
+  const zodiacLabel = useMemo(() => {
+    if (!profile.zodiac_key) return null;
+    const option = ZODIAC_OPTIONS.find((opt) => opt.id === profile.zodiac_key);
+    return option ? t(option.labelKey) : profile.zodiac_key;
+  }, [profile.zodiac_key]);
   const languageLabels =
     profile.languages && profile.languages.length > 0
       ? profile.languages.map((code) => {
@@ -206,76 +213,71 @@ export function UserProfileCard({
           </>
         )}
 
-        {/* Status badges */}
-        <View style={styles.badgesContainer}>
-          {true && (
-            <View
-              style={[styles.hereNowBadge, { backgroundColor: colors.accent }]}
-            >
-              <View style={styles.pulseIndicator} />
-              <Text style={styles.hereNowText}>{t("userProfile.hereNow")}</Text>
-            </View>
-          )}
+        {/* Overlay with gradient, name/age, badges */}
+        <View style={styles.overlayContainer} pointerEvents="box-none">
+          <LinearGradient
+            colors={["transparent", colors.background]}
+            locations={[0, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.overlayContent}>
+            <Text style={[styles.nameAge, { color: colors.text }]}>
+              {profile.name}
+              {profile.age ? `, ${profile.age}` : ""}
+            </Text>
+            <View style={styles.badgesContainer}>
+              <View
+                style={[styles.hereNowBadge, { backgroundColor: colors.accent }]}
+              >
+                <View style={styles.pulseIndicator} />
+                <Text style={styles.hereNowText}>{t("userProfile.hereNow")}</Text>
+              </View>
 
-          {isFavoritePlace() && (
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: "rgba(22, 24, 28, 0.9)",
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <StarIcon
-                width={14}
-                height={14}
-                color={colors.accent}
-                fill={colors.accent}
-              />
-              <Text style={[styles.badgeText, { color: colors.text }]}>
-                {t("userProfile.favorite")}
-              </Text>
-            </View>
-          )}
+              {isFavoritePlace() && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: "rgba(22, 24, 28, 0.9)",
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <StarIcon
+                    width={14}
+                    height={14}
+                    color={colors.accent}
+                    fill={colors.accent}
+                  />
+                  <Text style={[styles.badgeText, { color: colors.text }]}>
+                    {t("userProfile.favorite")}
+                  </Text>
+                </View>
+              )}
 
-          {getVisitCount() > 0 && (
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: "rgba(22, 24, 28, 0.9)",
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <NavigationIcon width={14} height={14} color={colors.accent} />
-              <Text style={[styles.badgeText, { color: colors.text }]}>
-                {t("userProfile.visitCount", { count: getVisitCount() })}
-              </Text>
+              {getVisitCount() > 0 && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: "rgba(22, 24, 28, 0.9)",
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <NavigationIcon width={14} height={14} color={colors.accent} />
+                  <Text style={[styles.badgeText, { color: colors.text }]}>
+                    {t("userProfile.visitCount", { count: getVisitCount() })}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
+          </View>
         </View>
       </View>
 
       {/* Info section */}
       <View style={styles.infoSection}>
-        {/* Name, age and location */}
-        <View style={styles.headerInfo}>
-          <Text style={[styles.nameAge, { color: colors.text }]}>
-            {profile.name}, {profile.age}
-          </Text>
-          {profile.location && (
-            <View style={styles.locationRow}>
-              <MapPinIcon width={16} height={16} color={colors.textSecondary} />
-              <Text
-                style={[styles.locationText, { color: colors.textSecondary }]}
-              >
-                {profile.location}
-              </Text>
-            </View>
-          )}
-        </View>
 
         {/* Bio */}
         {Boolean(profile.bio) && (
@@ -294,6 +296,7 @@ export function UserProfileCard({
           { key: "relationship", value: relationshipLabel },
           { key: "smoking", value: smokingLabel },
           { key: "education", value: educationLabel },
+          { key: "zodiac", value: zodiacLabel },
         ].map(
           (item) =>
             item.value && (
@@ -430,11 +433,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
   },
   carouselContainer: {
     position: "relative",
@@ -480,15 +478,22 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 2,
   },
-  badgesContainer: {
+  overlayContainer: {
     position: "absolute",
-    bottom: spacing.md,
-    left: spacing.md,
-    right: spacing.md,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing.md,
+    paddingTop: spacing.xl,
+    gap: spacing.sm,
+  },
+  overlayContent: {
+    gap: spacing.sm,
+  },
+  badgesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
-    zIndex: 5,
   },
   hereNowBadge: {
     flexDirection: "row",
