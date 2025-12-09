@@ -6,9 +6,11 @@ import {
   getTrendingPlaces as getTrendingPlacesApi,
   searchPlacesByText as searchPlacesByTextApi,
   toggleFavoritePlace as toggleFavoritePlaceApi,
+  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+  type PlacesByCategory,
 } from "@/modules/places/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Place } from "./types";
+import { Place, PlaceCategory } from "./types";
 
 // TTL configurations (in seconds)
 // Google Places API allows caching lat/lng for up to 30 days
@@ -35,8 +37,34 @@ export const placesApi = createApi({
     "TrendingPlaces",
     "FavoritePlaces",
     "DetectedPlace",
+    "SuggestedPlaces",
   ],
   endpoints: (builder) => ({
+    getSuggestedPlaces: builder.query<
+      { data: PlacesByCategory[] },
+      { latitude: number; longitude: number; categories: PlaceCategory[] }
+    >({
+      queryFn: async ({ latitude, longitude, categories }) => {
+        try {
+          const { data } = await getSuggestedPlacesByCategoriesApi(
+            latitude,
+            longitude,
+            categories
+          );
+          return { data: { data } };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, arg) => [
+        {
+          type: "SuggestedPlaces",
+          id: `${roundToGrid(arg.latitude)}_${roundToGrid(arg.longitude)}_${arg.categories.join(",")}`,
+        },
+      ],
+      keepUnusedDataFor: CACHE_TIME.FAVORITE_PLACES,
+    }),
+
     // Detect place based on user location
     detectPlace: builder.query<
       DetectPlaceResult | null,
@@ -222,4 +250,5 @@ export const {
   useToggleFavoritePlaceMutation,
   useLazyGetNearbyPlacesQuery,
   useLazySearchPlacesByTextQuery,
+  useGetSuggestedPlacesQuery,
 } = placesApi;

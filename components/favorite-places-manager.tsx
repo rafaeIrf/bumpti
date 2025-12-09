@@ -5,12 +5,11 @@ import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import {
-  getSuggestedPlacesByCategories,
-  PlacesByCategory,
-} from "@/modules/places/api";
+import { PlacesByCategory } from "@/modules/places/api";
 import { PlaceCategory } from "@/modules/places/types";
+import { useGetSuggestedPlacesQuery } from "@/modules/places/placesApi";
 import { logger } from "@/utils/logger";
+import { skipToken } from "@reduxjs/toolkit/query";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -65,39 +64,30 @@ export function useFavoritePlaces({
     React.useState<Record<string, string>>(initialPlacesMap);
 
   // API State
-  const [suggestedPlaces, setSuggestedPlaces] = React.useState<
-    PlacesByCategory[]
-  >([]);
-  const [isLoadingPlaces, setIsLoadingPlaces] = React.useState(false);
-  const hasFetchedRef = React.useRef(false);
+  const {
+    data: suggestedPlacesResponse,
+    isFetching: isLoadingPlaces,
+    isError,
+  } = useGetSuggestedPlacesQuery(
+    userLocation
+      ? {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          categories: CATEGORIES,
+        }
+      : skipToken
+  );
 
-  // Fetch suggested places once when location is available
   React.useEffect(() => {
-    if (!userLocation || hasFetchedRef.current) return;
+    if (isError) {
+      logger.error("[FavoritePlaces] Error fetching places via RTK Query");
+    }
+  }, [isError]);
 
-    const fetchSuggestedPlaces = async () => {
-      hasFetchedRef.current = true;
-      setIsLoadingPlaces(true);
-
-      try {
-        const { data } = await getSuggestedPlacesByCategories(
-          userLocation.latitude,
-          userLocation.longitude,
-          CATEGORIES
-        );
-        setSuggestedPlaces(data);
-
-        logger.log("[FavoritePlaces] Fetched suggested places:", data.length);
-      } catch (error) {
-        logger.error("[FavoritePlaces] Error fetching places:", error);
-        hasFetchedRef.current = false; // Allow retry on error
-      } finally {
-        setIsLoadingPlaces(false);
-      }
-    };
-
-    fetchSuggestedPlaces();
-  }, [userLocation]);
+  const suggestedPlaces = React.useMemo(
+    () => suggestedPlacesResponse?.data ?? [],
+    [suggestedPlacesResponse?.data]
+  );
 
   // Handle places selected from search screen
   const handlePlacesFromSearch = React.useCallback(
