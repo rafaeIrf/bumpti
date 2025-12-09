@@ -16,7 +16,6 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { UserPhotoGrid } from "@/components/user-photo-grid";
-import { LANGUAGES } from "@/constants/languages";
 import {
   EDUCATION_OPTIONS,
   GENDER_OPTIONS,
@@ -150,6 +149,18 @@ export default function ProfileEditScreen() {
     ) as string[];
     return parts.join(" - ");
   }, [profile?.job_title, profile?.company_name]);
+  const languageNames = React.useMemo(() => {
+    if (!profile?.languages) return "";
+    const translateLanguage = (code: string) => {
+      const key = `languages.${code}`;
+      const translated = t(key);
+      return translated && translated !== key ? translated : code;
+    };
+    return profile.languages
+      .map((id) => translateLanguage(id))
+      .filter(Boolean)
+      .join(", ");
+  }, [profile?.languages]);
 
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!profile) return;
@@ -393,14 +404,7 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={FlagIcon}
             label={t("screens.profile.profileEdit.more.languages")}
-            value={
-              Array.isArray(profile?.languages)
-                ? profile.languages
-                    .map((id) => LANGUAGES.find((l) => l.id === id)?.name)
-                    .filter(Boolean)
-                    .join(", ")
-                : ""
-            }
+            value={languageNames}
             onPress={() => handleFieldPress("languages")}
           />
           <EditRow

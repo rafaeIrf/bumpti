@@ -29,7 +29,6 @@
     "skip": "Skip",
     "select": "Select",
     "loading": "Loading...",
-    "select": "Select",
     "of": "of"
   },
   "errors": {
@@ -41,6 +40,13 @@
       "settings": "Settings",
       "completeProfile": "Complete profile",
       "editProfile": "Edit profile",
+      "preview": {
+        "title": "My profile"
+      },
+      "work": "Work",
+      "location": "Location",
+      "height": "Height",
+      "languages": "Languages",
       "edit": {
         "languages": {
           "title": "Languages I speak",
@@ -258,7 +264,52 @@
       }
     },
     "home": {
-      "peopleBadge": "{{count}} online"
+      "placeDetected": {
+        "title": "Place detected",
+        "message": "Are you at {{placeName}}?"
+      },
+      "heroTitle": "Where do you want to connect today?",
+      "heroSubtitle": "Pick the vibe and discover who's already there.",
+      "toolbar": {
+        "filters": "Filters",
+        "search": "Search"
+      },
+      "infoTitle": "How it works",
+      "infoDescription": "Choose a category and see nearby spots where you can connect with others.",
+      "categories": {
+        "highlighted": {
+          "title": "Trending now",
+          "description": "Busy spots full of people connecting."
+        },
+        "favorites": {
+          "title": "Favorite places",
+          "description": "Your go-to spots to connect."
+        },
+        "nightlife": {
+          "title": "Bars & nightlife",
+          "description": "Go out and meet new people."
+        },
+        "cafes": {
+          "title": "Cafés & hangouts",
+          "description": "Cozy spots to chat and relax."
+        },
+        "university": {
+          "title": "Campus life",
+          "description": "Where everyday meetups happen."
+        },
+        "fitness": {
+          "title": "Wellness & movement",
+          "description": "Connections that start during workouts."
+        },
+        "parks": {
+          "title": "Parks & outdoors",
+          "description": "Outdoor meetings in nature."
+        },
+        "restaurants": {
+          "title": "Restaurants",
+          "description": "Connections that start at the table."
+        }
+      }
     },
     "premiumPaywall": {
       "badge": "BUMPTI PREMIUM",
@@ -453,54 +504,6 @@
       "clearButton": "Clear search",
       "addressFallback": "Address unavailable"
     },
-    "home": {
-      "placeDetected": {
-        "title": "Place detected",
-        "message": "Are you at {{placeName}}?"
-      },
-      "heroTitle": "Where do you want to connect today?",
-      "heroSubtitle": "Pick the vibe and discover who's already there.",
-      "toolbar": {
-        "filters": "Filters",
-        "search": "Search"
-      },
-      "infoTitle": "How it works",
-      "infoDescription": "Choose a category and see nearby spots where you can connect with others.",
-      "categories": {
-        "highlighted": {
-          "title": "Trending now",
-          "description": "Busy spots full of people connecting."
-        },
-        "favorites": {
-          "title": "Favorite places",
-          "description": "Your go-to spots to connect."
-        },
-        "nightlife": {
-          "title": "Bars & nightlife",
-          "description": "Go out and meet new people."
-        },
-        "cafes": {
-          "title": "Cafés & hangouts",
-          "description": "Cozy spots to chat and relax."
-        },
-        "university": {
-          "title": "Campus life",
-          "description": "Where everyday meetups happen."
-        },
-        "fitness": {
-          "title": "Wellness & movement",
-          "description": "Connections that start during workouts."
-        },
-        "parks": {
-          "title": "Parks & outdoors",
-          "description": "Outdoor meetings in nature."
-        },
-        "restaurants": {
-          "title": "Restaurants",
-          "description": "Connections that start at the table."
-        }
-      }
-    },
     "chat": {
       "title": "Chat",
       "messagePlaceholder": "Type a message...",
@@ -604,6 +607,13 @@
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",
+    "work": "Work",
+    "location": "Location",
+    "height": "Height",
+    "languages": "Languages",
+    "relationship": "Relationship",
+    "smoking": "Smoking",
+    "education": "Education",
     "interest": "INTEREST",
     "favoritePlaces": "FAVORITE PLACES",
     "lookingFor": {
@@ -704,5 +714,140 @@
       "remove": "Remove photo",
       "add": "Add new photo"
     }
+  },
+  "languages": {
+    "asl": "American Sign Language",
+    "af": "Afrikaans",
+    "sq": "Albanian",
+    "am": "Amharic",
+    "ar": "Arabic",
+    "hy": "Armenian",
+    "as": "Assamese",
+    "ay": "Aymara",
+    "az": "Azerbaijani",
+    "bm": "Bambara",
+    "eu": "Basque",
+    "be": "Belarusian",
+    "bn": "Bangla",
+    "bho": "Bhojpuri",
+    "bs": "Bosnian",
+    "br": "Breton",
+    "bg": "Bulgarian",
+    "my": "Burmese",
+    "yue": "Cantonese",
+    "ca": "Catalan",
+    "ceb": "Cebuano",
+    "ny": "Nyanja",
+    "co": "Corsican",
+    "hr": "Croatian",
+    "cs": "Czech",
+    "da": "Danish",
+    "dv": "Divehi",
+    "doi": "Dogri",
+    "nl": "Dutch",
+    "en": "English",
+    "eo": "Esperanto",
+    "et": "Estonian",
+    "ee": "Ewe",
+    "fil": "Filipino",
+    "fi": "Finnish",
+    "fr": "French",
+    "fy": "Western Frisian",
+    "gl": "Galician",
+    "ka": "Georgian",
+    "de": "German",
+    "el": "Greek",
+    "gn": "Guarani",
+    "gu": "Gujarati",
+    "ht": "Haitian Creole",
+    "ha": "Hausa",
+    "haw": "Hawaiian",
+    "he": "Hebrew",
+    "hi": "Hindi",
+    "hmn": "Hmong",
+    "hu": "Hungarian",
+    "is": "Icelandic",
+    "ig": "Igbo",
+    "ilo": "Iloko",
+    "id": "Indonesian",
+    "ga": "Irish",
+    "it": "Italian",
+    "ja": "Japanese",
+    "jv": "Javanese",
+    "kn": "Kannada",
+    "kk": "Kazakh",
+    "km": "Khmer",
+    "rw": "Kinyarwanda",
+    "gom": "Konkani",
+    "ko": "Korean",
+    "kri": "Krio",
+    "ku": "Kurdish",
+    "ky": "Kyrgyz",
+    "lo": "Lao",
+    "la": "Latin",
+    "lv": "Latvian",
+    "ln": "Lingala",
+    "lt": "Lithuanian",
+    "lg": "Ganda",
+    "lb": "Luxembourgish",
+    "mk": "Macedonian",
+    "mai": "Maithili",
+    "mg": "Malagasy",
+    "ms": "Malay",
+    "ml": "Malayalam",
+    "mt": "Maltese",
+    "mn": "Mongolian",
+    "mni": "Manipuri",
+    "mi": "Māori",
+    "mr": "Marathi",
+    "lus": "Mizo",
+    "ne": "Nepali",
+    "no": "Norwegian",
+    "or": "Odia",
+    "om": "Oromo",
+    "ps": "Pashto",
+    "fa": "Persian",
+    "pl": "Polish",
+    "pt": "Portuguese",
+    "pa": "Punjabi",
+    "qu": "Quechua",
+    "ro": "Romanian",
+    "ru": "Russian",
+    "sm": "Samoan",
+    "sa": "Sanskrit",
+    "gd": "Scottish Gaelic",
+    "nso": "Northern Sotho",
+    "sr": "Serbian",
+    "st": "Southern Sotho",
+    "sn": "Shona",
+    "sd": "Sindhi",
+    "si": "Sinhala",
+    "sk": "Slovak",
+    "sl": "Slovenian",
+    "so": "Somali",
+    "es": "Spanish",
+    "su": "Sundanese",
+    "sw": "Swahili",
+    "sv": "Swedish",
+    "tg": "Tajik",
+    "ta": "Tamil",
+    "tt": "Tatar",
+    "te": "Telugu",
+    "th": "Thai",
+    "ti": "Tigrinya",
+    "ts": "Tsonga",
+    "tr": "Turkish",
+    "tk": "Turkmen",
+    "ak": "Akan",
+    "uk": "Ukrainian",
+    "ur": "Urdu",
+    "ug": "Uyghur",
+    "uz": "Uzbek",
+    "vi": "Vietnamese",
+    "cy": "Welsh",
+    "xh": "Xhosa",
+    "yi": "Yiddish",
+    "yo": "Yoruba",
+    "zu": "Zulu"
   }
 }

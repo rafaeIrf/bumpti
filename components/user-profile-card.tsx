@@ -1,5 +1,12 @@
-import { NavigationIcon, StarIcon } from "@/assets/icons";
+import { MapPinIcon, NavigationIcon, StarIcon } from "@/assets/icons";
+import Button from "@/components/ui/button";
+import {
+  EDUCATION_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  SMOKING_OPTIONS,
+} from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
+import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
@@ -51,6 +58,43 @@ export function UserProfileCard({
 }: UserProfileCardProps) {
   const colors = useThemeColors();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const { intentions: intentionOptions } = useOnboardingOptions();
+  const professionText = [profile.job_title, profile.company_name]
+    .filter(Boolean)
+    .join(" • ");
+  const heightText =
+    typeof profile.height_cm === "number"
+      ? `${profile.height_cm} cm`
+      : undefined;
+  const smokingLabel = React.useMemo(() => {
+    if (!profile.smoking_key) return null;
+    const option = SMOKING_OPTIONS.find(
+      (opt) => opt.id === profile.smoking_key
+    );
+    return option ? t(option.labelKey) : profile.smoking_key;
+  }, [profile.smoking_key]);
+  const relationshipLabel = React.useMemo(() => {
+    if (!profile.relationship_key) return null;
+    const option = RELATIONSHIP_OPTIONS.find(
+      (opt) => opt.id === profile.relationship_key
+    );
+    return option ? t(option.labelKey) : profile.relationship_key;
+  }, [profile.relationship_key]);
+  const educationLabel = React.useMemo(() => {
+    if (!profile.education_key) return null;
+    const option = EDUCATION_OPTIONS.find(
+      (opt) => opt.id === profile.education_key
+    );
+    return option ? t(option.labelKey) : profile.education_key;
+  }, [profile.education_key]);
+  const languageLabels =
+    profile.languages && profile.languages.length > 0
+      ? profile.languages.map((code) => {
+          const key = `languages.${code}`;
+          const translated = t(key);
+          return translated && translated !== key ? translated : code;
+        })
+      : [];
 
   // Reset photo index when profile changes
   useEffect(() => {
@@ -81,7 +125,24 @@ export function UserProfileCard({
 
   const isFavoritePlace = () => {
     if (!currentPlaceId || !profile.favoritePlaces) return false;
-    return profile.favoritePlaces.includes(currentPlaceId);
+    return profile.favoritePlaces.some((place) => {
+      const placeId = typeof place === "string" ? place : place.id;
+      return placeId === currentPlaceId;
+    });
+  };
+
+  const renderDetail = (labelKey: string, value?: string | null) => {
+    if (!value) return null;
+    return (
+      <View style={styles.detailRow}>
+        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+          {t(labelKey)}
+        </Text>
+        <Text style={[styles.detailValue, { color: colors.text }]}>
+          {value}
+        </Text>
+      </View>
+    );
   };
 
   return (
@@ -89,7 +150,7 @@ export function UserProfileCard({
       style={[
         styles.card,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderColor: colors.border,
         },
       ]}
@@ -147,14 +208,14 @@ export function UserProfileCard({
 
         {/* Status badges */}
         <View style={styles.badgesContainer}>
-          {/* {profile.isHereNow && (
+          {true && (
             <View
               style={[styles.hereNowBadge, { backgroundColor: colors.accent }]}
             >
               <View style={styles.pulseIndicator} />
               <Text style={styles.hereNowText}>{t("userProfile.hereNow")}</Text>
             </View>
-          )} */}
+          )}
 
           {isFavoritePlace() && (
             <View
@@ -204,16 +265,16 @@ export function UserProfileCard({
           <Text style={[styles.nameAge, { color: colors.text }]}>
             {profile.name}, {profile.age}
           </Text>
-          {/* {profile.location && (
+          {profile.location && (
             <View style={styles.locationRow}>
               <MapPinIcon width={16} height={16} color={colors.textSecondary} />
               <Text
                 style={[styles.locationText, { color: colors.textSecondary }]}
               >
-                {t("userProfile.nearLocation", { location: profile.location })}
+                {profile.location}
               </Text>
             </View>
-          )} */}
+          )}
         </View>
 
         {/* Bio */}
@@ -225,27 +286,88 @@ export function UserProfileCard({
           </View>
         )}
 
+        {/* Details */}
+        {[
+          { key: "work", value: professionText },
+          { key: "location", value: profile.location },
+          { key: "height", value: heightText },
+          { key: "relationship", value: relationshipLabel },
+          { key: "smoking", value: smokingLabel },
+          { key: "education", value: educationLabel },
+        ].map(
+          (item) =>
+            item.value && (
+              <View key={item.key} style={styles.detailBlock}>
+                <Text
+                  style={[styles.sectionTitle, { color: colors.textSecondary }]}
+                >
+                  {t(`userProfile.${item.key}`).toUpperCase()}
+                </Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>
+                  {item.value}
+                </Text>
+              </View>
+            )
+        )}
+        {languageLabels.length > 0 && (
+          <View style={styles.detailBlock}>
+            <Text
+              style={[styles.sectionTitle, { color: colors.textSecondary }]}
+            >
+              {t("userProfile.languages").toUpperCase()}
+            </Text>
+            <View style={styles.languagesContainer}>
+              {languageLabels.map((label) => (
+                <Button
+                  key={label}
+                  variant="outline"
+                  size="sm"
+                  label={label}
+                  style={styles.languageChip}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Looking for */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             {t("userProfile.interest")}
           </Text>
-          <View style={styles.interestContainer}>
-            {profile.intentions?.map((intention) => (
-              <View
-                key={intention}
-                style={[
-                  styles.interestBadge,
-                  {
-                    backgroundColor: `${colors.accent}1A`,
-                  },
-                ]}
-              >
-                <Text style={[styles.interestText, { color: colors.accent }]}>
-                  {t(`userProfile.lookingFor.${intention}`)}
-                </Text>
-              </View>
-            ))}
+          <View style={styles.intentionsContainer}>
+            {profile.intentions?.map((intention) => {
+              const intentionId =
+                typeof intention === "number"
+                  ? intention
+                  : Number(intention) || intention;
+              const intentionKey =
+                typeof intentionId === "number"
+                  ? intentionOptions.find((opt) => opt.id === intentionId)?.key
+                  : intentionId;
+
+              const translationKey = intentionKey
+                ? `userProfile.lookingFor.${intentionKey as string}`
+                : null;
+              const translated =
+                translationKey && typeof translationKey === "string"
+                  ? t(translationKey)
+                  : undefined;
+              const label =
+                translated && translated !== translationKey
+                  ? translated
+                  : String(intentionKey ?? intention);
+
+              return (
+                <Button
+                  key={String(intention)}
+                  variant="outline"
+                  size="sm"
+                  label={label}
+                  style={styles.intentButton}
+                />
+              );
+            })}
           </View>
         </View>
 
@@ -258,40 +380,41 @@ export function UserProfileCard({
               {t("userProfile.favoritePlaces")}
             </Text>
             <View style={styles.placesContainer}>
-              {profile.favoritePlaces.map((placeId) => {
-                const placeData = places[placeId];
-                if (!placeData) return null;
-
+              {profile.favoritePlaces.map((place) => {
+                const placeId = typeof place === "string" ? place : place.id;
+                const fallbackData = places[placeId];
+                const placeName =
+                  typeof place === "string"
+                    ? fallbackData?.name || placeId
+                    : place.name || fallbackData?.name || placeId;
+                const placeEmoji =
+                  typeof place === "string"
+                    ? fallbackData?.emoji
+                    : place.emoji || fallbackData?.emoji;
                 const isCurrentPlace = placeId === currentPlaceId;
 
+                const label = `${placeEmoji ? `${placeEmoji} ` : ""}${
+                  placeName || placeId
+                }`;
+
                 return (
-                  <View
+                  <Button
                     key={placeId}
-                    style={[
-                      styles.placeChip,
-                      {
-                        backgroundColor: isCurrentPlace
-                          ? `${colors.accent}1A`
-                          : "#000000",
-                        borderColor: isCurrentPlace
-                          ? colors.accent
-                          : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.placeEmoji}>{placeData.emoji}</Text>
-                    <Text style={[styles.placeName, { color: colors.text }]}>
-                      {placeData.name}
-                    </Text>
-                    {isCurrentPlace && (
-                      <StarIcon
-                        width={12}
-                        height={12}
-                        color={colors.accent}
-                        fill={colors.accent}
-                      />
-                    )}
-                  </View>
+                    variant="outline"
+                    size="sm"
+                    label={label}
+                    rightIcon={
+                      isCurrentPlace ? (
+                        <StarIcon
+                          width={14}
+                          height={14}
+                          color={colors.accent}
+                          fill={colors.accent}
+                        />
+                      ) : undefined
+                    }
+                    style={styles.placeButton}
+                  />
                 );
               })}
             </View>
@@ -431,48 +554,41 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   sectionTitle: {
-    ...typography.caption,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.5,
+    ...typography.captionBold,
   },
   interestContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
   },
-  interestBadge: {
+  intentionsContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 16,
-    gap: 6,
+    flexWrap: "wrap",
+    gap: spacing.sm,
   },
-  interestText: {
-    ...typography.caption,
-    fontSize: 13,
-    fontWeight: "500",
+  intentButton: {
+    alignSelf: "flex-start",
   },
   placesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
   },
-  placeChip: {
+  languagesContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 12,
-    borderWidth: 1,
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  languageChip: {
+    alignSelf: "flex-start",
+  },
+  placeButton: {
+    alignSelf: "flex-start",
+  },
+  detailBlock: {
     gap: spacing.xs,
   },
-  placeEmoji: {
-    fontSize: 18,
-  },
-  placeName: {
+  detailValue: {
     ...typography.body,
-    fontSize: 14,
   },
 });

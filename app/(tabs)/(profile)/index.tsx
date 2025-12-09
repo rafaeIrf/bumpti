@@ -190,6 +190,10 @@ export default function ProfileScreen() {
     router.push("/(modals)/premium-paywall");
   };
 
+  const handleOpenProfilePreview = () => {
+    router.push("/(modals)/profile-preview");
+  };
+
   const profilePhoto =
     profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
@@ -267,7 +271,11 @@ export default function ProfileScreen() {
           style={styles.profileHeader}
         >
           {/* Profile Photo */}
-          <View style={styles.photoContainer}>
+          <Pressable
+            onPress={handleOpenProfilePreview}
+            accessibilityRole="button"
+            style={styles.photoContainer}
+          >
             <View style={styles.photoRing}>
               <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
                 {/* Background circle */}
@@ -332,7 +340,7 @@ export default function ProfileScreen() {
                 </ThemedText>
               </View>
             )}
-          </View>
+          </Pressable>
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>

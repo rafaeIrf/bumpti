@@ -2,7 +2,7 @@ import { SearchIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
-import { LANGUAGES } from "@/constants/languages";
+import { LANGUAGE_CODES } from "@/constants/language-codes";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -20,6 +20,19 @@ export function LanguagesStep({
 }: LanguagesStepProps) {
   const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState("");
+  const translateLanguage = (code: string) => {
+    const key = `languages.${code}`;
+    const translated = t(key);
+    return translated && translated !== key ? translated : code;
+  };
+  const localeLanguages = React.useMemo(
+    () =>
+      LANGUAGE_CODES.map((code) => ({
+        id: code,
+        name: translateLanguage(code),
+      })),
+    []
+  );
 
   const normalizeText = (text: string) => {
     return text
@@ -28,7 +41,7 @@ export function LanguagesStep({
       .toLowerCase();
   };
 
-  const filteredLanguages = LANGUAGES.filter((lang) =>
+  const filteredLanguages = localeLanguages.filter((lang) =>
     normalizeText(lang.name).includes(normalizeText(searchQuery))
   );
 

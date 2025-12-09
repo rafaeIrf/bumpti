@@ -22,7 +22,17 @@ export type ActiveUserAtPlace = {
   entered_at: string;
   expires_at: string;
   visitedPlacesCount: number;
-  favoritePlaces: string[];
+  favoritePlaces: Array<
+    string | { id: string; name?: string; emoji?: string }
+  >;
+  job_title?: string | null;
+  company_name?: string | null;
+  height_cm?: number | null;
+  location?: string | null;
+  languages?: string[];
+  relationship_key?: string | null;
+  smoking_key?: string | null;
+  education_key?: string | null;
 };
 
 export type ActiveUsersResponse = {
