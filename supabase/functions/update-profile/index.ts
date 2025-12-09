@@ -21,7 +21,7 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
 type UpdateProfilePayload = {
   name?: string;
   birthdate?: string; // ISO date
-  genderId?: number;
+  gender?: string; // gender key
   ageRangeMin?: number;
   ageRangeMax?: number;
   intentions?: number[]; // intention ids
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     const {
       name,
       birthdate,
-      genderId,
+      gender,
       ageRangeMin,
       ageRangeMax,
       intentions,
@@ -145,6 +145,21 @@ Deno.serve(async (req) => {
           }
         );
       educationId = data.id;
+    }
+
+    let resolvedGenderId: number | undefined;
+    if (gender) {
+      const { data, error } = await supabase
+        .from("gender_options")
+        .select("id")
+        .eq("key", gender)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(JSON.stringify({ error: "invalid_gender_key" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      resolvedGenderId = data.id;
     }
 
     let zodiacId: number | undefined;
@@ -219,7 +234,7 @@ Deno.serve(async (req) => {
 
     if (name !== undefined) updates.name = name;
     if (birthdate !== undefined) updates.birthdate = birthdate;
-    if (genderId !== undefined) updates.gender_id = genderId;
+    if (resolvedGenderId !== undefined) updates.gender_id = resolvedGenderId;
     if (ageRangeMin !== undefined) updates.age_range_min = ageRangeMin;
     if (ageRangeMax !== undefined) updates.age_range_max = ageRangeMax;
     if (bio !== undefined) updates.bio = bio;
@@ -262,11 +277,11 @@ Deno.serve(async (req) => {
     }
 
     // Validate gender_id if provided
-    if (genderId !== undefined) {
+    if (resolvedGenderId !== undefined) {
       const { data: genderExists, error: genderError } = await supabase
         .from("gender_options")
         .select("id")
-        .eq("id", genderId)
+        .eq("id", resolvedGenderId)
         .eq("active", true)
         .maybeSingle();
 

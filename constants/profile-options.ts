@@ -74,7 +74,7 @@ export const SMOKING_OPTIONS = [
 export const GENDER_OPTIONS = [
   { id: "female", labelKey: "screens.profile.options.gender.female" },
   { id: "male", labelKey: "screens.profile.options.gender.male" },
-  { id: "nonbinary", labelKey: "screens.profile.options.gender.nonbinary" },
+  { id: "non-binary", labelKey: "screens.profile.options.gender.nonbinary" },
 ];
 
 export const RELATIONSHIP_OPTIONS = [

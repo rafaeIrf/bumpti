@@ -30,7 +30,7 @@ export type ProfilePayload = {
 export type UpdateProfilePayload = {
   name?: string;
   birthdate?: string;
-  genderId?: number;
+  gender?: string;
   ageRangeMin?: number;
   ageRangeMax?: number;
   intentions?: number[];
