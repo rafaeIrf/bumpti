@@ -4,6 +4,7 @@ import { LanguagesStep } from "@/components/profile-edit/languages-step";
 import { LocationStep } from "@/components/profile-edit/location-step";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
+import { InputText } from "@/components/ui/input-text";
 import { SelectionCard } from "@/components/ui/selection-card";
 import {
   EDUCATION_OPTIONS,
@@ -27,7 +28,6 @@ import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, TextInput, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const HEIGHT_OPTIONS = [
   { label: "< 91 cm", value: 90 },
@@ -52,7 +52,6 @@ export default function EditFieldScreen() {
   const colors = useThemeColors();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
-  const insets = useSafeAreaInsets();
 
   const [value, setValue] = useState<any>(() => {
     if (!profile) return "";
@@ -125,8 +124,35 @@ export default function EditFieldScreen() {
 
   const renderContent = () => {
     switch (field) {
+      case "profession": {
+        const parts = (value || "").split(" at ");
+        const jobTitle = parts[0] || "";
+        const company = parts.length > 1 ? parts.slice(1).join(" at ") : "";
+
+        return (
+          <View style={{ gap: spacing.md }}>
+            <InputText
+              value={jobTitle}
+              onChangeText={(text) => {
+                const newCompany = company;
+                setValue(newCompany ? `${text} at ${newCompany}` : text);
+              }}
+              placeholder={t("screens.profile.profileEdit.lifestyle.jobTitle")}
+              autoFocus
+            />
+            <InputText
+              value={company}
+              onChangeText={(text) => {
+                const newJob = jobTitle;
+                setValue(text ? `${newJob} at ${text}` : newJob);
+              }}
+              placeholder={t("screens.profile.profileEdit.lifestyle.company")}
+            />
+          </View>
+        );
+      }
+
       case "bio":
-      case "profession":
         return (
           <TextInput
             style={[
@@ -136,7 +162,7 @@ export default function EditFieldScreen() {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,
               },
-              field === "bio" && styles.textArea,
+              styles.textArea,
             ]}
             value={value}
             onChangeText={setValue}
@@ -144,8 +170,8 @@ export default function EditFieldScreen() {
               `screens.profile.profileEdit.profile.${field}Placeholder`
             )}
             placeholderTextColor={colors.textSecondary}
-            multiline={field === "bio"}
-            textAlignVertical={field === "bio" ? "top" : "center"}
+            multiline
+            textAlignVertical="top"
             autoFocus
           />
         );

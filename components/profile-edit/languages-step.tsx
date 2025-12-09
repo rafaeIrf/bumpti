@@ -1,7 +1,7 @@
 import { SearchIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/search-input";
+import { InputText } from "@/components/ui/input-text";
 import { LANGUAGES } from "@/constants/languages";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -50,7 +50,7 @@ export function LanguagesStep({
       </View>
 
       <View style={{ marginBottom: spacing.md }}>
-        <Input
+        <InputText
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder={t("common.search")}

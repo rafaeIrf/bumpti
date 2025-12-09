@@ -1,7 +1,7 @@
 import { SearchIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/search-input";
+import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -72,7 +72,7 @@ export function LocationStep({ value, onChange }: LocationStepProps) {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ marginBottom: spacing.md }}>
-        <Input
+        <InputText
           value={searchQuery}
           onChangeText={handleSearchChange}
           placeholder={t("common.search")}

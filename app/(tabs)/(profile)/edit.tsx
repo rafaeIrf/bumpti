@@ -139,27 +139,60 @@ export default function ProfileEditScreen() {
   const colors = useThemeColors();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const photos = profile?.photos?.map((p) => p.url) || [];
+  const photosRef = React.useRef(photos);
+  photosRef.current = photos;
 
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!profile) return;
 
-    // Optimistic update
-    const optimisticPhotos = newPhotos.map((url, index) => ({
-      url,
-      position: index,
-    }));
-    dispatch(setProfile({ ...profile, photos: optimisticPhotos }));
+    const isAddition = newPhotos.length > photosRef.current.length;
+
+    if (isAddition) {
+      setIsUploading(true);
+      // For additions, we DON'T do optimistic update to avoid flickering
+      // when switching from local URI to remote URL.
+      // Instead we show a loading state in the grid.
+    } else {
+      // For reordering or removal, we do optimistic update immediately
+      const optimisticPhotos = newPhotos.map((url, index) => ({
+        url,
+        position: index,
+      }));
+      dispatch(setProfile({ ...profile, photos: optimisticPhotos }));
+    }
 
     try {
       const updatedProfile = await updateProfilePhotos(newPhotos);
-      if (updatedProfile) {
-        dispatch(setProfile(updatedProfile));
+      if (updatedProfile?.photos) {
+        // 3. Merge to preserve stable URLs and prevent flickering
+        // We use the backend response for IDs and structure, but prefer the
+        // current URLs (newPhotos) if the base path matches, to avoid
+        // changing the 'key' in the list which causes blinking.
+        const returnedPhotos = updatedProfile.photos;
+        const mergedPhotos = returnedPhotos.map((photo, index) => {
+          const currentUrl = newPhotos[index];
+          // If we have a current URL and it matches the base of the returned one
+          if (
+            currentUrl &&
+            currentUrl.split("?")[0] === photo.url.split("?")[0]
+          ) {
+            return { ...photo, url: currentUrl };
+          }
+          // Otherwise use the returned one (e.g. it was a local URI and now is remote)
+          return photo;
+        });
+
+        dispatch(setProfile({ ...updatedProfile, photos: mergedPhotos }));
       }
     } catch (error) {
       logger.error("Failed to update photos:", error);
       Alert.alert(t("common.error"), t("errors.generic"));
+      // Revert optimistic update if needed (by fetching profile again or undoing)
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -246,6 +279,7 @@ export default function ProfileEditScreen() {
             onPhotosChange={handlePhotosChange}
             maxPhotos={9}
             minPhotos={2}
+            isUploading={isUploading}
           />
         </View>
 

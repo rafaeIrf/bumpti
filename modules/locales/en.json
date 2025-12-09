@@ -137,6 +137,8 @@
           "title": "Lifestyle",
           "subtitle": "How you live your daily life",
           "profession": "Profession",
+          "jobTitle": "Job Title",
+          "company": "Company",
           "smoking": "Smoking"
         },
         "interests": {

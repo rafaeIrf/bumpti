@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, SearchIcon } from "@/assets/icons";
-import { Input } from "@/components/ui/search-input";
+import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React from "react";
@@ -49,7 +49,7 @@ export function SearchToolbar({
           <ArrowLeftIcon width={20} height={20} color={colors.text} />
         </Pressable>
       ) : null}
-      <Input
+      <InputText
         value={value}
         onChangeText={onChangeText}
         onClear={onClear}
