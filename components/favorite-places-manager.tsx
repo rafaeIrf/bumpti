@@ -176,6 +176,7 @@ export function useFavoritePlaces({
 interface FavoritePlacesContentProps {
   title?: string;
   subtitle?: string;
+  showHeader?: boolean;
   selectedPlaceIds: string[];
   togglePlace: (id: string, name: string) => void;
   handleOpenSearch: () => void;
@@ -190,6 +191,7 @@ interface FavoritePlacesContentProps {
 export function FavoritePlacesContent({
   title,
   subtitle,
+  showHeader = true,
   selectedPlaceIds,
   togglePlace,
   handleOpenSearch,
@@ -209,16 +211,18 @@ export function FavoritePlacesContent({
     >
       <ThemedView style={styles.innerContainer}>
         {/* Header */}
-        <View style={styles.header}>
-          <ThemedText style={styles.title}>
-            {title || t("screens.onboarding.favoritePlaces.title")}
-          </ThemedText>
-          <ThemedText
-            style={[styles.subtitle, { color: colors.textSecondary }]}
-          >
-            {subtitle || t("screens.onboarding.favoritePlaces.subtitle")}
-          </ThemedText>
-        </View>
+        {showHeader && (
+          <View style={styles.header}>
+            <ThemedText style={styles.title}>
+              {title || t("screens.onboarding.favoritePlaces.title")}
+            </ThemedText>
+            <ThemedText
+              style={[styles.subtitle, { color: colors.textSecondary }]}
+            >
+              {subtitle || t("screens.onboarding.favoritePlaces.subtitle")}
+            </ThemedText>
+          </View>
+        )}
 
         {/* Search Input */}
         <Pressable

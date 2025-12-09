@@ -104,6 +104,7 @@ export default function EditFavoritePlacesScreen() {
       }
     >
       <FavoritePlacesContent
+        showHeader={false}
         selectedPlaceIds={selectedPlaceIds}
         togglePlace={togglePlace}
         handleOpenSearch={handleOpenSearch}
