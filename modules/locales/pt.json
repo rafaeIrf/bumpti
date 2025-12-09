@@ -615,6 +615,7 @@
     "relationship": "Relacionamento",
     "smoking": "Hábito de fumo",
     "education": "Escolaridade",
+    "zodiac": "Signo",
     "interest": "INTERESSE",
     "favoritePlaces": "LOCAIS FAVORITOS",
     "lookingFor": {
@@ -622,7 +623,8 @@
       "networking": "Networking profissional",
       "casual": "Encontrar pessoas novas",
       "relationship": "Encontrar alguém especial"
-    }
+    },
+    "zodiac": "Signo"
   },
   "profileSwiper": {
     "emptyStateTitle": "Você viu todos os perfis",
@@ -722,7 +724,7 @@
     "am": "amárico",
     "ar": "árabe",
     "hy": "armênio",
-    "asl": "asl",
+    "asl": "língua de sinais americana",
     "as": "assamês",
     "ay": "aimará",
     "az": "azerbaijano",
@@ -750,7 +752,6 @@
     "eo": "esperanto",
     "et": "estoniano",
     "ee": "ewe",
-    "asl": "língua de sinais americana",
     "fil": "filipino",
     "fi": "finlandês",
     "fr": "francês",

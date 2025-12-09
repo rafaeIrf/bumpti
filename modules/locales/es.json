@@ -615,6 +615,7 @@
     "relationship": "Relación",
     "smoking": "Hábito de fumar",
     "education": "Educación",
+    "zodiac": "Signo",
     "interest": "INTERÉS",
     "favoritePlaces": "LUGARES FAVORITOS",
     "lookingFor": {
@@ -622,7 +623,8 @@
       "networking": "Networking profesional",
       "casual": "Conocer gente nueva",
       "relationship": "Encontrar a alguien especial"
-    }
+    },
+    "zodiac": "Signo"
   },
   "profileSwiper": {
     "emptyStateTitle": "Has visto todos los perfiles",

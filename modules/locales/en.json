@@ -614,6 +614,7 @@
     "relationship": "Relationship",
     "smoking": "Smoking",
     "education": "Education",
+    "zodiac": "Zodiac",
     "interest": "INTEREST",
     "favoritePlaces": "FAVORITE PLACES",
     "lookingFor": {
@@ -621,7 +622,8 @@
       "networking": "Professional networking",
       "casual": "Meeting new people",
       "relationship": "Find someone special"
-    }
+    },
+    "zodiac": "Zodiac"
   },
   "profileSwiper": {
     "emptyStateTitle": "You've seen all profiles",

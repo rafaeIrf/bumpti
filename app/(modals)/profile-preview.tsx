@@ -44,6 +44,7 @@ export default function ProfilePreviewModal() {
       relationship_key: profile.relationship_key ?? null,
       smoking_key: profile.smoking_key ?? null,
       education_key: profile.education_key ?? null,
+      zodiac_key: profile.zodiac_key ?? null,
       entered_at: "",
       expires_at: "",
       visitedPlacesCount: favoritePlacesIds.length,
