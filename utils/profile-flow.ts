@@ -37,6 +37,11 @@ export function getNextMissingField(
 
     if (nextFieldKey === "spots") {
       isEmpty = !profile.favoritePlaces || profile.favoritePlaces.length === 0;
+    } else if (nextFieldKey === "profession") {
+      const jobTitle = (profile as any).job_title;
+      const companyName = (profile as any).company_name;
+      // Considered filled only when at least one of the fields has value
+      isEmpty = !jobTitle && !companyName;
     } else {
       const dbKey = FIELD_DB_KEYS[nextFieldKey] || nextFieldKey;
       const val = profile[dbKey as keyof ProfileData];

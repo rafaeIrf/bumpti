@@ -33,7 +33,7 @@ export function calculateProfileCompletion(profile: ProfileData | null): number 
   // Optional Details (5 points each, max 40)
   const details = [
     profile.height_cm,
-    profile.profession,
+    profile.job_title || profile.company_name,
     profile.smoking_key,
     profile.education_key,
     profile.location,

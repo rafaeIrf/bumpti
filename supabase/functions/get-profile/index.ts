@@ -188,6 +188,8 @@ Deno.serve(async (req) => {
         smoking,
         relationship,
         profile_languages,
+        job_title,
+        company_name,
         ...rest
       } = profile;
 
@@ -197,6 +199,8 @@ Deno.serve(async (req) => {
 
       profilePayload = {
         ...rest,
+        job_title: job_title ?? null,
+        company_name: company_name ?? null,
         location,
         gender: genderKey ?? null,
         gender_id: rest.gender_id ?? null,

@@ -1,6 +1,7 @@
 import { getProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { profileActions } from "@/modules/store/slices/profileActions";
+import { calculateAge } from "@/utils/calculate-age";
 import { useCallback, useEffect, useState } from "react";
 
 type UseProfileOptions = {
@@ -31,6 +32,7 @@ export function useProfile(options: UseProfileOptions = {}) {
           gender_id: data?.gender_id ?? null,
           age_range_min: data?.age_range_min ?? null,
           age_range_max: data?.age_range_max ?? null,
+          age: calculateAge(data?.birthdate ?? null),
           connectWith: data?.connectWith ?? [],
           intentions: data?.intentions ?? [],
           photos: data?.photos ?? [],
@@ -38,7 +40,8 @@ export function useProfile(options: UseProfileOptions = {}) {
           bio: data?.bio ?? null,
           favoritePlaces: data?.favoritePlaces ?? [],
           height_cm: data?.height_cm ?? null,
-          profession: data?.profession ?? null,
+          job_title: data?.job_title ?? null,
+          company_name: data?.company_name ?? null,
           smoking_key: data?.smoking_key ?? null,
           education_key: data?.education_key ?? null,
           location: data?.location ?? null,

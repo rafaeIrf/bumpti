@@ -17,7 +17,8 @@ export type ProfilePayload = {
   photos?: { url: string; position: number }[];
   bio?: string | null;
   favoritePlaces?: any[] | null;
-  profession?: string | null;
+  job_title?: string | null;
+  company_name?: string | null;
   education_key?: string | null;
   location?: string | null;
   languages?: string[] | null;
@@ -36,6 +37,8 @@ export type UpdateProfilePayload = {
   intentions?: number[];
   connectWith?: number[];
   bio?: string;
+  job_title?: string | null;
+  company_name?: string | null;
   education_key?: string;
   zodiac_key?: string;
   smoking_key?: string;

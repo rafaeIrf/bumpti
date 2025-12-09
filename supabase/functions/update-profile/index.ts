@@ -27,6 +27,8 @@ type UpdateProfilePayload = {
   intentions?: number[]; // intention ids
   connectWith?: number[]; // gender ids
   bio?: string;
+  job_title?: string | null;
+  company_name?: string | null;
   city_name?: string;
   city_state?: string;
   city_country?: string;
@@ -113,6 +115,8 @@ Deno.serve(async (req) => {
       intentions,
       connectWith,
       bio,
+      job_title,
+      company_name,
       city_name,
       city_state,
       city_country,
@@ -238,6 +242,8 @@ Deno.serve(async (req) => {
     if (ageRangeMin !== undefined) updates.age_range_min = ageRangeMin;
     if (ageRangeMax !== undefined) updates.age_range_max = ageRangeMax;
     if (bio !== undefined) updates.bio = bio;
+    if (job_title !== undefined) updates.job_title = job_title;
+    if (company_name !== undefined) updates.company_name = company_name;
     if (city_name !== undefined) updates.city_name = city_name;
     if (city_state !== undefined) updates.city_state = city_state;
     if (city_country !== undefined) updates.city_country = city_country;

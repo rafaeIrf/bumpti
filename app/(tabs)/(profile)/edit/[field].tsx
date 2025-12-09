@@ -53,25 +53,58 @@ export default function EditFieldScreen() {
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
 
-  const [value, setValue] = useState<any>(() => {
-    if (!profile) return "";
+  const getInitialValue = () => {
+    if (!profile) {
+      return field === "profession"
+        ? { jobTitle: "", companyName: "" }
+        : "";
+    }
+
+    if (field === "profession") {
+      return {
+        jobTitle: (profile as any).job_title ?? "",
+        companyName: (profile as any).company_name ?? "",
+      };
+    }
+
     const dbKey = FIELD_DB_KEYS[field] || field;
-    return (profile as any)[dbKey] || "";
-  });
+    return (profile as any)[dbKey] ?? "";
+  };
+
+  const [value, setValue] = useState<any>(getInitialValue);
 
   useEffect(() => {
-    if (profile) {
-      const dbKey = FIELD_DB_KEYS[field] || field;
-      setValue((profile as any)[dbKey] || "");
-    }
-  }, [field]);
+    setValue(getInitialValue());
+  }, [field, profile]);
 
   const handleSave = () => {
     if (profile) {
       let updatedProfile = { ...profile };
       let apiPayload: any = {};
 
-      if (field === "location" && typeof value === "object") {
+      if (field === "profession") {
+        const currentValue =
+          (value as { jobTitle?: string; companyName?: string }) || {};
+        const jobTitleValue =
+          currentValue.jobTitle && currentValue.jobTitle.trim().length > 0
+            ? currentValue.jobTitle.trim()
+            : null;
+        const companyNameValue =
+          currentValue.companyName &&
+          currentValue.companyName.trim().length > 0
+            ? currentValue.companyName.trim()
+            : null;
+
+        updatedProfile = {
+          ...updatedProfile,
+          job_title: jobTitleValue,
+          company_name: companyNameValue,
+        };
+        apiPayload = {
+          job_title: jobTitleValue,
+          company_name: companyNameValue,
+        };
+      } else if (field === "location" && typeof value === "object") {
         // Handle location object update (merging multiple fields)
         updatedProfile = { ...updatedProfile, ...value };
         // Also update the legacy/display field if needed, though we should probably migrate to using city_name
@@ -125,26 +158,25 @@ export default function EditFieldScreen() {
   const renderContent = () => {
     switch (field) {
       case "profession": {
-        const parts = (value || "").split(" at ");
-        const jobTitle = parts[0] || "";
-        const company = parts.length > 1 ? parts.slice(1).join(" at ") : "";
+        const currentValue =
+          (value as { jobTitle?: string; companyName?: string }) || {};
+        const jobTitle = currentValue.jobTitle ?? "";
+        const companyName = currentValue.companyName ?? "";
 
         return (
           <View style={{ gap: spacing.md }}>
             <InputText
               value={jobTitle}
               onChangeText={(text) => {
-                const newCompany = company;
-                setValue(newCompany ? `${text} at ${newCompany}` : text);
+                setValue({ jobTitle: text, companyName });
               }}
               placeholder={t("screens.profile.profileEdit.lifestyle.jobTitle")}
               autoFocus
             />
             <InputText
-              value={company}
+              value={companyName}
               onChangeText={(text) => {
-                const newJob = jobTitle;
-                setValue(text ? `${newJob} at ${text}` : newJob);
+                setValue({ jobTitle, companyName: text });
               }}
               placeholder={t("screens.profile.profileEdit.lifestyle.company")}
             />

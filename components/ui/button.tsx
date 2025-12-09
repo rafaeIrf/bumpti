@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactElement, ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -147,6 +147,22 @@ function getSizeStyles(size: ButtonSize, fullWidth?: boolean) {
   return base;
 }
 
+function getIconDimensions(size: ButtonSize) {
+  switch (size) {
+    case "sm":
+      return { width: 16, height: 16 };
+    case "lg":
+      return { width: 20, height: 20 };
+    case "fab":
+      return { width: 24, height: 24 };
+    case "icon":
+      return { width: 18, height: 18 };
+    case "default":
+    default:
+      return { width: 18, height: 18 };
+  }
+}
+
 export function Button({
   variant = "default",
   size = "default",
@@ -163,6 +179,52 @@ export function Button({
 }: ButtonProps) {
   const scheme = useColorScheme() ?? "light";
   const C = (Colors as any)[scheme] as any;
+
+  const renderIcon = (
+    icon?: ReactNode,
+    color?: string,
+    dimensions?: { width: number; height: number }
+  ) => {
+    if (!icon) return null;
+    if (typeof icon === "function") {
+      const IconComponent = icon as React.ComponentType<any>;
+      return (
+        <View style={styles.icon}>
+          <IconComponent
+            color={color}
+            width={dimensions?.width}
+            height={dimensions?.height}
+          />
+        </View>
+      );
+    }
+    if (React.isValidElement(icon)) {
+      const iconElement = icon as ReactElement<any>;
+      const injectedColor =
+        iconElement.props?.color !== undefined
+          ? iconElement.props.color
+          : color;
+      const iconWidth =
+        iconElement.props?.width !== undefined
+          ? iconElement.props.width
+          : dimensions?.width;
+      const iconHeight =
+        iconElement.props?.height !== undefined
+          ? iconElement.props.height
+          : dimensions?.height;
+      return (
+        <View style={styles.icon}>
+          {React.cloneElement(iconElement, {
+            color: injectedColor,
+            width: iconWidth,
+            height: iconHeight,
+          })}
+        </View>
+      );
+    }
+    return <View style={styles.icon}>{icon}</View>;
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -184,6 +246,7 @@ export function Button({
         const v = getVariantStyles(C, variant, pressed);
         const s = getSizeStyles(size, fullWidth);
         const content = typeof children === "string" ? children : label;
+        const iconDimensions = getIconDimensions(size);
         return (
           <View style={styles.contentRow}>
             {loading ? (
@@ -193,9 +256,9 @@ export function Button({
                   color={(v.text.color as string) ?? undefined}
                 />
               </View>
-            ) : leftIcon ? (
-              <View style={styles.icon}>{leftIcon}</View>
-            ) : null}
+            ) : (
+              renderIcon(leftIcon, v.text.color as string, iconDimensions)
+            )}
             {content ? (
               <Text numberOfLines={1} style={[v.text, s.text, textStyle]}>
                 {content}
@@ -204,7 +267,7 @@ export function Button({
               // If no label and not string children, render children as-is
               (children as ReactNode)
             )}
-            {rightIcon ? <View style={styles.icon}>{rightIcon}</View> : null}
+            {renderIcon(rightIcon, v.text.color as string, iconDimensions)}
           </View>
         );
       }}

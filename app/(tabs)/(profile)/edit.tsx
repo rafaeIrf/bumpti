@@ -144,6 +144,12 @@ export default function ProfileEditScreen() {
   const photos = profile?.photos?.map((p) => p.url) || [];
   const photosRef = React.useRef(photos);
   photosRef.current = photos;
+  const professionValue = React.useMemo(() => {
+    const parts = [profile?.job_title, profile?.company_name].filter(
+      Boolean
+    ) as string[];
+    return parts.join(" - ");
+  }, [profile?.job_title, profile?.company_name]);
 
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!profile) return;
@@ -337,7 +343,7 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={ShoppingBagIcon}
             label={t("screens.profile.profileEdit.lifestyle.profession")}
-            value={profile?.profession || ""}
+            value={professionValue}
             onPress={() => handleFieldPress("profession")}
           />
           <EditRow

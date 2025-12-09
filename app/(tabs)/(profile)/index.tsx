@@ -4,6 +4,7 @@ import {
   FlameIcon,
   MapPinIcon,
   NavigationIcon,
+  PencilIcon,
   SettingsIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
@@ -198,6 +199,11 @@ export default function ProfileScreen() {
     return photos.filter(Boolean);
   }, [profile?.photos, onboardingUserData.photoUris]);
 
+  const ageText = React.useMemo(() => {
+    if (!profile?.age) return "";
+    return `, ${profile.age}`;
+  }, [profile?.age]);
+
   // Prefetch profile photos
   React.useEffect(() => {
     if (allProfilePhotos.length > 0) {
@@ -216,6 +222,7 @@ export default function ProfileScreen() {
   }, [profile]);
 
   const completionText = `${Math.round(profileProgress * 100)}%`;
+  const shouldShowCompletionBadge = profileProgress < 1;
 
   if (isLoadingImage) {
     return (
@@ -307,34 +314,39 @@ export default function ProfileScreen() {
                 )}
               </View>
             </View>
-            <View
-              style={[
-                styles.progressBadge,
-                {
-                  backgroundColor:
-                    (colors as any).cardGradientStart ?? colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <ThemedText
-                style={[typography.captionBold, { color: colors.text }]}
+            {shouldShowCompletionBadge && (
+              <View
+                style={[
+                  styles.progressBadge,
+                  {
+                    backgroundColor:
+                      (colors as any).cardGradientStart ?? colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
-                {completionText}
-              </ThemedText>
-            </View>
+                <ThemedText
+                  style={[typography.captionBold, { color: colors.text }]}
+                >
+                  {completionText}
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>
-            <ThemedText style={[typography.body1, { color: colors.text }]}>
+            <ThemedText
+              style={[typography.subheading2, { color: colors.text }]}
+            >
               {profile?.name || t("screens.profile.title")}
-              {profile?.age ? `, ${profile.age}` : ""}
+              {ageText}
             </ThemedText>
 
             <Button
               onPress={handleCompleteProfile}
               size="sm"
+              leftIcon={<PencilIcon />}
               style={styles.profileButton}
               label={
                 profileProgress >= 1
@@ -529,7 +541,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   photoContainer: {
     flexShrink: 0,
