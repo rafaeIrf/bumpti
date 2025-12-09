@@ -8,8 +8,10 @@ import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { t } from "@/modules/locales";
+import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
+import { logger } from "@/utils/logger";
 import { navigateToNextProfileField } from "@/utils/profile-flow";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -47,7 +49,15 @@ export default function EditFavoritePlacesScreen() {
         name: placesMap[id] || "Unknown Place",
       }));
       const updatedProfile = { ...profile, favoritePlaces };
+
+      // Optimistic update
       dispatch(setProfile(updatedProfile));
+
+      // Background API update
+      updateProfile({ favoritePlaces: selectedPlaceIds }).catch((error) => {
+        logger.error("Failed to update favorite places", error);
+      });
+
       navigateToNextProfileField("spots", updatedProfile);
     } else {
       router.back();

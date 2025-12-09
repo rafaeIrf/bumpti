@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 // Cache the user location globally
 let cachedLocation: { latitude: number; longitude: number; accuracy?: number } | null = null;
 let lastFetchTime = 0;
-const LOCATION_CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+const LOCATION_CACHE_TIME = 2 * 60 * 1000; // 5 minutes in milliseconds
 
 export const useCachedLocation = () => {
   const [location, setLocation] = useState<{

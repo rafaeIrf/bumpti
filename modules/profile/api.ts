@@ -1,3 +1,4 @@
+import { processProfileImage } from "@/modules/media/image-processor";
 import { supabase } from "@/modules/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
 
@@ -15,17 +16,34 @@ export type ProfilePayload = {
   intentions?: number[];
   photos?: { url: string; position: number }[];
   bio?: string | null;
+  favoritePlaces?: any[] | null;
+  job_title?: string | null;
+  company_name?: string | null;
+  education_key?: string | null;
+  location?: string | null;
+  languages?: string[] | null;
+  zodiac_key?: string | null;
+  relationship_key?: string | null;
+  smoking_key?: string | null;
+  height_cm?: number | null;
 };
 
 export type UpdateProfilePayload = {
   name?: string;
   birthdate?: string;
-  genderId?: number;
+  gender?: string;
   ageRangeMin?: number;
   ageRangeMax?: number;
   intentions?: number[];
   connectWith?: number[];
   bio?: string;
+  job_title?: string | null;
+  company_name?: string | null;
+  education_key?: string;
+  zodiac_key?: string;
+  smoking_key?: string;
+  relationship_key?: string;
+  height_cm?: number;
   [key: string]: unknown;
 };
 
@@ -48,6 +66,39 @@ export async function updateProfile(payload: UpdateProfilePayload) {
 
   if (error) {
     throw error as PostgrestError;
+  }
+
+  return data?.profile;
+}
+
+export async function updateProfilePhotos(photos: string[]) {
+  const formData = new FormData();
+
+  for (let i = 0; i < photos.length; i++) {
+    const photoUri = photos[i];
+
+    if (photoUri.startsWith("http") || photoUri.startsWith("https")) {
+      // Existing photo URL
+      formData.append("photos", photoUri);
+    } else {
+      // New local photo
+      const processed = await processProfileImage(photoUri, `photo-${i}.jpg`);
+      formData.append("photos", {
+        uri: processed.uri,
+        name: processed.name,
+        type: processed.type,
+      } as any);
+    }
+  }
+
+  const { data, error } = await supabase.functions.invoke<{
+    profile: ProfilePayload;
+  }>("update-profile", {
+    body: formData,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Não foi possível atualizar as fotos.");
   }
 
   return data?.profile;

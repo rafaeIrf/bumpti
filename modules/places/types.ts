@@ -15,6 +15,14 @@ export type Place = {
   active_users?: number; // Optional: number of active users currently at the place
 };
 
+export type CityPrediction = {
+  placeId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  formattedAddress: string | null;
+};
+
 export type NearbyPlacesResponse = { places: Place[] };
 
 // General place categories (mapped to multiple Foursquare IDs in backend)

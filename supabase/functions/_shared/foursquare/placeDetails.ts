@@ -1,10 +1,10 @@
 import { haversineDistance } from "../haversine.ts";
 import type {
-    FoursquareCategory,
-    FoursquarePhoto,
-    FoursquareSocialMedia,
-    GetPlaceDetailsParams,
-    PlaceDetailsResult
+  FoursquareCategory,
+  FoursquarePhoto,
+  FoursquareSocialMedia,
+  GetPlaceDetailsParams,
+  PlaceDetailsResult
 } from "./types.ts";
 
 export const FOURSQUARE_API_BASE = "https://places-api.foursquare.com";
@@ -55,8 +55,8 @@ export async function getPlaceDetails({
     throw new Error("FS_PLACES_API_KEY not configured");
   }
 
-  if (!fsq_ids || fsq_ids.length === 0 || userLat === undefined || userLng === undefined) {
-    throw new Error("Missing required parameters: fsq_ids (non-empty array), userLat, userLng");
+  if (!fsq_ids || fsq_ids.length === 0) {
+    throw new Error("Missing required parameters: fsq_ids (non-empty array)");
   }
 
   const fields = [
@@ -101,9 +101,12 @@ export async function getPlaceDetails({
         }
 
         // Calculate distance using haversine (API may not return distance for details endpoint)
-        const distance = place.distance 
-          ? place.distance / 1000 // Convert meters to km if provided
-          : haversineDistance(userLat, userLng, placeLat, placeLng);
+        let distance = 0;
+        if (userLat !== undefined && userLng !== undefined) {
+             distance = place.distance 
+            ? place.distance / 1000 // Convert meters to km if provided
+            : haversineDistance(userLat, userLng, placeLat, placeLng);
+        }
 
         return {
           fsq_id: place.fsq_place_id,

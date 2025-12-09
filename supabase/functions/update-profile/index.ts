@@ -21,12 +21,25 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
 type UpdateProfilePayload = {
   name?: string;
   birthdate?: string; // ISO date
-  genderId?: number;
+  gender?: string; // gender key
   ageRangeMin?: number;
   ageRangeMax?: number;
   intentions?: number[]; // intention ids
   connectWith?: number[]; // gender ids
   bio?: string;
+  job_title?: string | null;
+  company_name?: string | null;
+  city_name?: string;
+  city_state?: string;
+  city_country?: string;
+  city_lat?: number;
+  city_lng?: number;
+  education_key?: string;
+  zodiac_key?: string;
+  smoking_key?: string;
+  relationship_key?: string;
+  height_cm?: number;
+  favoritePlaces?: string[]; // array of place_ids
   [key: string]: unknown;
 };
 
@@ -63,10 +76,25 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const payload = (await req.json()) as UpdateProfilePayload;
-    if (!payload || typeof payload !== "object") {
+    let payload: UpdateProfilePayload = {};
+    let photosToUpdate: (File | string)[] | null = null;
+
+    const contentType = req.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      payload = (await req.json()) as UpdateProfilePayload;
+    } else if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      if (formData.has("photos")) {
+        photosToUpdate = formData.getAll("photos");
+      }
+      
+      // Parse other fields from formData if needed (currently only photos are sent via FormData)
+      // If we wanted to support mixed updates, we'd parse them here.
+      // For now, we assume FormData is primarily for photos.
+    } else {
       return new Response(
-        JSON.stringify({ error: "invalid_payload", message: "Body must be JSON" }),
+        JSON.stringify({ error: "invalid_content_type", message: "Content-Type must be application/json or multipart/form-data" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -74,27 +102,158 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!payload || typeof payload !== "object") {
+      payload = {}; // Ensure payload is an object
+    }
+
     const {
       name,
       birthdate,
-      genderId,
+      gender,
       ageRangeMin,
       ageRangeMax,
       intentions,
       connectWith,
       bio,
+      job_title,
+      company_name,
+      city_name,
+      city_state,
+      city_country,
+      city_lat,
+      city_lng,
+      education_key,
+      zodiac_key,
+      smoking_key,
+      relationship_key,
+      height_cm,
+      languages,
+      favoritePlaces,
       ...rest
     } = payload;
+
+    // Lookup IDs for keys
+    let educationId: number | undefined;
+    if (education_key) {
+      const { data, error } = await supabase
+        .from("education_levels")
+        .select("id")
+        .eq("key", education_key)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(
+          JSON.stringify({ error: "invalid_education_key" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      educationId = data.id;
+    }
+
+    let resolvedGenderId: number | undefined;
+    if (gender) {
+      const { data, error } = await supabase
+        .from("gender_options")
+        .select("id")
+        .eq("key", gender)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(JSON.stringify({ error: "invalid_gender_key" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      resolvedGenderId = data.id;
+    }
+
+    let zodiacId: number | undefined;
+    if (zodiac_key) {
+      const { data, error } = await supabase
+        .from("zodiac_signs")
+        .select("id")
+        .eq("key", zodiac_key)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(JSON.stringify({ error: "invalid_zodiac_key" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      zodiacId = data.id;
+    }
+
+    let smokingId: number | undefined;
+    if (smoking_key) {
+      const { data, error } = await supabase
+        .from("smoking_habits")
+        .select("id")
+        .eq("key", smoking_key)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(JSON.stringify({ error: "invalid_smoking_key" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      smokingId = data.id;
+    }
+
+    let relationshipId: number | undefined;
+    if (relationship_key) {
+      const { data, error } = await supabase
+        .from("relationship_status")
+        .select("id")
+        .eq("key", relationship_key)
+        .maybeSingle();
+      if (error || !data)
+        return new Response(
+          JSON.stringify({ error: "invalid_relationship_key" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      relationshipId = data.id;
+    }
+
+    let validLanguages: number[] | undefined;
+    if (Array.isArray(languages)) {
+      if (languages.length === 0) {
+        validLanguages = [];
+      } else {
+        const { data: languageRows, error: languageError } = await supabase
+          .from("languages")
+          .select("id")
+          .in("key", languages);
+        if (languageError) {
+          return new Response(JSON.stringify({ error: "invalid_languages" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        validLanguages = (languageRows ?? []).map((r) => r.id);
+      }
+    }
 
     // Reject unknown fields only if present and not in rest (optional: for forward compat we allow extra)
     const updates: Record<string, unknown> = {};
 
     if (name !== undefined) updates.name = name;
     if (birthdate !== undefined) updates.birthdate = birthdate;
-    if (genderId !== undefined) updates.gender_id = genderId;
+    if (resolvedGenderId !== undefined) updates.gender_id = resolvedGenderId;
     if (ageRangeMin !== undefined) updates.age_range_min = ageRangeMin;
     if (ageRangeMax !== undefined) updates.age_range_max = ageRangeMax;
     if (bio !== undefined) updates.bio = bio;
+    if (job_title !== undefined) updates.job_title = job_title;
+    if (company_name !== undefined) updates.company_name = company_name;
+    if (city_name !== undefined) updates.city_name = city_name;
+    if (city_state !== undefined) updates.city_state = city_state;
+    if (city_country !== undefined) updates.city_country = city_country;
+    if (city_lat !== undefined) updates.city_lat = city_lat;
+    if (city_lng !== undefined) updates.city_lng = city_lng;
+    if (educationId !== undefined) updates.education_id = educationId;
+    if (zodiacId !== undefined) updates.zodiac_id = zodiacId;
+    if (smokingId !== undefined) updates.smoking_id = smokingId;
+    if (relationshipId !== undefined) updates.relationship_id = relationshipId;
+    if (height_cm !== undefined) updates.height_cm = height_cm;
 
     // Basic validations
     if (ageRangeMin !== undefined && ageRangeMin < 18) {
@@ -124,11 +283,11 @@ Deno.serve(async (req) => {
     }
 
     // Validate gender_id if provided
-    if (genderId !== undefined) {
+    if (resolvedGenderId !== undefined) {
       const { data: genderExists, error: genderError } = await supabase
         .from("gender_options")
         .select("id")
-        .eq("id", genderId)
+        .eq("id", resolvedGenderId)
         .eq("active", true)
         .maybeSingle();
 
@@ -246,41 +405,255 @@ Deno.serve(async (req) => {
           );
         if (insertError) {
           return new Response(
-            JSON.stringify({ error: "connect_with_insert_failed", message: insertError.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({
+              error: "connect_with_insert_failed",
+              message: insertError.message,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
           );
         }
       }
     }
 
-    // Return updated profile (with relations)
-    const [profileResult, connectResult, intentionResult, photosResult] =
-      await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-        supabase
-          .from("profile_connect_with")
-          .select("gender_id")
-          .eq("user_id", userId),
-        supabase
-          .from("profile_intentions")
-          .select("option_id")
-          .eq("user_id", userId),
-        supabase
+    // Manage languages
+    if (validLanguages) {
+      const { error: deleteError } = await supabase
+        .from("profile_languages")
+        .delete()
+        .eq("user_id", userId);
+      if (deleteError) {
+        return new Response(
+          JSON.stringify({
+            error: "languages_delete_failed",
+            message: deleteError.message,
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      if (validLanguages.length > 0) {
+        const { error: insertError } = await supabase
+          .from("profile_languages")
+          .insert(
+            validLanguages.map((id) => ({
+              user_id: userId,
+              language_id: id,
+            }))
+          );
+        if (insertError) {
+          return new Response(
+            JSON.stringify({
+              error: "languages_insert_failed",
+              message: insertError.message,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      }
+    }
+
+    // Manage favorite places
+    if (Array.isArray(favoritePlaces)) {
+      const { error: deleteError } = await supabase
+        .from("profile_favorite_places")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteError) {
+        return new Response(
+          JSON.stringify({
+            error: "favorite_places_delete_failed",
+            message: deleteError.message,
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (favoritePlaces.length > 0) {
+        const { error: insertError } = await supabase
+          .from("profile_favorite_places")
+          .insert(
+            favoritePlaces.map((placeId) => ({
+              user_id: userId,
+              place_id: placeId,
+            }))
+          );
+
+        if (insertError) {
+          return new Response(
+            JSON.stringify({
+              error: "favorite_places_insert_failed",
+              message: insertError.message,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      }
+    }
+
+    // Manage photos
+    if (photosToUpdate && photosToUpdate.length > 0) {
+      // Fetch current photos to identify what needs to be deleted later
+      const { data: currentPhotos } = await supabase
+        .from("profile_photos")
+        .select("url")
+        .eq("user_id", userId);
+
+      const newPhotos: { url: string; position: number }[] = [];
+
+      for (let i = 0; i < photosToUpdate.length; i++) {
+        const item = photosToUpdate[i];
+
+        if (typeof item === "string") {
+          // Existing photo URL (likely signed)
+          let path = item;
+          try {
+            const urlObj = new URL(item);
+            if (urlObj.pathname.includes(`/sign/${userPhotosBucket}/`)) {
+               path = urlObj.pathname.split(`/sign/${userPhotosBucket}/`)[1];
+               path = decodeURIComponent(path);
+            }
+          } catch (e) {
+            // Not a URL, assume it is the path
+          }
+          newPhotos.push({ url: path, position: i });
+
+        } else if (item instanceof File) {
+          // New file upload
+          const fileExt = item.name.split(".").pop();
+          const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from(userPhotosBucket)
+            .upload(fileName, item, {
+              contentType: item.type,
+              upsert: true,
+            });
+
+          if (uploadError) {
+             console.error("Upload error:", uploadError);
+             throw new Error("Failed to upload photo");
+          }
+          
+          newPhotos.push({ url: fileName, position: i });
+        }
+      }
+
+      // Delete removed photos from storage
+      if (currentPhotos) {
+        const newPhotoPaths = new Set(newPhotos.map((p) => p.url));
+        const photosToDelete = currentPhotos
+          .map((p) => p.url)
+          .filter((url) => !newPhotoPaths.has(url));
+
+        if (photosToDelete.length > 0) {
+          const { error: removeError } = await supabase.storage
+            .from(userPhotosBucket)
+            .remove(photosToDelete);
+
+          if (removeError) {
+            console.error(
+              "Failed to remove old photos from storage:",
+              removeError
+            );
+          }
+        }
+      }
+
+      // Replace photos in DB
+      const { error: deleteError } = await supabase
+        .from("profile_photos")
+        .delete()
+        .eq("user_id", userId);
+        
+      if (deleteError) {
+         throw new Error("Failed to delete old photos");
+      }
+
+      if (newPhotos.length > 0) {
+        const { error: insertError } = await supabase
           .from("profile_photos")
-          .select("url, position")
-          .eq("user_id", userId)
-          .order("position", { ascending: true }),
-      ]);
+          .insert(
+            newPhotos.map((p) => ({
+              user_id: userId,
+              url: p.url,
+              position: p.position,
+            }))
+          );
+          
+        if (insertError) {
+           throw new Error("Failed to insert new photos");
+        }
+      }
+    }
+
+    // Return updated profile (with relations)
+    const [
+      profileResult,
+      connectResult,
+      intentionResult,
+      photosResult,
+      favoritePlacesResult,
+    ] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(
+          `
+          *,
+          education:education_levels(key),
+          zodiac:zodiac_signs(key),
+          smoking:smoking_habits(key),
+          relationship:relationship_status(key),
+          profile_languages(language:languages(key))
+        `
+        )
+        .eq("id", userId)
+        .maybeSingle(),
+      supabase
+        .from("profile_connect_with")
+        .select("gender_id")
+        .eq("user_id", userId),
+      supabase
+        .from("profile_intentions")
+        .select("option_id")
+        .eq("user_id", userId),
+      supabase
+        .from("profile_photos")
+        .select("url, position")
+        .eq("user_id", userId)
+        .order("position", { ascending: true }),
+      supabase
+        .from("profile_favorite_places")
+        .select("place_id")
+        .eq("user_id", userId),
+    ]);
 
     const { data: profile, error: profileError } = profileResult;
     const { data: connectRows, error: connectError } = connectResult;
     const { data: intentionRows, error: intentionError } = intentionResult;
     const { data: photoRows, error: photoError } = photosResult;
+    const { data: favoritePlacesRows, error: favoritePlacesError } =
+      favoritePlacesResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
+    if (favoritePlacesError) throw favoritePlacesError;
 
     const connectWithIds = (connectRows ?? [])
       .map((row: any) => row.gender_id)
@@ -288,6 +661,9 @@ Deno.serve(async (req) => {
     const intentionsIds = (intentionRows ?? [])
       .map((row: any) => row.option_id)
       .filter((id: number | null) => id != null);
+    const favoritePlacesIds = (favoritePlacesRows ?? [])
+      .map((row: any) => row.place_id)
+      .filter((id: string | null) => id != null);
 
     let photos =
       (photoRows ?? [])
@@ -315,14 +691,39 @@ Deno.serve(async (req) => {
     }
     photos = signedPhotos;
 
-    const profilePayload = profile
-      ? {
-          ...profile,
-          connectWith: connectWithIds,
-          intentions: intentionsIds,
-          photos,
-        }
-      : null;
+    let profilePayload = null;
+
+    if (profile) {
+      const {
+        education,
+        zodiac,
+        smoking,
+        relationship,
+        profile_languages,
+        ...rest
+      } = profile;
+
+      const location = rest.city_name
+        ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
+        : rest.location;
+
+      profilePayload = {
+        ...rest,
+        location,
+        connectWith: connectWithIds,
+        intentions: intentionsIds,
+        favoritePlaces: favoritePlacesIds.map((id: string) => ({ id, name: "" })), // Return minimal object structure expected by frontend
+        photos,
+        education_key: education?.key ?? null,
+        zodiac_key: zodiac?.key ?? null,
+        smoking_key: smoking?.key ?? null,
+        relationship_key: relationship?.key ?? null,
+        languages:
+          profile_languages
+            ?.map((pl: any) => pl.language?.key)
+            .filter(Boolean) ?? [],
+      };
+    }
 
     return new Response(JSON.stringify({ profile: profilePayload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

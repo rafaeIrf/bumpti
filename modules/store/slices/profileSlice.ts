@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { calculateAge } from "@/utils/calculate-age";
 
 export type ProfileData = {
   id?: string;
@@ -8,19 +9,21 @@ export type ProfileData = {
   gender_id?: number | null;
   age_range_min?: number | null;
   age_range_max?: number | null;
+  age?: number | null;
   connectWith?: number[];
   intentions?: number[];
   photos?: { url: string; position: number }[];
   updatedAt?: string | null;
   bio?: string | null;
-  height?: number | null;
-  profession?: string | null;
-  smoking?: string | null;
-  education?: string | null;
-  hometown?: string | null;
+  height_cm?: number | null;
+  job_title?: string | null;
+  company_name?: string | null;
+  smoking_key?: string | null;
+  education_key?: string | null;
+  location?: string | null;
   languages?: string[] | null;
-  zodiac?: string | null;
-  relationshipStatus?: string | null;
+  zodiac_key?: string | null;
+  relationship_key?: string | null;
   favoritePlaces?: any[] | null;
 };
 
@@ -39,7 +42,17 @@ const profileSlice = createSlice({
   initialState,
   reducers: {
     setProfile: (state, action: PayloadAction<ProfileData | null>) => {
-      state.data = action.payload;
+      if (!action.payload) {
+        state.data = null;
+        return;
+      }
+
+      const derivedAge =
+        action.payload.age !== undefined
+          ? action.payload.age
+          : calculateAge(action.payload.birthdate ?? null);
+
+      state.data = { ...action.payload, age: derivedAge ?? null };
     },
     setProfileLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;

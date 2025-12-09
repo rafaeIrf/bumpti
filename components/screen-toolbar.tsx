@@ -11,7 +11,8 @@ import Animated, {
 import { SvgProps } from "react-native-svg";
 
 export interface ToolbarAction {
-  icon: ComponentType<SvgProps>; // SVG Icon component
+  icon?: ComponentType<SvgProps>; // SVG Icon component
+  label?: string;
   onClick: () => void;
   ariaLabel: string;
   color?: string; // Optional color override
@@ -79,6 +80,7 @@ export function ScreenToolbar({
           <ActionButton
             key={`right-action-${index}`}
             icon={action.icon}
+            label={action.label}
             onPress={action.onClick}
             ariaLabel={action.ariaLabel}
             color={action.color}
@@ -107,6 +109,7 @@ export function ScreenToolbar({
             {leftAction && (
               <ActionButton
                 icon={leftAction.icon}
+                label={leftAction.label}
                 onPress={leftAction.onClick}
                 ariaLabel={leftAction.ariaLabel}
                 color={leftAction.color}
@@ -163,11 +166,13 @@ export function ScreenToolbar({
 
 function ActionButton({
   icon: IconComponent,
+  label,
   onPress,
   ariaLabel,
   color = "#FFF",
 }: {
-  icon: ComponentType<SvgProps>;
+  icon?: ComponentType<SvgProps>;
+  label?: string;
   onPress: () => void;
   ariaLabel: string;
   color?: string;
@@ -194,7 +199,13 @@ function ActionButton({
       style={[styles.actionButton, animatedStyle]}
       accessibilityLabel={ariaLabel}
     >
-      <IconComponent width={24} height={24} color={color} stroke={color} />
+      {IconComponent ? (
+        <IconComponent width={24} height={24} color={color} stroke={color} />
+      ) : (
+        <Text style={[typography.body, { color, fontWeight: "600" }]}>
+          {label}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 }

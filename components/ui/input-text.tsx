@@ -11,7 +11,7 @@ import {
   ViewStyle,
 } from "react-native";
 
-export interface InputProps extends Omit<TextInputProps, "style"> {
+export interface InputTextProps extends Omit<TextInputProps, "style"> {
   value: string;
   onChangeText: (text: string) => void;
   onClear?: () => void;
@@ -31,7 +31,7 @@ export interface InputProps extends Omit<TextInputProps, "style"> {
   inputStyle?: TextStyle;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(
+export const InputText = forwardRef<TextInput, InputTextProps>(
   (
     {
       value,
@@ -129,4 +129,4 @@ export const Input = forwardRef<TextInput, InputProps>(
   }
 );
 
-Input.displayName = "Input";
+InputText.displayName = "InputText";

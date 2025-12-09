@@ -38,6 +38,14 @@ export default function ModalsLayout() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="profile-preview"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }

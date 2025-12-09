@@ -6,16 +6,19 @@ import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { Image } from "expo-image";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Pressable,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from "react-native";
+import Sortable from "react-native-sortables";
 
 interface UserPhotoGridProps {
   photos: string[];
@@ -23,6 +26,7 @@ interface UserPhotoGridProps {
   maxPhotos?: number;
   minPhotos?: number;
   showInfo?: boolean;
+  isUploading?: boolean;
 }
 
 export function UserPhotoGrid({
@@ -31,18 +35,37 @@ export function UserPhotoGrid({
   maxPhotos = 9,
   minPhotos = 3,
   showInfo = true,
+  isUploading = false,
 }: UserPhotoGridProps) {
   const colors = useThemeColors();
   const { isLoading, pickFromLibrary } = useImagePicker();
   const { expand, close } = useCustomBottomSheet();
+  const { width } = useWindowDimensions();
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Calculate item dimensions
+  const containerPadding = spacing.md * 2;
+  const columnGap = spacing.sm;
+  const rowGap = spacing.md;
+  const columns = 3;
+  const itemWidth =
+    (width - containerPadding - (columns - 1) * columnGap) / columns;
+  const itemHeight = itemWidth * (4 / 3);
+
+  // Calculate total height for the container
+  const totalRows = Math.ceil(maxPhotos / columns);
+  const containerHeight = totalRows * itemHeight + (totalRows - 1) * rowGap;
 
   const remainingPhotos = Math.max(0, minPhotos - photos.length);
 
   const handleAddPhoto = async () => {
-    if (photos.length >= maxPhotos) return;
+    const currentPhotos = photosRef.current;
+    if (currentPhotos.length >= maxPhotos) return;
 
     try {
-      const remainingSlots = maxPhotos - photos.length;
+      const remainingSlots = maxPhotos - currentPhotos.length;
 
       const result = await pickFromLibrary({
         aspect: [3, 4],
@@ -53,7 +76,9 @@ export function UserPhotoGrid({
       });
 
       if (result.success && result.uris) {
-        onPhotosChange([...photos, ...result.uris]);
+        // Use the latest photos from ref to ensure we have the correct state
+        // even if a removal happened recently
+        onPhotosChange([...photosRef.current, ...result.uris]);
       } else if (result.error === "permission_denied") {
         Alert.alert(
           t("common.error"),
@@ -61,7 +86,7 @@ export function UserPhotoGrid({
         );
       }
     } catch (error) {
-      console.error("Erro ao adicionar foto:", error);
+      logger.error("Erro ao adicionar foto:", error);
       Alert.alert(
         t("common.error"),
         t("components.userPhotoGrid.addPhotoError")
@@ -84,18 +109,19 @@ export function UserPhotoGrid({
       if (result.success) {
         const newUri = result.uri || (result.uris && result.uris[0]);
         if (newUri) {
-          const newPhotos = [...photos];
+          const newPhotos = [...photosRef.current];
           newPhotos[index] = newUri;
           onPhotosChange(newPhotos);
         }
       }
     } catch (error) {
-      console.error("Erro ao substituir foto:", error);
+      logger.error("Erro ao substituir foto:", error);
     }
   };
 
   const handlePhotoAction = (index: number) => {
-    const canRemove = photos.length > minPhotos;
+    const currentPhotos = photosRef.current;
+    const canRemove = currentPhotos.length > minPhotos;
 
     expand({
       content: () => (
@@ -107,7 +133,7 @@ export function UserPhotoGrid({
           }}
           onRemove={() => {
             close();
-            onPhotosChange(photos.filter((_, i) => i !== index));
+            onPhotosChange(photosRef.current.filter((_, i) => i !== index));
           }}
           onAdd={() => {
             close();
@@ -119,85 +145,205 @@ export function UserPhotoGrid({
     });
   };
 
-  const slots = Array(maxPhotos).fill(null);
+  // Only photos are sortable
+  const sortableData = photos.map((uri) => ({ key: uri, uri, type: "photo" }));
+
+  const renderStaticItems = () => {
+    const items = [];
+    const startIndex = photos.length;
+
+    // Loading or Add button
+    if (isUploading) {
+      items.push({ type: "loading", index: startIndex });
+    } else if (photos.length < maxPhotos) {
+      items.push({ type: "add", index: startIndex });
+    }
+
+    // Empty slots
+    const nextIndex =
+      startIndex + (isUploading || photos.length < maxPhotos ? 1 : 0);
+    for (let i = nextIndex; i < maxPhotos; i++) {
+      items.push({ type: "empty", index: i });
+    }
+
+    return items.map((item) => {
+      const row = Math.floor(item.index / columns);
+      const col = item.index % columns;
+      const left = col * (itemWidth + columnGap);
+      const top = row * (itemHeight + rowGap);
+
+      return (
+        <View
+          key={`static-${item.index}`}
+          style={{
+            position: "absolute",
+            left,
+            top,
+            width: itemWidth,
+            height: itemHeight,
+            zIndex: 2,
+          }}
+        >
+          {renderStaticItemContent(item.type, item.index)}
+        </View>
+      );
+    });
+  };
+
+  const renderStaticItemContent = (type: string, index: number) => {
+    const itemStyle = { width: "100%", height: "100%" };
+
+    if (type === "loading") {
+      return (
+        <View
+          style={[
+            styles.addPhotoButton,
+            itemStyle,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              justifyContent: "center",
+              alignItems: "center",
+            },
+          ]}
+        >
+          <ActivityIndicator size="small" color={colors.accent} />
+        </View>
+      );
+    }
+
+    if (type === "add") {
+      return (
+        <Pressable
+          onPress={handleAddPhoto}
+          disabled={isLoading}
+          style={[
+            styles.addPhotoButton,
+            itemStyle,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <>
+              <Ionicons
+                name="camera-outline"
+                size={32}
+                color={colors.textSecondary}
+              />
+              {index === 0 && (
+                <ThemedText
+                  style={[
+                    styles.addPhotoLabel,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t("screens.onboarding.photosMainLabel")}
+                </ThemedText>
+              )}
+            </>
+          )}
+        </Pressable>
+      );
+    }
+
+    // Empty
+    return (
+      <View
+        style={[
+          styles.addPhotoButton,
+          itemStyle,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            opacity: 0.5,
+          },
+        ]}
+      />
+    );
+  };
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: any; index: number }) => {
+      const itemStyle = { width: itemWidth, height: itemHeight };
+
+      return (
+        <View style={[styles.photoContainer, itemStyle]}>
+          <View style={styles.photoWrapper}>
+            <Image
+              source={item.uri}
+              style={styles.photo}
+              contentFit="cover"
+              transition={0}
+              cachePolicy="memory-disk"
+            />
+            {index === 0 && (
+              <View
+                style={[styles.mainBadge, { backgroundColor: colors.accent }]}
+              >
+                <ThemedText style={styles.mainBadgeText}>
+                  {t("screens.onboarding.photosMainLabel")}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+          <Pressable
+            style={[
+              styles.removeButton,
+              {
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => handlePhotoAction(index)}
+          >
+            <XIcon width={20} height={20} color="#FFFFFF" />
+          </Pressable>
+        </View>
+      );
+    },
+    [colors, itemWidth, itemHeight]
+  );
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = ({ data }: { data: typeof sortableData }) => {
+    setIsDragging(false);
+    const newPhotos = data.map((item) => item.uri);
+    onPhotosChange(newPhotos);
+  };
 
   return (
     <View>
-      <View style={styles.gridContainer}>
-        {slots.map((_, index) => (
-          <View key={index} style={styles.photoSlot}>
-            {photos[index] ? (
-              <>
-                <View style={styles.photoContainer}>
-                  <Image
-                    source={{ uri: photos[index] }}
-                    style={styles.photo}
-                    resizeMode="cover"
-                  />
-                  {index === 0 && (
-                    <View
-                      style={[
-                        styles.mainBadge,
-                        { backgroundColor: colors.accent },
-                      ]}
-                    >
-                      <ThemedText style={styles.mainBadgeText}>
-                        {t("screens.onboarding.photosMainLabel")}
-                      </ThemedText>
-                    </View>
-                  )}
-                </View>
-                <Pressable
-                  style={[
-                    styles.removeButton,
-                    {
-                      backgroundColor: colors.surface,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  onPress={() => handlePhotoAction(index)}
-                >
-                  <XIcon width={20} height={20} color="#FFFFFF" />
-                </Pressable>
-              </>
-            ) : (
-              <Pressable
-                onPress={handleAddPhoto}
-                disabled={photos.length >= maxPhotos || isLoading}
-                style={[
-                  styles.addPhotoButton,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                {isLoading && index === photos.length ? (
-                  <ActivityIndicator size="small" color={colors.accent} />
-                ) : (
-                  <>
-                    <Ionicons
-                      name="camera-outline"
-                      size={32}
-                      color={colors.textSecondary}
-                    />
-                    {index === 0 && photos.length === 0 && (
-                      <ThemedText
-                        style={[
-                          styles.addPhotoLabel,
-                          { color: colors.textSecondary },
-                        ]}
-                      >
-                        {t("screens.onboarding.photosMainLabel")}
-                      </ThemedText>
-                    )}
-                  </>
-                )}
-              </Pressable>
-            )}
-          </View>
-        ))}
+      <View style={[styles.gridContainer, { height: containerHeight }]}>
+        {renderStaticItems()}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: isDragging ? 3 : 1,
+          }}
+        >
+          <Sortable.Grid
+            key={`grid-${photos.length}`}
+            columns={3}
+            data={sortableData}
+            renderItem={renderItem}
+            columnGap={spacing.sm}
+            rowGap={spacing.md}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          />
+        </View>
       </View>
 
       {showInfo && (
@@ -228,17 +374,12 @@ export function UserPhotoGrid({
 
 const styles = StyleSheet.create({
   gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
     marginBottom: spacing.lg,
   },
-  photoSlot: {
-    width: "31.5%",
-    aspectRatio: 3 / 4,
-    marginBottom: spacing.md,
-  },
   photoContainer: {
+    // Dimensions set dynamically
+  },
+  photoWrapper: {
     width: "100%",
     height: "100%",
     borderRadius: 18,
@@ -279,8 +420,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   addPhotoButton: {
-    width: "100%",
-    height: "100%",
+    // Dimensions set dynamically
     borderRadius: 18,
     borderWidth: 2,
     borderStyle: "dashed",

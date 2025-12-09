@@ -104,6 +104,8 @@ export type PlaceById = {
   type: string | null;
   types: string[];
   formattedAddress: string | null;
+  location: { latitude: number; longitude: number };
+  addressComponents: { longText: string; shortText: string; types: string[] }[];
 };
 
 export async function fetchPlacesByIds({
@@ -125,7 +127,7 @@ export async function fetchPlacesByIds({
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "id,displayName,formattedAddress,location,types",
+          "id,displayName,formattedAddress,location,types,addressComponents",
       },
     });
 
@@ -148,6 +150,11 @@ export async function fetchPlacesByIds({
       type: data.types?.[0] || null,
       types: data.types || [],
       formattedAddress: data.formattedAddress || null,
+      location: {
+        latitude: data.location?.latitude || 0,
+        longitude: data.location?.longitude || 0,
+      },
+      addressComponents: data.addressComponents || [],
     };
   };
 
@@ -231,3 +238,83 @@ export async function fetchPlacesAutocomplete({
     })) ?? []
   );
 }
+
+export type CityPlace = {
+  placeId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  formattedAddress: string | null;
+};
+
+export async function fetchCities({
+  input,
+}: {
+  input: string;
+}): Promise<CityPlace[]> {
+  const apiKey = ensureApiKey();
+
+  const body: Record<string, unknown> = {
+    input,
+    includedPrimaryTypes: ["locality"],
+  };
+
+  const response = await fetch(
+    "https://places.googleapis.com/v1/places:autocomplete",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Cities autocomplete failed: ${errorText}`);
+  }
+
+  const data: any = await response.json();
+  const suggestions = data?.suggestions || [];
+
+  const placeIds = suggestions
+    .map((s: any) => s.placePrediction?.placeId || s.placePrediction?.place)
+    .filter((id: string) => !!id);
+
+  if (placeIds.length === 0) {
+    return [];
+  }
+
+  const placesDetails = await fetchPlacesByIds({ placeIds });
+
+  return placesDetails.map((place) => {
+    const components = place.addressComponents || [];
+    const state = components.find((c) =>
+      c.types.includes("administrative_area_level_1")
+    )?.shortText;
+    const country = components.find((c) =>
+      c.types.includes("country")
+    )?.longText;
+
+    let displayAddress = place.formattedAddress;
+    if (state && country) {
+      displayAddress = `${state}, ${country}`;
+    } else if (state) {
+      displayAddress = state;
+    } else if (country) {
+      displayAddress = country;
+    }
+
+    return {
+      placeId: place.placeId,
+      name: place.name,
+      latitude: place.location.latitude,
+      longitude: place.location.longitude,
+      formattedAddress: displayAddress,
+    };
+  });
+}
+
+

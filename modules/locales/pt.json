@@ -29,7 +29,7 @@
     "skip": "Pular",
     "select": "Selecione",
     "loading": "Carregando...",
-    "select": "Selecione"
+    "of": "de"
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente."
@@ -39,7 +39,75 @@
       "title": "Perfil",
       "settings": "Configurações",
       "completeProfile": "Completar perfil",
+      "editProfile": "Editar perfil",
+      "preview": {
+        "title": "Meu perfil"
+      },
+      "work": "Profissão",
+      "location": "Localização",
+      "height": "Altura",
+      "languages": "Idiomas",
+      "edit": {
+        "languages": {
+          "title": "Idiomas que eu falo",
+          "subtitle": "Selecione até 5 idiomas que você fala para incluir no seu perfil"
+        }
+      },
       "yearsOld": "{{age}} anos",
+      "options": {
+        "education": {
+          "preferNotToSay": "Prefiro não informar",
+          "highSchool": "Ensino Médio",
+          "highSchoolDesc": "Conclusão do ensino médio",
+          "technical": "Técnico",
+          "technicalDesc": "Curso técnico profissionalizante",
+          "undergraduate": "Graduação",
+          "undergraduateDesc": "Cursando ou concluído",
+          "postgraduate": "Pós-graduação",
+          "postgraduateDesc": "Especialização ou MBA",
+          "masters": "Mestrado",
+          "mastersDesc": "Mestrado acadêmico",
+          "doctorate": "Doutorado",
+          "doctorateDesc": "Doutorado ou PhD"
+        },
+        "zodiac": {
+          "preferNotToSay": "Prefiro não informar",
+          "aries": "Áries",
+          "taurus": "Touro",
+          "gemini": "Gêmeos",
+          "cancer": "Câncer",
+          "leo": "Leão",
+          "virgo": "Virgem",
+          "libra": "Libra",
+          "scorpio": "Escorpião",
+          "sagittarius": "Sagitário",
+          "capricorn": "Capricórnio",
+          "aquarius": "Aquário",
+          "pisces": "Peixes"
+        },
+        "smoking": {
+          "social": "Fumo socialmente",
+          "socialDesc": "Apenas em eventos ou ocasiões especiais",
+          "no": "Eu não fumo",
+          "noDesc": "Não sou fumante",
+          "yes": "Eu fumo",
+          "yesDesc": "Fumante regular",
+          "quitting": "Tentando parar de fumar",
+          "quittingDesc": "Em processo de parar"
+        },
+        "gender": {
+          "female": "Mulher",
+          "male": "Homem",
+          "nonbinary": "Não binário"
+        },
+        "relationship": {
+          "single": "Solteiro(a)",
+          "dating": "Namorando",
+          "married": "Casado(a)",
+          "open": "Relacionamento aberto",
+          "complicated": "É complicado"
+        }
+      },
       "turbo": {
         "title": "Connect+",
         "subtitle": "Destaque seu perfil"
@@ -75,6 +143,8 @@
           "title": "Estilo de vida",
           "subtitle": "Como você vive seu dia a dia",
           "profession": "Profissão",
+          "jobTitle": "Cargo",
+          "company": "Empresa",
           "smoking": "Hábito de fumar"
         },
         "interests": {
@@ -87,7 +157,7 @@
           "title": "Mais sobre você",
           "subtitle": "Informações adicionais (opcional)",
           "education": "Educação",
-          "hometown": "Cidade natal",
+          "location": "Localização atual",
           "languages": "Idiomas",
           "zodiac": "Signo"
         },
@@ -194,7 +264,52 @@
       }
     },
     "home": {
-      "peopleBadge": "{{count}} pessoas"
+      "heroTitle": "Onde você quer se conectar hoje?",
+      "heroSubtitle": "Escolha o tipo de lugar e descubra quem está por lá.",
+      "placeDetected": {
+        "title": "Local detectado",
+        "message": "Você está em {{placeName}}?"
+      },
+      "toolbar": {
+        "filters": "Filtros",
+        "search": "Pesquisar"
+      },
+      "infoTitle": "Como funciona?",
+      "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
+      "categories": {
+        "highlighted": {
+          "title": "Movimentados agora",
+          "description": "Lugares cheios e com gente se conectando."
+        },
+        "favorites": {
+          "title": "Locais favoritos",
+          "description": "Seus lugares preferidos para se conectar."
+        },
+        "nightlife": {
+          "title": "Bares & baladas",
+          "description": "Pra sair e conhecer gente nova."
+        },
+        "cafes": {
+          "title": "Cafés & bate-papo",
+          "description": "Lugares pra conversar e relaxar."
+        },
+        "university": {
+          "title": "Vida universitária",
+          "description": "Onde os encontros acontecem na rotina."
+        },
+        "fitness": {
+          "title": "Bem-estar & movimento",
+          "description": "Conexões que começam no treino."
+        },
+        "parks": {
+          "title": "Parques & ar livre",
+          "description": "Encontros ao ar livre e na natureza."
+        },
+        "restaurants": {
+          "title": "Restaurantes",
+          "description": "Conexões que começam à mesa."
+        }
+      }
     },
     "premiumPaywall": {
       "badge": "BUMPTI PREMIUM",
@@ -390,54 +505,6 @@
       "clearButton": "Limpar busca",
       "addressFallback": "Endereço indisponível"
     },
-    "home": {
-      "heroTitle": "Onde você quer se conectar hoje?",
-      "heroSubtitle": "Escolha o tipo de lugar e descubra quem está por lá.",
-      "placeDetected": {
-        "title": "Local detectado",
-        "message": "Você está em {{placeName}}?"
-      },
-      "toolbar": {
-        "filters": "Filtros",
-        "search": "Pesquisar"
-      },
-      "infoTitle": "Como funciona?",
-      "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
-      "categories": {
-        "highlighted": {
-          "title": "Movimentados agora",
-          "description": "Lugares cheios e com gente se conectando."
-        },
-        "favorites": {
-          "title": "Locais favoritos",
-          "description": "Seus lugares preferidos para se conectar."
-        },
-        "nightlife": {
-          "title": "Bares & baladas",
-          "description": "Pra sair e conhecer gente nova."
-        },
-        "cafes": {
-          "title": "Cafés & bate-papo",
-          "description": "Lugares pra conversar e relaxar."
-        },
-        "university": {
-          "title": "Vida universitária",
-          "description": "Onde os encontros acontecem na rotina."
-        },
-        "fitness": {
-          "title": "Bem-estar & movimento",
-          "description": "Conexões que começam no treino."
-        },
-        "parks": {
-          "title": "Parques & ar livre",
-          "description": "Encontros ao ar livre e na natureza."
-        },
-        "restaurants": {
-          "title": "Restaurantes",
-          "description": "Conexões que começam à mesa."
-        }
-      }
-    },
     "chat": {
       "title": "Conexões",
       "messagePlaceholder": "Digite uma mensagem...",
@@ -541,6 +608,13 @@
     "favorite": "Favorito",
     "visitCount": "{{count}}x aqui",
     "nearLocation": "Próximo de {{location}}",
+    "work": "Profissão",
+    "location": "Localização",
+    "height": "Altura",
+    "languages": "Idiomas",
+    "relationship": "Relacionamento",
+    "smoking": "Hábito de fumo",
+    "education": "Escolaridade",
     "interest": "INTERESSE",
     "favoritePlaces": "LOCAIS FAVORITOS",
     "lookingFor": {
@@ -641,5 +715,141 @@
       "remove": "Remover foto",
       "add": "Adicionar nova foto"
     }
+  },
+  "languages": {
+    "af": "africâner",
+    "sq": "albanês",
+    "am": "amárico",
+    "ar": "árabe",
+    "hy": "armênio",
+    "asl": "asl",
+    "as": "assamês",
+    "ay": "aimará",
+    "az": "azerbaijano",
+    "bm": "bambara",
+    "eu": "basco",
+    "be": "bielorrusso",
+    "bn": "bengali",
+    "bho": "bhojpuri",
+    "bs": "bósnio",
+    "br": "bretão",
+    "bg": "búlgaro",
+    "my": "birmanês",
+    "yue": "cantonês",
+    "ca": "catalão",
+    "ceb": "cebuano",
+    "ny": "nianja",
+    "co": "corso",
+    "hr": "croata",
+    "cs": "tcheco",
+    "da": "dinamarquês",
+    "dv": "divehi",
+    "doi": "dogri",
+    "nl": "holandês",
+    "en": "inglês",
+    "eo": "esperanto",
+    "et": "estoniano",
+    "ee": "ewe",
+    "asl": "língua de sinais americana",
+    "fil": "filipino",
+    "fi": "finlandês",
+    "fr": "francês",
+    "fy": "frísio ocidental",
+    "gl": "galego",
+    "ka": "georgiano",
+    "de": "alemão",
+    "el": "grego",
+    "gn": "guarani",
+    "gu": "guzerate",
+    "ht": "haitiano",
+    "ha": "hauçá",
+    "haw": "havaiano",
+    "he": "hebraico",
+    "hi": "híndi",
+    "hmn": "hmong",
+    "hu": "húngaro",
+    "is": "islandês",
+    "ig": "igbo",
+    "ilo": "ilocano",
+    "id": "indonésio",
+    "ga": "irlandês",
+    "it": "italiano",
+    "ja": "japonês",
+    "jv": "javanês",
+    "kn": "canarim",
+    "kk": "cazaque",
+    "km": "khmer",
+    "rw": "quiniaruanda",
+    "gom": "concani",
+    "ko": "coreano",
+    "kri": "kri",
+    "ku": "curdo",
+    "ky": "quirguiz",
+    "lo": "laosiano",
+    "la": "latim",
+    "lv": "letão",
+    "ln": "lingala",
+    "lt": "lituano",
+    "lg": "luganda",
+    "lb": "luxemburguês",
+    "mk": "macedônio",
+    "mai": "maithili",
+    "mg": "malgaxe",
+    "ms": "malaio",
+    "ml": "malaiala",
+    "mt": "maltês",
+    "mn": "mongol",
+    "mni": "manipuri",
+    "mi": "maori",
+    "mr": "marati",
+    "lus": "lushai",
+    "ne": "nepalês",
+    "no": "norueguês",
+    "or": "oriá",
+    "om": "oromo",
+    "ps": "pashto",
+    "fa": "persa",
+    "pl": "polonês",
+    "pt": "português",
+    "pa": "panjabi",
+    "qu": "quíchua",
+    "ro": "romeno",
+    "ru": "russo",
+    "sm": "samoano",
+    "sa": "sânscrito",
+    "gd": "gaélico escocês",
+    "nso": "soto setentrional",
+    "sr": "sérvio",
+    "st": "soto do sul",
+    "sn": "xona",
+    "sd": "sindi",
+    "si": "cingalês",
+    "sk": "eslovaco",
+    "sl": "esloveno",
+    "so": "somali",
+    "es": "espanhol",
+    "su": "sundanês",
+    "sw": "suaíli",
+    "sv": "sueco",
+    "tg": "tadjique",
+    "ta": "tâmil",
+    "tt": "tártaro",
+    "te": "télugo",
+    "th": "tailandês",
+    "ti": "tigrínia",
+    "ts": "tsonga",
+    "tr": "turco",
+    "tk": "turcomeno",
+    "ak": "akan",
+    "uk": "ucraniano",
+    "ur": "urdu",
+    "ug": "uigur",
+    "uz": "uzbeque",
+    "vi": "vietnamita",
+    "cy": "galês",
+    "xh": "xhosa",
+    "yi": "iídiche",
+    "yo": "iorubá",
+    "zu": "zulu"
   }
 }

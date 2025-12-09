@@ -1,14 +1,25 @@
 import { ArrowRightIcon, CheckIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { LanguagesStep } from "@/components/profile-edit/languages-step";
+import { LocationStep } from "@/components/profile-edit/location-step";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
-import { ThemedText } from "@/components/themed-text";
+import { InputText } from "@/components/ui/input-text";
 import { SelectionCard } from "@/components/ui/selection-card";
+import {
+  EDUCATION_OPTIONS,
+  GENDER_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  SMOKING_OPTIONS,
+  ZODIAC_OPTIONS,
+} from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
+import { logger } from "@/utils/logger";
 import {
   getNextMissingField,
   PROFILE_FIELDS_ORDER,
@@ -16,14 +27,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform, StyleSheet, TextInput, View } from "react-native";
 
 const HEIGHT_OPTIONS = [
   { label: "< 91 cm", value: 90 },
@@ -34,76 +38,13 @@ const HEIGHT_OPTIONS = [
   { label: "> 220 cm", value: 221 },
 ];
 
-const EDUCATION_OPTIONS = [
-  { id: "", label: "Prefiro não informar" },
-  {
-    id: "high_school",
-    label: "Ensino Médio",
-    description: "Conclusão do ensino médio",
-  },
-  {
-    id: "technical",
-    label: "Técnico",
-    description: "Curso técnico profissionalizante",
-  },
-  {
-    id: "undergraduate",
-    label: "Graduação",
-    description: "Cursando ou concluído",
-  },
-  {
-    id: "postgraduate",
-    label: "Pós-graduação",
-    description: "Especialização ou MBA",
-  },
-  { id: "masters", label: "Mestrado", description: "Mestrado acadêmico" },
-  { id: "doctorate", label: "Doutorado", description: "Doutorado ou PhD" },
-];
-
-const ZODIAC_OPTIONS = [
-  { id: "", label: "Prefiro não informar" },
-  { id: "aries", label: "Áries" },
-  { id: "taurus", label: "Touro" },
-  { id: "gemini", label: "Gêmeos" },
-  { id: "cancer", label: "Câncer" },
-  { id: "leo", label: "Leão" },
-  { id: "virgo", label: "Virgem" },
-  { id: "libra", label: "Libra" },
-  { id: "scorpio", label: "Escorpião" },
-  { id: "sagittarius", label: "Sagitário" },
-  { id: "capricorn", label: "Capricórnio" },
-  { id: "aquarius", label: "Aquário" },
-  { id: "pisces", label: "Peixes" },
-];
-
-const SMOKING_OPTIONS = [
-  {
-    id: "social",
-    label: "Fumo socialmente",
-    description: "Apenas em eventos ou ocasiões especiais",
-  },
-  { id: "no", label: "Eu não fumo", description: "Não sou fumante" },
-  { id: "yes", label: "Eu fumo", description: "Fumante regular" },
-  {
-    id: "quitting",
-    label: "Tentando parar de fumar",
-    description: "Em processo de parar",
-  },
-];
-
-const GENDER_OPTIONS = [
-  { id: "female", label: "Mulher" },
-  { id: "male", label: "Homem" },
-  { id: "nonbinary", label: "Não binário" },
-];
-
-const RELATIONSHIP_OPTIONS = [
-  { id: "single", label: "Solteiro(a)" },
-  { id: "dating", label: "Namorando" },
-  { id: "married", label: "Casado(a)" },
-  { id: "open", label: "Relacionamento aberto" },
-  { id: "complicated", label: "É complicado" },
-];
+const FIELD_DB_KEYS: Record<string, string> = {
+  education: "education_key",
+  zodiac: "zodiac_key",
+  smoking: "smoking_key",
+  relationshipStatus: "relationship_key",
+  height: "height_cm",
+};
 
 export default function EditFieldScreen() {
   const { field } = useLocalSearchParams<{ field: string }>();
@@ -111,22 +52,78 @@ export default function EditFieldScreen() {
   const colors = useThemeColors();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
-  const insets = useSafeAreaInsets();
 
-  const [value, setValue] = useState<any>(
-    profile ? (profile as any)[field] : ""
-  );
+  const getInitialValue = () => {
+    if (!profile) {
+      return field === "profession"
+        ? { jobTitle: "", companyName: "" }
+        : "";
+    }
+
+    if (field === "profession") {
+      return {
+        jobTitle: (profile as any).job_title ?? "",
+        companyName: (profile as any).company_name ?? "",
+      };
+    }
+
+    const dbKey = FIELD_DB_KEYS[field] || field;
+    return (profile as any)[dbKey] ?? "";
+  };
+
+  const [value, setValue] = useState<any>(getInitialValue);
 
   useEffect(() => {
-    if (profile) {
-      setValue((profile as any)[field] || "");
-    }
-  }, [field]);
+    setValue(getInitialValue());
+  }, [field, profile]);
 
   const handleSave = () => {
     if (profile) {
-      const updatedProfile = { ...profile, [field]: value };
+      let updatedProfile = { ...profile };
+      let apiPayload: any = {};
+
+      if (field === "profession") {
+        const currentValue =
+          (value as { jobTitle?: string; companyName?: string }) || {};
+        const jobTitleValue =
+          currentValue.jobTitle && currentValue.jobTitle.trim().length > 0
+            ? currentValue.jobTitle.trim()
+            : null;
+        const companyNameValue =
+          currentValue.companyName &&
+          currentValue.companyName.trim().length > 0
+            ? currentValue.companyName.trim()
+            : null;
+
+        updatedProfile = {
+          ...updatedProfile,
+          job_title: jobTitleValue,
+          company_name: companyNameValue,
+        };
+        apiPayload = {
+          job_title: jobTitleValue,
+          company_name: companyNameValue,
+        };
+      } else if (field === "location" && typeof value === "object") {
+        // Handle location object update (merging multiple fields)
+        updatedProfile = { ...updatedProfile, ...value };
+        // Also update the legacy/display field if needed, though we should probably migrate to using city_name
+        updatedProfile.location = value.location || value.city_name;
+        apiPayload = { ...value };
+      } else {
+        const dbKey = FIELD_DB_KEYS[field] || field;
+
+        updatedProfile = { ...updatedProfile, [dbKey]: value };
+        apiPayload = { [dbKey]: value };
+      }
+
+      // Optimistic update
       dispatch(setProfile(updatedProfile));
+
+      // Background API update
+      updateProfile(apiPayload).catch((error) => {
+        logger.error("Failed to update profile field", error);
+      });
 
       const nextFieldKey = getNextMissingField(field, updatedProfile);
 
@@ -160,9 +157,34 @@ export default function EditFieldScreen() {
 
   const renderContent = () => {
     switch (field) {
+      case "profession": {
+        const currentValue =
+          (value as { jobTitle?: string; companyName?: string }) || {};
+        const jobTitle = currentValue.jobTitle ?? "";
+        const companyName = currentValue.companyName ?? "";
+
+        return (
+          <View style={{ gap: spacing.md }}>
+            <InputText
+              value={jobTitle}
+              onChangeText={(text) => {
+                setValue({ jobTitle: text, companyName });
+              }}
+              placeholder={t("screens.profile.profileEdit.lifestyle.jobTitle")}
+              autoFocus
+            />
+            <InputText
+              value={companyName}
+              onChangeText={(text) => {
+                setValue({ jobTitle, companyName: text });
+              }}
+              placeholder={t("screens.profile.profileEdit.lifestyle.company")}
+            />
+          </View>
+        );
+      }
+
       case "bio":
-      case "profession":
-      case "hometown":
         return (
           <TextInput
             style={[
@@ -172,7 +194,7 @@ export default function EditFieldScreen() {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,
               },
-              field === "bio" && styles.textArea,
+              styles.textArea,
             ]}
             value={value}
             onChangeText={setValue}
@@ -180,11 +202,14 @@ export default function EditFieldScreen() {
               `screens.profile.profileEdit.profile.${field}Placeholder`
             )}
             placeholderTextColor={colors.textSecondary}
-            multiline={field === "bio"}
-            textAlignVertical={field === "bio" ? "top" : "center"}
+            multiline
+            textAlignVertical="top"
             autoFocus
           />
         );
+
+      case "location":
+        return <LocationStep value={value} onChange={setValue} />;
 
       case "height":
         return (
@@ -242,8 +267,12 @@ export default function EditFieldScreen() {
             {options.map((option) => (
               <SelectionCard
                 key={option.id}
-                label={option.label}
-                description={(option as any).description}
+                label={t(option.labelKey)}
+                description={
+                  (option as any).descriptionKey
+                    ? t((option as any).descriptionKey)
+                    : undefined
+                }
                 isSelected={value === option.id}
                 onPress={() => setValue(option.id)}
               />
@@ -253,11 +282,11 @@ export default function EditFieldScreen() {
       }
 
       case "languages":
-        // TODO: Implement language selection
         return (
-          <ThemedText style={{ color: colors.text }}>
-            Language selection coming soon
-          </ThemedText>
+          <LanguagesStep
+            selectedLanguages={Array.isArray(value) ? value : []}
+            onLanguagesChange={setValue}
+          />
         );
 
       case "spots":
@@ -285,10 +314,10 @@ export default function EditFieldScreen() {
         return t("screens.profile.profileEdit.lifestyle.smoking");
       case "education":
         return t("screens.profile.profileEdit.more.education");
-      case "hometown":
-        return t("screens.profile.profileEdit.more.hometown");
+      case "location":
+        return t("screens.profile.profileEdit.more.location");
       case "languages":
-        return t("screens.profile.profileEdit.more.languages");
+        return t("screens.profile.edit.languages.title");
       case "zodiac":
         return t("screens.profile.profileEdit.more.zodiac");
       default:
@@ -301,7 +330,10 @@ export default function EditFieldScreen() {
   return (
     <BaseTemplateScreen
       isModal
-      scrollEnabled={field !== "height"}
+      scrollEnabled={
+        field !== "height" && field !== "languages" && field !== "location"
+      }
+      contentContainerStyle={styles.content}
       TopHeader={
         <ScreenToolbar
           title={getTitle()}
@@ -328,16 +360,14 @@ export default function EditFieldScreen() {
         />
       }
     >
-      <ScrollView contentContainerStyle={styles.content}>
-        {renderContent()}
-      </ScrollView>
+      {renderContent()}
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    padding: spacing.md,
+    paddingBottom: 0,
   },
   input: {
     padding: spacing.md,
