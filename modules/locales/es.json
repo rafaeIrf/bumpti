@@ -29,7 +29,8 @@
     "skip": "Saltar",
     "select": "Seleccionar",
     "loading": "Cargando...",
-    "select": "Seleccionar"
+    "select": "Seleccione",
+    "of": "de"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo."
@@ -39,7 +40,68 @@
       "title": "Perfil",
       "settings": "Configuración",
       "completeProfile": "Completar perfil",
+      "editProfile": "Editar perfil",
+      "edit": {
+        "languages": {
+          "title": "Idiomas que hablo",
+          "subtitle": "Selecciona hasta 5 idiomas que hablas para incluir en tu perfil"
+        }
+      },
       "yearsOld": "{{age}} años",
+      "options": {
+        "education": {
+          "preferNotToSay": "Prefiero no decir",
+          "highSchool": "Escuela secundaria",
+          "highSchoolDesc": "Diploma de escuela secundaria",
+          "technical": "Técnico",
+          "technicalDesc": "Curso técnico profesional",
+          "undergraduate": "Licenciatura",
+          "undergraduateDesc": "Estudiando o completado",
+          "postgraduate": "Posgrado",
+          "postgraduateDesc": "Especialización o MBA",
+          "masters": "Maestría",
+          "mastersDesc": "Maestría académica",
+          "doctorate": "Doctorado",
+          "doctorateDesc": "Doctorado o PhD"
+        },
+        "zodiac": {
+          "preferNotToSay": "Prefiero no decir",
+          "aries": "Aries",
+          "taurus": "Tauro",
+          "gemini": "Géminis",
+          "cancer": "Cáncer",
+          "leo": "Leo",
+          "virgo": "Virgo",
+          "libra": "Libra",
+          "scorpio": "Escorpio",
+          "sagittarius": "Sagitario",
+          "capricorn": "Capricornio",
+          "aquarius": "Acuario",
+          "pisces": "Piscis"
+        },
+        "smoking": {
+          "social": "Socialmente",
+          "socialDesc": "Solo en eventos u ocasiones especiales",
+          "no": "No fumo",
+          "noDesc": "No fumador",
+          "yes": "Fumo",
+          "yesDesc": "Fumador regular",
+          "quitting": "Intentando dejarlo",
+          "quittingDesc": "En proceso de dejarlo"
+        },
+        "gender": {
+          "female": "Mujer",
+          "male": "Hombre",
+          "nonbinary": "No binario"
+        },
+        "relationship": {
+          "single": "Soltero(a)",
+          "dating": "Saliendo",
+          "married": "Casado(a)",
+          "open": "Relación abierta",
+          "complicated": "Es complicado"
+        }
+      },
       "turbo": {
         "title": "Connect+",
         "subtitle": "Destaca tu perfil"
@@ -87,7 +149,7 @@
           "title": "Más sobre ti",
           "subtitle": "Información adicional (opcional)",
           "education": "Educación",
-          "hometown": "Ciudad natal",
+          "location": "Ubicación actual",
           "languages": "Idiomas",
           "zodiac": "Signo"
         },

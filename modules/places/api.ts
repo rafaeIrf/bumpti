@@ -1,5 +1,22 @@
 import { supabase } from "@/modules/supabase/client";
-import { Place, PlaceCategory } from "./types";
+import { CityPrediction, Place, PlaceCategory } from "./types";
+
+export async function searchCities(
+  input: string
+): Promise<CityPrediction[]> {
+  const { data, error } = await supabase.functions.invoke<{
+    places: CityPrediction[];
+  }>("search-cities", {
+    body: { input },
+  });
+
+  if (error) {
+    console.error("search-cities (edge) error:", error);
+    return [];
+  }
+
+  return data?.places || [];
+}
 
 export async function searchPlacesByText(
   input: string,

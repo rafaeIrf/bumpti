@@ -22,7 +22,8 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
-import { prefetchImage } from "@/utils/image-prefetch";
+import { prefetchImages } from "@/utils/image-prefetch";
+import { calculateProfileCompletion } from "@/utils/profile-completion";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -191,23 +192,28 @@ export default function ProfileScreen() {
   const profilePhoto =
     profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
-  // Prefetch profile photo
+  const allProfilePhotos = React.useMemo(() => {
+    const photos =
+      profile?.photos?.map((p) => p.url) || onboardingUserData.photoUris || [];
+    return photos.filter(Boolean);
+  }, [profile?.photos, onboardingUserData.photoUris]);
+
+  // Prefetch profile photos
   React.useEffect(() => {
-    if (profilePhoto) {
-      prefetchImage(profilePhoto)
+    if (allProfilePhotos.length > 0) {
+      prefetchImages(allProfilePhotos)
         .then(() => setIsLoadingImage(false))
         .catch(() => setIsLoadingImage(false));
     } else {
       setIsLoadingImage(false);
     }
-  }, [profilePhoto]);
+  }, [allProfilePhotos]);
 
   // Update progress from profile data
   React.useEffect(() => {
-    if (typeof profile?.completion === "number") {
-      setProfileProgress(Math.max(0, Math.min(1, profile.completion)));
-    }
-  }, [profile?.completion]);
+    const completion = calculateProfileCompletion(profile);
+    setProfileProgress(completion);
+  }, [profile]);
 
   const completionText = `${Math.round(profileProgress * 100)}%`;
 
@@ -330,7 +336,11 @@ export default function ProfileScreen() {
               onPress={handleCompleteProfile}
               size="sm"
               style={styles.profileButton}
-              label={t("screens.profile.completeProfile")}
+              label={
+                profileProgress >= 1
+                  ? t("screens.profile.editProfile")
+                  : t("screens.profile.completeProfile")
+              }
             />
           </View>
         </Animated.View>

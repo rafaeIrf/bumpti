@@ -22,7 +22,7 @@ type ButtonVariant =
   | "ghost"
   | "link";
 
-export type ButtonSize = "default" | "sm" | "lg" | "icon";
+export type ButtonSize = "default" | "sm" | "lg" | "icon" | "fab";
 
 export interface ButtonProps extends Omit<PressableProps, "style"> {
   variant?: ButtonVariant;
@@ -127,6 +127,11 @@ function getSizeStyles(size: ButtonSize, fullWidth?: boolean) {
     case "icon":
       base.container.minHeight = 36;
       base.container.width = 36;
+      base.container.paddingHorizontal = 0;
+      break;
+    case "fab":
+      base.container.minHeight = 56;
+      base.container.width = 56;
       base.container.paddingHorizontal = 0;
       break;
     case "default":

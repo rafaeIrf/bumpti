@@ -10,9 +10,17 @@ export const PROFILE_FIELDS_ORDER = [
   "smoking",
   "spots",
   "education",
-  "hometown",
+  "location",
   "zodiac",
 ];
+
+const FIELD_DB_KEYS: Record<string, string> = {
+  education: "education_key",
+  zodiac: "zodiac_key",
+  smoking: "smoking_key",
+  relationshipStatus: "relationship_key",
+  height: "height_cm",
+};
 
 export function getNextMissingField(
   currentField: string,
@@ -30,7 +38,8 @@ export function getNextMissingField(
     if (nextFieldKey === "spots") {
       isEmpty = !profile.favoritePlaces || profile.favoritePlaces.length === 0;
     } else {
-      const val = profile[nextFieldKey as keyof ProfileData];
+      const dbKey = FIELD_DB_KEYS[nextFieldKey] || nextFieldKey;
+      const val = profile[dbKey as keyof ProfileData];
       isEmpty = val === null || val === undefined || val === "";
     }
 

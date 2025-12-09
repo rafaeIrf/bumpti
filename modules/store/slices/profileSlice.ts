@@ -13,14 +13,14 @@ export type ProfileData = {
   photos?: { url: string; position: number }[];
   updatedAt?: string | null;
   bio?: string | null;
-  height?: number | null;
+  height_cm?: number | null;
   profession?: string | null;
-  smoking?: string | null;
-  education?: string | null;
-  hometown?: string | null;
+  smoking_key?: string | null;
+  education_key?: string | null;
+  location?: string | null;
   languages?: string[] | null;
-  zodiac?: string | null;
-  relationshipStatus?: string | null;
+  zodiac_key?: string | null;
+  relationship_key?: string | null;
   favoritePlaces?: any[] | null;
 };
 

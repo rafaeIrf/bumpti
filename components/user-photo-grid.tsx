@@ -6,12 +6,13 @@ import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Pressable,
   StyleSheet,
   View,
@@ -61,7 +62,7 @@ export function UserPhotoGrid({
         );
       }
     } catch (error) {
-      console.error("Erro ao adicionar foto:", error);
+      logger.error("Erro ao adicionar foto:", error);
       Alert.alert(
         t("common.error"),
         t("components.userPhotoGrid.addPhotoError")
@@ -90,7 +91,7 @@ export function UserPhotoGrid({
         }
       }
     } catch (error) {
-      console.error("Erro ao substituir foto:", error);
+      logger.error("Erro ao substituir foto:", error);
     }
   };
 
@@ -130,9 +131,10 @@ export function UserPhotoGrid({
               <>
                 <View style={styles.photoContainer}>
                   <Image
-                    source={{ uri: photos[index] }}
+                    source={photos[index]}
                     style={styles.photo}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    transition={200}
                   />
                   {index === 0 && (
                     <View

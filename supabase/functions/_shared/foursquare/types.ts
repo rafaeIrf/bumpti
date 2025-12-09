@@ -104,6 +104,6 @@ export interface SearchNearbyPlacesParams {
 
 export interface GetPlaceDetailsParams {
   fsq_ids: string[];
-  userLat: number;
-  userLng: number;
+  userLat?: number;
+  userLng?: number;
 }

@@ -46,6 +46,15 @@ export default function CompleteScreen() {
         age_range_min: profileResponse?.age_range_min ?? null,
         age_range_max: profileResponse?.age_range_max ?? null,
         bio: profileResponse?.bio ?? null,
+        favoritePlaces: profileResponse?.favoritePlaces ?? [],
+        height_cm: profileResponse?.height_cm ?? null,
+        profession: profileResponse?.profession ?? null,
+        smoking_key: profileResponse?.smoking_key ?? null,
+        education_key: profileResponse?.education_key ?? null,
+        location: profileResponse?.location ?? null,
+        languages: profileResponse?.languages ?? [],
+        zodiac_key: profileResponse?.zodiac_key ?? null,
+        relationship_key: profileResponse?.relationship_key ?? null,
       });
       onboardingActions.completeOnboarding();
       router.replace("/(tabs)/(home)");

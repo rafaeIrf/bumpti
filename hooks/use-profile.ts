@@ -36,6 +36,15 @@ export function useProfile(options: UseProfileOptions = {}) {
           photos: data?.photos ?? [],
           updatedAt: data?.updated_at ?? null,
           bio: data?.bio ?? null,
+          favoritePlaces: data?.favoritePlaces ?? [],
+          height_cm: data?.height_cm ?? null,
+          profession: data?.profession ?? null,
+          smoking_key: data?.smoking_key ?? null,
+          education_key: data?.education_key ?? null,
+          location: data?.location ?? null,
+          languages: data?.languages ?? [],
+          zodiac_key: data?.zodiac_key ?? null,
+          relationship_key: data?.relationship_key ?? null,
         });
       }
     } catch (err: any) {

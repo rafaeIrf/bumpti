@@ -16,14 +16,24 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { UserPhotoGrid } from "@/components/user-photo-grid";
+import { LANGUAGES } from "@/constants/languages";
+import {
+  EDUCATION_OPTIONS,
+  GENDER_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  SMOKING_OPTIONS,
+  ZODIAC_OPTIONS,
+} from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { updateProfilePhotos } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
+import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SvgProps } from "react-native-svg";
 
 type FieldType =
@@ -34,7 +44,7 @@ type FieldType =
   | "profession"
   | "height"
   | "education"
-  | "hometown"
+  | "location"
   | "languages"
   | "zodiac"
   | "smoking"
@@ -76,17 +86,28 @@ function EditRow({
           <Icon size={20} color={colors.textSecondary} />
         )}
         <View style={styles.rowText}>
-          <ThemedText
-            style={[typography.caption, { color: colors.textSecondary }]}
-          >
-            {label}
-          </ThemedText>
-          <ThemedText
-            style={[typography.body, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {value || t("screens.profile.profileEdit.add")}
-          </ThemedText>
+          {value ? (
+            <>
+              <ThemedText
+                style={[typography.caption, { color: colors.textSecondary }]}
+              >
+                {label}
+              </ThemedText>
+              <ThemedText
+                style={[typography.body, { color: colors.text }]}
+                numberOfLines={1}
+              >
+                {value}
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText
+              style={[typography.body, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {label}
+            </ThemedText>
+          )}
         </View>
       </View>
       <ArrowRightIcon width={20} height={20} color={colors.textSecondary} />
@@ -103,7 +124,7 @@ function SectionHeader({ title, subtitle }: SectionHeaderProps) {
   const colors = useThemeColors();
   return (
     <View style={styles.sectionHeader}>
-      <ThemedText style={[typography.heading, { color: colors.text }]}>
+      <ThemedText style={[typography.subheading, { color: colors.text }]}>
         {title}
       </ThemedText>
       <ThemedText style={[typography.body, { color: colors.textSecondary }]}>
@@ -121,13 +142,24 @@ export default function ProfileEditScreen() {
 
   const photos = profile?.photos?.map((p) => p.url) || [];
 
-  const handlePhotosChange = (newPhotos: string[]) => {
-    if (profile) {
-      const updatedPhotos = newPhotos.map((url, index) => ({
-        url,
-        position: index,
-      }));
-      dispatch(setProfile({ ...profile, photos: updatedPhotos }));
+  const handlePhotosChange = async (newPhotos: string[]) => {
+    if (!profile) return;
+
+    // Optimistic update
+    const optimisticPhotos = newPhotos.map((url, index) => ({
+      url,
+      position: index,
+    }));
+    dispatch(setProfile({ ...profile, photos: optimisticPhotos }));
+
+    try {
+      const updatedProfile = await updateProfilePhotos(newPhotos);
+      if (updatedProfile) {
+        dispatch(setProfile(updatedProfile));
+      }
+    } catch (error) {
+      logger.error("Failed to update photos:", error);
+      Alert.alert(t("common.error"), t("errors.generic"));
     }
   };
 
@@ -140,6 +172,53 @@ export default function ProfileEditScreen() {
       pathname: "/(tabs)/(profile)/edit/[field]",
       params: { field },
     });
+  };
+
+  const getTranslatedValue = (
+    field: FieldType,
+    value: string | null | undefined
+  ) => {
+    if (!value) return "";
+
+    switch (field) {
+      case "gender":
+        return (
+          t(
+            GENDER_OPTIONS.find((o) => o.id === value)?.labelKey ||
+              `screens.profile.options.gender.${value}`
+          ) || value
+        );
+      case "relationshipStatus":
+        return (
+          t(
+            RELATIONSHIP_OPTIONS.find((o) => o.id === value)?.labelKey ||
+              `screens.profile.options.relationship.${value}`
+          ) || value
+        );
+      case "smoking":
+        return (
+          t(
+            SMOKING_OPTIONS.find((o) => o.id === value)?.labelKey ||
+              `screens.profile.options.smoking.${value}`
+          ) || value
+        );
+      case "education":
+        return (
+          t(
+            EDUCATION_OPTIONS.find((o) => o.id === value)?.labelKey ||
+              `screens.profile.options.education.${value}`
+          ) || value
+        );
+      case "zodiac":
+        return (
+          t(
+            ZODIAC_OPTIONS.find((o) => o.id === value)?.labelKey ||
+              `screens.profile.options.zodiac.${value}`
+          ) || value
+        );
+      default:
+        return value;
+    }
   };
 
   return (
@@ -193,7 +272,7 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={UserRoundIcon}
             label={t("screens.profile.profileEdit.personalInfo.gender")}
-            value={profile?.gender || ""}
+            value={getTranslatedValue("gender", profile?.gender)}
             onPress={() => handleFieldPress("gender")}
           />
           <EditRow
@@ -201,13 +280,16 @@ export default function ProfileEditScreen() {
             label={t(
               "screens.profile.profileEdit.personalInfo.relationshipStatus"
             )}
-            value={profile?.relationshipStatus || ""}
+            value={getTranslatedValue(
+              "relationshipStatus",
+              profile?.relationship_key
+            )}
             onPress={() => handleFieldPress("relationshipStatus")}
           />
           <EditRow
             icon={SlidersHorizontalIcon}
             label={t("screens.profile.profileEdit.personalInfo.height")}
-            value={profile?.height ? `${profile.height} cm` : ""}
+            value={profile?.height_cm ? `${profile.height_cm} cm` : ""}
             onPress={() => handleFieldPress("height")}
           />
         </View>
@@ -227,7 +309,7 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={CoffeeIcon}
             label={t("screens.profile.profileEdit.lifestyle.smoking")}
-            value={profile?.smoking || ""}
+            value={getTranslatedValue("smoking", profile?.smoking_key)}
             onPress={() => handleFieldPress("smoking")}
           />
         </View>
@@ -259,21 +341,24 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={GraduationCapIcon}
             label={t("screens.profile.profileEdit.more.education")}
-            value={profile?.education || ""}
+            value={getTranslatedValue("education", profile?.education_key)}
             onPress={() => handleFieldPress("education")}
           />
           <EditRow
             icon={MapPinIcon}
-            label={t("screens.profile.profileEdit.more.hometown")}
-            value={profile?.hometown || ""}
-            onPress={() => handleFieldPress("hometown")}
+            label={t("screens.profile.profileEdit.more.location")}
+            value={profile?.location || ""}
+            onPress={() => handleFieldPress("location")}
           />
           <EditRow
             icon={FlagIcon}
             label={t("screens.profile.profileEdit.more.languages")}
             value={
               Array.isArray(profile?.languages)
-                ? profile.languages.join(", ")
+                ? profile.languages
+                    .map((id) => LANGUAGES.find((l) => l.id === id)?.name)
+                    .filter(Boolean)
+                    .join(", ")
                 : ""
             }
             onPress={() => handleFieldPress("languages")}
@@ -281,7 +366,7 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={SparklesIcon}
             label={t("screens.profile.profileEdit.more.zodiac")}
-            value={profile?.zodiac || ""}
+            value={getTranslatedValue("zodiac", profile?.zodiac_key)}
             onPress={() => handleFieldPress("zodiac")}
           />
         </View>

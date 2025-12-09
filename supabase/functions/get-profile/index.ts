@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,8 +58,22 @@ Deno.serve(async (req) => {
       connectResult,
       intentionResult,
       photosResult,
+      favoritePlacesResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select(
+          `
+          *,
+          education:education_levels(key),
+          zodiac:zodiac_signs(key),
+          smoking:smoking_habits(key),
+          relationship:relationship_status(key),
+          profile_languages(language:languages(key))
+        `
+        )
+        .eq("id", userId)
+        .maybeSingle(),
       supabase
         .from("profile_connect_with")
         .select("gender_id")
@@ -72,17 +87,24 @@ Deno.serve(async (req) => {
         .select("url, position")
         .eq("user_id", userId)
         .order("position", { ascending: true }),
+      supabase
+        .from("profile_favorite_places")
+        .select("place_id")
+        .eq("user_id", userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
     const { data: connectRows, error: connectError } = connectResult;
     const { data: intentionRows, error: intentionError } = intentionResult;
     const { data: photoRows, error: photoError } = photosResult;
+    const { data: favoritePlacesRows, error: favoritePlacesError } =
+      favoritePlacesResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
+    if (favoritePlacesError) throw favoritePlacesError;
 
     // Resolve gender key if gender_id exists
     let genderKey: string | null = null;
@@ -103,6 +125,32 @@ Deno.serve(async (req) => {
     const intentions = (intentionRows ?? [])
       .map((row: any) => row.option_id)
       .filter((id: number | null) => id != null);
+    
+    // Fetch favorite places details from Foursquare
+    let favoritePlaces = [];
+    const favoritePlaceIds = (favoritePlacesRows ?? [])
+      .map((row: any) => row.place_id)
+      .filter((id: string | null) => id != null);
+
+    if (favoritePlaceIds.length > 0) {
+      try {
+        // We don't have user location here, so distance will be 0
+        const placesDetails = await getPlaceDetails({
+          fsq_ids: favoritePlaceIds,
+        });
+        
+        favoritePlaces = placesDetails.map((place) => ({
+          id: place.fsq_id,
+          name: place.name,
+          category: place.categories?.[0]?.name || "",
+        }));
+      } catch (error) {
+        console.error("Error fetching favorite places details:", error);
+        // Fallback to just IDs if API fails
+        favoritePlaces = favoritePlaceIds.map((id: string) => ({ id, name: "" }));
+      }
+    }
+
     let photos =
       (photoRows ?? [])
         .map((row: any) => ({
@@ -130,18 +178,44 @@ Deno.serve(async (req) => {
     }
     photos = signedPhotos;
 
-    const profilePayload = profile
-      ? {
-          ...profile,
-          gender: genderKey ?? null,
-          gender_id: profile.gender_id ?? null,
-          age_range_min: profile.age_range_min ?? null,
-          age_range_max: profile.age_range_max ?? null,
-          connectWith,
-          intentions,
-          photos,
-        }
-      : null;
+    let profilePayload = null;
+
+    if (profile) {
+      // Destructure to separate relations from raw profile data
+      const {
+        education,
+        zodiac,
+        smoking,
+        relationship,
+        profile_languages,
+        ...rest
+      } = profile;
+
+      const location = rest.city_name
+        ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
+        : rest.location;
+
+      profilePayload = {
+        ...rest,
+        location,
+        gender: genderKey ?? null,
+        gender_id: rest.gender_id ?? null,
+        age_range_min: rest.age_range_min ?? null,
+        age_range_max: rest.age_range_max ?? null,
+        connectWith,
+        intentions,
+        favoritePlaces,
+        photos,
+        education_key: education?.key ?? null,
+        zodiac_key: zodiac?.key ?? null,
+        smoking_key: smoking?.key ?? null,
+        relationship_key: relationship?.key ?? null,
+        languages:
+          profile_languages
+            ?.map((pl: any) => pl.language?.key)
+            .filter(Boolean) ?? [],
+      };
+    }
 
     return new Response(JSON.stringify({ profile: profilePayload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import React from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Keyboard, Platform, StyleSheet, View, ViewStyle } from "react-native";
 
 interface ScreenBottomBarProps {
   // Primary action button
@@ -90,10 +90,35 @@ export function ScreenBottomBar({
 }: ScreenBottomBarProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-  const paddingBottom = compact
-    ? spacing.md
-    : Math.max(spacing.xl, insets.bottom + spacing.md);
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const keyboardShowListener = Keyboard.addListener(showEvent, () =>
+      setKeyboardVisible(true)
+    );
+    const keyboardHideListener = Keyboard.addListener(hideEvent, () =>
+      setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, []);
+
+  let paddingBottom: number;
+  if (compact) {
+    paddingBottom = spacing.md;
+  } else if (isKeyboardVisible) {
+    paddingBottom = spacing.md;
+  } else {
+    paddingBottom = Math.max(spacing.xl, insets.bottom + spacing.md);
+  }
 
   const containerStyle = [
     styles.container,
@@ -160,12 +185,7 @@ export function ScreenBottomBar({
           {/* Left: Back Button */}
           <View style={styles.wizardLeft}>
             {onBackPress && (
-              <Button
-                onPress={onBackPress}
-                variant="secondary"
-                size="icon"
-                style={styles.fab}
-              >
+              <Button onPress={onBackPress} variant="secondary" size="fab">
                 <ArrowLeftIcon width={24} height={24} color="#FFF" />
               </Button>
             )}
@@ -191,8 +211,7 @@ export function ScreenBottomBar({
                 onPress={onPrimaryPress}
                 disabled={primaryDisabled}
                 variant="secondary"
-                size="icon"
-                style={styles.fab}
+                size="fab"
               >
                 {primaryIcon}
               </Button>
@@ -241,7 +260,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 56, // Match FAB height
   },
   wizardLeft: {
     flex: 1,
@@ -257,19 +275,5 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: spacing.xs,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-    overflow: "visible",
   },
 });
