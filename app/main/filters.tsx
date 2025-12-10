@@ -12,7 +12,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { updateProfile } from "@/modules/profile/api";
-import { profileActions } from "@/modules/store/slices/profileActions";
+import { setProfile } from "@/modules/store/slices/profileActions";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -139,7 +139,7 @@ export default function FiltersScreen() {
           ageRangeMin: nextFilters.ageRangeMin,
           ageRangeMax: nextFilters.ageRangeMax,
         });
-        profileActions.setProfile({
+        setProfile({
           ...profile,
           connectWith: sanitizedConnectWith,
           intentions: sanitizedIntentions,

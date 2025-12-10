@@ -42,7 +42,12 @@ export default function UserPhotosScreen() {
         {t("screens.onboarding.photosSubtitle")}
       </ThemedText>
 
-      <UserPhotoGrid photos={photos} onPhotosChange={setPhotos} />
+      <UserPhotoGrid
+        maxPhotos={9}
+        minPhotos={3}
+        photos={photos}
+        onPhotosChange={setPhotos}
+      />
     </BaseTemplateScreen>
   );
 }

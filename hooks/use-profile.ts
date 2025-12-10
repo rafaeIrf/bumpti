@@ -1,6 +1,9 @@
 import { getProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
-import { profileActions } from "@/modules/store/slices/profileActions";
+import {
+  setProfile,
+  setProfileLoading,
+} from "@/modules/store/slices/profileActions";
 import { calculateAge } from "@/utils/calculate-age";
 import { useCallback, useEffect, useState } from "react";
 
@@ -18,13 +21,13 @@ export function useProfile(options: UseProfileOptions = {}) {
 
   const fetchProfile = useCallback(async () => {
     try {
-      profileActions.setProfileLoading(true);
+      setProfileLoading(true);
       setError(undefined);
       const data = await getProfile();
       if (!data) {
-        profileActions.setProfile(null);
+        setProfile(null);
       } else {
-        profileActions.setProfile({
+        setProfile({
           id: data?.id,
           name: data?.name ?? null,
           birthdate: data?.birthdate ?? null,
@@ -53,7 +56,7 @@ export function useProfile(options: UseProfileOptions = {}) {
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar seu perfil.");
     } finally {
-      profileActions.setProfileLoading(false);
+      setProfileLoading(false);
     }
   }, [dispatch]);
 

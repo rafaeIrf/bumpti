@@ -9,7 +9,7 @@ import { t } from "@/modules/locales";
 import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
 import { getProfile } from "@/modules/profile/api";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import { profileActions } from "@/modules/store/slices/profileActions";
+import { setProfile } from "@/modules/store/slices/profileActions";
 import { calculateAge } from "@/utils/calculate-age";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -35,7 +35,7 @@ export default function CompleteScreen() {
 
       // Sync profile state in Redux
       const profileResponse = await getProfile();
-      profileActions.setProfile({
+      setProfile({
         id: profileResponse?.id,
         name: profileResponse?.name ?? null,
         birthdate: profileResponse?.birthdate ?? null,
