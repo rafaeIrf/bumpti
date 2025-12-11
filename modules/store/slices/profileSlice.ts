@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { calculateAge } from "@/utils/calculate-age";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type ProfileData = {
   id?: string;
@@ -10,8 +10,8 @@ export type ProfileData = {
   age_range_min?: number | null;
   age_range_max?: number | null;
   age?: number | null;
-  connectWith?: number[];
-  intentions?: number[];
+  connectWith?: string[];
+  intentions?: string[];
   photos?: { url: string; position: number }[];
   updatedAt?: string | null;
   bio?: string | null;

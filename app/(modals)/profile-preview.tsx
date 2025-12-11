@@ -27,6 +27,7 @@ export default function ProfilePreviewModal() {
       profile.favoritePlaces?.map((p: any) => ({
         id: p.id || p.place_id,
         name: p.name,
+        emoji: p.emoji,
       })) ?? [];
 
     return {

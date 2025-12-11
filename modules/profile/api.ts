@@ -12,8 +12,8 @@ export type ProfilePayload = {
   age_range_max?: number | null;
   created_at?: string;
   updated_at?: string;
-  connectWith?: number[];
-  intentions?: number[];
+  connectWith?: string[];
+  intentions?: string[];
   photos?: { url: string; position: number }[];
   bio?: string | null;
   favoritePlaces?: any[] | null;
@@ -34,8 +34,8 @@ export type UpdateProfilePayload = {
   gender?: string;
   ageRangeMin?: number;
   ageRangeMax?: number;
-  intentions?: number[];
-  connectWith?: number[];
+  intentions?: string[];
+  connectWith?: string[];
   bio?: string;
   job_title?: string | null;
   company_name?: string | null;

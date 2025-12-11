@@ -132,3 +132,27 @@ export async function getPlaceDetails({
     throw error;
   }
 }
+
+/**
+ * Helper to resolve favorite places with names and emojis, handling errors gracefully.
+ */
+export async function resolveFavoritePlaces(fsq_ids: string[]) {
+  if (!fsq_ids || fsq_ids.length === 0) return [];
+
+  try {
+    const placesDetails = await getPlaceDetails({
+      fsq_ids,
+    });
+    
+    return placesDetails.map((place) => ({
+      id: place.fsq_id,
+      name: place.name,
+      category: place.categories?.[0]?.name || "",
+      emoji: place.categories?.[0]?.icon?.prefix ? `${place.categories[0].icon.prefix}bg_32${place.categories[0].icon.suffix}` : "",
+    }));
+  } catch (error) {
+    console.error("Error resolving favorite places:", error);
+    // Fallback to just IDs if API fails
+    return fsq_ids.map((id) => ({ id, name: "" }));
+  }
+}

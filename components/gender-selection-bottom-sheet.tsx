@@ -9,9 +9,9 @@ import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 interface GenderSelectionBottomSheetContentProps {
-  readonly initialSelection: number[];
-  readonly onConfirm: (selection: number[]) => void;
-  readonly options: { id: number; label: string }[];
+  readonly initialSelection: string[];
+  readonly onConfirm: (selection: string[]) => void;
+  readonly options: { id: string; label: string }[];
 }
 
 export function GenderSelectionBottomSheetContent({
@@ -20,9 +20,10 @@ export function GenderSelectionBottomSheetContent({
   options,
 }: GenderSelectionBottomSheetContentProps) {
   const colors = useThemeColors();
-  const [tempSelection, setTempSelection] = useState<number[]>(initialSelection);
+  const [tempSelection, setTempSelection] =
+    useState<string[]>(initialSelection);
 
-  const toggleGenderOption = (value: number) => {
+  const toggleGenderOption = (value: string) => {
     setTempSelection((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );

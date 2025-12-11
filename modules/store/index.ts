@@ -16,14 +16,13 @@ import {
   REHYDRATE,
 } from "redux-persist";
 import onboardingReducer from "./slices/onboardingSlice";
-import optionsReducer from "./slices/optionsSlice";
 import profileReducer from "./slices/profileSlice";
 
 // Configure persistence
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile", "options", "messagesApi"], // Persist onboarding, profile, options, messages cache
+  whitelist: ["onboarding", "profile", "messagesApi"], // Persist onboarding, profile, messages cache
 };
 
 // Combine reducers
@@ -34,7 +33,6 @@ const rootReducer = combineReducers({
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
-  options: optionsReducer,
 });
 
 // Create persisted reducer
@@ -62,3 +60,7 @@ setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+// Re-export from types for convenience
+export type { AppDispatch as AppDispatchType, RootState as RootStateType } from "./types";
+
