@@ -3,9 +3,9 @@ import {
   ExclamationCircleIcon,
   ListIcon,
   LockIcon,
-  MapPinIcon,
   MessageCircleIcon,
   ShieldAlertIcon,
+  ShieldCheckIcon,
   UserRoundIcon,
   XIcon,
 } from "@/assets/icons";
@@ -257,17 +257,10 @@ export default function SettingsScreen() {
             )}
             onClick={() => logger.log("Block list clicked")}
           />
-        </View>
-
-        {/* Localização */}
-        <SectionHeader
-          title={t("screens.profile.settingsPage.location.title")}
-        />
-        <View style={styles.sectionGap}>
           <SettingItem
-            icon={MapPinIcon}
-            title={t("screens.profile.settingsPage.location.item")}
-            onClick={() => logger.log("Location clicked")}
+            icon={ShieldCheckIcon}
+            title={t("screens.profile.settingsPage.account.verifyProfile")}
+            onClick={() => logger.log("Verify profile clicked")}
           />
         </View>
 

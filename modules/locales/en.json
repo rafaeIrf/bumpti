@@ -53,12 +53,10 @@
         "account": {
           "title": "ACCOUNT",
           "blockList": "Blocked list",
-          "blockListDescription": "Manage who you have blocked."
+          "blockListDescription": "Manage who you have blocked.",
+          "verifyProfile": "Verify profile"
         },
-        "location": {
-          "title": "LOCATION",
-          "item": "Location"
-        },
+
         "security": {
           "title": "SECURITY AND PRIVACY",
           "privacyPolicy": "Privacy Policy",

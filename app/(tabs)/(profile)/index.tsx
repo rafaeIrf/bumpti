@@ -1,5 +1,6 @@
 import {
   CheckIcon,
+  CircleCheckDashedIcon,
   CrownIcon,
   FlameIcon,
   MapPinIcon,
@@ -343,12 +344,19 @@ export default function ProfileScreen() {
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>
-            <ThemedText
-              style={[typography.subheading2, { color: colors.text }]}
-            >
-              {profile?.name || t("screens.profile.title")}
-              {ageText}
-            </ThemedText>
+            <View style={styles.profileInfoTextContainer}>
+              <ThemedText
+                style={[typography.subheading2, { color: colors.text }]}
+              >
+                {profile?.name || t("screens.profile.title")}
+                {ageText}
+              </ThemedText>
+              <CircleCheckDashedIcon
+                width={24}
+                height={24}
+                color={colors.textSecondary}
+              />
+            </View>
 
             <Button
               onPress={handleCompleteProfile}
@@ -581,6 +589,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    gap: spacing.xs,
   },
   profileButton: {
     alignSelf: "flex-start",
@@ -667,5 +676,10 @@ const styles = StyleSheet.create({
     height: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  profileInfoTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
 });

@@ -53,12 +53,10 @@
         "account": {
           "title": "CONTA",
           "blockList": "Lista de bloqueio",
-          "blockListDescription": "Gerencie quem você bloqueou."
+          "blockListDescription": "Gerencie quem você bloqueou.",
+          "verifyProfile": "Verificar perfil"
         },
-        "location": {
-          "title": "LOCALIZAÇÃO",
-          "item": "Localização"
-        },
+
         "security": {
           "title": "SEGURANÇA E PRIVACIDADE",
           "privacyPolicy": "Política de Privacidade",

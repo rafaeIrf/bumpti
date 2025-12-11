@@ -52,12 +52,10 @@
         "account": {
           "title": "CUENTA",
           "blockList": "Lista de bloqueados",
-          "blockListDescription": "Administra a quién has bloqueado."
+          "blockListDescription": "Administra a quién has bloqueado.",
+          "verifyProfile": "Verificar perfil"
         },
-        "location": {
-          "title": "UBICACIÓN",
-          "item": "Ubicación"
-        },
+
         "security": {
           "title": "SEGURIDAD Y PRIVACIDAD",
           "privacyPolicy": "Política de Privacidad",
