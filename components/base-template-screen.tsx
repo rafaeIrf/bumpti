@@ -1,5 +1,5 @@
 import { spacing } from "@/constants/theme";
-import { StatusBar } from "expo-status-bar";
+import { StatusBar, StatusBarStyle } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
 import {
   KeyboardAvoidingView,
@@ -70,10 +70,14 @@ interface BaseTemplateScreenProps {
   scrollEnabled?: boolean;
   showsVerticalScrollIndicator?: boolean;
 
-  // Whether the screen has a Stack header (e.g., onboarding screens with progress bar)
   // If true, won't add paddingTop for safe area (header already handles it)
   hasStackHeader?: boolean;
   isModal?: boolean;
+
+  // Whether to apply safe area padding automatically (default: true)
+  useSafeArea?: boolean;
+
+  statusBarStyle?: StatusBarStyle;
 }
 
 export function BaseTemplateScreen({
@@ -88,6 +92,8 @@ export function BaseTemplateScreen({
   showsVerticalScrollIndicator = false,
   hasStackHeader = false,
   isModal = false,
+  useSafeArea = true,
+  statusBarStyle = "light",
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -121,14 +127,15 @@ export function BaseTemplateScreen({
         styles.wrapper,
         containerStyle,
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
-        hasStackHeader || isModal
-          ? { paddingTop: 16 }
+        // and if useSafeArea is true
+        hasStackHeader || isModal || !useSafeArea
+          ? { paddingTop: useSafeArea ? 16 : 0 }
           : { paddingTop: insets.top },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}
       <StatusBar
-        style="light"
+        style={statusBarStyle}
         hidden={false}
         translucent
         backgroundColor="transparent"
