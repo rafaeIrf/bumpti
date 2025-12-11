@@ -7,10 +7,8 @@ import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
-import { getProfile } from "@/modules/profile/api";
+import { fetchAndSetUserProfile } from "@/modules/profile/index";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import { setProfile } from "@/modules/store/slices/profileActions";
-import { calculateAge } from "@/utils/calculate-age";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -23,6 +21,7 @@ import Animated, {
 
 export default function CompleteScreen() {
   const colors = useThemeColors();
+
   const { userData } = useOnboardingFlow();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -34,31 +33,7 @@ export default function CompleteScreen() {
       await saveOnboarding(userData);
 
       // Sync profile state in Redux
-      const profileResponse = await getProfile();
-      setProfile({
-        id: profileResponse?.id,
-        name: profileResponse?.name ?? null,
-        birthdate: profileResponse?.birthdate ?? null,
-        gender: profileResponse?.gender ?? null,
-        connectWith: profileResponse?.connectWith ?? [],
-        intentions: profileResponse?.intentions ?? [],
-        photos: profileResponse?.photos ?? [],
-        updatedAt: profileResponse?.updated_at ?? null,
-        age_range_min: profileResponse?.age_range_min ?? null,
-        age_range_max: profileResponse?.age_range_max ?? null,
-        age: calculateAge(profileResponse?.birthdate ?? null),
-        bio: profileResponse?.bio ?? null,
-        favoritePlaces: profileResponse?.favoritePlaces ?? [],
-        height_cm: profileResponse?.height_cm ?? null,
-        job_title: profileResponse?.job_title ?? null,
-        company_name: profileResponse?.company_name ?? null,
-        smoking_key: profileResponse?.smoking_key ?? null,
-        education_key: profileResponse?.education_key ?? null,
-        location: profileResponse?.location ?? null,
-        languages: profileResponse?.languages ?? [],
-        zodiac_key: profileResponse?.zodiac_key ?? null,
-        relationship_key: profileResponse?.relationship_key ?? null,
-      });
+      await fetchAndSetUserProfile();
       onboardingActions.completeOnboarding();
       router.replace("/(tabs)/(home)");
     } catch (error: any) {

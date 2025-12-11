@@ -38,6 +38,50 @@
     "profile": {
       "title": "Perfil",
       "settings": "Configurações",
+      "settingsPage": {
+        "title": "Configurações",
+        "presence": {
+          "title": "PREFERÊNCIAS DE PRESENÇA",
+
+          "invisible": "Modo invisível",
+          "invisibleDescription": "Torna sua presença invisível para outros usuários."
+        },
+        "notifications": {
+          "title": "NOTIFICAÇÕES",
+          "push": "Notificações Push"
+        },
+        "account": {
+          "title": "CONTA",
+          "blockList": "Lista de bloqueio",
+          "blockListDescription": "Gerencie quem você bloqueou."
+        },
+        "location": {
+          "title": "LOCALIZAÇÃO",
+          "item": "Localização"
+        },
+        "security": {
+          "title": "SEGURANÇA E PRIVACIDADE",
+          "privacyPolicy": "Política de Privacidade",
+          "terms": "Termos de Uso"
+        },
+        "support": {
+          "title": "SUPORTE",
+          "help": "Ajuda & Suporte",
+          "report": "Reportar um problema"
+        },
+        "about": {
+          "title": "SOBRE O APP",
+          "version": "Versão",
+          "madeWith": "Criado com 💛 pelo Bumpti"
+        },
+        "session": {
+          "title": "SESSÃO",
+          "logout": "Sair",
+          "logoutConfirm": "Tem certeza que deseja sair?",
+          "deleteAccount": "Deletar conta",
+          "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+        }
+      },
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -623,8 +667,7 @@
       "networking": "Networking profissional",
       "casual": "Encontrar pessoas novas",
       "relationship": "Encontrar alguém especial"
-    },
-    "zodiac": "Signo"
+    }
   },
   "profileSwiper": {
     "emptyStateTitle": "Você viu todos os perfis",

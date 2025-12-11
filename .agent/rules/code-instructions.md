@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Instructions for this repo
 
 These guidelines steer GitHub Copilot (Chat and inline suggestions) when generating code and docs in this project.
@@ -234,134 +238,71 @@ const colors = useThemeColors();
 
 When creating or modifying ANY screen or component, you MUST:
 
-0.  **Logging - ALWAYS REQUIRED:**
+0. **Logging - ALWAYS REQUIRED:**
 
-    - ❌ NEVER use `console.log`, `console.error`, `console.warn`, `console.info`, or `console.debug` directly
-    - ✅ ALWAYS use the logger utility from `@/utils/logger`
-    - ✅ Import: `import { logger } from "@/utils/logger";`
-    - ✅ Use appropriate method: `logger.log()`, `logger.error()`, `logger.warn()`, `logger.info()`, `logger.debug()`
-    - The logger is automatically disabled in production builds
-    - Example:
+   - ❌ NEVER use `console.log`, `console.error`, `console.warn`, `console.info`, or `console.debug` directly
+   - ✅ ALWAYS use the logger utility from `@/utils/logger`
+   - ✅ Import: `import { logger } from "@/utils/logger";`
+   - ✅ Use appropriate method: `logger.log()`, `logger.error()`, `logger.warn()`, `logger.info()`, `logger.debug()`
+   - The logger is automatically disabled in production builds
+   - Example:
 
-      ```tsx
-      // ❌ WRONG - Direct console usage
-      console.log("Fetching data...");
-      console.error("API error:", error);
+     ```tsx
+     // ❌ WRONG - Direct console usage
+     console.log("Fetching data...");
+     console.error("API error:", error);
 
-      // ✅ CORRECT - Using logger
-      import { logger } from "@/utils/logger";
-      logger.log("Fetching data...");
-      logger.error("API error:", error);
-      ```
+     // ✅ CORRECT - Using logger
+     import { logger } from "@/utils/logger";
+     logger.log("Fetching data...");
+     logger.error("API error:", error);
+     ```
 
-1.  **i18n (Internationalization) - ALWAYS REQUIRED:**
+1. **i18n (Internationalization) - ALWAYS REQUIRED:**
 
-    - ❌ NEVER hardcode user-facing text in any language (PT, EN, ES, etc.)
-    - ✅ ALWAYS use `t("translation.key")` for ALL user-facing strings
-    - ✅ ALWAYS add translation keys to ALL three locale files: `pt.json`, `en.json`, `es.json`
-    - ✅ Import: `import { t } from "@/modules/locales";`
-    - Example:
+   - ❌ NEVER hardcode user-facing text in any language (PT, EN, ES, etc.)
+   - ✅ ALWAYS use `t("translation.key")` for ALL user-facing strings
+   - ✅ ALWAYS add translation keys to ALL three locale files: `pt.json`, `en.json`, `es.json`
+   - ✅ Import: `import { t } from "@/modules/locales";`
+   - Example:
 
-      ```tsx
-      // ❌ WRONG - Hardcoded text
-      <ThemedText>Configurações</ThemedText>
-      <ThemedText>Settings</ThemedText>
+     ```tsx
+     // ❌ WRONG - Hardcoded text
+     <ThemedText>Configurações</ThemedText>
+     <ThemedText>Settings</ThemedText>
 
-      // ✅ CORRECT - Using translation
-      import { t } from "@/modules/locales";
-      <ThemedText>{t("screens.profile.settings")}</ThemedText>
-      ```
+     // ✅ CORRECT - Using translation
+     import { t } from "@/modules/locales";
+     <ThemedText>{t("screens.profile.settings")}</ThemedText>
+     ```
 
-2.  **Typography - ALWAYS REQUIRED:**
+2. **Typography - ALWAYS REQUIRED:**
 
-    - ❌ NEVER hardcode fontSize, lineHeight, fontWeight, fontFamily, letterSpacing
-    - ✅ ALWAYS use typography tokens: `typography.heading`, `typography.subheading`, `typography.body`, `typography.caption`
-    - ✅ Import: `import { typography, spacing } from "@/constants/theme";`
-    - ✅ ONLY override when absolutely necessary with clear comment explaining why
-    - Example:
+   - ❌ NEVER hardcode fontSize, lineHeight, fontWeight, fontFamily, letterSpacing
+   - ✅ ALWAYS use typography tokens: `typography.heading`, `typography.subheading`, `typography.body`, `typography.caption`
+   - ✅ Import: `import { typography, spacing } from "@/constants/theme";`
+   - ✅ ONLY override when absolutely necessary with clear comment explaining why
+   - Example:
 
-      ```tsx
-      // ❌ WRONG - Hardcoded typography
-      <Text style={{ fontSize: 20, fontWeight: "600", lineHeight: 28 }}>
-        Title
-      </Text>;
+     ```tsx
+     // ❌ WRONG - Hardcoded typography
+     <Text style={{ fontSize: 20, fontWeight: "600", lineHeight: 28 }}>
+       Title
+     </Text>;
 
-      // ✅ CORRECT - Using typography token
-      import { typography } from "@/constants/theme";
-      <ThemedText style={typography.heading}>Title</ThemedText>;
-      ```
+     // ✅ CORRECT - Using typography token
+     import { typography } from "@/constants/theme";
+     <ThemedText style={typography.heading}>Title</ThemedText>;
+     ```
 
-3.  **Theme Colors - ALWAYS REQUIRED:**
+3. **Theme Colors - ALWAYS REQUIRED:**
 
-    - ❌ NEVER hardcode colors like `#FFFFFF`, `#000000`, `rgb(...)`, etc.
-    - ✅ ALWAYS use `useThemeColors()` hook for colors
-    - ✅ Available colors: `background`, `surface`, `text`, `textSecondary`, `accent`, `border`, `error`, `success`
-    - Example:
+   - ❌ NEVER hardcode colors like `#FFFFFF`, `#000000`, `rgb(...)`, etc.
+   - ✅ ALWAYS use `useThemeColors()` hook for colors
+   - ✅ Available colors: `background`, `surface`, `text`, `textSecondary`, `accent`, `border`, `error`, `success`
+   - Example:
 
-      ```tsx
-      // ❌ WRONG - Hardcoded color
-      <View style={{ backgroundColor: "#1a1a1a" }} />;
-
-      // ✅ CORRECT - Using theme color
-      import { useThemeColors } from "@/hooks/use-theme-colors";
-      const colors = useThemeColors();
-      <View style={{ backgroundColor: colors.surface }} />;
-      ```
-
-4.  **Spacing - ALWAYS REQUIRED:**
-
-    - ❌ NEVER hardcode spacing values like `margin: 16`, `padding: 24`, etc.
-    - ✅ ALWAYS use spacing tokens: `spacing.xs`, `spacing.sm`, `spacing.md`, `spacing.lg`, `spacing.xl`, `spacing.xxl`
-    - Example:
-
-      ```tsx
-      // ❌ WRONG - Hardcoded spacing
-      <View style={{ marginBottom: 24, paddingHorizontal: 16 }} />;
-
-      // ✅ CORRECT - Using spacing tokens
-      import { spacing } from "@/constants/theme";
-      <View
-        style={{ marginBottom: spacing.lg, paddingHorizontal: spacing.md }}
-      />;
-      ```
-
-5.  **Structure and Styles - ALWAYS REQUIRED:**
-
-    - ❌ NEVER use inline styles for static layout/spacing/sizing.
-    - ✅ ALWAYS define styles using `const styles = StyleSheet.create({...})` at the end of the file.
-    - ✅ ONLY use inline styles for dynamic values (e.g. `colors` from hook, animations).
-    - Example:
-
-           ```tsx
-           // ❌ WRONG - Inline styles
-           <View style={{ padding: 16, marginTop: 10 }} />
-
-           // ✅ CORRECT - StyleSheet
-           <View style={styles.container} />
-
-           const styles = StyleSheet.create({
-             container: {
-               padding: 16,
-               marginTop: 10,
-             },
-           });
-           ```
-
-      **IF YOU VIOLATE THESE RULES, THE CODE WILL BE REJECTED. NO EXCEPTIONS.**
-
-**REMINDER: NEVER use console.log/error/warn - ALWAYS use logger from @/utils/logger**
-
-## Quick Do/Don't
-
-- Do: use `@/` for internal imports, type routes/params, keep style consistency.
-- Do: create new route groups with `_layout.tsx` when needed.
-- Don’t: use raw React Navigation if Expo Router suffices.
-- Don’t: add heavy libs without justification.
-
-## Prompts to ask Copilot
-
-- "Create a new screen in `(onboarding)` named `permissions.tsx` with a continue button and update the flow."
-- "Add a `Profile` tab in `(tabs)` with an icon and a link to `modal`."
-- "Implement a `useOnboarding` hook that reads/writes the `hasOnboarded` flag."
-
-These instructions apply to this repository. When proposing larger changes (structure, dependencies), Copilot should explain the impact and propose atomic commits.
+     ```tsx
+     // ❌ WRONG - Hardcoded color
+     <View style={{ backgroundColor: "#1a1a1a" }} />
+     ```
