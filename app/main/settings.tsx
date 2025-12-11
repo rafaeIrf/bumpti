@@ -255,7 +255,7 @@ export default function SettingsScreen() {
             description={t(
               "screens.profile.settingsPage.account.blockListDescription"
             )}
-            onClick={() => logger.log("Block list clicked")}
+            onClick={() => router.push("/main/blocked-list")}
           />
           <SettingItem
             icon={ShieldCheckIcon}

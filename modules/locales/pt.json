@@ -80,6 +80,7 @@
           "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
         }
       },
+
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -304,6 +305,15 @@
           }
         }
       }
+    },
+    "blockedList": {
+      "title": "Lista de bloqueio",
+      "unblockConfirmTitle": "Desbloquear usuário?",
+      "unblockConfirmMessage": "Ao desbloquear, esse usuário poderá ver seu perfil e entrar em contato com você novamente.",
+      "unblock": "Desbloquear",
+      "unblockSuccess": "Usuário desbloqueado com sucesso.",
+      "unblockError": "Não foi possível desbloquear o usuário.",
+      "empty": "Você não tem usuários bloqueados."
     },
     "home": {
       "heroTitle": "Onde você quer se conectar hoje?",

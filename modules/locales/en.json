@@ -80,6 +80,7 @@
           "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
         }
       },
+
       "completeProfile": "Complete profile",
       "editProfile": "Edit profile",
       "preview": {
@@ -304,6 +305,15 @@
           }
         }
       }
+    },
+    "blockedList": {
+      "title": "Blocked list",
+      "unblockConfirmTitle": "Unblock user?",
+      "unblockConfirmMessage": "Unblocking this user will allow them to see your profile and contact you again.",
+      "unblock": "Unblock",
+      "unblockSuccess": "User unblocked successfully.",
+      "unblockError": "Could not unblock user.",
+      "empty": "You have no blocked users."
     },
     "home": {
       "placeDetected": {

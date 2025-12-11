@@ -115,12 +115,6 @@ export function BaseTemplateScreen({
     return TopHeader;
   };
 
-  // Extracted keyboard vertical offset to avoid nested ternary
-  let keyboardVerticalOffset = 0;
-  if (Platform.OS === "ios") {
-    keyboardVerticalOffset = (hasStackHeader || isModal ? 16 : insets.top) + 60;
-  }
-
   return (
     <View
       style={[
@@ -140,38 +134,56 @@ export function BaseTemplateScreen({
         translucent
         backgroundColor="transparent"
       />
+      {/* Top Header with scroll position - positioned absolutely to stay on top */}
+      <View style={styles.headerContainer} pointerEvents="box-none">
+        {renderTopHeader()}
+      </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={keyboardVerticalOffset}
-      >
-        {/* Top Header with scroll position - positioned absolutely to stay on top */}
-        <View style={styles.headerContainer} pointerEvents="box-none">
-          {renderTopHeader()}
-        </View>
-
-        {/* Scrollable content */}
-        {scrollEnabled ? (
-          <Animated.ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.contentContainer,
-              contentContainerStyle,
-            ]}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
-            scrollEnabled={scrollEnabled}
-            showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-            refreshControl={
-              onRefresh ? (
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              ) : undefined
-            }
-          >
-            {children}
-          </Animated.ScrollView>
-        ) : (
+      {/* Scrollable content */}
+      {scrollEnabled ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+        >
+          <View style={{ flex: 1 }}>
+            <Animated.ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.contentContainer,
+                contentContainerStyle,
+              ]}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              scrollEnabled={scrollEnabled}
+              showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+              refreshControl={
+                onRefresh ? (
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
+                ) : undefined
+              }
+            >
+              {children}
+            </Animated.ScrollView>
+            {/* Bottom Bar - positioned absolutely to stay at bottom */}
+          </View>
+          {BottomBar && (
+            <View style={styles.bottomBarContainer} pointerEvents="box-none">
+              {BottomBar}
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      ) : (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={
+            Platform.OS === "ios" && !scrollEnabled && isModal ? 70 : 0
+          }
+        >
           <View
             style={{
               flex: 1,
@@ -180,16 +192,15 @@ export function BaseTemplateScreen({
             }}
           >
             {children}
+            {/* Bottom Bar - positioned absolutely to stay at bottom */}
+            {BottomBar && (
+              <View style={styles.bottomBarContainer} pointerEvents="box-none">
+                {BottomBar}
+              </View>
+            )}
           </View>
-        )}
-
-        {/* Bottom Bar - positioned absolutely to stay at bottom */}
-        {BottomBar && (
-          <View style={styles.bottomBarContainer} pointerEvents="box-none">
-            {BottomBar}
-          </View>
-        )}
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      )}
     </View>
   );
 }
