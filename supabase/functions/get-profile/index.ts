@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
+import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,11 +76,11 @@ Deno.serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("profile_connect_with")
-        .select("gender_id")
+        .select("gender:gender_options(key)")
         .eq("user_id", userId),
       supabase
         .from("profile_intentions")
-        .select("option_id")
+        .select("intention:intention_options(key)")
         .eq("user_id", userId),
       supabase
         .from("profile_photos")
@@ -120,36 +120,18 @@ Deno.serve(async (req) => {
     }
 
     const connectWith = (connectRows ?? [])
-      .map((row: any) => row.gender_id)
-      .filter((id: number | null) => id != null);
+      .map((row: any) => row.gender?.key)
+      .filter((key: string | null) => key != null);
     const intentions = (intentionRows ?? [])
-      .map((row: any) => row.option_id)
-      .filter((id: number | null) => id != null);
+      .map((row: any) => row.intention?.key)
+      .filter((key: string | null) => key != null);
     
     // Fetch favorite places details from Foursquare
-    let favoritePlaces = [];
     const favoritePlaceIds = (favoritePlacesRows ?? [])
       .map((row: any) => row.place_id)
       .filter((id: string | null) => id != null);
 
-    if (favoritePlaceIds.length > 0) {
-      try {
-        // We don't have user location here, so distance will be 0
-        const placesDetails = await getPlaceDetails({
-          fsq_ids: favoritePlaceIds,
-        });
-        
-        favoritePlaces = placesDetails.map((place) => ({
-          id: place.fsq_id,
-          name: place.name,
-          category: place.categories?.[0]?.name || "",
-        }));
-      } catch (error) {
-        console.error("Error fetching favorite places details:", error);
-        // Fallback to just IDs if API fails
-        favoritePlaces = favoritePlaceIds.map((id: string) => ({ id, name: "" }));
-      }
-    }
+    const favoritePlaces = await resolveFavoritePlaces(favoritePlaceIds);
 
     let photos =
       (photoRows ?? [])

@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-
+import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -24,8 +24,8 @@ type UpdateProfilePayload = {
   gender?: string; // gender key
   ageRangeMin?: number;
   ageRangeMax?: number;
-  intentions?: number[]; // intention ids
-  connectWith?: number[]; // gender ids
+  connectWith?: string[]; // gender keys
+  intentions?: string[]; // intention keys
   bio?: string;
   job_title?: string | null;
   company_name?: string | null;
@@ -233,6 +233,54 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve Intentions Keys to IDs
+    let validIntentionIds: number[] | undefined;
+    if (Array.isArray(intentions)) {
+      if (intentions.length === 0) {
+        validIntentionIds = [];
+      } else {
+        const { data: intentionRows, error: intentionError } = await supabase
+          .from("intention_options")
+          .select("id")
+          .in("key", intentions);
+        
+        if (intentionError) {
+          return new Response(
+            JSON.stringify({ error: "invalid_intentions" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        validIntentionIds = (intentionRows ?? []).map((r) => r.id);
+      }
+    }
+
+    // Resolve ConnectWith (Gender) Keys to IDs
+    let validConnectWithIds: number[] | undefined;
+    if (Array.isArray(connectWith)) {
+      if (connectWith.length === 0) {
+        validConnectWithIds = [];
+      } else {
+        const isAll = connectWith.includes("all");
+        // If 'all' is sent (though client usually filters it), we might want to handle it
+        // based on business logic. Assuming strict keys here matching DB.
+        // If client sends "all", we probably shouldn't be here or we treat it as all genders.
+        // Assuming client sends specific gender keys.
+
+        const { data: connectRows, error: connectError } = await supabase
+          .from("gender_options")
+          .select("id")
+          .in("key", connectWith);
+          
+        if (connectError) {
+          return new Response(
+            JSON.stringify({ error: "invalid_connect_with" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        validConnectWithIds = (connectRows ?? []).map((r) => r.id);
+      }
+    }
+
     // Reject unknown fields only if present and not in rest (optional: for forward compat we allow extra)
     const updates: Record<string, unknown> = {};
 
@@ -299,45 +347,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate intentions/connect_with if provided
-    let validIntentions: number[] | undefined;
-    if (Array.isArray(intentions)) {
-      if (intentions.length === 0) {
-        validIntentions = [];
-      } else {
-        const { data: intentionRows, error: intentionError } = await supabase
-          .from("intention_options")
-          .select("id")
-          .in("id", intentions);
-        if (intentionError) {
-          return new Response(
-            JSON.stringify({ error: "invalid_intentions" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        validIntentions = (intentionRows ?? []).map((r) => r.id);
-      }
-    }
-
-    let validConnectWith: number[] | undefined;
-    if (Array.isArray(connectWith)) {
-      if (connectWith.length === 0) {
-        validConnectWith = [];
-      } else {
-        const { data: connectRows, error: connectError } = await supabase
-          .from("gender_options")
-          .select("id")
-          .in("id", connectWith);
-        if (connectError) {
-          return new Response(
-            JSON.stringify({ error: "invalid_connect_with" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        validConnectWith = (connectRows ?? []).map((r) => r.id);
-      }
-    }
-
     // Only run update if we have any profile fields to set
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabase
@@ -353,7 +362,7 @@ Deno.serve(async (req) => {
     }
 
     // Manage intentions
-    if (validIntentions) {
+    if (validIntentionIds) {
       const { error: deleteError } = await supabase
         .from("profile_intentions")
         .delete()
@@ -364,15 +373,15 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (validIntentions.length > 0) {
+      if (validIntentionIds.length > 0) {
         const { error: insertError } = await supabase
           .from("profile_intentions")
-        .insert(
-          validIntentions.map((id) => ({
-            user_id: userId,
-            option_id: id,
-          }))
-        );
+          .insert(
+            validIntentionIds.map((id) => ({
+              user_id: userId,
+              option_id: id,
+            }))
+          );
         if (insertError) {
           return new Response(
             JSON.stringify({ error: "intentions_insert_failed", message: insertError.message }),
@@ -383,7 +392,7 @@ Deno.serve(async (req) => {
     }
 
     // Manage connect_with
-    if (validConnectWith) {
+    if (validConnectWithIds) {
       const { error: deleteError } = await supabase
         .from("profile_connect_with")
         .delete()
@@ -394,11 +403,11 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (validConnectWith.length > 0) {
+      if (validConnectWithIds.length > 0) {
         const { error: insertError } = await supabase
           .from("profile_connect_with")
           .insert(
-            validConnectWith.map((id) => ({
+            validConnectWithIds.map((id) => ({
               user_id: userId,
               gender_id: id,
             }))
@@ -625,11 +634,11 @@ Deno.serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("profile_connect_with")
-        .select("gender_id")
+        .select("gender:gender_options(key)")
         .eq("user_id", userId),
       supabase
         .from("profile_intentions")
-        .select("option_id")
+        .select("intention:intention_options(key)")
         .eq("user_id", userId),
       supabase
         .from("profile_photos")
@@ -656,11 +665,11 @@ Deno.serve(async (req) => {
     if (favoritePlacesError) throw favoritePlacesError;
 
     const connectWithIds = (connectRows ?? [])
-      .map((row: any) => row.gender_id)
-      .filter((id: number | null) => id != null);
+      .map((row: any) => row.gender?.key)
+      .filter((key: string | null) => key != null);
     const intentionsIds = (intentionRows ?? [])
-      .map((row: any) => row.option_id)
-      .filter((id: number | null) => id != null);
+      .map((row: any) => row.intention?.key)
+      .filter((key: string | null) => key != null);
     const favoritePlacesIds = (favoritePlacesRows ?? [])
       .map((row: any) => row.place_id)
       .filter((id: string | null) => id != null);
@@ -707,12 +716,16 @@ Deno.serve(async (req) => {
         ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
         : rest.location;
 
+
+      // Fetch favorite places details from Foursquare
+      const favoritePlaces = await resolveFavoritePlaces(favoritePlacesIds);
+
       profilePayload = {
         ...rest,
         location,
         connectWith: connectWithIds,
         intentions: intentionsIds,
-        favoritePlaces: favoritePlacesIds.map((id: string) => ({ id, name: "" })), // Return minimal object structure expected by frontend
+        favoritePlaces,
         photos,
         education_key: education?.key ?? null,
         zodiac_key: zodiac?.key ?? null,

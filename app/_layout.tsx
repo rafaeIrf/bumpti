@@ -10,7 +10,6 @@ import "react-native-reanimated";
 
 import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
-import { OptionsInitializer } from "@/components/options-initializer";
 import { ReduxProvider } from "@/components/redux-provider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import I18nProvider from "@/modules/locales/i18n-provider";
@@ -66,7 +65,10 @@ export default function RootLayout() {
                     name="(onboarding)"
                     options={{ headerShown: false }}
                   />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
                   <Stack.Screen
                     name="main"
                     options={{
@@ -82,7 +84,6 @@ export default function RootLayout() {
                     }}
                   />
                 </Stack>
-                <OptionsInitializer />
                 <StatusBar style="auto" />
               </ChatRealtimeProvider>
             </BottomSheetProvider>

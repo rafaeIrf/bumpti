@@ -36,7 +36,7 @@ export function ChatRealtimeProvider({
       if (!user) return;
 
       const matchChannel = attachMatchOverviewRealtime(dispatch);
-      const chatChannel = attachChatListRealtime(dispatch);
+      const chatChannel = attachChatListRealtime(dispatch, user.id);
       const pendingLikesChannel = attachPendingLikesRealtime(dispatch, user.id);
 
       return () => {

@@ -2,29 +2,26 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { GenderIdentityBottomSheet } from "@/components/gender-identity-bottom-sheet";
 import { ThemedText } from "@/components/themed-text";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
+import { GENDER_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { onboardingActions } from "@/modules/store/slices/onboardingActions";
-import React, { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { onboardingActions } from "@/modules/store/slices";
+import { isIOS } from "@/utils";
+import { useState } from "react";
+import { KeyboardAvoidingView, StyleSheet } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+// ... existing imports
 
 export default function UserGenderScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const { genders, isLoading } = useOnboardingOptions();
+  // Removed useOnboardingOptions usage
 
   const normalizeInitialGender = (value?: string | null) => {
     if (!value) return "";
@@ -42,34 +39,39 @@ export default function UserGenderScreen() {
   );
 
   const genderOptions =
-    genders.map((option) => {
-      switch (option.key) {
+    GENDER_OPTIONS.map((option) => {
+      switch (option.id) {
         case "female":
           return {
-            value: option.key,
+            value: option.id,
             emoji: "👩",
-            label: t("screens.onboarding.genderWoman"),
+            label: t(option.labelKey),
           };
         case "male":
           return {
-            value: option.key,
+            value: option.id,
             emoji: "👨",
-            label: t("screens.onboarding.genderMan"),
+            label: t(option.labelKey),
           };
         case "non-binary":
           return {
-            value: option.key,
+            value: option.id,
             emoji: "⚧️",
-            label: t("screens.onboarding.genderNonBinary"),
+            label: t(option.labelKey),
           };
         default:
           return {
-            value: option.key,
+            value: option.id,
             emoji: "✨",
-            label: t("screens.onboarding.genderOther"),
+            label: t(option.labelKey),
           };
       }
     }) ?? [];
+
+  // Check if we need to append "Other" if it's not in GENDER_OPTIONS but was logically supported
+  // The previous code had a default case returning "Other", implying dynamic options might have it or fallback.
+  // Based on user request/constants, GENDER_OPTIONS has female, male, non-binary.
+  // Use logic as requested.
 
   const handleGenderSelect = (value: string) => {
     if (value === "non-binary") {
@@ -77,7 +79,12 @@ export default function UserGenderScreen() {
         content: () => (
           <GenderIdentityBottomSheet
             onSelect={(identity) => {
+              // logic from previous implementation
               setGender("non-binary");
+              // If we need to save the specific identity, we might need a separate state or updated hook call
+              // The original code just set gender to "non-binary" and closed.
+              // It seems identity selection might be handled internally or we need to revisit if userData needs more info.
+              // Assuming simple gender selection for now based on original code.
               bottomSheet.close();
             }}
             onClose={() => bottomSheet.close()}
@@ -102,24 +109,12 @@ export default function UserGenderScreen() {
   const isValid = Boolean(gender);
   const isNonBinaryGender = gender === "non-binary";
 
-  if (isLoading && !genderOptions.length) {
-    return (
-      <BaseTemplateScreen hasStackHeader>
-        <View style={styles.loadingContainer}>
-          <ThemedText
-            style={[styles.subtitle, { color: colors.textSecondary }]}
-          >
-            {t("screens.onboarding.loading")}
-          </ThemedText>
-        </View>
-      </BaseTemplateScreen>
-    );
-  }
+  // Removed isLoading check
 
   return (
     <BaseTemplateScreen hasStackHeader>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={styles.container}
       >
         <ScrollView

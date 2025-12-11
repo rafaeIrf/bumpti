@@ -2,7 +2,7 @@ import { processProfileImage } from "@/modules/media/image-processor";
 import { OnboardingUserData } from "@/modules/store/slices/onboardingSlice";
 import { supabase } from "@/modules/supabase/client";
 
-export type OnboardingOption = { id: number; key: string };
+
 
 export type ProfilePayload = {
   id: string;
@@ -14,31 +14,13 @@ export type ProfilePayload = {
   age_range_max?: number | null;
   created_at?: string;
   updated_at?: string;
-  connectWith?: number[];
-  intentions?: number[];
+  connectWith?: string[];
+  intentions?: string[];
   photos?: { url: string; position: number }[];
   bio?: string | null;
 };
 
-export async function getOnboardingOptions(): Promise<{
-  genders: OnboardingOption[];
-  intentions: OnboardingOption[];
-}> {
-  const { data, error } = await supabase.functions.invoke("get-onboarding-options");
-
-  if (error) {
-    throw new Error(error.message || "Não foi possível carregar as opções.");
-  }
-
-  const payload =
-    (data as Partial<{ genders: OnboardingOption[]; intentions: OnboardingOption[] }>) ??
-    {};
-
-  return {
-    genders: Array.isArray(payload.genders) ? payload.genders : [],
-    intentions: Array.isArray(payload.intentions) ? payload.intentions : [],
-  };
-}
+// getOnboardingOptions removed
 
 export async function saveOnboarding(userData: OnboardingUserData) {
   const allowedGenders = ["male", "female", "non-binary"];

@@ -7,9 +7,9 @@ import {
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
+import { INTENTION_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -34,33 +34,31 @@ const intentionIconMap: Record<
 };
 
 function getIntentionLabel(key: IntentionOptionKey) {
-  switch (key) {
-    case "relationship":
-      return t("screens.onboarding.intentionDating");
-    case "casual":
-      return t("screens.onboarding.intentionCasual");
-    case "networking":
-      return t("screens.onboarding.intentionNetworking");
-    case "friendship":
-      return t("screens.onboarding.intentionFriends");
-    default:
-      return key;
-  }
+  const option = INTENTION_OPTIONS.find((opt) => opt.id === key);
+  return option ? t(option.labelKey) : key;
 }
 
 export default function IntentionScreen() {
   const colors = useThemeColors();
+  // const { userData, completeCurrentStep } = useOnboardingFlow(); // Keeping this line from context but not replacing it if it's outside range
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const { intentions, isLoading, error, reload } = useOnboardingOptions();
-  const [selectedIntentions, setSelectedIntentions] = useState<IntentionOptionKey[]>(
-    (userData.intentions as IntentionOptionKey[]) || []
-  );
+  // Removed useOnboardingOptions hook
 
+  const [selectedIntentions, setSelectedIntentions] = useState<
+    IntentionOptionKey[]
+  >((userData.intentions as IntentionOptionKey[]) || []);
+
+  // Removed useEffect that filtered based on fetched intentions, as we now have static valid keys
+  // validating against INTENTION_OPTIONS could be done but might be overkill if types are strict
+  // If we want to ensure only valid keys from constants are used initially:
   useEffect(() => {
-    if (intentions.length === 0) return;
-    const validKeys = intentions.map((opt) => opt.key) as IntentionOptionKey[];
-    setSelectedIntentions((current) => current.filter((key) => validKeys.includes(key)));
-  }, [intentions]);
+    const validKeys = INTENTION_OPTIONS.map(
+      (opt) => opt.id
+    ) as IntentionOptionKey[];
+    setSelectedIntentions((current) =>
+      current.filter((key) => validKeys.includes(key))
+    );
+  }, []);
 
   const toggleIntention = (value: IntentionOptionKey) => {
     if (selectedIntentions.includes(value)) {
@@ -84,7 +82,7 @@ export default function IntentionScreen() {
         <ScreenBottomBar
           primaryLabel={t("screens.onboarding.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={selectedIntentions.length === 0 || isLoading}
+          primaryDisabled={selectedIntentions.length === 0}
         />
       }
     >
@@ -101,13 +99,13 @@ export default function IntentionScreen() {
         entering={FadeInUp.delay(300).duration(500)}
         style={styles.optionsList}
       >
-        {intentions.map((option, index) => {
-          const key = option.key as IntentionOptionKey;
+        {INTENTION_OPTIONS.map((option, index) => {
+          const key = option.id as IntentionOptionKey;
           const Icon = intentionIconMap[key] ?? UsersIcon;
           const isSelected = selectedIntentions.includes(key);
           return (
             <Animated.View
-              key={option.key}
+              key={option.id}
               entering={FadeInUp.delay(400 + index * 75).duration(500)}
             >
               <Pressable
@@ -133,7 +131,7 @@ export default function IntentionScreen() {
                       <ThemedText
                         style={[styles.optionLabel, { color: colors.text }]}
                       >
-                        {getIntentionLabel(key)}
+                        {t(option.labelKey)}
                       </ThemedText>
                     </View>
                   </View>
@@ -155,15 +153,6 @@ export default function IntentionScreen() {
               })}
         </ThemedText>
       )}
-
-      {error ? (
-        <ThemedText
-          style={[styles.selectedInfo, { color: colors.error }]}
-          onPress={reload}
-        >
-          {error}
-        </ThemedText>
-      ) : null}
     </BaseTemplateScreen>
   );
 }

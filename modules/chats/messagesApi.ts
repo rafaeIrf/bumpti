@@ -1,16 +1,15 @@
 import {
-  getChats as fetchChats,
-  getMatches as fetchMatches,
-  getMessages as fetchMessages,
-  sendMessage as sendMessageEdge,
+    getChats as fetchChats,
+    getMatches as fetchMatches,
+    getMessages as fetchMessages,
+    sendMessage as sendMessageEdge,
 } from "@/modules/chats/api";
 import {
-  ChatListChange,
-  subscribeToChatList,
-  subscribeToChatMessages,
-  subscribeToMatchOverview,
+    ChatListChange,
+    subscribeToChatList,
+    subscribeToChatMessages,
+    subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
-import { getCurrentUserId } from "@/modules/store/selectors/profile";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export type ChatMessage = {
@@ -287,9 +286,8 @@ export function attachMatchOverviewRealtime(dispatch: any) {
   return channel;
 }
 
-export function attachChatListRealtime(dispatch: any) {
+export function attachChatListRealtime(dispatch: any, userId: string) {
   const channel = subscribeToChatList((event: ChatListChange) => {
-    const userId = getCurrentUserId();
 
     if (event.type === "message") {
       if (event?.message?.sender_id !== userId) {

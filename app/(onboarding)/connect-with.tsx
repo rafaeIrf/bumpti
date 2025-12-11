@@ -2,9 +2,9 @@ import { HeartIcon, UserRoundIcon, UsersIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
+import { CONNECT_WITH_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -15,71 +15,59 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 type ConnectWithOptionKey = string | "all";
 
 const optionIconMap: Record<
-  ConnectWithOptionKey,
+  string,
   React.ComponentType<{ width: number; height: number; color: string }>
 > = {
-  women: UserRoundIcon,
-  men: UserRoundIcon,
+  female: UserRoundIcon,
+  male: UserRoundIcon,
   "non-binary": UsersIcon,
   all: HeartIcon,
 };
 
-function getOptionLabel(key: ConnectWithOptionKey) {
-  switch (key) {
-    case "female":
-      return t("screens.onboarding.connectWithFemale");
-    case "male":
-      return t("screens.onboarding.connectWithMale");
-    case "non-binary":
-      return t("screens.onboarding.connectWithNonBinary");
-    case "all":
-      return t("screens.onboarding.connectWithAll");
-    default:
-      return key;
-  }
-}
-
 export default function ConnectWithScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  const { genders, isLoading, error, reload } = useOnboardingOptions();
+
   const [selectedOptions, setSelectedOptions] = useState<
     ConnectWithOptionKey[]
   >((userData.connectWith as ConnectWithOptionKey[]) || []);
 
+  // Initialize with 'all' if nothing selected? Or validate?
+  // Previous logic had a useEffect to filter valid keys.
   useEffect(() => {
-    if (genders.length === 0) return;
-    const validKeys = [
-      ...genders.map((opt) => opt.key as ConnectWithOptionKey),
-      "all",
-    ];
+    const validKeys = CONNECT_WITH_OPTIONS.map((opt) => opt.id);
     setSelectedOptions((current) =>
-      current.filter((key) => validKeys.includes(key))
+      current.filter((key) => validKeys.includes(key) || key === "all")
     );
-  }, [genders]);
+  }, []);
 
   const handleOptionToggle = (value: ConnectWithOptionKey) => {
     if (value === "all") {
       setSelectedOptions(["all"]);
       return;
     }
-    if (selectedOptions.includes("all")) {
-      setSelectedOptions([value]);
-      return;
+    // If selecting a specific gender, remove 'all'
+    let newSelection = selectedOptions.filter((opt) => opt !== "all");
+
+    if (newSelection.includes(value)) {
+      newSelection = newSelection.filter((opt) => opt !== value);
+    } else {
+      newSelection = [...newSelection, value];
     }
 
-    const newSelection = selectedOptions.includes(value)
-      ? selectedOptions.filter((opt) => opt !== value)
-      : [...selectedOptions, value];
     setSelectedOptions(newSelection);
   };
 
   const handleContinue = () => {
     if (selectedOptions.length > 0) {
-      const allKeys = genders.map((opt) => opt.key as ConnectWithOptionKey);
+      const allGenderKeys = CONNECT_WITH_OPTIONS.filter(
+        (o) => o.id !== "all"
+      ).map((opt) => opt.id as ConnectWithOptionKey);
+
       const selectedKeys = selectedOptions.includes("all")
-        ? allKeys
-        : selectedOptions.filter((key) => key !== "all");
+        ? allGenderKeys // If 'all' is selected, save all gender keys
+        : selectedOptions;
+
       onboardingActions.setConnectWith(selectedKeys);
       completeCurrentStep("connect-with");
     }
@@ -108,53 +96,58 @@ export default function ConnectWithScreen() {
           entering={FadeInUp.delay(300).duration(500)}
           style={styles.optionsGrid}
         >
-          {genders.map((option, index) => {
-            const key = option.key as ConnectWithOptionKey;
-            const Icon = optionIconMap[key] ?? HeartIcon;
-            const isSelected = selectedOptions.includes(key);
-            return (
-              <Animated.View
-                key={option.key}
-                entering={FadeInUp.delay(450 + index * 75).duration(500)}
-              >
-                <Pressable
-                  onPress={() => handleOptionToggle(key)}
-                  style={[
-                    styles.optionButton,
-                    {
-                      backgroundColor: isSelected
-                        ? colors.accent
-                        : colors.surface,
-                      borderColor: isSelected ? colors.accent : colors.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.optionContent}>
-                    <Icon
-                      width={32}
-                      height={32}
-                      color={isSelected ? "#fff" : colors.textSecondary}
-                    />
-                    <ThemedText
-                      style={[
-                        styles.optionLabel,
-                        { color: isSelected ? "#fff" : colors.textSecondary },
-                      ]}
-                    >
-                      {getOptionLabel(key)}
-                    </ThemedText>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            );
-          })}
+          {CONNECT_WITH_OPTIONS.filter((o) => o.id !== "all").map(
+            (option, index) => {
+              const key = option.id as ConnectWithOptionKey;
+              const Icon = optionIconMap[key] ?? HeartIcon;
+              const isSelected =
+                selectedOptions.includes(key) &&
+                !selectedOptions.includes("all"); // Visual selection logic
+              // Actually, if 'all' is selected, should individual ones look selected?
+              // Previous logic: if 'all', only 'all' is selected in state.
 
-          {/* All option (not returned by backend) - show last */}
-          <Animated.View
-            entering={FadeInUp.delay(450 + genders.length * 75).duration(500)}
-          >
+              return (
+                <Animated.View
+                  key={option.id}
+                  entering={FadeInUp.delay(450 + index * 75).duration(500)}
+                >
+                  <Pressable
+                    onPress={() => handleOptionToggle(key)}
+                    style={[
+                      styles.optionButton,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.accent
+                          : colors.surface,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.optionContent}>
+                      <Icon
+                        width={32}
+                        height={32}
+                        color={isSelected ? "#fff" : colors.textSecondary}
+                      />
+                      <ThemedText
+                        style={[
+                          styles.optionLabel,
+                          { color: isSelected ? "#fff" : colors.textSecondary },
+                        ]}
+                      >
+                        {t(option.labelKey)}
+                      </ThemedText>
+                    </View>
+                  </Pressable>
+                </Animated.View>
+              );
+            }
+          )}
+
+          {/* All option */}
+          <Animated.View entering={FadeInUp.delay(450 + 3 * 75).duration(500)}>
             <Pressable
-              onPress={() => setSelectedOptions(["all"])}
+              onPress={() => handleOptionToggle("all")}
               style={[
                 styles.optionButton,
                 {
@@ -200,22 +193,13 @@ export default function ConnectWithScreen() {
 
         <Button
           onPress={handleContinue}
-          disabled={!isValid || isLoading}
+          disabled={!isValid}
           size="lg"
           fullWidth
           style={styles.continueButton}
         >
           {t("screens.onboarding.continue")}
         </Button>
-
-        {error ? (
-          <ThemedText
-            style={[styles.footer, { color: colors.error }]}
-            onPress={reload}
-          >
-            {error}
-          </ThemedText>
-        ) : null}
 
         <ThemedText style={[styles.footer, { color: colors.textTertiary }]}>
           {t("screens.onboarding.connectWithFooter")}
@@ -227,50 +211,59 @@ export default function ConnectWithScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
   },
   heading: {
-    ...typography.heading,
-    marginBottom: spacing.sm,
+    ...typography.h2,
+    marginBottom: spacing.xs,
     textAlign: "center",
   },
   subtitle: {
     ...typography.body,
-    marginBottom: spacing.xs,
     textAlign: "center",
+    marginBottom: spacing.xs,
   },
   info: {
     ...typography.caption,
-    marginBottom: spacing.md,
     textAlign: "center",
+    marginBottom: spacing.lg,
   },
   optionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.md,
     justifyContent: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   optionButton: {
-    width: "45%",
-    minWidth: 140,
-    paddingVertical: spacing.xl,
-    borderRadius: 18,
+    width: 140,
+    height: 140,
+    borderRadius: spacing.md,
     borderWidth: 2,
-    marginBottom: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.sm,
+    // Shadow for depth
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   optionContent: {
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   optionLabel: {
-    ...typography.body,
+    ...typography.h4,
     textAlign: "center",
   },
   continueButton: {
-    marginTop: spacing.lg,
+    marginTop: "auto",
     marginBottom: spacing.md,
   },
   footer: {

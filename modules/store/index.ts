@@ -6,36 +6,46 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import {
-  FLUSH,
-  PAUSE,
-  PERSIST,
-  persistReducer,
-  persistStore,
-  PURGE,
-  REGISTER,
-  REHYDRATE,
+    FLUSH,
+    PAUSE,
+    PERSIST,
+    persistReducer,
+    persistStore,
+    PURGE,
+    REGISTER,
+    REHYDRATE,
 } from "redux-persist";
 import onboardingReducer from "./slices/onboardingSlice";
-import optionsReducer from "./slices/optionsSlice";
 import profileReducer from "./slices/profileSlice";
 
 // Configure persistence
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile", "options", "messagesApi"], // Persist onboarding, profile, options, messages cache
+  whitelist: ["onboarding", "profile", "messagesApi"], // Persist onboarding, profile, messages cache
 };
 
+// Define action type
+const RESET_STORE = "RESET_STORE";
+
 // Combine reducers
-const rootReducer = combineReducers({
+const appReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   [messagesApi.reducerPath]: messagesApi.reducer,
   [interactionsApi.reducerPath]: interactionsApi.reducer,
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
-  options: optionsReducer,
 });
+
+// Root reducer with reset capability
+const rootReducer = (state: any, action: any) => {
+  if (action.type === RESET_STORE) {
+    // Check if we need to purge storage here as well, but usually handled by purge helper
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
 
 // Create persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -57,8 +67,21 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
+/**
+ * Resets the entire Redux store and clears persisted storage.
+ * Use this on logout.
+ */
+export const resetGlobalStore = async () => {
+  await persistor.purge();
+  store.dispatch({ type: RESET_STORE });
+};
+
 // Enable refetchOnFocus/refetchOnReconnect behaviors
 setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+// Re-export from types for convenience
+export type { AppDispatch as AppDispatchType, RootState as RootStateType } from "./types";
+

@@ -1,26 +1,14 @@
 // Export actions and types for easy imports
 export { onboardingActions } from "./onboardingActions";
 export type {
-  OnboardingState,
-  OnboardingStep,
-  OnboardingUserData,
+    OnboardingState,
+    OnboardingStep,
+    OnboardingUserData
 } from "./onboardingSlice";
+export * from "./profileActions";
 export {
-  setProfile,
-  setProfileLoading,
-  resetProfile,
-  type ProfileData,
-  type ProfileState,
+    resetProfile, setProfile,
+    setProfileLoading, type ProfileData,
+    type ProfileState
 } from "./profileSlice";
-export { profileActions } from "./profileActions";
-export {
-  setOptions,
-  setLoaded as setOptionsLoaded,
-  setLastFetchedAt as setOptionsLastFetchedAt,
-  setLoading as setOptionsLoading,
-  setError as setOptionsError,
-  resetOptions,
-  fetchOptions,
-  type OptionsState,
-  type OnboardingOption as OnboardingOptionType,
-} from "./optionsSlice";
+

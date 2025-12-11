@@ -137,8 +137,7 @@ export default function ProfileScreen() {
   const [isLoadingImage, setIsLoadingImage] = React.useState(true);
 
   const handleSettingsClick = () => {
-    // TODO: Navigate to settings
-    console.log("Settings clicked");
+    router.push("/main/settings");
   };
 
   const handleCompleteProfile = () => {

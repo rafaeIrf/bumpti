@@ -38,6 +38,50 @@
     "profile": {
       "title": "Profile",
       "settings": "Settings",
+      "settingsPage": {
+        "title": "Settings",
+        "presence": {
+          "title": "PRESENCE PREFERENCES",
+
+          "invisible": "Invisible mode",
+          "invisibleDescription": "Makes your presence invisible to other users."
+        },
+        "notifications": {
+          "title": "NOTIFICATIONS",
+          "push": "Push Notifications"
+        },
+        "account": {
+          "title": "ACCOUNT",
+          "blockList": "Blocked list",
+          "blockListDescription": "Manage who you have blocked."
+        },
+        "location": {
+          "title": "LOCATION",
+          "item": "Location"
+        },
+        "security": {
+          "title": "SECURITY AND PRIVACY",
+          "privacyPolicy": "Privacy Policy",
+          "terms": "Terms of Use"
+        },
+        "support": {
+          "title": "SUPPORT",
+          "help": "Help & Support",
+          "report": "Report a problem"
+        },
+        "about": {
+          "title": "ABOUT THE APP",
+          "version": "Version",
+          "madeWith": "Made with 💛 by Bumpti"
+        },
+        "session": {
+          "title": "SESSION",
+          "logout": "Logout",
+          "logoutConfirm": "Are you sure you want to log out?",
+          "deleteAccount": "Delete account",
+          "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
+        }
+      },
       "completeProfile": "Complete profile",
       "editProfile": "Edit profile",
       "preview": {
@@ -622,8 +666,7 @@
       "networking": "Professional networking",
       "casual": "Meeting new people",
       "relationship": "Find someone special"
-    },
-    "zodiac": "Zodiac"
+    }
   },
   "profileSwiper": {
     "emptyStateTitle": "You've seen all profiles",

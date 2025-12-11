@@ -7,6 +7,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { phoneAuthService } from "@/modules/auth";
 import { t } from "@/modules/locales";
+import { fetchAndSetUserProfile } from "@/modules/profile/index";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -21,6 +22,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 export default function VerifyCodeScreen() {
   const colors = useThemeColors();
+
   const params = useLocalSearchParams<{ phone: string }>();
   const phoneNumber = params.phone || "";
 
@@ -90,11 +92,15 @@ export default function VerifyCodeScreen() {
         verificationCode
       );
 
-      // Navigate to user name screen
-      console.log("User authenticated:", authenticatedUser.id);
+      // Fetch user profile to populate store and check existence
+      const profile = await fetchAndSetUserProfile();
 
       setTimeout(() => {
-        router.replace("/(onboarding)/user-name");
+        if (profile) {
+          router.replace("/(tabs)/(home)");
+        } else {
+          router.replace("/(onboarding)/user-name");
+        }
       }, 500);
     } catch (error: any) {
       setIsLoading(false);

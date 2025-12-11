@@ -6,73 +6,64 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { AgeRangeSlider } from "@/components/ui/age-range-slider";
+import {
+  CONNECT_WITH_OPTIONS,
+  INTENTION_OPTIONS,
+} from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
-import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { updateProfile } from "@/modules/profile/api";
-import { profileActions } from "@/modules/store/slices/profileActions";
+import { setProfile } from "@/modules/store/slices/profileActions";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 export default function FiltersScreen() {
   const colors = useThemeColors();
-  const { genders, intentions, isLoading } = useOnboardingOptions();
   const bottomSheet = useCustomBottomSheet();
   const { profile, isLoading: profileLoading } = useProfile();
+  console.log(profile);
 
-  const [genderOptions, setGenderOptions] = useState<
-    { id: number; label: string; key: string }[]
-  >([]);
-  const [intentionOptions, setIntentionOptions] = useState<
-    { id: number; label: string; key: string }[]
-  >([]);
-  const [localFilters, setLocalFilters] = useState({
-    connectWith: (profile?.connectWith ?? []).filter(
-      (v) => typeof v === "number"
-    ) as number[],
-    intentions: (profile?.intentions ?? []).filter(
-      (v) => typeof v === "number"
-    ) as number[],
+  const [localFilters, setLocalFilters] = useState<{
+    connectWith: string[];
+    intentions: string[];
+    ageRangeMin: number;
+    ageRangeMax: number;
+  }>({
+    connectWith: profile?.connectWith ?? [],
+    intentions: profile?.intentions ?? [],
     ageRangeMin: profile?.age_range_min ?? 18,
     ageRangeMax: profile?.age_range_max ?? 35,
   });
+
   const hasInitialized = useRef(false);
   const hasProfileSeeded = useRef(false);
   const skipNextSave = useRef(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load options and sync with profile data
-  // Load options from store first; fallback to remote fetch
-  useEffect(() => {
-    if (isLoading) return;
-    setGenderOptions(
-      genders.map((g) => ({
-        id: g.id,
-        label: t(`filters.gender.${g.key}`, g.key),
-        key: g.key,
-      }))
-    );
-    setIntentionOptions(
-      intentions.map((i) => ({
-        id: i.id,
-        label: t(`filters.connectionType.${i.key}`, i.key),
-        key: i.key,
-      }))
-    );
-  }, [isLoading, genders, intentions]);
+  const genderOptions = useMemo(() => {
+    return CONNECT_WITH_OPTIONS.filter((o) => o.id !== "all").map((opt) => ({
+      id: opt.id,
+      label: t(opt.labelKey),
+      key: opt.id,
+    }));
+  }, []);
+
+  const intentionOptions = useMemo(() => {
+    return INTENTION_OPTIONS.map((opt) => ({
+      id: opt.id,
+      label: t(opt.labelKey),
+      key: opt.id,
+    }));
+  }, []);
 
   useEffect(() => {
     if (!profile || hasProfileSeeded.current) return;
     setLocalFilters({
-      connectWith: (profile.connectWith ?? []).filter(
-        (v) => typeof v === "number"
-      ) as number[],
-      intentions: (profile.intentions ?? []).filter(
-        (v) => typeof v === "number"
-      ) as number[],
+      connectWith: profile.connectWith ?? [],
+      intentions: profile.intentions ?? [],
       ageRangeMin: profile.age_range_min ?? 18,
       ageRangeMax: profile.age_range_max ?? 35,
     });
@@ -88,7 +79,7 @@ export default function FiltersScreen() {
       .join(", ");
   }, [localFilters.connectWith, genderOptions]);
 
-  const toggleConnectionType = (id: number) => {
+  const toggleConnectionType = (id: string) => {
     setLocalFilters((prev) => ({
       ...prev,
       intentions: prev.intentions.includes(id)
@@ -97,7 +88,7 @@ export default function FiltersScreen() {
     }));
   };
 
-  const handleGenderConfirm = (selection: number[]) => {
+  const handleGenderConfirm = (selection: string[]) => {
     setLocalFilters((prev) => ({ ...prev, connectWith: selection }));
     bottomSheet?.close();
   };
@@ -108,7 +99,7 @@ export default function FiltersScreen() {
         <GenderSelectionBottomSheetContent
           initialSelection={localFilters.connectWith}
           options={genderOptions}
-          onConfirm={(sel) => handleGenderConfirm(sel as number[])}
+          onConfirm={(sel) => handleGenderConfirm(sel)}
         />
       ),
     });
@@ -120,29 +111,16 @@ export default function FiltersScreen() {
     }
     saveTimeout.current = setTimeout(async () => {
       try {
-        const intentionMapByKey = new Map(
-          intentionOptions.map((opt) => [opt.key, opt.id])
-        );
-        const sanitizedIntentions = nextFilters.intentions
-          .map((val) =>
-            typeof val === "number" ? val : intentionMapByKey.get(String(val))
-          )
-          .filter((v): v is number => typeof v === "number");
-
-        const sanitizedConnectWith = nextFilters.connectWith.filter(
-          (v): v is number => typeof v === "number"
-        );
-
         await updateProfile({
-          connectWith: sanitizedConnectWith,
-          intentions: sanitizedIntentions,
+          connectWith: nextFilters.connectWith,
+          intentions: nextFilters.intentions,
           ageRangeMin: nextFilters.ageRangeMin,
           ageRangeMax: nextFilters.ageRangeMax,
         });
-        profileActions.setProfile({
+        setProfile({
           ...profile,
-          connectWith: sanitizedConnectWith,
-          intentions: sanitizedIntentions,
+          connectWith: nextFilters.connectWith,
+          intentions: nextFilters.intentions,
           age_range_min: nextFilters.ageRangeMin,
           age_range_max: nextFilters.ageRangeMax,
         });

@@ -1,5 +1,6 @@
-import { AuthError, User } from "@supabase/supabase-js";
 import { supabase } from "@/modules/supabase/client";
+import { AuthError, User } from "@supabase/supabase-js";
+import { resetGlobalStore } from "../store";
 
 /**
  * Phone authentication service using Supabase Auth
@@ -82,9 +83,29 @@ class PhoneAuthService {
   async signOut(): Promise<void> {
     try {
       await supabase.auth.signOut();
+      await resetGlobalStore();
       this.verificationPhone = null;
     } catch (error) {
       console.error("Error signing out:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete current user account
+   */
+  async deleteAccount(): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+
+      if (error) {
+        throw error;
+      }
+
+      await this.signOut();
+      await resetGlobalStore();
+    } catch (error) {
+      console.error("Error deleting account:", error);
       throw error;
     }
   }

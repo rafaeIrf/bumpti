@@ -1,19 +1,19 @@
-import { MapPinIcon, NavigationIcon, StarIcon } from "@/assets/icons";
+import { NavigationIcon, StarIcon } from "@/assets/icons";
 import Button from "@/components/ui/button";
 import {
   EDUCATION_OPTIONS,
+  INTENTION_OPTIONS,
   RELATIONSHIP_OPTIONS,
   SMOKING_OPTIONS,
   ZODIAC_OPTIONS,
 } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
-import { useOnboardingOptions } from "@/hooks/use-onboarding-options";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
-import { useEffect, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
@@ -31,8 +31,8 @@ export interface UserProfile {
 }
 
 interface PlaceData {
+  id: string;
   name: string;
-  emoji: string;
 }
 
 interface UserProfileCardProps {
@@ -40,13 +40,6 @@ interface UserProfileCardProps {
   readonly currentPlaceId?: string;
   readonly places?: Record<string, PlaceData>;
 }
-
-const DEFAULT_PLACES: Record<string, PlaceData> = {
-  "1": { name: "Bar do João", emoji: "🍸" },
-  "2": { name: "The Irish Pub", emoji: "🍺" },
-  "6": { name: "Café Central", emoji: "☕" },
-  "4": { name: "Universidade Central", emoji: "🎓" },
-};
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_PADDING = spacing.lg;
@@ -56,11 +49,10 @@ const IMAGE_HEIGHT = IMAGE_WIDTH * (4 / 3); // Aspect ratio 3:4
 export function UserProfileCard({
   profile,
   currentPlaceId,
-  places = DEFAULT_PLACES,
 }: UserProfileCardProps) {
   const colors = useThemeColors();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const { intentions: intentionOptions } = useOnboardingOptions();
+
   const professionText = [profile.job_title, profile.company_name]
     .filter(Boolean)
     .join(" • ");
@@ -138,20 +130,6 @@ export function UserProfileCard({
     });
   };
 
-  const renderDetail = (labelKey: string, value?: string | null) => {
-    if (!value) return null;
-    return (
-      <View style={styles.detailRow}>
-        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-          {t(labelKey)}
-        </Text>
-        <Text style={[styles.detailValue, { color: colors.text }]}>
-          {value}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <View
       style={[
@@ -227,10 +205,15 @@ export function UserProfileCard({
             </Text>
             <View style={styles.badgesContainer}>
               <View
-                style={[styles.hereNowBadge, { backgroundColor: colors.accent }]}
+                style={[
+                  styles.hereNowBadge,
+                  { backgroundColor: colors.accent },
+                ]}
               >
                 <View style={styles.pulseIndicator} />
-                <Text style={styles.hereNowText}>{t("userProfile.hereNow")}</Text>
+                <Text style={styles.hereNowText}>
+                  {t("userProfile.hereNow")}
+                </Text>
               </View>
 
               {isFavoritePlace() && (
@@ -265,7 +248,11 @@ export function UserProfileCard({
                     },
                   ]}
                 >
-                  <NavigationIcon width={14} height={14} color={colors.accent} />
+                  <NavigationIcon
+                    width={14}
+                    height={14}
+                    color={colors.accent}
+                  />
                   <Text style={[styles.badgeText, { color: colors.text }]}>
                     {t("userProfile.visitCount", { count: getVisitCount() })}
                   </Text>
@@ -278,7 +265,6 @@ export function UserProfileCard({
 
       {/* Info section */}
       <View style={styles.infoSection}>
-
         {/* Bio */}
         {Boolean(profile.bio) && (
           <View style={styles.bioSection}>
@@ -340,26 +326,11 @@ export function UserProfileCard({
           </Text>
           <View style={styles.intentionsContainer}>
             {profile.intentions?.map((intention) => {
-              const intentionId =
-                typeof intention === "number"
-                  ? intention
-                  : Number(intention) || intention;
-              const intentionKey =
-                typeof intentionId === "number"
-                  ? intentionOptions.find((opt) => opt.id === intentionId)?.key
-                  : intentionId;
-
-              const translationKey = intentionKey
-                ? `userProfile.lookingFor.${intentionKey as string}`
-                : null;
-              const translated =
-                translationKey && typeof translationKey === "string"
-                  ? t(translationKey)
-                  : undefined;
-              const label =
-                translated && translated !== translationKey
-                  ? translated
-                  : String(intentionKey ?? intention);
+              const intentionId = String(intention);
+              const option = INTENTION_OPTIONS.find(
+                (opt) => opt.id === intentionId
+              );
+              const label = option ? t(option.labelKey) : intentionId;
 
               return (
                 <Button
@@ -385,20 +356,10 @@ export function UserProfileCard({
             <View style={styles.placesContainer}>
               {profile.favoritePlaces.map((place) => {
                 const placeId = typeof place === "string" ? place : place.id;
-                const fallbackData = places[placeId];
                 const placeName =
-                  typeof place === "string"
-                    ? fallbackData?.name || placeId
-                    : place.name || fallbackData?.name || placeId;
-                const placeEmoji =
-                  typeof place === "string"
-                    ? fallbackData?.emoji
-                    : place.emoji || fallbackData?.emoji;
-                const isCurrentPlace = placeId === currentPlaceId;
+                  typeof place === "string" ? placeId : place.name || placeId;
 
-                const label = `${placeEmoji ? `${placeEmoji} ` : ""}${
-                  placeName || placeId
-                }`;
+                const label = `${placeName || placeId}`;
 
                 return (
                   <Button
@@ -406,16 +367,6 @@ export function UserProfileCard({
                     variant="outline"
                     size="sm"
                     label={label}
-                    rightIcon={
-                      isCurrentPlace ? (
-                        <StarIcon
-                          width={14}
-                          height={14}
-                          color={colors.accent}
-                          fill={colors.accent}
-                        />
-                      ) : undefined
-                    }
                     style={styles.placeButton}
                   />
                 );
