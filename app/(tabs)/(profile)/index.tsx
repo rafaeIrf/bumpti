@@ -1,5 +1,6 @@
 import {
   CheckIcon,
+  CircleCheckDashedIcon,
   CrownIcon,
   FlameIcon,
   MapPinIcon,
@@ -30,6 +31,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, SvgProps } from "react-native-svg";
 
 interface BenefitRow {
@@ -132,6 +134,7 @@ export default function ProfileScreen() {
   const onboardingUserData = useAppSelector(
     (state) => state.onboarding.userData
   );
+  const insets = useSafeAreaInsets();
 
   const [profileProgress, setProfileProgress] = React.useState<number>(0.65);
   const [isLoadingImage, setIsLoadingImage] = React.useState(true);
@@ -250,292 +253,332 @@ export default function ProfileScreen() {
 
   return (
     <BaseTemplateScreen
-      TopHeader={
-        <ScreenToolbar
-          title={t("screens.profile.title")}
-          rightActions={[
-            {
-              icon: SettingsIcon,
-              onClick: handleSettingsClick,
-              ariaLabel: t("screens.profile.settings"),
-            },
-          ]}
-        />
-      }
+      useSafeArea={false}
+      contentContainerStyle={{ paddingHorizontal: 0 }}
     >
       <View style={[styles.content]}>
-        {/* Profile Header */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          style={styles.profileHeader}
+        {/* Header Container (Toolbar + Info + Cards) */}
+        <View
+          style={[
+            styles.headerContainer,
+            {
+              backgroundColor: colors.surface,
+              paddingTop: insets.top,
+              borderBottomLeftRadius: spacing.xl,
+              borderBottomRightRadius: spacing.xl,
+            },
+          ]}
         >
-          {/* Profile Photo */}
-          <Pressable
-            onPress={handleOpenProfilePreview}
-            accessibilityRole="button"
-            style={styles.photoContainer}
+          <View style={{ marginHorizontal: -spacing.md }}>
+            <ScreenToolbar
+              title={t("screens.profile.title")}
+              rightActions={[
+                {
+                  icon: SettingsIcon,
+                  onClick: handleSettingsClick,
+                  ariaLabel: t("screens.profile.settings"),
+                },
+              ]}
+            />
+          </View>
+
+          {/* Profile Header */}
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={styles.profileHeader}
           >
-            <View style={styles.photoRing}>
-              <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
-                {/* Background circle */}
-                <Circle
-                  cx="40"
-                  cy="40"
-                  r="37"
-                  stroke={(colors as any).border ?? colors.surface}
-                  strokeWidth="5"
-                  fill="none"
-                />
-                {/* Progress circle */}
-                <Circle
-                  cx="40"
-                  cy="40"
-                  r="37"
-                  stroke={(colors as any).premiumBlue ?? colors.accent}
-                  strokeWidth="5"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 37}`}
-                  strokeDashoffset={`${
-                    2 * Math.PI * 37 * (1 - profileProgress)
-                  }`}
-                  strokeLinecap="round"
-                  rotation="-90"
-                  origin="40, 40"
-                />
-              </Svg>
-              <View
-                style={[
-                  styles.photoTrack,
-                  { backgroundColor: colors.background },
-                ]}
-              >
-                {profilePhoto ? (
-                  <Image source={{ uri: profilePhoto }} style={styles.photo} />
-                ) : (
-                  <View
-                    style={[
-                      styles.photoPlaceholder,
-                      { backgroundColor: colors.surface },
-                    ]}
+            {/* Profile Photo */}
+            <Pressable
+              onPress={handleOpenProfilePreview}
+              accessibilityRole="button"
+              style={styles.photoContainer}
+            >
+              <View style={styles.photoRing}>
+                <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
+                  {/* Background circle */}
+                  <Circle
+                    cx="40"
+                    cy="40"
+                    r="37"
+                    stroke={(colors as any).border ?? colors.surface}
+                    strokeWidth="5"
+                    fill="none"
                   />
-                )}
+                  {/* Progress circle */}
+                  <Circle
+                    cx="40"
+                    cy="40"
+                    r="37"
+                    stroke={(colors as any).premiumBlue ?? colors.accent}
+                    strokeWidth="5"
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 37}`}
+                    strokeDashoffset={`${
+                      2 * Math.PI * 37 * (1 - profileProgress)
+                    }`}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin="40, 40"
+                  />
+                </Svg>
+                <View
+                  style={[
+                    styles.photoTrack,
+                    { backgroundColor: colors.background },
+                  ]}
+                >
+                  {profilePhoto ? (
+                    <Image
+                      source={{ uri: profilePhoto }}
+                      style={styles.photo}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.photoPlaceholder,
+                        { backgroundColor: colors.surface },
+                      ]}
+                    />
+                  )}
+                </View>
               </View>
+              {shouldShowCompletionBadge && (
+                <View
+                  style={[
+                    styles.progressBadge,
+                    {
+                      backgroundColor:
+                        (colors as any).cardGradientStart ?? colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[typography.captionBold, { color: colors.text }]}
+                  >
+                    {completionText}
+                  </ThemedText>
+                </View>
+              )}
+            </Pressable>
+
+            {/* Profile Info */}
+            <View style={styles.profileInfo}>
+              <View style={styles.profileInfoTextContainer}>
+                <ThemedText
+                  style={[typography.subheading2, { color: colors.text }]}
+                >
+                  {profile?.name || t("screens.profile.title")}
+                  {ageText}
+                </ThemedText>
+                <CircleCheckDashedIcon
+                  width={24}
+                  height={24}
+                  color={colors.textSecondary}
+                />
+              </View>
+
+              <Button
+                onPress={handleCompleteProfile}
+                size="sm"
+                leftIcon={<PencilIcon />}
+                style={styles.profileButton}
+                label={
+                  profileProgress >= 1
+                    ? t("screens.profile.editProfile")
+                    : t("screens.profile.completeProfile")
+                }
+              />
             </View>
-            {shouldShowCompletionBadge && (
-              <View
+          </Animated.View>
+
+          {/* Action Cards */}
+          <Animated.View
+            entering={FadeInDown.duration(400).delay(100)}
+            style={styles.actionCardsContainer}
+          >
+            <ProfileActionCard
+              icon={FlameIcon}
+              titleKey={t("screens.profile.turbo.title")}
+              onPress={handleTurboClick}
+            />
+            <ProfileActionCard
+              icon={NavigationIcon}
+              titleKey={t("screens.profile.pings.title")}
+              onPress={handlePingsClick}
+            />
+            <ProfileActionCard
+              icon={MapPinIcon}
+              titleKey={t("screens.profile.earlyCheckin.title")}
+              onPress={handleEarlyCheckinClick}
+            />
+          </Animated.View>
+        </View>
+
+        {/* Content Body */}
+        <View style={styles.bodyContent}>
+          {/* Premium Hero Card */}
+          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+            <Pressable onPress={handlePremiumClick}>
+              <LinearGradient
+                colors={[
+                  (colors as any).premiumBlue ?? colors.accent,
+                  (colors as any).premiumBlueDark ?? colors.surface,
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={[
-                  styles.progressBadge,
+                  styles.premiumCard,
                   {
-                    backgroundColor:
-                      (colors as any).cardGradientStart ?? colors.surface,
-                    borderColor: colors.border,
+                    shadowColor: (colors as any).premiumBlue ?? colors.accent,
                   },
                 ]}
               >
-                <ThemedText
-                  style={[typography.captionBold, { color: colors.text }]}
+                <View style={styles.premiumHeader}>
+                  <View
+                    style={[
+                      styles.premiumIconContainer,
+                      { backgroundColor: "rgba(255, 255, 255, 0.15)" },
+                    ]}
+                  >
+                    <CrownIcon width={24} height={24} color={colors.text} />
+                  </View>
+                  <View style={styles.premiumTextContainer}>
+                    <ThemedText
+                      style={[typography.body1, { color: colors.text }]}
+                    >
+                      {t("screens.profile.premium.title")}
+                    </ThemedText>
+
+                    <ThemedText
+                      style={[typography.caption, { color: colors.text }]}
+                    >
+                      {t("screens.profile.premium.description")}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.premiumButton,
+                    {
+                      backgroundColor:
+                        (colors as any).cardGradientStart ?? colors.surface,
+                    },
+                  ]}
                 >
-                  {completionText}
-                </ThemedText>
-              </View>
-            )}
-          </Pressable>
+                  <ThemedText
+                    style={[typography.captionBold, { color: colors.text }]}
+                  >
+                    {t("screens.profile.premium.cta")}
+                  </ThemedText>
+                </View>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
 
-          {/* Profile Info */}
-          <View style={styles.profileInfo}>
-            <ThemedText
-              style={[typography.subheading2, { color: colors.text }]}
-            >
-              {profile?.name || t("screens.profile.title")}
-              {ageText}
-            </ThemedText>
-
-            <Button
-              onPress={handleCompleteProfile}
-              size="sm"
-              leftIcon={<PencilIcon />}
-              style={styles.profileButton}
-              label={
-                profileProgress >= 1
-                  ? t("screens.profile.editProfile")
-                  : t("screens.profile.completeProfile")
-              }
-            />
-          </View>
-        </Animated.View>
-
-        {/* Action Cards */}
-        <Animated.View
-          entering={FadeInDown.duration(400).delay(100)}
-          style={styles.actionCardsContainer}
-        >
-          <ProfileActionCard
-            icon={FlameIcon}
-            titleKey={t("screens.profile.turbo.title")}
-            onPress={handleTurboClick}
-          />
-          <ProfileActionCard
-            icon={NavigationIcon}
-            titleKey={t("screens.profile.pings.title")}
-            onPress={handlePingsClick}
-          />
-          <ProfileActionCard
-            icon={MapPinIcon}
-            titleKey={t("screens.profile.earlyCheckin.title")}
-            onPress={handleEarlyCheckinClick}
-          />
-        </Animated.View>
-
-        {/* Premium Hero Card */}
-        <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-          <Pressable onPress={handlePremiumClick}>
+          {/* Benefits Table */}
+          <Animated.View entering={FadeInDown.duration(400).delay(300)}>
             <LinearGradient
               colors={[
-                (colors as any).premiumBlue ?? colors.accent,
-                (colors as any).premiumBlueDark ?? colors.surface,
+                (colors as any).cardGradientStart ?? colors.surface,
+                (colors as any).cardGradientEnd ?? colors.surface,
               ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[
-                styles.premiumCard,
-                {
-                  shadowColor: (colors as any).premiumBlue ?? colors.accent,
-                },
-              ]}
+              style={styles.benefitsCard}
             >
-              <View style={styles.premiumHeader}>
-                <View
-                  style={[
-                    styles.premiumIconContainer,
-                    { backgroundColor: "rgba(255, 255, 255, 0.15)" },
-                  ]}
-                >
-                  <CrownIcon width={24} height={24} color={colors.text} />
-                </View>
-                <View style={styles.premiumTextContainer}>
-                  <ThemedText
-                    style={[typography.body1, { color: colors.text }]}
-                  >
-                    {t("screens.profile.premium.title")}
-                  </ThemedText>
+              <ThemedText style={[typography.body, { color: colors.text }]}>
+                {t("screens.profile.benefits.title")}
+              </ThemedText>
 
-                  <ThemedText
-                    style={[typography.caption, { color: colors.text }]}
-                  >
-                    {t("screens.profile.premium.description")}
-                  </ThemedText>
-                </View>
-              </View>
+              {/* Table Header */}
               <View
                 style={[
-                  styles.premiumButton,
-                  {
-                    backgroundColor:
-                      (colors as any).cardGradientStart ?? colors.surface,
-                  },
+                  styles.tableHeader,
+                  { borderBottomColor: colors.border },
                 ]}
               >
+                <View style={styles.tableHeaderCell} />
                 <ThemedText
-                  style={[typography.captionBold, { color: colors.text }]}
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      flex: 1,
+                      textAlign: "center",
+                    },
+                  ]}
                 >
-                  {t("screens.profile.premium.cta")}
+                  {t("screens.profile.benefits.free")}
+                </ThemedText>
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    { color: colors.accent, flex: 1, textAlign: "center" },
+                  ]}
+                >
+                  {t("screens.profile.benefits.premium")}
                 </ThemedText>
               </View>
+
+              {/* Table Rows */}
+              <View style={styles.tableBody}>
+                {BENEFITS.map((benefit) => (
+                  <View key={benefit.labelKey} style={styles.tableRow}>
+                    <ThemedText
+                      style={[
+                        typography.caption,
+                        { color: colors.text, flex: 2 },
+                      ]}
+                    >
+                      {t(benefit.labelKey)}
+                    </ThemedText>
+                    <View style={styles.tableCell}>
+                      {benefit.free ? (
+                        <CheckIcon
+                          width={16}
+                          height={16}
+                          color={colors.accent}
+                        />
+                      ) : (
+                        <View style={styles.iconPlaceholder}>
+                          <ThemedText
+                            style={[
+                              typography.body,
+                              { color: colors.textSecondary },
+                            ]}
+                          >
+                            —
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.tableCell}>
+                      {benefit.premium ? (
+                        <CheckIcon
+                          width={16}
+                          height={16}
+                          color={colors.accent}
+                        />
+                      ) : (
+                        <View style={styles.iconPlaceholder}>
+                          <ThemedText
+                            style={[
+                              typography.body,
+                              { color: colors.textSecondary },
+                            ]}
+                          >
+                            —
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
             </LinearGradient>
-          </Pressable>
-        </Animated.View>
-
-        {/* Benefits Table */}
-        <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-          <LinearGradient
-            colors={[
-              (colors as any).cardGradientStart ?? colors.surface,
-              (colors as any).cardGradientEnd ?? colors.surface,
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.benefitsCard}
-          >
-            <ThemedText style={[typography.body, { color: colors.text }]}>
-              {t("screens.profile.benefits.title")}
-            </ThemedText>
-
-            {/* Table Header */}
-            <View
-              style={[styles.tableHeader, { borderBottomColor: colors.border }]}
-            >
-              <View style={styles.tableHeaderCell} />
-              <ThemedText
-                style={[
-                  typography.caption,
-                  {
-                    color: colors.textSecondary,
-                    flex: 1,
-                    textAlign: "center",
-                  },
-                ]}
-              >
-                {t("screens.profile.benefits.free")}
-              </ThemedText>
-              <ThemedText
-                style={[
-                  typography.caption,
-                  { color: colors.accent, flex: 1, textAlign: "center" },
-                ]}
-              >
-                {t("screens.profile.benefits.premium")}
-              </ThemedText>
-            </View>
-
-            {/* Table Rows */}
-            <View style={styles.tableBody}>
-              {BENEFITS.map((benefit) => (
-                <View key={benefit.labelKey} style={styles.tableRow}>
-                  <ThemedText
-                    style={[
-                      typography.caption,
-                      { color: colors.text, flex: 2 },
-                    ]}
-                  >
-                    {t(benefit.labelKey)}
-                  </ThemedText>
-                  <View style={styles.tableCell}>
-                    {benefit.free ? (
-                      <CheckIcon width={16} height={16} color={colors.accent} />
-                    ) : (
-                      <View style={styles.iconPlaceholder}>
-                        <ThemedText
-                          style={[
-                            typography.body,
-                            { color: colors.textSecondary },
-                          ]}
-                        >
-                          —
-                        </ThemedText>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.tableCell}>
-                    {benefit.premium ? (
-                      <CheckIcon width={16} height={16} color={colors.accent} />
-                    ) : (
-                      <View style={styles.iconPlaceholder}>
-                        <ThemedText
-                          style={[
-                            typography.body,
-                            { color: colors.textSecondary },
-                          ]}
-                        >
-                          —
-                        </ThemedText>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </View>
-          </LinearGradient>
-        </Animated.View>
+          </Animated.View>
+        </View>
       </View>
     </BaseTemplateScreen>
   );
@@ -543,7 +586,16 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 16,
+    // Gap handled by padding in bodyContent and headerContainer structure
+  },
+  headerContainer: {
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  bodyContent: {
+    paddingTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
   },
   profileHeader: {
     flexDirection: "row",
@@ -581,6 +633,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    gap: spacing.xs,
   },
   profileButton: {
     alignSelf: "flex-start",
@@ -589,7 +642,7 @@ const styles = StyleSheet.create({
   actionCardsContainer: {
     flexDirection: "row",
     gap: spacing.sm,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     alignItems: "stretch",
   },
   progressBadge: {
@@ -602,7 +655,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   premiumCard: {
-    borderRadius: 16,
+    borderRadius: spacing.xl,
     padding: spacing.xl,
     minHeight: 160,
     gap: spacing.sm,
@@ -636,7 +689,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   benefitsCard: {
-    borderRadius: 16,
+    borderRadius: spacing.xl,
     padding: spacing.xl,
     gap: spacing.md,
   },
@@ -667,5 +720,10 @@ const styles = StyleSheet.create({
     height: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  profileInfoTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
 });

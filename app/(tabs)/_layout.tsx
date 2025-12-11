@@ -11,8 +11,8 @@ import {
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
 import { useProfile } from "@/hooks/use-profile";
+import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -48,6 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(discover)"
         options={{
+          href: null,
           title: t("discover"),
           tabBarIcon: ({ color }) => (
             <CompassIcon width={28} height={28} color={color} />

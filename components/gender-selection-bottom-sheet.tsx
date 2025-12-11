@@ -1,5 +1,4 @@
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
@@ -30,7 +29,7 @@ export function GenderSelectionBottomSheetContent({
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={[styles.title, { color: colors.text }]}>
           {t("screens.onboarding.connectWithTitle")}
@@ -67,7 +66,7 @@ export function GenderSelectionBottomSheetContent({
           size="lg"
         />
       </View>
-    </ThemedView>
+    </View>
   );
 }
 

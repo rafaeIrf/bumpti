@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -24,22 +23,10 @@ export function ProfileActionCard({
 
   return (
     <Pressable onPress={onPress} style={styles.actionCard}>
-      <LinearGradient
-        colors={[
-          (colors as any).cardGradientStart ?? colors.surface,
-          (colors as any).cardGradientEnd ?? colors.background,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <View
         style={[
           styles.actionCardGradient,
-          {
-            borderColor:
-              (colors as any).accentBorderFaint ??
-              (colors as any).accentBlueLight ??
-              colors.border,
-            shadowColor: (colors as any).premiumBlue ?? colors.accent,
-          },
+          { backgroundColor: colors.background },
         ]}
       >
         <View
@@ -63,7 +50,7 @@ export function ProfileActionCard({
         >
           {titleKey}
         </ThemedText>
-      </LinearGradient>
+      </View>
     </Pressable>
   );
 }
@@ -71,11 +58,11 @@ export function ProfileActionCard({
 const styles = StyleSheet.create({
   actionCard: {
     flex: 1,
-    height: 100,
+    height: 112,
   },
   actionCardGradient: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: spacing.xl,
     padding: spacing.md,
     alignItems: "center",
     justifyContent: "center",

@@ -52,12 +52,10 @@
         "account": {
           "title": "CUENTA",
           "blockList": "Lista de bloqueados",
-          "blockListDescription": "Administra a quién has bloqueado."
+          "blockListDescription": "Administra a quién has bloqueado.",
+          "verifyProfile": "Verificar perfil"
         },
-        "location": {
-          "title": "UBICACIÓN",
-          "item": "Ubicación"
-        },
+
         "security": {
           "title": "SEGURIDAD Y PRIVACIDAD",
           "privacyPolicy": "Política de Privacidad",
@@ -81,6 +79,7 @@
           "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
         }
       },
+
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -305,6 +304,15 @@
           }
         }
       }
+    },
+    "blockedList": {
+      "title": "Lista de bloqueados",
+      "unblockConfirmTitle": "¿Desbloquear usuario?",
+      "unblockConfirmMessage": "Al desbloquear, este usuario podrá ver tu perfil y contactarte nuevamente.",
+      "unblock": "Desbloquear",
+      "unblockSuccess": "Usuario desbloqueado con éxito.",
+      "unblockError": "No se pudo desbloquear al usuario.",
+      "empty": "No tienes usuarios bloqueados."
     },
     "home": {
       "placeDetected": {

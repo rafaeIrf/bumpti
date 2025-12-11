@@ -4,8 +4,8 @@ import type { FoursquareCategory } from "./types.ts";
 export const FOURSQUARE_API_BASE = "https://places-api.foursquare.com";
 
 // Maximum distance thresholds based on venue size
-const MAX_DISTANCE_SMALL_VENUE = 80; // meters - bars, cafes, gyms
-const MAX_DISTANCE_LARGE_VENUE = 250; // meters - universities, malls, parks
+const MAX_DISTANCE_SMALL_VENUE = 60; // meters - bars, cafes, gyms
+const MAX_DISTANCE_LARGE_VENUE = 300; // meters - universities, malls, parks
 
 interface FoursquareLocation {
   formatted_address?: string;

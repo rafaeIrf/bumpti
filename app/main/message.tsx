@@ -39,8 +39,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -556,11 +554,7 @@ export default function ChatMessageScreen() {
             </ThemedText>
           </View>
         ) : null}
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-        >
+        <View style={{ flex: 1 }}>
           <ThemedView style={styles.flex}>
             {content}
             <ScrollToLatestButton
@@ -568,61 +562,60 @@ export default function ChatMessageScreen() {
               onPress={handleScrollToLatest}
             />
           </ThemedView>
-          <View
+        </View>
+        <View
+          style={[
+            styles.inputRow,
+            {
+              borderTopColor: colors.border,
+              paddingVertical: spacing.sm,
+              paddingBottom: spacing.md,
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <TextInput
+            ref={inputRef}
+            value={newMessage}
+            onChangeText={setNewMessage}
+            placeholder={t("screens.chat.messagePlaceholder")}
+            placeholderTextColor={colors.textSecondary}
             style={[
-              styles.inputRow,
+              styles.input,
               {
-                borderTopColor: colors.border,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                color: colors.text,
                 paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-                paddingBottom: spacing.sm + insets.bottom,
-                backgroundColor: colors.background,
+                paddingTop: spacing.sm + 2,
+                paddingBottom: spacing.sm + 2,
+              },
+            ]}
+            multiline
+            numberOfLines={6}
+            maxLength={500}
+            blurOnSubmit={false}
+            textAlignVertical="center"
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={!newMessage.trim()}
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor: !newMessage.trim()
+                  ? colors.disabledBG
+                  : colors.accent,
               },
             ]}
           >
-            <TextInput
-              ref={inputRef}
-              value={newMessage}
-              onChangeText={setNewMessage}
-              placeholder={t("screens.chat.messagePlaceholder")}
-              placeholderTextColor={colors.textSecondary}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  color: colors.text,
-                  paddingHorizontal: spacing.md,
-                  paddingTop: spacing.sm + 2,
-                  paddingBottom: spacing.sm + 2,
-                },
-              ]}
-              multiline
-              numberOfLines={6}
-              maxLength={500}
-              blurOnSubmit={false}
-              textAlignVertical="center"
+            <SendHorizontalIcon
+              width={20}
+              height={20}
+              color={colors.textPrimary}
             />
-            <Pressable
-              onPress={handleSend}
-              disabled={!newMessage.trim()}
-              style={[
-                styles.sendButton,
-                {
-                  backgroundColor: !newMessage.trim()
-                    ? colors.disabledBG
-                    : colors.accent,
-                },
-              ]}
-            >
-              <SendHorizontalIcon
-                width={20}
-                height={20}
-                color={colors.textPrimary}
-              />
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
+          </Pressable>
+        </View>
       </BaseTemplateScreen>
     </>
   );

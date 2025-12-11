@@ -1,5 +1,5 @@
 import { spacing } from "@/constants/theme";
-import { StatusBar } from "expo-status-bar";
+import { StatusBar, StatusBarStyle } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
 import {
   KeyboardAvoidingView,
@@ -70,10 +70,14 @@ interface BaseTemplateScreenProps {
   scrollEnabled?: boolean;
   showsVerticalScrollIndicator?: boolean;
 
-  // Whether the screen has a Stack header (e.g., onboarding screens with progress bar)
   // If true, won't add paddingTop for safe area (header already handles it)
   hasStackHeader?: boolean;
   isModal?: boolean;
+
+  // Whether to apply safe area padding automatically (default: true)
+  useSafeArea?: boolean;
+
+  statusBarStyle?: StatusBarStyle;
 }
 
 export function BaseTemplateScreen({
@@ -88,6 +92,8 @@ export function BaseTemplateScreen({
   showsVerticalScrollIndicator = false,
   hasStackHeader = false,
   isModal = false,
+  useSafeArea = true,
+  statusBarStyle = "light",
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -109,62 +115,75 @@ export function BaseTemplateScreen({
     return TopHeader;
   };
 
-  // Extracted keyboard vertical offset to avoid nested ternary
-  let keyboardVerticalOffset = 0;
-  if (Platform.OS === "ios") {
-    keyboardVerticalOffset = (hasStackHeader || isModal ? 16 : insets.top) + 60;
-  }
-
   return (
     <View
       style={[
         styles.wrapper,
         containerStyle,
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
-        hasStackHeader || isModal
-          ? { paddingTop: 16 }
+        // and if useSafeArea is true
+        hasStackHeader || isModal || !useSafeArea
+          ? { paddingTop: useSafeArea ? 16 : 0 }
           : { paddingTop: insets.top },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}
       <StatusBar
-        style="light"
+        style={statusBarStyle}
         hidden={false}
         translucent
         backgroundColor="transparent"
       />
+      {/* Top Header with scroll position - positioned absolutely to stay on top */}
+      <View style={styles.headerContainer} pointerEvents="box-none">
+        {renderTopHeader()}
+      </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={keyboardVerticalOffset}
-      >
-        {/* Top Header with scroll position - positioned absolutely to stay on top */}
-        <View style={styles.headerContainer} pointerEvents="box-none">
-          {renderTopHeader()}
-        </View>
-
-        {/* Scrollable content */}
-        {scrollEnabled ? (
-          <Animated.ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.contentContainer,
-              contentContainerStyle,
-            ]}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
-            scrollEnabled={scrollEnabled}
-            showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-            refreshControl={
-              onRefresh ? (
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              ) : undefined
-            }
-          >
-            {children}
-          </Animated.ScrollView>
-        ) : (
+      {/* Scrollable content */}
+      {scrollEnabled ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+        >
+          <View style={{ flex: 1 }}>
+            <Animated.ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.contentContainer,
+                contentContainerStyle,
+              ]}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              scrollEnabled={scrollEnabled}
+              showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+              refreshControl={
+                onRefresh ? (
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
+                ) : undefined
+              }
+            >
+              {children}
+            </Animated.ScrollView>
+            {/* Bottom Bar - positioned absolutely to stay at bottom */}
+          </View>
+          {BottomBar && (
+            <View style={styles.bottomBarContainer} pointerEvents="box-none">
+              {BottomBar}
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      ) : (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={
+            Platform.OS === "ios" && !scrollEnabled && isModal ? 70 : 0
+          }
+        >
           <View
             style={{
               flex: 1,
@@ -173,16 +192,15 @@ export function BaseTemplateScreen({
             }}
           >
             {children}
+            {/* Bottom Bar - positioned absolutely to stay at bottom */}
+            {BottomBar && (
+              <View style={styles.bottomBarContainer} pointerEvents="box-none">
+                {BottomBar}
+              </View>
+            )}
           </View>
-        )}
-
-        {/* Bottom Bar - positioned absolutely to stay at bottom */}
-        {BottomBar && (
-          <View style={styles.bottomBarContainer} pointerEvents="box-none">
-            {BottomBar}
-          </View>
-        )}
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      )}
     </View>
   );
 }
