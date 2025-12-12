@@ -570,7 +570,7 @@ export default function ChatMessageScreen() {
             {
               borderTopColor: colors.border,
               paddingVertical: spacing.sm,
-              paddingBottom: spacing.md,
+              paddingBottom: insets.bottom,
               backgroundColor: colors.background,
             },
           ]}
