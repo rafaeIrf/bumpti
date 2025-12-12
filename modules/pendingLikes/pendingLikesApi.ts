@@ -1,4 +1,4 @@
-import { fetchPendingLikes } from "@/modules/pendingLikes/api";
+import { fetchPendingLikes, PendingUser } from "@/modules/pendingLikes/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const pendingLikesApi = createApi({
@@ -7,13 +7,13 @@ export const pendingLikesApi = createApi({
   tagTypes: ["PendingLikes"],
   endpoints: (builder) => ({
     getPendingLikes: builder.query<
-      { count: number },
+      { count: number; users: PendingUser[] },
       void
     >({
       queryFn: async () => {
         try {
           const res = await fetchPendingLikes();
-          return { data: { count: res.count } };
+          return { data: { count: res.count, users: res.users } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }

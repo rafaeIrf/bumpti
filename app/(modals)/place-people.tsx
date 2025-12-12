@@ -55,6 +55,7 @@ export default function PlacePeopleScreen() {
     placeId: string;
     placeName: string;
     distance?: string;
+    initialUsers?: string;
   }>();
   const [loading, setLoading] = useState(true);
   const [availableProfiles, setAvailableProfiles] = useState<
@@ -68,6 +69,32 @@ export default function PlacePeopleScreen() {
     let isMounted = true;
     const load = async () => {
       try {
+        // If we have initialUsers passed via params, use those directly
+        if (params.initialUsers) {
+          try {
+            const parsedUsers = JSON.parse(
+              params.initialUsers
+            ) as ActiveUserAtPlace[];
+            if (isMounted) {
+              setAvailableProfiles(parsedUsers);
+              // Prefetch images for passed users
+              const urls = parsedUsers
+                .flatMap((u) => u.photos ?? [])
+                .filter(Boolean);
+              if (urls.length) {
+                prefetchImages(urls).finally(() => {
+                  if (isMounted) setLoading(false);
+                });
+              } else {
+                setLoading(false);
+              }
+            }
+            return; // Skip fetching from API
+          } catch (e) {
+            console.error("Failed to parse initialUsers", e);
+          }
+        }
+
         const response: ActiveUsersResponse | null =
           await getActiveUsersAtPlace(params.placeId);
         if (!isMounted) return;
@@ -113,10 +140,11 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
+    console.log("profile", profile);
     interactUser({
       toUserId: profile.user_id,
       action: "like",
-      placeId: place.id,
+      placeId: profile.place_id || place.id, // Use profile's specific place_id if available (e.g. from pending likes)
     })
       .unwrap()
       .then((response) => {
@@ -131,7 +159,7 @@ export default function PlacePeopleScreen() {
     interactUser({
       toUserId: profile.user_id,
       action: "dislike",
-      placeId: place.id,
+      placeId: profile.place_id || place.id,
     })
       .unwrap()
       .then((response) => {
@@ -325,12 +353,12 @@ export default function PlacePeopleScreen() {
             <UsersIcon width={48} height={48} color={colors.textSecondary} />
           </View>
           <ThemedText style={styles.emptyTitle}>
-            {t("profileSwiper.emptyStateTitle")}
+            {t("placePeople.emptyState.title")}
           </ThemedText>
           <ThemedText
             style={[styles.emptyDescription, { color: colors.textSecondary }]}
           >
-            {t("profileSwiper.emptyStateDescription")}
+            {t("placePeople.emptyState.description")}
           </ThemedText>
           <Button onPress={handleBack} style={styles.emptyButton}>
             {t("common.back")}

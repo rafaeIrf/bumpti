@@ -37,14 +37,44 @@ export function attachPendingLikesRealtime(
     .on(
       "postgres_changes",
       {
+        event: "INSERT",
+        schema: "public",
+        table: "user_matches",
+        filter: `user_a=eq.${userId}`,
+      },
+      () => {
+        dispatch(
+          pendingLikesApi.util.invalidateTags([
+            { type: "PendingLikes", id: "LIST" },
+          ])
+        );
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "user_matches",
+        filter: `user_b=eq.${userId}`,
+      },
+      () => {
+        dispatch(
+          pendingLikesApi.util.invalidateTags([
+            { type: "PendingLikes", id: "LIST" },
+          ])
+        );
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
         event: "UPDATE",
         schema: "public",
         table: "user_interactions",
         filter: `to_user_id=eq.${userId}`,
       },
-      (payload) => {
-        logger.log("Interaction updated:", payload);
-        // Invalidate on any update that might affect pending status
+      () => {
         dispatch(
           pendingLikesApi.util.invalidateTags([
             { type: "PendingLikes", id: "LIST" },

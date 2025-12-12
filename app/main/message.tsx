@@ -539,6 +539,7 @@ export default function ChatMessageScreen() {
       <BaseTemplateScreen
         TopHeader={header}
         scrollEnabled={false}
+        useKeyboardAvoidingView
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 0,

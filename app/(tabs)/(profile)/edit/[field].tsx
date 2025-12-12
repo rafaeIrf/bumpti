@@ -55,9 +55,7 @@ export default function EditFieldScreen() {
 
   const getInitialValue = () => {
     if (!profile) {
-      return field === "profession"
-        ? { jobTitle: "", companyName: "" }
-        : "";
+      return field === "profession" ? { jobTitle: "", companyName: "" } : "";
     }
 
     if (field === "profession") {
@@ -90,8 +88,7 @@ export default function EditFieldScreen() {
             ? currentValue.jobTitle.trim()
             : null;
         const companyNameValue =
-          currentValue.companyName &&
-          currentValue.companyName.trim().length > 0
+          currentValue.companyName && currentValue.companyName.trim().length > 0
             ? currentValue.companyName.trim()
             : null;
 
@@ -213,13 +210,7 @@ export default function EditFieldScreen() {
 
       case "height":
         return (
-          <View
-            style={{
-              overflow: "hidden",
-              justifyContent: "center",
-              ...(Platform.OS === "ios" && { height: 200 }),
-            }}
-          >
+          <View style={{ flex: 1 }}>
             <Picker
               selectedValue={value === "" ? null : value}
               onValueChange={(itemValue) => setValue(itemValue)}
@@ -330,6 +321,7 @@ export default function EditFieldScreen() {
   return (
     <BaseTemplateScreen
       isModal
+      useKeyboardAvoidingView
       scrollEnabled={
         field !== "height" && field !== "languages" && field !== "location"
       }

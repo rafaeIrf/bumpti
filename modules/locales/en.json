@@ -689,7 +689,11 @@
     "benefit3": "Explore places in other cities",
     "subscribePremium": "Subscribe Premium",
     "backToPlaces": "Back to places",
-    "howItWorks": "How it works"
+    "howItWorks": "How it works",
+    "emptyState": {
+      "title": "No one here yet",
+      "description": "You are the first! When other people appear here, we will notify you."
+    }
   },
   "filters": {
     "title": "Filters",

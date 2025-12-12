@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,6 +103,17 @@ Deno.serve(async (req) => {
 
     const filteredRows = rows;
 
+    // Extract all unique favorite place IDs
+    const allFavoritePlaceIds = Array.from(
+      new Set(
+        filteredRows.flatMap((row) => row.favorite_places || [])
+      )
+    ).filter(Boolean) as string[];
+
+    // Resolve details for all favorite places
+    const resolvedPlaces = await resolveFavoritePlaces(allFavoritePlaceIds);
+    const placeMap = new Map(resolvedPlaces.map((p) => [p.id, p]));
+
     const users =
       await Promise.all(
         filteredRows.map(async (row) => {
@@ -120,6 +132,16 @@ Deno.serve(async (req) => {
             })
           );
 
+          // Map favorite places to objects
+          const favoritePlaces = (row.favorite_places || []).map((id: string) => {
+            const details = placeMap.get(id);
+            return {
+              id: id,
+              name: details?.name || "Unknown Place",
+              emoji: details?.emoji || ""
+            };
+          });
+
           return {
             user_id: row.user_id,
             name: row.name,
@@ -129,8 +151,19 @@ Deno.serve(async (req) => {
               ? row.intentions.map((i) => (i == null ? null : String(i)))
               : [],
             photos: signedPhotos.filter((url): url is string => Boolean(url)),
+            visited_places_count: 0, 
+            favorite_places: favoritePlaces,
+            job_title: row.job_title,
+            company_name: row.company_name,
+            height_cm: row.height_cm,
+            languages: row.languages || [],
+            relationship_status: row.relationship_status,
+            smoking_habit: row.smoking_habit,
+            education_level: row.education_level,
+            place_id: placeId,
             entered_at: row.entered_at,
             expires_at: row.expires_at,
+            zodiac_sign: row.zodiac_sign,
           };
         })
       ) ?? [];

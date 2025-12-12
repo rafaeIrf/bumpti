@@ -133,6 +133,24 @@ export default function ChatScreen() {
       refetchOnReconnect: true,
     });
   const pendingCount = pendingData?.count ?? 0;
+  const pendingUsers = pendingData?.users ?? [];
+  const pendingPhotos = pendingUsers
+    .map((u) => u.photos?.[0])
+    .filter((p): p is string => !!p)
+    .slice(0, 3);
+
+  const handleOpenPendingLikes = useCallback(() => {
+    if (pendingUsers.length === 0) return;
+
+    router.push({
+      pathname: "/(modals)/place-people",
+      params: {
+        placeId: "pending-likes", // Virtual ID
+        placeName: t("screens.chat.potentialConnections.title"),
+        initialUsers: JSON.stringify(pendingUsers),
+      },
+    });
+  }, [pendingUsers]);
 
   return (
     <BaseTemplateScreen TopHeader={header} scrollEnabled={false}>
@@ -148,10 +166,13 @@ export default function ChatScreen() {
             renderItem={renderChatItem}
             ListHeaderComponent={
               <>
-                {!loadingPending && pendingCount > 0 ? (
+                {!loadingPending &&
+                pendingCount > 0 &&
+                pendingPhotos.length > 0 ? (
                   <PotentialConnectionsBanner
                     count={pendingCount}
-                    onPress={handleOpenPaywall}
+                    profilePhotos={pendingPhotos}
+                    onPress={handleOpenPendingLikes}
                     style={styles.banner}
                   />
                 ) : null}

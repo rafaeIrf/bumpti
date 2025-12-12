@@ -12,6 +12,7 @@ export type PresenceRecord = {
   lng: number | null;
 };
 
+
 export type ActiveUserAtPlace = {
   user_id: string;
   name: string | null;
@@ -19,20 +20,20 @@ export type ActiveUserAtPlace = {
   bio: string | null;
   intentions: string[];
   photos: string[];
-  entered_at: string;
-  expires_at: string;
-  visitedPlacesCount: number;
-  favoritePlaces: Array<
-    string | { id: string; name?: string; emoji?: string }
-  >;
+  entered_at?: string;
+  expires_at?: string;
+  visited_places_count?: number;
+  favorite_places: (string | { id: string; name?: string; emoji?: string })[];
   job_title?: string | null;
   company_name?: string | null;
   height_cm?: number | null;
   location?: string | null;
   languages?: string[];
-  relationship_key?: string | null;
-  smoking_key?: string | null;
-  education_key?: string | null;
+  relationship_status?: string | null;
+  smoking_habit?: string | null;
+  education_level?: string | null;
+  place_id?: string | null;
+  zodiac_sign: string | null;
 };
 
 export type ActiveUsersResponse = {

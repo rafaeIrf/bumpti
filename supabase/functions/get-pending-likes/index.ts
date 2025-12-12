@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,25 +65,89 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Call RPC get_pending_likes(viewer_id)
-    const { data, error } = await serviceSupabase.rpc("get_pending_likes", {
+    const userPhotosBucket = Deno.env.get("USER_PHOTOS_BUCKET") || "user_photos";
+
+    // Call RPC get_pending_likes_users(viewer_id)
+    const { data: users, error } = await serviceSupabase.rpc("get_pending_likes_users", {
       viewer_id: user.id,
     });
 
     if (error) {
-      console.error("get_pending_likes rpc error:", error);
+      console.error("get_pending_likes_users rpc error:", error);
       return new Response(
         JSON.stringify({ error: "rpc_error", message: error.message }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    // rpc returns rows with pending_count only
-    const row = (data && data[0]) || { pending_count: 0 };
+    const pendingUsers = users || [];
+
+    // Extract all unique favorite place IDs
+    const allFavoritePlaceIds = Array.from(
+      new Set(
+        (pendingUsers || []).flatMap((user: any) => user.favorite_places || [])
+      )
+    ).filter(Boolean) as string[];
+
+    // Resolve details for all favorite places
+    const resolvedPlaces = await resolveFavoritePlaces(allFavoritePlaceIds);
+    const placeMap = new Map(resolvedPlaces.map((p) => [p.id, p]));
+
+    // Process users: resolve photos and favorite places
+    const usersWithSignedPhotos = await Promise.all(
+      (pendingUsers || []).map(async (user: any) => {
+        const photos = user.photos || [];
+        const signedPhotos = await Promise.all(
+          photos.map(async (path: string) => {
+             // Basic signed URL generation per photo to match get-active-users-at-place logic
+            const { data: signedData } = await serviceSupabase.storage
+              .from(userPhotosBucket)
+              .createSignedUrl(path, 60 * 60); // 1 hour expiry
+            return signedData?.signedUrl || null;
+          })
+        );
+
+        // Map favorite places to objects
+        const favoritePlaces = (user.favorite_places || []).map((id: string) => {
+          const details = placeMap.get(id);
+          return {
+            id: id,
+            name: details?.name || "Unknown Place",
+            emoji: details?.emoji || ""
+          };
+        });
+
+        return {
+          user_id: user.user_id,
+          name: user.name,
+          age: user.age,
+          bio: user.bio,
+          intentions: [], // Default for compatibility
+          photos: signedPhotos.filter((url) => url !== null),
+          entered_at: user.created_at, // Use like creation time as entered_at
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Mock expiry
+          visited_places_count: 0,
+          favorite_places: favoritePlaces,
+          job_title: user.job_title,
+          company_name: user.company_name,
+          height_cm: user.height_cm,
+          location: user.city_name
+            ? `${user.city_name}${user.state_name ? `, ${user.state_name}` : ""}`
+            : null,
+          languages: user.languages || [],
+          relationship_status: user.relationship_status,
+          smoking_habit: user.smoking_habit,
+          education_level: user.education_level,
+          place_id: user.place_id,
+          zodiac_sign: user.zodiac_sign,
+        };
+      })
+    );
 
     return new Response(
       JSON.stringify({
-        count: Number(row.pending_count || 0),
+        count: usersWithSignedPhotos.length,
+        users: usersWithSignedPhotos,
       }),
       { status: 200, headers: corsHeaders }
     );
