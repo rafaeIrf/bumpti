@@ -1,5 +1,5 @@
 import { spacing } from "@/constants/theme";
-import { StatusBar, StatusBarStyle } from "expo-status-bar";
+import { StatusBar } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
 import {
   KeyboardAvoidingView,
@@ -77,7 +77,11 @@ interface BaseTemplateScreenProps {
   // Whether to apply safe area padding automatically (default: true)
   useSafeArea?: boolean;
 
-  statusBarStyle?: StatusBarStyle;
+  // Enable keyboard avoiding view (default: true)
+  useKeyboardAvoidingView?: boolean;
+
+  // Status bar style (default: 'light')
+  statusBarStyle?: "auto" | "inverted" | "light" | "dark";
 }
 
 export function BaseTemplateScreen({
@@ -94,6 +98,7 @@ export function BaseTemplateScreen({
   isModal = false,
   useSafeArea = true,
   statusBarStyle = "light",
+  useKeyboardAvoidingView = false,
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -113,6 +118,36 @@ export function BaseTemplateScreen({
     }
 
     return TopHeader;
+  };
+
+  const ContentWrapper = ({ children }: { children: ReactNode }) => {
+    if (!useKeyboardAvoidingView) {
+      return <View style={{ flex: 1 }}>{children}</View>;
+    }
+
+    if (scrollEnabled) {
+      return (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+        >
+          {children}
+        </KeyboardAvoidingView>
+      );
+    }
+
+    return (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" && !scrollEnabled && isModal ? 70 : 0
+        }
+      >
+        {children}
+      </KeyboardAvoidingView>
+    );
   };
 
   return (
@@ -140,12 +175,8 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      {scrollEnabled ? (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
-        >
+      <ContentWrapper>
+        {scrollEnabled ? (
           <View style={{ flex: 1 }}>
             <Animated.ScrollView
               style={styles.scrollView}
@@ -170,20 +201,7 @@ export function BaseTemplateScreen({
             </Animated.ScrollView>
             {/* Bottom Bar - positioned absolutely to stay at bottom */}
           </View>
-          {BottomBar && (
-            <View style={styles.bottomBarContainer} pointerEvents="box-none">
-              {BottomBar}
-            </View>
-          )}
-        </KeyboardAvoidingView>
-      ) : (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={
-            Platform.OS === "ios" && !scrollEnabled && isModal ? 70 : 0
-          }
-        >
+        ) : (
           <View
             style={{
               flex: 1,
@@ -199,8 +217,18 @@ export function BaseTemplateScreen({
               </View>
             )}
           </View>
-        </KeyboardAvoidingView>
-      )}
+        )}
+
+        {/* Bottom Bar for scrollEnabled case needs to be outside ScrollView but inside Wrapper? 
+            Original code had BottomBar OUTSIDE ScrollView inside the KAV.
+            Let's check the structure carefully.
+        */}
+        {scrollEnabled && BottomBar && (
+          <View style={styles.bottomBarContainer} pointerEvents="box-none">
+            {BottomBar}
+          </View>
+        )}
+      </ContentWrapper>
     </View>
   );
 }
