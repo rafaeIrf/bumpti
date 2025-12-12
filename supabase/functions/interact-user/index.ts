@@ -105,27 +105,47 @@ Deno.serve(async (req) => {
     }
 
     if (action === "like") {
-      const { data: activePresence, error: presenceError } = await dbClient
-        .from("user_presences")
+      // Check if there is an existing pending like from the target user (Like Back scenario)
+      // If there is a pending like, we allow the interaction even if the current user is not at the place
+      const { data: incomingLike, error: incomingLikeError } = await dbClient
+        .from("user_interactions")
         .select("id")
-        .eq("user_id", user.id)
-        .eq("place_id", placeId)
-        .eq("active", true)
-        .gt("expires_at", new Date().toISOString())
+        .eq("from_user_id", toUserId)
+        .eq("to_user_id", user.id)
+        .eq("action", "like")
+        .gt("action_expires_at", new Date().toISOString())
         .maybeSingle();
 
-      if (presenceError) {
-        return new Response(
-          JSON.stringify({ error: "place_lookup_failed", message: presenceError.message }),
-          { status: 400, headers: corsHeaders }
-        );
+      if (incomingLikeError) {
+         console.error("Error checking incoming like:", incomingLikeError);
+         // Continue to presence check if this fails, or strict fail? 
+         // Safest to continue to presence check, but let's just log it.
       }
 
-      if (!activePresence) {
-        return new Response(JSON.stringify({ error: "place_not_active_for_user" }), {
-          status: 400,
-          headers: corsHeaders,
-        });
+      // Only enforce presence if this is NOT a response to an existing like
+      if (!incomingLike) {
+        const { data: activePresence, error: presenceError } = await dbClient
+          .from("user_presences")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("place_id", placeId)
+          .eq("active", true)
+          .gt("expires_at", new Date().toISOString())
+          .maybeSingle();
+
+        if (presenceError) {
+          return new Response(
+            JSON.stringify({ error: "place_lookup_failed", message: presenceError.message }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        if (!activePresence) {
+          return new Response(JSON.stringify({ error: "place_not_active_for_user" }), {
+            status: 400,
+            headers: corsHeaders,
+          });
+        }
       }
 
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();

@@ -42,14 +42,14 @@ export default function ProfilePreviewModal() {
       height_cm: profile.height_cm ?? null,
       location: profile.location ?? null,
       languages: profile.languages ?? [],
-      relationship_key: profile.relationship_key ?? null,
-      smoking_key: profile.smoking_key ?? null,
-      education_key: profile.education_key ?? null,
-      zodiac_key: profile.zodiac_key ?? null,
+      relationship_status: profile.relationship_key ?? null,
+      smoking_habit: profile.smoking_key ?? null,
+      education_level: profile.education_key ?? null,
+      zodiac_sign: profile.zodiac_key ?? null,
       entered_at: "",
       expires_at: "",
-      visitedPlacesCount: favoritePlacesIds.length,
-      favoritePlaces: favoritePlacesIds,
+      visited_places_count: favoritePlacesIds.length,
+      favorite_places: favoritePlacesIds,
     };
   }, [profile]);
 

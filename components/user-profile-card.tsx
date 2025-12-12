@@ -61,31 +61,31 @@ export function UserProfileCard({
       ? `${profile.height_cm} cm`
       : undefined;
   const smokingLabel = React.useMemo(() => {
-    if (!profile.smoking_key) return null;
+    if (!profile.smoking_habit) return null;
     const option = SMOKING_OPTIONS.find(
-      (opt) => opt.id === profile.smoking_key
+      (opt) => opt.id === profile.smoking_habit
     );
-    return option ? t(option.labelKey) : profile.smoking_key;
-  }, [profile.smoking_key]);
+    return option ? t(option.labelKey) : profile.smoking_habit;
+  }, [profile.smoking_habit]);
   const relationshipLabel = React.useMemo(() => {
-    if (!profile.relationship_key) return null;
+    if (!profile.relationship_status) return null;
     const option = RELATIONSHIP_OPTIONS.find(
-      (opt) => opt.id === profile.relationship_key
+      (opt) => opt.id === profile.relationship_status
     );
-    return option ? t(option.labelKey) : profile.relationship_key;
-  }, [profile.relationship_key]);
+    return option ? t(option.labelKey) : profile.relationship_status;
+  }, [profile.relationship_status]);
   const educationLabel = React.useMemo(() => {
-    if (!profile.education_key) return null;
+    if (!profile.education_level) return null;
     const option = EDUCATION_OPTIONS.find(
-      (opt) => opt.id === profile.education_key
+      (opt) => opt.id === profile.education_level
     );
-    return option ? t(option.labelKey) : profile.education_key;
-  }, [profile.education_key]);
+    return option ? t(option.labelKey) : profile.education_level;
+  }, [profile.education_level]);
   const zodiacLabel = useMemo(() => {
-    if (!profile.zodiac_key) return null;
-    const option = ZODIAC_OPTIONS.find((opt) => opt.id === profile.zodiac_key);
-    return option ? t(option.labelKey) : profile.zodiac_key;
-  }, [profile.zodiac_key]);
+    if (!profile.zodiac_sign) return null;
+    const option = ZODIAC_OPTIONS.find((opt) => opt.id === profile.zodiac_sign);
+    return option ? t(option.labelKey) : profile.zodiac_sign;
+  }, [profile.zodiac_sign]);
   const languageLabels =
     profile.languages && profile.languages.length > 0
       ? profile.languages.map((code) => {
@@ -118,13 +118,13 @@ export function UserProfileCard({
   };
 
   const getVisitCount = () => {
-    if (!currentPlaceId || !profile.visitedPlacesCount) return 0;
-    return profile.visitedPlacesCount || 0;
+    if (!currentPlaceId || !profile.visited_places_count) return 0;
+    return profile.visited_places_count || 0;
   };
 
   const isFavoritePlace = () => {
-    if (!currentPlaceId || !profile.favoritePlaces) return false;
-    return profile.favoritePlaces.some((place) => {
+    if (!currentPlaceId || !profile.favorite_places) return false;
+    return profile.favorite_places.some((place) => {
       const placeId = typeof place === "string" ? place : place.id;
       return placeId === currentPlaceId;
     });
@@ -346,7 +346,7 @@ export function UserProfileCard({
         </View>
 
         {/* Favorite places */}
-        {profile.favoritePlaces && profile.favoritePlaces.length > 0 && (
+        {profile.favorite_places && profile.favorite_places.length > 0 && (
           <View style={styles.section}>
             <Text
               style={[styles.sectionTitle, { color: colors.textSecondary }]}
@@ -354,7 +354,7 @@ export function UserProfileCard({
               {t("userProfile.favoritePlaces")}
             </Text>
             <View style={styles.placesContainer}>
-              {profile.favoritePlaces.map((place) => {
+              {profile.favorite_places.map((place) => {
                 const placeId = typeof place === "string" ? place : place.id;
                 const placeName =
                   typeof place === "string" ? placeId : place.name || placeId;
