@@ -325,12 +325,12 @@ export default function PlacePeopleScreen() {
             <UsersIcon width={48} height={48} color={colors.textSecondary} />
           </View>
           <ThemedText style={styles.emptyTitle}>
-            {t("profileSwiper.emptyStateTitle")}
+            {t("placePeople.emptyState.title")}
           </ThemedText>
           <ThemedText
             style={[styles.emptyDescription, { color: colors.textSecondary }]}
           >
-            {t("profileSwiper.emptyStateDescription")}
+            {t("placePeople.emptyState.description")}
           </ThemedText>
           <Button onPress={handleBack} style={styles.emptyButton}>
             {t("common.back")}

@@ -689,7 +689,11 @@
     "benefit3": "Explora lugares en otras ciudades",
     "subscribePremium": "Suscribirse a Premium",
     "backToPlaces": "Volver a los lugares",
-    "howItWorks": "Cómo funciona"
+    "howItWorks": "Cómo funciona",
+    "emptyState": {
+      "title": "Nadie por aquí todavía",
+      "description": "¡Eres el primero! Cuando aparezcan otras personas aquí, te avisaremos."
+    }
   },
   "filters": {
     "title": "Filtros",
