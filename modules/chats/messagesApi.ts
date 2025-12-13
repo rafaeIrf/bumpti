@@ -1,15 +1,16 @@
 import {
-    getChats as fetchChats,
-    getMatches as fetchMatches,
-    getMessages as fetchMessages,
-    sendMessage as sendMessageEdge,
+  getChats as fetchChats,
+  getMatches as fetchMatches,
+  getMessages as fetchMessages,
+  sendMessage as sendMessageEdge,
 } from "@/modules/chats/api";
 import {
-    ChatListChange,
-    subscribeToChatList,
-    subscribeToChatMessages,
-    subscribeToMatchOverview,
+  ChatListChange,
+  subscribeToChatList,
+  subscribeToChatMessages,
+  subscribeToMatchOverview,
 } from "@/modules/chats/realtime";
+import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export type ChatMessage = {
@@ -37,6 +38,7 @@ export type ChatSummary = {
   last_message_at: string | null;
   unread_count?: number;
   first_message_at: string | null;
+  other_user_profile?: ActiveUserAtPlace | null;
 };
 
 export type MatchSummary = {
@@ -97,25 +99,31 @@ export const messagesApi = createApi({
     }),
 
     getMessages: builder.query<
-      { messages: ChatMessage[]; hasMore: boolean; nextCursor: string | null },
+      {
+        messages: ChatMessage[];
+        hasMore: boolean;
+        nextCursor: string | null;
+        other_user_profile?: ActiveUserAtPlace | null;
+      },
       { chatId: string; cursor?: string }
     >({
       queryFn: async ({ chatId, cursor }) => {
         try {
-          const data = await fetchMessages({ 
+          const data = await fetchMessages({
             chatId,
             limit: 50,
-            before: cursor 
+            before: cursor,
           });
           const messages =
             data.messages?.map((m) => ({ ...m, status: "sent" as const })) ??
             [];
-          return { 
-            data: { 
+          return {
+            data: {
               messages,
               hasMore: data.has_more,
-              nextCursor: data.next_cursor
-            } 
+              nextCursor: data.next_cursor,
+              other_user_profile: data.other_user_profile ?? null,
+            },
           };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
@@ -140,6 +148,7 @@ export const messagesApi = createApi({
             messages: uniqueMessages,
             hasMore: newResponse.hasMore,
             nextCursor: newResponse.nextCursor,
+            other_user_profile: currentCache.other_user_profile,
           };
         }
         // Initial load or refresh
