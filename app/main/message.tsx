@@ -31,6 +31,7 @@ import {
 import { t } from "@/modules/locales";
 import { useAppDispatch } from "@/modules/store/hooks";
 import { supabase } from "@/modules/supabase/client";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
@@ -105,9 +106,16 @@ export default function ChatMessageScreen() {
 
   useEffect(() => {
     if (params.photoUrl) {
-      Image.prefetch(params.photoUrl).catch(() => {});
+      prefetchImages([params.photoUrl]);
     }
   }, [params.photoUrl]);
+
+  useEffect(() => {
+    const photos = data?.other_user_profile?.photos;
+    if (photos && Array.isArray(photos)) {
+      prefetchImages(photos);
+    }
+  }, [data?.other_user_profile]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -350,7 +358,22 @@ export default function ChatMessageScreen() {
         color: colors.text,
       }}
       customTitleView={
-        <View style={styles.toolbarTitle}>
+        <Pressable
+          style={styles.toolbarTitle}
+          onPress={() => {
+            if (otherUserId) {
+              const profile = data?.other_user_profile;
+              router.push({
+                pathname: "/(modals)/profile-preview",
+                params: {
+                  userId: otherUserId,
+                  // Pass the profile we already have to avoid refetching
+                  initialProfile: profile ? JSON.stringify(profile) : undefined,
+                },
+              });
+            }
+          }}
+        >
           <View style={[styles.avatarWrapper, { borderColor: colors.border }]}>
             {params.photoUrl ? (
               <Image
@@ -390,7 +413,7 @@ export default function ChatMessageScreen() {
                 </View>
               )}
           </View>
-        </View>
+        </Pressable>
       }
       rightActions={{
         icon: EllipsisVerticalIcon,

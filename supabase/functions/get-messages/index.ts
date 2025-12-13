@@ -1,6 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { decryptMessage, getEncryptionKey } from "../_shared/encryption.ts";
+import { getPublicProfile } from "../_shared/getPublicProfile.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,6 +36,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseAnonKey) {
       return new Response(
@@ -145,6 +147,7 @@ Deno.serve(async (req) => {
     // Fetch one extra message to determine if there are more
     const fetchLimit = pageSize + 1;
 
+    // Start fetching messages
     let messagesQuery = supabase
       .from("messages")
       .select("id, chat_id, sender_id, content_enc, content_iv, content_tag, created_at, read_at")
@@ -158,6 +161,21 @@ Deno.serve(async (req) => {
     }
 
     const { data: encryptedMessages, error: messagesError } = await messagesQuery;
+
+    // Fetch other user profile if it's the first page (no 'before' param)
+    // and we have a valid match
+    let otherUserProfile = null;
+    if (!before) {
+      const otherUserId = match.user_a === user.id ? match.user_b : match.user_a;
+      try {
+        // Use service client for getting profile
+        const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey!);
+        otherUserProfile = await getPublicProfile(supabase, serviceSupabase, otherUserId);
+      } catch (err) {
+        console.error("Failed to fetch other user profile:", err);
+        // Continue without profile, don't fail the request
+      }
+    }
     
     // Check if there are more messages
     const hasMore = (encryptedMessages?.length ?? 0) > pageSize;
@@ -251,6 +269,7 @@ Deno.serve(async (req) => {
         messages: sortedMessages,
         has_more: hasMore,
         next_cursor: hasMore ? nextCursor : null,
+        other_user_profile: otherUserProfile,
       }),
       { status: 200, headers: corsHeaders }
     );

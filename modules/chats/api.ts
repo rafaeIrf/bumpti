@@ -1,3 +1,4 @@
+import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
 import { extractEdgeErrorMessage } from "@/modules/supabase/edge-error";
 
@@ -32,6 +33,7 @@ export type GetMessagesResponse = {
   messages: Message[];
   has_more: boolean;
   next_cursor: string | null;
+  other_user_profile?: ActiveUserAtPlace | null;
 };
 export type MatchSummary = {
   match_id: string;
