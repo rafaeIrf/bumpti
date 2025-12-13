@@ -32,7 +32,8 @@
     "of": "de"
   },
   "errors": {
-    "generic": "Algo deu errado. Tente novamente."
+    "generic": "Algo deu errado. Por favor, tente novamente.",
+    "profileUnavailable": "Perfil indisponível"
   },
   "screens": {
     "profile": {
