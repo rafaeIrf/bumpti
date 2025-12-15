@@ -10,7 +10,6 @@ import {
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
-import { LoadingView } from "@/components/loading-view";
 import {
   PowerUpBottomSheet,
   PowerUpOptionConfig,
@@ -19,17 +18,17 @@ import { ProfileActionCard } from "@/components/profile-action-card";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
-import { prefetchImages } from "@/utils/image-prefetch";
 import { calculateProfileCompletion } from "@/utils/profile-completion";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, SvgProps } from "react-native-svg";
@@ -137,7 +136,6 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
 
   const [profileProgress, setProfileProgress] = React.useState<number>(0.65);
-  const [isLoadingImage, setIsLoadingImage] = React.useState(true);
 
   const handleSettingsClick = () => {
     router.push("/main/settings");
@@ -199,27 +197,10 @@ export default function ProfileScreen() {
   const profilePhoto =
     profile?.photos?.[0]?.url ?? onboardingUserData.photoUris?.[0];
 
-  const allProfilePhotos = React.useMemo(() => {
-    const photos =
-      profile?.photos?.map((p) => p.url) || onboardingUserData.photoUris || [];
-    return photos.filter(Boolean);
-  }, [profile?.photos, onboardingUserData.photoUris]);
-
   const ageText = React.useMemo(() => {
     if (!profile?.age) return "";
     return `, ${profile.age}`;
   }, [profile?.age]);
-
-  // Prefetch profile photos
-  React.useEffect(() => {
-    if (allProfilePhotos.length > 0) {
-      prefetchImages(allProfilePhotos)
-        .then(() => setIsLoadingImage(false))
-        .catch(() => setIsLoadingImage(false));
-    } else {
-      setIsLoadingImage(false);
-    }
-  }, [allProfilePhotos]);
 
   // Update progress from profile data
   React.useEffect(() => {
@@ -229,27 +210,6 @@ export default function ProfileScreen() {
 
   const completionText = `${Math.round(profileProgress * 100)}%`;
   const shouldShowCompletionBadge = profileProgress < 1;
-
-  if (isLoadingImage) {
-    return (
-      <BaseTemplateScreen
-        TopHeader={
-          <ScreenToolbar
-            title={t("screens.profile.title")}
-            rightActions={[
-              {
-                icon: SettingsIcon,
-                onClick: handleSettingsClick,
-                ariaLabel: t("screens.profile.settings"),
-              },
-            ]}
-          />
-        }
-      >
-        <LoadingView />
-      </BaseTemplateScreen>
-    );
-  }
 
   return (
     <BaseTemplateScreen
@@ -328,9 +288,10 @@ export default function ProfileScreen() {
                   ]}
                 >
                   {profilePhoto ? (
-                    <Image
+                    <RemoteImage
                       source={{ uri: profilePhoto }}
                       style={styles.photo}
+                      contentFit="cover"
                     />
                   ) : (
                     <View

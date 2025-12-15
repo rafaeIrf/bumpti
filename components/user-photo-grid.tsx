@@ -2,13 +2,13 @@ import { XIcon } from "@/assets/icons";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { PhotoActionsBottomSheet } from "@/components/photo-actions-bottom-sheet";
 import { ThemedText } from "@/components/themed-text";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -274,12 +274,10 @@ export function UserPhotoGrid({
       return (
         <View style={[styles.photoContainer, itemStyle]}>
           <View style={styles.photoWrapper}>
-            <Image
-              source={item.uri}
+            <RemoteImage
+              source={{ uri: item.uri }}
               style={styles.photo}
               contentFit="cover"
-              transition={0}
-              cachePolicy="memory-disk"
             />
             {index === 0 && (
               <View

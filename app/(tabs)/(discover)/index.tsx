@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Platform, StyleSheet } from "react-native";
 
 import { ExternalLink } from "@/components/external-link";
@@ -8,6 +7,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { Colors, Fonts } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -69,7 +69,7 @@ export default function TabTwoScreen() {
           <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to
           provide files for different screen densities
         </ThemedText>
-        <Image
+        <RemoteImage
           source={require("@/assets/images/react-logo.png")}
           style={{ width: 100, height: 100, alignSelf: "center" }}
         />

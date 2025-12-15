@@ -1,9 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { MatchSummary } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
-import { Image } from "expo-image";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -35,13 +35,9 @@ export function MatchAvatar({ match, onPress }: Props) {
         ]}
       >
         {match.other_user?.photo_url ? (
-          <Image
+          <RemoteImage
             source={{ uri: match.other_user.photo_url }}
             style={styles.matchAvatarImage}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            priority="high"
-            transition={200}
           />
         ) : (
           <ThemedText style={[typography.body1, { color: colors.text }]}>
