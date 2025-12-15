@@ -1,15 +1,15 @@
 import { ThemedText } from "@/components/themed-text";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { ChatSummary } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
-import { Image } from "expo-image";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 type Props = {
   readonly chat: ChatSummary;
-  readonly onPress: () => void;
+  readonly onPress: (chat: ChatSummary) => void;
 };
 
 export function ChatListItem({ chat, onPress }: Props) {
@@ -17,7 +17,7 @@ export function ChatListItem({ chat, onPress }: Props) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => onPress(chat)}
       style={[
         styles.chatCard,
         {
@@ -82,14 +82,7 @@ function UserAvatar({
         ]}
       >
         {photoUrl ? (
-          <Image
-            source={{ uri: photoUrl }}
-            style={styles.avatarImage}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            priority="high"
-            transition={200}
-          />
+          <RemoteImage source={{ uri: photoUrl }} style={styles.avatarImage} />
         ) : (
           <ThemedText style={[typography.body1, { color: colors.text }]}>
             {initial}

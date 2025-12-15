@@ -32,7 +32,8 @@
     "of": "of"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "profileUnavailable": "Profile unavailable"
   },
   "screens": {
     "profile": {

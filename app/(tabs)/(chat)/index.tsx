@@ -1,6 +1,7 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ChatListItem } from "@/components/chat/chat-list-item";
 import { MatchAvatar } from "@/components/chat/match-avatar";
+import { LoadingView } from "@/components/loading-view";
 import { PotentialConnectionsBanner } from "@/components/potential-connections-banner";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -16,51 +17,15 @@ import {
 } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
-import { prefetchImages } from "@/utils/image-prefetch";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import { useCallback, useMemo } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
 
 export default function ChatScreen() {
   const colors = useThemeColors();
   const { data: chats = [], isLoading: loadingChats } = useGetChatsQuery();
-  const { data: matchesData = [], isLoading: loadingMatches } =
-    useGetMatchesQuery();
+  const { data: matchesData = [] } = useGetMatchesQuery();
   const matches = matchesData;
-  const [isLoading, setIsLoading] = useState(true);
-  // Prefetch all user images for better UX
-  useEffect(() => {
-    if (loadingChats || loadingMatches) return;
-
-    const imageUrls: string[] = [];
-
-    // Collect image URLs from matches (high priority - visible first)
-    for (const match of matches) {
-      if (match.other_user?.photo_url) {
-        imageUrls.push(match.other_user.photo_url);
-      }
-    }
-
-    // Collect image URLs from chats
-    for (const chat of chats) {
-      if (chat.other_user?.photo_url) {
-        imageUrls.push(chat.other_user.photo_url);
-      }
-    }
-
-    // Prefetch all images in parallel with cache policy
-    if (imageUrls.length > 0) {
-      prefetchImages(imageUrls)
-        .then(() => {
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setIsLoading(false);
-    }
-  }, [chats, matches, loadingChats, loadingMatches]);
 
   const renderMatchItem = useCallback(
     ({ item }: { item: MatchSummary }) => (
@@ -104,15 +69,17 @@ export default function ChatScreen() {
           router.push({
             pathname: "/main/message",
             params: {
-              matchId: item.match_id,
               chatId: item.chat_id,
-              otherUserId: item.other_user?.id,
-              name: item.other_user?.name ?? undefined,
-              photoUrl: item.other_user?.photo_url ?? undefined,
+              matchId: item.match_id,
+              name: item.other_user.name,
+              photoUrl: item.other_user.photo_url,
               matchPlace: item.place_name ?? undefined,
+              otherUserId: item.other_user.id,
+              unreadCount: item.unread_count ?? undefined,
+              lastMessagePreview: item.last_message,
               matchedAt: item.chat_created_at ?? undefined,
-              unreadMessages: item.unread_count ?? undefined,
               firstMessageAt: item.first_message_at ?? undefined,
+              unreadMessages: item.unread_count ?? undefined,
             },
           })
         }
@@ -120,10 +87,6 @@ export default function ChatScreen() {
     ),
     []
   );
-
-  const handleOpenPaywall = useCallback(() => {
-    router.push("/(modals)/premium-paywall");
-  }, []);
 
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
@@ -133,11 +96,15 @@ export default function ChatScreen() {
       refetchOnReconnect: true,
     });
   const pendingCount = pendingData?.count ?? 0;
-  const pendingUsers = pendingData?.users ?? [];
-  const pendingPhotos = pendingUsers
-    .map((u) => u.photos?.[0])
-    .filter((p): p is string => !!p)
-    .slice(0, 3);
+  const pendingUsers = useMemo(() => pendingData?.users ?? [], [pendingData]);
+  const pendingPhotos = useMemo(
+    () =>
+      pendingUsers
+        .map((u) => u.photos?.[0])
+        .filter((p): p is string => !!p)
+        .slice(0, 3),
+    [pendingUsers]
+  );
 
   const handleOpenPendingLikes = useCallback(() => {
     if (pendingUsers.length === 0) return;
@@ -155,47 +122,43 @@ export default function ChatScreen() {
   return (
     <BaseTemplateScreen TopHeader={header} scrollEnabled={false}>
       <ThemedView style={styles.flex}>
-        {isLoading ? (
-          <View style={styles.loader}>
-            <ActivityIndicator color={colors.accent} />
-          </View>
-        ) : (
-          <FlatList
-            data={chats}
-            keyExtractor={(item) => item.chat_id}
-            renderItem={renderChatItem}
-            ListHeaderComponent={
-              <>
-                {!loadingPending &&
-                pendingCount > 0 &&
-                pendingPhotos.length > 0 ? (
-                  <PotentialConnectionsBanner
-                    count={pendingCount}
-                    profilePhotos={pendingPhotos}
-                    onPress={handleOpenPendingLikes}
-                    style={styles.banner}
-                  />
-                ) : null}
+        <FlatList
+          data={chats}
+          keyExtractor={(item) => item.chat_id}
+          renderItem={renderChatItem}
+          ListHeaderComponent={
+            <>
+              {!loadingPending &&
+              pendingCount > 0 &&
+              pendingPhotos.length > 0 ? (
+                <PotentialConnectionsBanner
+                  count={pendingCount}
+                  profilePhotos={pendingPhotos}
+                  onPress={handleOpenPendingLikes}
+                  style={styles.banner}
+                />
+              ) : null}
 
-                {matches.length > 0 ? (
-                  <FlatList
-                    data={matches}
-                    keyExtractor={(item) => item.match_id}
-                    renderItem={renderMatchItem}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    ItemSeparatorComponent={() => (
-                      <View style={{ width: spacing.sm }} />
-                    )}
-                    style={styles.matchesList}
-                  />
-                ) : null}
-              </>
-            }
-            ItemSeparatorComponent={() => (
-              <View style={{ height: spacing.sm }} />
-            )}
-            ListEmptyComponent={
+              {matches.length > 0 ? (
+                <FlatList
+                  data={matches}
+                  keyExtractor={(item) => item.match_id}
+                  renderItem={renderMatchItem}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ width: spacing.sm }} />
+                  )}
+                  style={styles.matchesList}
+                />
+              ) : null}
+            </>
+          }
+          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          ListEmptyComponent={
+            loadingChats ? (
+              <LoadingView />
+            ) : (
               <View style={[styles.emptyState, { padding: spacing.lg }]}>
                 <ThemedText
                   style={[typography.subheading, { color: colors.text }]}
@@ -215,9 +178,9 @@ export default function ChatScreen() {
                   {t("screens.chat.emptySubtitle")}
                 </ThemedText>
               </View>
-            }
-          />
-        )}
+            )
+          }
+        />
       </ThemedView>
     </BaseTemplateScreen>
   );

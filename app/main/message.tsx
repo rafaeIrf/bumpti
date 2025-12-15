@@ -17,6 +17,7 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import Button from "@/components/ui/button";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { blockUser } from "@/modules/block/api";
@@ -33,7 +34,6 @@ import { useAppDispatch } from "@/modules/store/hooks";
 import { supabase } from "@/modules/supabase/client";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
-import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -138,19 +138,28 @@ export default function ChatMessageScreen() {
     };
   }, [chatId, dispatch, userId]);
 
-  // Com inverted, a lista já mostra mensagens mais recentes no topo
-  // Não precisa de scrollToEnd
+  const lastProcessedMessageId = useRef<string | null>(null);
 
   useEffect(() => {
-    logger.log("unreadMessages", unreadMessages);
-    if (!chatId || loading || messages.length === 0 || unreadMessages === "0")
-      return;
-    logger.log("chamou");
-    // Mark messages as read after they are rendered
-    requestAnimationFrame(() => {
-      markMessagesRead({ chatId }).catch(() => {});
-    });
-  }, [chatId, unreadMessages, loading, messages.length]);
+    if (!chatId || loading || messages.length === 0 || !userId) return;
+    const latestMessage = messages[messages.length - 1];
+
+    if (!latestMessage) return;
+
+    const isNewMessage = latestMessage.id !== lastProcessedMessageId.current;
+    const isFromOther = latestMessage.sender_id !== userId;
+    const hasUnreadInitial =
+      unreadMessages &&
+      Number(unreadMessages) > 0 &&
+      lastProcessedMessageId.current === null;
+
+    if ((isNewMessage && isFromOther) || hasUnreadInitial) {
+      lastProcessedMessageId.current = latestMessage.id;
+      requestAnimationFrame(() => {
+        markMessagesRead({ chatId }).catch(() => {});
+      });
+    }
+  }, [chatId, loading, messages, unreadMessages, userId]);
 
   const handleSend = useCallback(async () => {
     if (!chatId || !otherUserId) return;
@@ -376,7 +385,7 @@ export default function ChatMessageScreen() {
         >
           <View style={[styles.avatarWrapper, { borderColor: colors.border }]}>
             {params.photoUrl ? (
-              <Image
+              <RemoteImage
                 source={{ uri: params.photoUrl }}
                 style={styles.avatarImage}
                 contentFit="cover"
@@ -426,7 +435,7 @@ export default function ChatMessageScreen() {
 
   const content = (
     <View style={styles.flex}>
-      {loading ? (
+      {loading && messages.length === 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -472,7 +481,6 @@ export default function ChatMessageScreen() {
             </View>
           }
           contentContainerStyle={{
-            paddingHorizontal: spacing.md,
             paddingVertical: spacing.md,
             rowGap: spacing.sm,
           }}
@@ -824,6 +832,7 @@ function ScrollToLatestButton({
 }: {
   visible: boolean;
   onPress: () => void;
+  bottomInset: number;
 }) {
   const colors = useThemeColors();
 

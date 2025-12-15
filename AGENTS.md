@@ -325,7 +325,25 @@ When creating or modifying ANY screen or component, you MUST:
       />;
       ```
 
-5.  **Structure and Styles - ALWAYS REQUIRED:**
+5.  **Loading State - ALWAYS REQUIRED:**
+
+    - ❌ NEVER use `ActivityIndicator` directly or build custom loading views inline.
+    - ✅ ALWAYS use `LoadingView` component from `@/components/loading-view`.
+    - ✅ Import: `import { LoadingView } from "@/components/loading-view";`
+    - Example:
+
+      ```tsx
+      // ❌ WRONG - Inline ActivityIndicator
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>;
+
+      // ✅ CORRECT - Using LoadingView
+      import { LoadingView } from "@/components/loading-view";
+      if (isLoading) return <LoadingView />;
+      ```
+
+6.  **Structure and Styles - ALWAYS REQUIRED:**
 
     - ❌ NEVER use inline styles for static layout/spacing/sizing.
     - ✅ ALWAYS define styles using `const styles = StyleSheet.create({...})` at the end of the file.

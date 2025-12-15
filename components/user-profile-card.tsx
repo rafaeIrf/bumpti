@@ -1,5 +1,6 @@
 import { NavigationIcon, StarIcon } from "@/assets/icons";
 import Button from "@/components/ui/button";
+import { RemoteImage } from "@/components/ui/remote-image";
 import {
   EDUCATION_OPTIONS,
   INTENTION_OPTIONS,
@@ -11,7 +12,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
-import { Image } from "expo-image";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
@@ -102,9 +103,9 @@ export function UserProfileCard({
 
   // Prefetch photos for smoother swaps
   useEffect(() => {
-    profile.photos.forEach((uri) => {
-      Image.prefetch?.(uri);
-    });
+    if (profile.photos.length > 0) {
+      prefetchImages(profile.photos);
+    }
   }, [profile.photos]);
 
   const nextPhoto = () => {
@@ -148,12 +149,10 @@ export function UserProfileCard({
           exiting={FadeOut.duration(200)}
           style={styles.imageContainer}
         >
-          <Image
-            source={profile.photos[currentPhotoIndex]}
+          <RemoteImage
+            source={{ uri: profile.photos[currentPhotoIndex] }}
             style={styles.image}
             contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={0}
           />
         </Animated.View>
 

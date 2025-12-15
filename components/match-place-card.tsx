@@ -1,11 +1,11 @@
 import { MapPinIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { getRelativeDate } from "@/utils/date";
-import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
 type MatchPlaceCardProps = {
@@ -74,11 +74,10 @@ export function MatchPlaceCard({
         {/* Foto do usuário */}
         {photoUrl && (
           <View style={styles.photoContainer}>
-            <Image
+            <RemoteImage
               source={{ uri: photoUrl }}
               style={[styles.photo, { borderColor: colors.border }]}
               contentFit="cover"
-              cachePolicy="memory-disk"
             />
           </View>
         )}

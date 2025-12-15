@@ -63,6 +63,7 @@ function EditRow({
   iconType = "svg",
 }: EditRowProps) {
   const colors = useThemeColors();
+  const VectorIcon = Icon as any;
 
   return (
     <Pressable
@@ -79,7 +80,7 @@ function EditRow({
         {iconType === "svg" ? (
           <Icon width={20} height={20} color={colors.textSecondary} />
         ) : (
-          <Icon size={20} color={colors.textSecondary} />
+          <VectorIcon size={20} color={colors.textSecondary} />
         )}
         <View style={styles.rowText}>
           {value ? (

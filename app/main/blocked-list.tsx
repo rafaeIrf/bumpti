@@ -4,13 +4,13 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { BlockedUser, getBlockedUsers, unblockUser } from "@/modules/block/api";
 import { t } from "@/modules/locales";
 import { logger } from "@/utils/logger";
 import { useFocusEffect } from "@react-navigation/native";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -96,13 +96,13 @@ export default function BlockedListScreen() {
         style={[styles.userCard, { backgroundColor: colors.surface }]}
       >
         <View style={styles.userInfo}>
-          <Image
-            source={
-              photoUrl ? { uri: photoUrl } : require("@/assets/images/icon.png")
-            }
-            style={styles.avatar}
-            contentFit="cover"
-          />
+          {photoUrl && (
+            <RemoteImage
+              source={{ uri: photoUrl }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          )}
           <ThemedText style={[typography.body, { flex: 1 }]} numberOfLines={1}>
             {name}
           </ThemedText>
