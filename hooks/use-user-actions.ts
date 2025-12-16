@@ -28,11 +28,8 @@ export function useUserActions({
     if (!userId) return;
 
     router.push({
-      pathname: "/(modals)/report-reasons",
-      params: {
-        name: userName ?? "",
-        reportedUserId: userId,
-      },
+      pathname: "/(modals)/report",
+      params: { reportedUserId: userId, name: userName },
     });
   }, [userId, userName]);
 

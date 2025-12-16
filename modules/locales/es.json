@@ -743,7 +743,6 @@
       "reportDescription": "Usa esta opción para reportar comportamiento inapropiado o sospechoso."
     },
     "report": {
-      "title": "¿Por qué quieres reportar a {{name}}?",
       "subtitle": "Selecciona el motivo del reporte",
       "reasons": {
         "inappropriate": "Comportamiento inapropiado",
