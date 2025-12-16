@@ -108,7 +108,7 @@ function getVariantStyles(C: any, variant: ButtonVariant, pressed: boolean) {
 function getSizeStyles(size: ButtonSize, fullWidth?: boolean) {
   const base: { container: ViewStyle; text: TextStyle } = {
     container: { paddingHorizontal: 16, minHeight: 36 },
-    text: { ...typography.body },
+    text: { ...typography.body1 },
   };
 
   switch (size) {

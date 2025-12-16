@@ -1,4 +1,10 @@
 {
+  "actions": {
+    "report": "Reportar",
+    "block": "Bloquear",
+    "delete": "Eliminar",
+    "confirm": "Confirmar"
+  },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",
   "discover": "Descubrir",

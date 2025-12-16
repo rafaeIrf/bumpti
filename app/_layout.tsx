@@ -83,8 +83,8 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="(modals)"
                       options={{
-                        headerShown: false,
                         presentation: "modal",
+                        headerShown: false,
                         animation: "slide_from_bottom",
                       }}
                     />

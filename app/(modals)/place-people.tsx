@@ -1,11 +1,4 @@
-import {
-  ArrowLeftIcon,
-  CheckIcon,
-  EllipsisVerticalIcon,
-  SparklesIcon,
-  UsersIcon,
-  XIcon,
-} from "@/assets/icons";
+import { CheckIcon, SparklesIcon, UsersIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { LoadingView } from "@/components/loading-view";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
@@ -196,222 +189,186 @@ export default function PlacePeopleScreen() {
   const distanceInKm = Number.parseFloat(place.distance.replace(" km", ""));
   const isFarAway = distanceInKm > 3;
 
-  if (loading) {
-    return (
-      <BaseTemplateScreen
-        isModal
-        TopHeader={
-          <ScreenToolbar
-            leftAction={{
-              icon: ArrowLeftIcon,
-              onClick: handleBack,
-              ariaLabel: t("common.back"),
-              color: colors.icon,
-            }}
-            title={place.name}
-          />
-        }
-      >
-        <LoadingView />
-      </BaseTemplateScreen>
-    );
-  }
+  // No more profiles or Premium logic handled within unified return
 
-  // Not at place AND far away (>3km) AND not premium - show premium upsell
-  if (!isUserHere && isFarAway && !isPremium) {
-    return (
-      <BaseTemplateScreen
-        isModal
-        TopHeader={
-          <ScreenToolbar
-            leftAction={{
-              icon: ArrowLeftIcon,
-              onClick: handleBack,
-              ariaLabel: t("common.back"),
-              color: colors.icon,
-            }}
-            title={place.name}
-          />
-        }
-      >
-        <ThemedView style={styles.premiumContainer}>
-          <View style={styles.premiumContent}>
-            <LinearGradient
-              colors={["#FFD700", "#FFA500"]}
-              style={styles.premiumIcon}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <SparklesIcon width={40} height={40} color="#000000" />
-            </LinearGradient>
+  const toolbar = (
+    <ScreenToolbar
+      rightActions={[
+        {
+          icon: XIcon,
+          onClick: handleBack,
+          ariaLabel: t("common.back"),
+          color: colors.icon,
+        },
+      ]}
+      title={place.name}
+    />
+  );
 
-            <ThemedText style={styles.premiumTitle}>
-              {t("placePeople.premiumRequired")}
-            </ThemedText>
-            <ThemedText
-              style={[
-                styles.premiumDescription,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {t("placePeople.premiumDescription")}
-            </ThemedText>
-
-            <View
-              style={[
-                styles.benefitsContainer,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <View style={styles.benefitRow}>
-                <View
-                  style={[styles.checkIcon, { backgroundColor: colors.accent }]}
-                >
-                  <CheckIcon width={16} height={16} color="#FFFFFF" />
-                </View>
-                <ThemedText style={styles.benefitText}>
-                  {t("placePeople.benefit1")}
-                </ThemedText>
-              </View>
-
-              <View style={styles.benefitRow}>
-                <View
-                  style={[styles.checkIcon, { backgroundColor: colors.accent }]}
-                >
-                  <CheckIcon width={16} height={16} color="#FFFFFF" />
-                </View>
-                <ThemedText style={styles.benefitText}>
-                  {t("placePeople.benefit2")}
-                </ThemedText>
-              </View>
-
-              <View style={styles.benefitRow}>
-                <View
-                  style={[styles.checkIcon, { backgroundColor: colors.accent }]}
-                >
-                  <CheckIcon width={16} height={16} color="#FFFFFF" />
-                </View>
-                <ThemedText style={styles.benefitText}>
-                  {t("placePeople.benefit3")}
-                </ThemedText>
-              </View>
-            </View>
-
-            <View style={styles.premiumActions}>
-              <LinearGradient
-                colors={["#FFD700", "#FFA500"]}
-                style={styles.premiumButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Button
-                  onPress={handleUpgradeToPremium}
-                  style={styles.premiumButton}
-                  textStyle={styles.premiumButtonText}
-                >
-                  <SparklesIcon width={20} height={20} color="#000000" />
-                  <ThemedText style={styles.premiumButtonTextContent}>
-                    {t("placePeople.subscribePremium")}
-                  </ThemedText>
-                </Button>
-              </LinearGradient>
-
-              <Button onPress={handleBack} variant="secondary">
-                {t("placePeople.backToPlaces")}
-              </Button>
-            </View>
-          </View>
-        </ThemedView>
-      </BaseTemplateScreen>
-    );
-  }
-
-  // No more profiles
-  if (availableProfiles.length === 0) {
-    return (
-      <BaseTemplateScreen
-        isModal
-        TopHeader={
-          <ScreenToolbar
-            leftAction={{
-              icon: ArrowLeftIcon,
-              onClick: handleBack,
-              ariaLabel: t("common.back"),
-              color: colors.icon,
-            }}
-            title={place.name}
-          />
-        }
-      >
-        <ThemedView style={styles.emptyContainer}>
-          <View
-            style={[
-              styles.emptyIcon,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <UsersIcon width={48} height={48} color={colors.textSecondary} />
-          </View>
-          <ThemedText style={styles.emptyTitle}>
-            {t("placePeople.emptyState.title")}
-          </ThemedText>
-          <ThemedText
-            style={[styles.emptyDescription, { color: colors.textSecondary }]}
-          >
-            {t("placePeople.emptyState.description")}
-          </ThemedText>
-          <Button onPress={handleBack} style={styles.emptyButton}>
-            {t("common.back")}
-          </Button>
-        </ThemedView>
-      </BaseTemplateScreen>
-    );
-  }
+  const showPremium = !isUserHere && isFarAway && !isPremium;
+  const showEmpty = !loading && !showPremium && availableProfiles.length === 0;
+  const showSwiper = !loading && !showPremium && !showEmpty;
 
   return (
     <View style={styles.screenContainer}>
       <BaseTemplateScreen
         isModal
-        contentContainerStyle={{ paddingBottom: 156, paddingHorizontal: 0 }}
-        TopHeader={
-          <ScreenToolbar
-            leftAction={{
-              icon: XIcon,
+        contentContainerStyle={
+          showSwiper ? { paddingBottom: 156, paddingHorizontal: 0 } : undefined
+        }
+        TopHeader={toolbar}
+      >
+        {loading && <LoadingView />}
+
+        {showPremium && (
+          <ThemedView style={styles.premiumContainer}>
+            <View style={styles.premiumContent}>
+              <LinearGradient
+                colors={["#FFD700", "#FFA500"]}
+                style={styles.premiumIcon}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <SparklesIcon width={40} height={40} color="#000000" />
+              </LinearGradient>
+
+              <ThemedText style={styles.premiumTitle}>
+                {t("placePeople.premiumRequired")}
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.premiumDescription,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {t("placePeople.premiumDescription")}
+              </ThemedText>
+
+              <View
+                style={[
+                  styles.benefitsContainer,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.benefitRow}>
+                  <View
+                    style={[
+                      styles.checkIcon,
+                      { backgroundColor: colors.accent },
+                    ]}
+                  >
+                    <CheckIcon width={16} height={16} color="#FFFFFF" />
+                  </View>
+                  <ThemedText style={styles.benefitText}>
+                    {t("placePeople.benefit1")}
+                  </ThemedText>
+                </View>
+
+                <View style={styles.benefitRow}>
+                  <View
+                    style={[
+                      styles.checkIcon,
+                      { backgroundColor: colors.accent },
+                    ]}
+                  >
+                    <CheckIcon width={16} height={16} color="#FFFFFF" />
+                  </View>
+                  <ThemedText style={styles.benefitText}>
+                    {t("placePeople.benefit2")}
+                  </ThemedText>
+                </View>
+
+                <View style={styles.benefitRow}>
+                  <View
+                    style={[
+                      styles.checkIcon,
+                      { backgroundColor: colors.accent },
+                    ]}
+                  >
+                    <CheckIcon width={16} height={16} color="#FFFFFF" />
+                  </View>
+                  <ThemedText style={styles.benefitText}>
+                    {t("placePeople.benefit3")}
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.premiumActions}>
+                <LinearGradient
+                  colors={["#FFD700", "#FFA500"]}
+                  style={styles.premiumButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Button
+                    onPress={handleUpgradeToPremium}
+                    style={styles.premiumButton}
+                    textStyle={styles.premiumButtonText}
+                  >
+                    <SparklesIcon width={20} height={20} color="#000000" />
+                    <ThemedText style={styles.premiumButtonTextContent}>
+                      {t("placePeople.subscribePremium")}
+                    </ThemedText>
+                  </Button>
+                </LinearGradient>
+
+                <Button onPress={handleBack} variant="secondary">
+                  {t("placePeople.backToPlaces")}
+                </Button>
+              </View>
+            </View>
+          </ThemedView>
+        )}
+
+        {showEmpty && (
+          <ThemedView style={styles.emptyContainer}>
+            <View
+              style={[
+                styles.emptyIcon,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <UsersIcon width={48} height={48} color={colors.textSecondary} />
+            </View>
+            <ThemedText style={styles.emptyTitle}>
+              {t("placePeople.emptyState.title")}
+            </ThemedText>
+            <ThemedText
+              style={[styles.emptyDescription, { color: colors.textSecondary }]}
+            >
+              {t("placePeople.emptyState.description")}
+            </ThemedText>
+            <Button onPress={handleBack} style={styles.emptyButton}>
+              {t("common.back")}
+            </Button>
+          </ThemedView>
+        )}
+
+        {showSwiper && (
+          <ProfileSwiper
+            ref={swiperRef}
+            profiles={availableProfiles}
+            currentPlaceId={place.id}
+            places={mockPlaces}
+            onLike={handleLike}
+            onPass={handlePass}
+            onComplete={handleComplete}
+            emptyStateAction={{
+              label: t("common.back"),
               onClick: handleBack,
-              ariaLabel: t("common.back"),
-              color: colors.icon,
-            }}
-            title={place.name}
-            rightActions={{
-              icon: EllipsisVerticalIcon,
-              onClick: () => console.log("Show info"),
-              ariaLabel: t("placePeople.howItWorks"),
-              color: colors.icon,
             }}
           />
-        }
-      >
-        <ProfileSwiper
-          ref={swiperRef}
-          profiles={availableProfiles}
-          currentPlaceId={place.id}
-          places={mockPlaces}
-          onLike={handleLike}
-          onPass={handlePass}
-          onComplete={handleComplete}
-          emptyStateAction={{
-            label: t("common.back"),
-            onClick: handleBack,
-          }}
-        />
+        )}
       </BaseTemplateScreen>
 
-      {/* Action buttons - Fixed position outside BaseTemplateScreen */}
-      {availableProfiles.length > 0 && hasProfiles && (
+      {showSwiper && hasProfiles && availableProfiles.length > 0 && (
         <View style={styles.actionsContainer}>
           <SwipeActionButtons
             onLike={() => swiperRef.current?.handleLike()}
-            onSkip={() => swiperRef.current?.handleSkip()}
+            onSkip={() => swiperRef.current?.handleDislike()}
             swipeX={swipeX}
           />
         </View>

@@ -1,4 +1,4 @@
-import { XIcon } from "@/assets/icons";
+import { ArrowLeftIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -10,7 +10,13 @@ import { t } from "@/modules/locales";
 import { submitReport } from "@/modules/report/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = {
@@ -33,7 +39,8 @@ export default function ReportModalScreen() {
       inappropriate: "bottomSheets.report.reasons.inappropriate",
       harassment: "bottomSheets.report.reasons.harassment",
       fake: "bottomSheets.report.reasons.fake",
-      inappropriate_content: "bottomSheets.report.reasons.inappropriate_content",
+      inappropriate_content:
+        "bottomSheets.report.reasons.inappropriate_content",
       other: "bottomSheets.report.reasons.other",
     };
     const labelKey = reasonKeyMap[params.reason] ?? params.reason;
@@ -75,10 +82,10 @@ export default function ReportModalScreen() {
   const header = (
     <ScreenToolbar
       title={t("screens.report.title")}
-      rightActions={{
-        icon: XIcon,
+      leftAction={{
+        icon: ArrowLeftIcon,
         onClick: () => router.back(),
-        ariaLabel: t("common.close"),
+        ariaLabel: t("common.back"),
       }}
     />
   );
