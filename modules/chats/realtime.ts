@@ -67,18 +67,6 @@ export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => v
       {
         event: "UPDATE",
         schema: "public",
-        table: "messages",
-      },
-      (payload: RealtimePostgresUpdatePayload<Message>) => {
-        // TODO: Verificar se é disparado quando outros usuarios trocam mensagens
-        onUpdate({ type: "message", message: payload.new });
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
         table: "user_matches",
       },
       (payload) => {
@@ -118,6 +106,7 @@ export function subscribeToChatMessages(
         filter: `chat_id=eq.${chatId}`,
       },
       (payload: RealtimePostgresInsertPayload<Message>) => {
+        console.log("INSERT")
         onMessage(payload.new);
       }
     )

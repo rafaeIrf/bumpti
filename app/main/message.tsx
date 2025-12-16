@@ -21,12 +21,13 @@ import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { blockUser } from "@/modules/block/api";
-import { markMessagesRead, updateMatch } from "@/modules/chats/api";
+import { updateMatch } from "@/modules/chats/api";
 import {
   ChatMessage,
   attachChatRealtime,
   messagesApi,
   useGetMessagesQuery,
+  useMarkMessagesReadMutation,
   useSendMessageMutation,
 } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
@@ -98,10 +99,14 @@ export default function ChatMessageScreen() {
       refetchOnReconnect: false,
     }
   );
-  const messages = data?.messages ?? [];
-  const hasMore = data?.hasMore ?? false;
-  const nextCursor = data?.nextCursor ?? null;
+  const { messages, hasMore, nextCursor } = data || {
+    messages: [],
+    hasMore: false,
+    nextCursor: null,
+  };
+
   const [sendMessage] = useSendMessageMutation();
+  const [markMessagesRead] = useMarkMessagesReadMutation();
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -159,7 +164,7 @@ export default function ChatMessageScreen() {
         markMessagesRead({ chatId }).catch(() => {});
       });
     }
-  }, [chatId, loading, messages, unreadMessages, userId]);
+  }, [chatId, loading, messages, unreadMessages, userId, markMessagesRead]);
 
   const handleSend = useCallback(async () => {
     if (!chatId || !otherUserId) return;
