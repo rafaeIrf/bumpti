@@ -2,6 +2,7 @@ import {
   getChats as fetchChats,
   getMatches as fetchMatches,
   getMessages as fetchMessages,
+  markMessagesRead,
   sendMessage as sendMessageEdge,
 } from "@/modules/chats/api";
 import {
@@ -83,7 +84,6 @@ export const messagesApi = createApi({
       queryFn: async () => {
         try {
           const { matches } = await fetchMatches();
-          console.log("Fetched matches:", matches);
           return { data: matches ?? [] };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
@@ -231,6 +231,11 @@ export const messagesApi = createApi({
                 }
                 // Add real message from server
                 draft.messages.push({ ...result.message, status: "sent" });
+                
+                // Sort messages by created_at to ensure correct order even if responses arrive out of order
+                draft.messages.sort((a, b) => 
+                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                );
               })
             );
           }
@@ -246,12 +251,39 @@ export const messagesApi = createApi({
         }
       },
     }),
+
+    markMessagesRead: builder.mutation<null, { chatId: string }>({
+      queryFn: async ({ chatId }) => {
+        try {
+          await markMessagesRead({ chatId });
+          return { data: null };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      async onQueryStarted({ chatId }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData("getChats", undefined, (draft) => {
+            const chat = draft.find((c) => c.chat_id === chatId);
+            if (chat) {
+              chat.unread_count = 0;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
   }),
 });
 
 export const {
   useGetMessagesQuery,
   useSendMessageMutation,
+  useMarkMessagesReadMutation,
   useGetChatsQuery,
   useGetMatchesQuery,
   util: messagesUtil,
@@ -297,16 +329,6 @@ export function attachMatchOverviewRealtime(dispatch: any) {
 
 export function attachChatListRealtime(dispatch: any, userId: string) {
   const channel = subscribeToChatList((event: ChatListChange) => {
-
-    if (event.type === "message") {
-      if (event?.message?.sender_id !== userId) {
-        dispatch(
-          messagesApi.util.invalidateTags([
-            { type: "Message", id: event.message.chat_id },
-          ])
-        );
-      }
-    }
 
     dispatch(messagesApi.util.invalidateTags([{ type: "Chat", id: "LIST" }]));
     dispatch(
