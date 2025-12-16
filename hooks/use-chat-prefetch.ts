@@ -38,6 +38,7 @@ export function useChatPrefetch() {
 
     // Debounce the prefetch to allow realtime updates (from message.tsx) to settle in the cache first.
     // If we run immediately, we might check the cache before the optimistic update lands, triggering a redundant fetch.
+    const timer = setTimeout(() => {
       const imageUrls: string[] = [];
 
       // Collect image URLs from matches (high priority - visible first)
@@ -85,6 +86,7 @@ export function useChatPrefetch() {
 
         // If we don't need to refetch, we can still initiate to ensure subscription/access, 
         // but without 'forceRefetch', saving the network call if data exists.
+        console.log('getm shouldRefetch', shouldRefetch);
         dispatch(
           messagesApi.endpoints.getMessages.initiate(
             { chatId: chat.chat_id, cursor: undefined },
@@ -92,6 +94,9 @@ export function useChatPrefetch() {
           )
         );
       });
-    }, [chats, matches, isLoading, dispatch]);
+    }, 1000); // 1s delay to let Redux settle
+
+    return () => clearTimeout(timer);
+  }, [chats, matches, isLoading, dispatch]);
 }
 

@@ -106,7 +106,6 @@ export function subscribeToChatMessages(
         filter: `chat_id=eq.${chatId}`,
       },
       (payload: RealtimePostgresInsertPayload<Message>) => {
-        console.log("INSERT")
         onMessage(payload.new);
       }
     )

@@ -231,6 +231,11 @@ export const messagesApi = createApi({
                 }
                 // Add real message from server
                 draft.messages.push({ ...result.message, status: "sent" });
+                
+                // Sort messages by created_at to ensure correct order even if responses arrive out of order
+                draft.messages.sort((a, b) => 
+                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                );
               })
             );
           }
