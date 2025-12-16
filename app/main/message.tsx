@@ -46,10 +46,12 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import Animated, {
   Easing,
   FadeInUp,
   FadeOutDown,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -70,6 +72,15 @@ export default function ChatMessageScreen() {
   const params = useLocalSearchParams<Params>();
   const bottomSheet = useCustomBottomSheet();
   const insets = useSafeAreaInsets();
+
+  // Use the library's dedicated hook for smoother native synchronized animation
+  const { height } = useReanimatedKeyboardAnimation();
+
+  const fakeView = useAnimatedStyle(() => {
+    return {
+      height: Math.abs(height.value),
+    };
+  });
   const dispatch = useAppDispatch();
   const chatId = params.chatId;
   const matchId = params.matchId;
@@ -575,7 +586,7 @@ export default function ChatMessageScreen() {
       <BaseTemplateScreen
         TopHeader={header}
         scrollEnabled={false}
-        useKeyboardAvoidingView
+        useKeyboardAvoidingView={false}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 0,
@@ -653,6 +664,7 @@ export default function ChatMessageScreen() {
             />
           </Pressable>
         </View>
+        <Animated.View style={fakeView} />
       </BaseTemplateScreen>
     </>
   );
@@ -700,6 +712,10 @@ function MessageBubble({
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
                 maxWidth: isFailed ? "90%" : "100%",
+                borderTopRightRadius: isMe ? spacing.sm : spacing.md,
+                borderTopLeftRadius: isMe ? spacing.md : spacing.sm,
+                borderBottomRightRadius: isMe ? spacing.md : spacing.sm,
+                borderBottomLeftRadius: isMe ? spacing.sm : spacing.md,
               },
             ]}
           >
@@ -790,7 +806,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   messageBubble: {
-    borderRadius: spacing.lg,
+    borderTopRightRadius: spacing.lg,
+    borderBottomRightRadius: spacing.lg,
+    borderTopLeftRadius: spacing.lg,
+    borderBottomLeftRadius: spacing.lg,
     borderWidth: 1,
   },
   statusRowBelow: {
