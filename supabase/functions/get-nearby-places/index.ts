@@ -55,7 +55,6 @@ Deno.serve(async (req) => {
       lng,
       category,
       radius = 20000,
-      limit = 50,
     } = await req.json();
 
     console.log("=== GET NEARBY PLACES DEBUG ===");
@@ -90,7 +89,6 @@ Deno.serve(async (req) => {
       userLat: lat,
       userLng: lng,
       radius,
-      limit,
       categories: foursquareIds,
       openNow: true,
     });

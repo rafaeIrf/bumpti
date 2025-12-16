@@ -1,8 +1,8 @@
 import { haversineDistance } from "../haversine.ts";
 import type {
-    FoursquareCategory,
-    PlaceNearbyResult,
-    SearchNearbyPlacesParams
+  FoursquareCategory,
+  PlaceNearbyResult,
+  SearchNearbyPlacesParams
 } from "./types.ts";
 import { FoursquareSortOrder } from "./types.ts";
 
@@ -31,10 +31,10 @@ export async function searchNearbyPlaces({
   userLat,
   userLng,
   radius = 20000,
-  limit = 50,
+  limit = 20,
   categories,
   openNow = true,
-  sort = FoursquareSortOrder.POPULARITY,
+  sort = FoursquareSortOrder.RELEVANCE,
 }: SearchNearbyPlacesParams): Promise<PlaceNearbyResult[]> {
   const fsApiKey = Deno.env.get("FS_PLACES_API_KEY");
 
