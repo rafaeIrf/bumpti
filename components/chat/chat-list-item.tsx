@@ -16,17 +16,7 @@ export function ChatListItem({ chat, onPress }: Props) {
   const colors = useThemeColors();
 
   return (
-    <Pressable
-      onPress={() => onPress(chat)}
-      style={[
-        styles.chatCard,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          padding: spacing.md,
-        },
-      ]}
-    >
+    <Pressable onPress={() => onPress(chat)}>
       <View style={styles.chatRow}>
         <UserAvatar
           name={chat.other_user?.name}
@@ -116,9 +106,6 @@ function formatTime(value?: string | null) {
 }
 
 const styles = StyleSheet.create({
-  chatCard: {
-    borderRadius: spacing.md,
-  },
   chatRow: {
     flexDirection: "row",
     alignItems: "center",
