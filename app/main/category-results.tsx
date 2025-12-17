@@ -33,7 +33,7 @@ export default function CategoryResultsScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams();
   const categoryName = params.categoryName as string;
-  const category = params.category as string;
+  const category = params.category as string[];
   const favoritesMode = params.favorites === "true";
   const trendingMode = params.trending === "true";
   const bottomSheet = useCustomBottomSheet();
@@ -55,16 +55,24 @@ export default function CategoryResultsScreen() {
     );
 
   // Use RTK Query hook - only runs when userLocation is available and not in trending mode
+  // City is required for new places-nearby logic (async seeding)
   const shouldFetchNearby =
-    !favoritesMode && !trendingMode && !!userLocation && !!category;
+    !favoritesMode &&
+    !trendingMode &&
+    !!userLocation &&
+    !!userLocation.city &&
+    !!category;
+
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
       longitude: userLocation?.longitude ?? 0,
       category: category,
+      city: userLocation?.city ?? "",
+      countryCode: userLocation?.countryCode,
     },
     {
-      skip: !shouldFetchNearby, // skip when favorites, trending or missing location/category
+      skip: !shouldFetchNearby, // skip when favorites, trending or missing location/category/city
     }
   );
 
