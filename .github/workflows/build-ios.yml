@@ -25,10 +25,10 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔧 Select Xcode 16
+      - name: 🔧 Select Xcode Version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "16.2"
+          xcode-version: "16.1"
 
       - name: 🏗️ Setup Node.js
         uses: actions/setup-node@v4
