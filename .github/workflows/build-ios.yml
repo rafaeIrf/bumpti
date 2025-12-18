@@ -19,7 +19,7 @@ env:
 jobs:
   build-ios:
     name: 🍎 Build & Deploy iOS
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: 📥 Checkout repository
@@ -28,7 +28,7 @@ jobs:
       - name: Select Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "16.1"
+          xcode-version: "16.4"
 
       - name: 🏗️ Setup Node.js
         uses: actions/setup-node@v4
@@ -67,7 +67,7 @@ jobs:
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
-          TEAM_ID: V68Y42WV27
+          TEAM_ID: ${{ secrets.TEAM_ID}}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
@@ -79,13 +79,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
-          TEAM_ID: V68Y42WV27
+          TEAM_ID: ${{ secrets.TEAM_ID}}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: fastlane ios build
+
+      - name: 📋 Upload Build Logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            ios/build/logs/**/*
+            ~/Library/Logs/gym/**/*
+          retention-days: 7
 
       - name: 📤 Upload IPA Artifact
         uses: actions/upload-artifact@v4
