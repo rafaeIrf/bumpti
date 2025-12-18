@@ -25,9 +25,13 @@ platform :ios do
       api_key: api_key
     )
     
-    # Increment build number using GitHub run number
-    increment_build_number(
-      build_number: ENV["BUILD_NUMBER"]
+    # Set build number using GitHub run number
+    update_info_plist(
+      xcodeproj: "ios/bumpti.xcodeproj",
+      plist_path: "bumpti/Info.plist",
+      block: proc do |plist|
+        plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
+      end
     )
     
     # Build the app
@@ -66,8 +70,12 @@ platform :ios do
       api_key: api_key
     )
     
-    increment_build_number(
-      build_number: ENV["BUILD_NUMBER"]
+    update_info_plist(
+      xcodeproj: "ios/bumpti.xcodeproj",
+      plist_path: "bumpti/Info.plist",
+      block: proc do |plist|
+        plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
+      end
     )
     
     build_app(
