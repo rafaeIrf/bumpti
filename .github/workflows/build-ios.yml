@@ -51,12 +51,6 @@ jobs:
       - name: 📦 Install CocoaPods
         run: cd ios && pod install
 
-      - name: 🔧 Share Xcode Scheme
-        run: |
-          mkdir -p ios/bumpti.xcodeproj/xcshareddata/xcschemes
-          cp ios/bumpti.xcodeproj/xcuserdata/*/xcschemes/bumpti.xcscheme ios/bumpti.xcodeproj/xcshareddata/xcschemes/ 2>/dev/null || \
-          xcodebuild -list -workspace ios/bumpti.xcworkspace
-
       - name: 📦 Install Fastlane
         run: gem install fastlane
 
