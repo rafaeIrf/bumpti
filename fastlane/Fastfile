@@ -27,8 +27,8 @@ platform :ios do
     
     # Set build number using GitHub run number
     update_info_plist(
-      xcodeproj: "ios/bumpti.xcodeproj",
-      plist_path: "bumpti/Info.plist",
+      xcodeproj: "./ios/Bumpti.xcodeproj",
+      plist_path: "./ios/bumpti/Info.plist",
       block: proc do |plist|
         plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
       end
@@ -36,12 +36,12 @@ platform :ios do
     
     # Build the app
     build_app(
-      workspace: "ios/Bumpti.xcworkspace",
-      scheme: "bumpti",
+      workspace: "./ios/Bumpti.xcworkspace",
+      scheme: "Bumpti",
       export_method: "app-store",
       configuration: "Release",
       clean: true,
-      output_directory: "ios/build",
+      output_directory: "./ios/build",
       output_name: "bumpti.ipa"
     )
     
@@ -67,25 +67,25 @@ platform :ios do
       type: "appstore",
       readonly: is_ci,
       git_url: ENV["MATCH_GIT_URL"],
-      app_identifier: "com.bumpti",
+      app_identifier: "com.bump ti",
       api_key: api_key
     )
     
     update_info_plist(
-      xcodeproj: "ios/bumpti.xcodeproj",
-      plist_path: "bumpti/Info.plist",
+      xcodeproj: "./ios/Bumpti.xcodeproj",
+      plist_path: "./ios/bumpti/Info.plist",
       block: proc do |plist|
         plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
       end
     )
     
     build_app(
-      workspace: "ios/Bumpti.xcworkspace",
-      scheme: "bumpti",
+      workspace: "./ios/Bumpti.xcworkspace",
+      scheme: "Bumpti",
       export_method: "app-store",
       configuration: "Release",
       clean: true,
-      output_directory: "ios/build",
+      output_directory: "./ios/build",
       output_name: "bumpti.ipa"
     )
   end
