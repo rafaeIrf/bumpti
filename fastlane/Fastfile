@@ -121,6 +121,14 @@ platform :ios do
 end
 
 platform :android do
+  desc "Set build number for Android"
+  lane :set_build_number do |options|
+    increment_version_code(
+      gradle_file_path: "./android/app/build.gradle",
+      version_code: options[:build_number].to_i
+    )
+  end
+  
   desc "Build and upload to Play Store (Internal)"
   lane :release do
     # Android: Increment versionCode using gradle property
@@ -132,8 +140,7 @@ platform :android do
         "android.injected.signing.store.file" => ENV["KEYSTORE_PATH"],
         "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-        "android.injected.version.code" => ENV["BUILD_NUMBER"]
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"]
       }
     )
     
@@ -161,7 +168,6 @@ platform :android do
         "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
         "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-        "android.injected.version.code" => ENV["BUILD_NUMBER"]
       }
     )
   end

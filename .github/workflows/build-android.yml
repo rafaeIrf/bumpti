@@ -82,6 +82,9 @@ jobs:
         id: build_number
         run: echo "value=$((${{ github.run_number }} + 50))" >> $GITHUB_OUTPUT
 
+      - name: 🔢 Set Android Build Number
+        run: fastlane android set_build_number build_number:${{ steps.build_number.outputs.value }}
+
       - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
