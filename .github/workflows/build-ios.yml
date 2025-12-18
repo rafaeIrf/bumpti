@@ -62,11 +62,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.MATCH_DEPLOY_KEY }}
 
-      - name: � Calculate Build Number
+      - name: Calculate Build Number
         id: build_number
         run: echo "value=$((${{ github.run_number }} + 50))" >> $GITHUB_OUTPUT
 
-      - name: �🚀 Build & Submit with Fastlane
+      - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
@@ -76,6 +76,8 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: fastlane ios release
 
       - name: 🔨 Build Only with Fastlane
@@ -88,6 +90,8 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: fastlane ios build
 
       - name: 📋 Upload Build Logs (on failure)
