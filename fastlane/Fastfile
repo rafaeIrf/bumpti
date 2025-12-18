@@ -19,7 +19,7 @@ platform :ios do
     sync_code_signing(
         api_key: api_key,
         type: "appstore",
-        git_branch: "main",
+        git_branch: "master",
         app_identifier: "com.bumpti",
         team_id: ENV['TEAM_ID'],
         git_url: ENV['MATCH_GIT_URL']
