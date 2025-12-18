@@ -112,6 +112,7 @@ platform :android do
     
     # Upload to Play Store internal track
     upload_to_play_store(
+      package_name: "com.bumpti",
       track: "internal",
       release_status: "draft",
       aab: "./android/app/build/outputs/bundle/release/app-release.aab",
