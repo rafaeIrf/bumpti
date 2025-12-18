@@ -63,11 +63,10 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo prebuild --platform android --clean
 
-      - name: 📦 Install Fastlane
-        run: gem install fastlane
-
-      - name: 📦 Install Fastlane Plugins
-        run: fastlane install_plugins
+      - name: 📦 Install Bundler & Dependencies
+        run: |
+          gem install bundler
+          bundle install
 
       - name: 🔐 Setup Keystore
         env:
@@ -86,7 +85,7 @@ jobs:
         run: echo "value=$((${{ github.run_number }} + 50))" >> $GITHUB_OUTPUT
 
       - name: 🔢 Set Android Build Number
-        run: fastlane android set_build_number build_number:${{ steps.build_number.outputs.value }}
+        run: bundle exec fastlane android set_build_number build_number:${{ steps.build_number.outputs.value }}
 
       - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
@@ -97,7 +96,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           GOOGLE_PLAY_JSON_KEY_PATH: ${{ github.workspace }}/google-play-key.json
-        run: fastlane android release
+        run: bundle exec fastlane android release
 
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
@@ -107,7 +106,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: fastlane android build
+        run: bundle exec fastlane android build
 
       - name: 📤 Upload AAB Artifact
         uses: actions/upload-artifact@v4
