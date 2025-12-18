@@ -42,7 +42,9 @@ platform :ios do
       configuration: "Release",
       clean: true,
       output_directory: "./ios/build",
-      output_name: "bumpti.ipa"
+      output_name: "bumpti.ipa",
+      export_xcargs: "-verbose",
+      buildlog_path: "./ios/build/logs"
     )
     
     # Upload to TestFlight
