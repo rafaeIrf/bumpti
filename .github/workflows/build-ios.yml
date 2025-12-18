@@ -19,7 +19,7 @@ env:
 jobs:
   build-ios:
     name: 🍎 Build & Deploy iOS
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: 📥 Checkout repository
@@ -28,7 +28,7 @@ jobs:
       - name: Select Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "16.0"
 
       - name: 🏗️ Setup Node.js
         uses: actions/setup-node@v4

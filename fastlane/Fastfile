@@ -69,7 +69,7 @@ platform :ios do
       type: "appstore",
       readonly: is_ci,
       git_url: ENV["MATCH_GIT_URL"],
-      app_identifier: "com.bump ti",
+      app_identifier: "com.bumpti",
       api_key: api_key
     )
     
@@ -112,6 +112,7 @@ platform :android do
     
     # Upload to Play Store internal track
     upload_to_play_store(
+      package_name: "com.bumpti",
       track: "internal",
       release_status: "draft",
       aab: "./android/app/build/outputs/bundle/release/app-release.aab",
