@@ -41,7 +41,8 @@ interface ProfileSwiperProps {
 
 export interface ProfileSwiperRef {
   handleLike: () => void;
-  handleSkip: () => void;
+  handleDislike: () => void;
+  handleSkip: () => void; // Local skip (no API call)
   triggerSwipeLike: () => void;
   triggerSwipeSkip: () => void;
   getSwipeX: () => SharedValue<number>;
@@ -115,7 +116,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       onComplete,
     ]);
 
-    const handleSkip = useCallback(() => {
+    const handleDislike = useCallback(() => {
       if (!currentProfile) return;
 
       setIsTransitioning(true);
@@ -133,6 +134,24 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       }, 350); // Delay para suavizar transição
     }, [currentProfile, currentIndex, profiles.length, onPass, onComplete]);
 
+    const handleSkip = useCallback(() => {
+      if (!currentProfile) return;
+
+      setIsTransitioning(true);
+      // No onPass call here - pure skip (e.g. for blocking)
+
+      // Next profile with smooth delay
+      const nextIndex = currentIndex + 1;
+      setTimeout(() => {
+        setCurrentIndex(nextIndex);
+        setIsTransitioning(false);
+
+        if (nextIndex >= profiles.length) {
+          onComplete?.();
+        }
+      }, 350); // Delay para suavizar transição
+    }, [currentProfile, currentIndex, profiles.length, onComplete]);
+
     // Monitor swipe direction changes
     useEffect(() => {
       const checkSwipe = setInterval(() => {
@@ -141,12 +160,12 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
           handleLike();
         } else if (swipeDirection.value === "skip") {
           swipeDirection.value = "none";
-          handleSkip();
+          handleDislike(); // Swipe left implies dislike
         }
       }, 100);
 
       return () => clearInterval(checkSwipe);
-    }, [swipeDirection, handleLike, handleSkip]);
+    }, [swipeDirection, handleLike, handleDislike]);
 
     // Reset translateX when currentIndex changes (new profile)
     useEffect(() => {
@@ -156,9 +175,10 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       handleLike,
+      handleDislike,
       handleSkip,
       triggerSwipeLike: handleLike,
-      triggerSwipeSkip: handleSkip,
+      triggerSwipeSkip: handleDislike, // X button triggers dislike
       getSwipeX: () => translateX,
     }));
 
@@ -308,6 +328,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
                   profile={currentProfile}
                   currentPlaceId={currentPlaceId}
                   places={places}
+                  onBlockSuccess={handleSkip}
                 />
               </Animated.View>
             </GestureDetector>

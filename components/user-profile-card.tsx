@@ -1,4 +1,5 @@
 import { NavigationIcon, StarIcon } from "@/assets/icons";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import Button from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import {
@@ -10,13 +11,16 @@ import {
 } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useUserActions } from "@/hooks/use-user-actions";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { supabase } from "@/modules/supabase/client";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Divider } from "./ui/divider";
 
 export interface UserProfile {
   id: string;
@@ -40,6 +44,7 @@ interface UserProfileCardProps {
   readonly profile: ActiveUserAtPlace;
   readonly currentPlaceId?: string;
   readonly places?: Record<string, PlaceData>;
+  onBlockSuccess?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -50,9 +55,32 @@ const IMAGE_HEIGHT = IMAGE_WIDTH * (4 / 3); // Aspect ratio 3:4
 export function UserProfileCard({
   profile,
   currentPlaceId,
+  onBlockSuccess,
 }: UserProfileCardProps) {
   const colors = useThemeColors();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
+
+  const {
+    handleReport,
+    handleBlock,
+    confirmBlock,
+    isBlocking,
+    showBlockModal,
+    setShowBlockModal,
+  } = useUserActions({
+    userId: profile.user_id,
+    userName: profile.name ?? "",
+    onBlockSuccess,
+  });
+
+  const isOwnProfile = currentUserId === profile.user_id;
 
   const professionText = [profile.job_title, profile.company_name]
     .filter(Boolean)
@@ -374,6 +402,59 @@ export function UserProfileCard({
           </View>
         )}
       </View>
+
+      {/* Actions (Report / Block) - Only for other users */}
+      {!isOwnProfile && (
+        <View style={styles.actionsSection}>
+          <Divider />
+          <View style={styles.actionButtons}>
+            <Button
+              label={t("actions.report")}
+              onPress={handleReport}
+              variant="secondary"
+              size="default"
+              fullWidth
+              // style={styles.actionButton}
+              textStyle={{ color: colors.textSecondary }}
+            />
+            <Button
+              label={t("actions.block")}
+              onPress={handleBlock}
+              variant="secondary"
+              size="default"
+              fullWidth
+              style={styles.actionButton}
+              textStyle={{ color: colors.error }}
+            />
+          </View>
+        </View>
+      )}
+
+      <ConfirmationModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        title={t("modals.chatActions.blockTitle", { name: profile.name ?? "" })}
+        description={t("modals.chatActions.blockDescription", {
+          name: profile.name ?? "",
+        })}
+        actions={[
+          {
+            label: t("modals.chatActions.blockConfirm", {
+              name: profile.name ?? "",
+            }),
+            onPress: confirmBlock,
+            variant: "destructive",
+            loading: isBlocking,
+            disabled: isBlocking,
+          },
+          {
+            label: t("common.cancel"),
+            onPress: () => setShowBlockModal(false),
+            variant: "outline",
+            disabled: isBlocking,
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -545,5 +626,17 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     ...typography.body,
+  },
+  actionsSection: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  actionButtons: {
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  actionButton: {
+    paddingHorizontal: spacing.md,
   },
 });

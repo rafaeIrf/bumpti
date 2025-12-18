@@ -1,4 +1,10 @@
 {
+  "actions": {
+    "report": "Report",
+    "block": "Block",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
   "welcome": "Welcome!",
   "explore": "Explore",
   "discover": "Discover",
@@ -7,7 +13,6 @@
   "common": {
     "retry": "Try again",
     "resend": "Resend",
-    "delete": "Delete",
     "cancel": "Cancel",
     "close": "Close",
     "back": "Back",
@@ -527,8 +532,9 @@
       "completeTitle": "You're all set to start connecting!",
       "completeSubtitle": "Enter a place and see who also shares the same interests.",
       "completeExplore": "Explore places",
-      "completeFindPlaces": "Find\nplaces",
-      "completeConnectPeople": "Connect\nwith people"
+      "completeConnectPeople": "Connect\nwith people",
+      "report": "Report",
+      "block": "Block"
     },
     "categoryResults": {
       "subtitle": "See the most popular places in the area",

@@ -22,22 +22,32 @@ export async function searchPlacesByText(
   input: string,
   lat: number,
   lng: number,
-  radius: number = 20000,
+  radius?: number,
   sessionToken?: string
 ): Promise<{ places: (Place & { active_users?: number })[] }> {
-  const { data, error } = await supabase.functions.invoke<{
-    places: (Place & { active_users?: number })[];
-  }>("search-places-by-text", {
-    body: { input, lat, lng, radius, sessionToken },
+  // We use the new places-autocomplete function which uses Photon
+  // It expects GET with q, lat, lng
+  const params = new URLSearchParams({
+    q: input,
+    lat: lat.toString(),
+    lng: lng.toString(),
+    limit: "10"
+  });
+
+  const { data, error } = await supabase.functions.invoke<{ places: any[] }>(`places-autocomplete?${params.toString()}`, {
+    method: "GET"
   });
 
   if (error) {
-    console.error("search-places-by-text (edge) error:", error);
+    console.error("places-autocomplete (edge) error:", error);
     return { places: [] };
   }
 
+  // The edge function now does the mapping and distance calculation
+  const places: Place[] = (data?.places || []);
+
   return {
-    places: data?.places || [],
+    places: places,
   };
 }
 
@@ -45,16 +55,15 @@ export async function searchPlacesByText(
 export async function getNearbyPlaces(
   latitude: number,
   longitude: number,
-  category: string // General category name (bars, cafes, etc.)
+  category: string[], // General category name (bars, cafes, etc.)
 ): Promise<Place[]> {
-  console.log('category', category)
-  const { data, error } = await supabase.functions.invoke<{
-    places: Place[];
-  }>("get-nearby-places", {
+  console.log('category', category);
+  
+  const { data, error } = await supabase.functions.invoke<any[]>("places-nearby", {
     body: {
       lat: latitude,
       lng: longitude,
-      category,
+      category, // Edge function internally maps this to FSQ categories if needed, or we rely on RPC
     },
   });
   
@@ -63,7 +72,18 @@ export async function getNearbyPlaces(
     return [];
   }
 
-  return data?.places || [];
+  // Map RPC result to Place type
+  // RPC returns: id, name, category, lat, lng, street, city, total_score, active_users, dist_meters
+  return (data || []).map((p: any) => ({
+    placeId: p.id,
+    name: p.name,
+    formattedAddress: [p.street, p.city].filter(Boolean).join(", "),
+    distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
+    latitude: p.lat,
+    longitude: p.lng,
+    types: [p.category], // put category in types
+    active_users: p.active_users
+  }));
 }
 
 export async function getTrendingPlaces(

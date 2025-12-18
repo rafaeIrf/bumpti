@@ -7,45 +7,11 @@ export default function ModalsLayout() {
         headerShown: false,
       }}
     >
-      <Stack.Screen
-        name="place-search"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="place-people"
-        options={{
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="premium-paywall"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="report"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="profile-preview"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
+      <Stack.Screen name="place-search" />
+      <Stack.Screen name="place-people" />
+      <Stack.Screen name="premium-paywall" />
+      <Stack.Screen name="report" />
+      <Stack.Screen name="profile-preview" />
     </Stack>
   );
 }

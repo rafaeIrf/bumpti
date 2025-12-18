@@ -1,0 +1,92 @@
+name: Build & Deploy iOS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "Submit to App Store"
+        required: false
+        default: true
+        type: boolean
+
+env:
+  NODE_VERSION: "22"
+  RUBY_VERSION: "3.2"
+
+jobs:
+  build-ios:
+    name: 🍎 Build & Deploy iOS
+    runs-on: macos-14
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "yarn"
+
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+
+      - name: 📦 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔧 Setup Expo (Prebuild iOS)
+        run: npx expo prebuild --platform ios --clean
+
+      - name: 📦 Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: 📦 Install Fastlane
+        run: gem install fastlane
+
+      - name: 🔐 Setup SSH for Match
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.MATCH_DEPLOY_KEY }}
+
+      - name: 🚀 Build & Submit with Fastlane
+        if: github.event_name == 'push' || github.event.inputs.submit == 'true'
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+          TEAM_ID: V68Y42WV27
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          cd ios
+          fastlane release
+
+      - name: 🔨 Build Only with Fastlane
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+          TEAM_ID: V68Y42WV27
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          cd ios
+          fastlane build
+
+      - name: 📤 Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release
+          path: ios/build/*.ipa
+          retention-days: 14

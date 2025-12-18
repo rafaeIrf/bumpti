@@ -1,4 +1,5 @@
 import {
+  ArrowLeftIcon,
   ArrowRightIcon,
   ExclamationCircleIcon,
   ListIcon,
@@ -7,9 +8,9 @@ import {
   ShieldAlertIcon,
   ShieldCheckIcon,
   UserRoundIcon,
-  XIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import Button from "@/components/ui/button";
@@ -174,30 +175,14 @@ export default function SettingsScreen() {
   };
 
   const TopHeader = (
-    <View
-      style={[
-        styles.topHeader,
-        {
-          backgroundColor: colors.background,
-          borderBottomColor: colors.border,
-        },
-      ]}
-    >
-      <ThemedText style={[typography.heading2, { flex: 1 }]}>
-        {t("screens.profile.settingsPage.title")}
-      </ThemedText>
-      <Pressable
-        onPress={handleClose}
-        style={({ pressed }) => [
-          styles.closeButton,
-          {
-            backgroundColor: pressed ? colors.surfaceHover : "transparent",
-          },
-        ]}
-      >
-        <XIcon width={24} height={24} color={colors.text} />
-      </Pressable>
-    </View>
+    <ScreenToolbar
+      title={t("screens.profile.settingsPage.title")}
+      leftAction={{
+        icon: ArrowLeftIcon,
+        onClick: handleClose,
+        ariaLabel: t("common.close") || "Close",
+      }}
+    />
   );
 
   return (
@@ -382,20 +367,6 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "rgba(255, 255, 255, 0.06)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topHeader: {
-    padding: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },

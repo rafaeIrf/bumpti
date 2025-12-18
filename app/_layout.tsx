@@ -6,6 +6,7 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
 import BottomSheetProvider from "@/components/BottomSheetProvider";
@@ -57,36 +58,41 @@ export default function RootLayout() {
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
           <GestureHandlerRootView style={{ flex: 1 }}>
-            <BottomSheetProvider>
-              <ChatRealtimeProvider>
-                <Stack>
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="(onboarding)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="main"
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="(modals)"
-                    options={{
-                      headerShown: false,
-                      presentation: "modal",
-                      animation: "slide_from_bottom",
-                    }}
-                  />
-                </Stack>
-                <StatusBar style="auto" />
-              </ChatRealtimeProvider>
-            </BottomSheetProvider>
+            <KeyboardProvider>
+              <BottomSheetProvider>
+                <ChatRealtimeProvider>
+                  <Stack>
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(onboarding)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="main"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="(modals)"
+                      options={{
+                        presentation: "modal",
+                        headerShown: false,
+                        animation: "slide_from_bottom",
+                      }}
+                    />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </ChatRealtimeProvider>
+              </BottomSheetProvider>
+            </KeyboardProvider>
           </GestureHandlerRootView>
         </ThemeProvider>
       </I18nProvider>

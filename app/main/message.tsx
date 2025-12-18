@@ -12,7 +12,6 @@ import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { LoadingView } from "@/components/loading-view";
 import { MatchPlaceCard } from "@/components/match-place-card";
-import { ReportReasonsBottomSheet } from "@/components/report-reasons-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -20,8 +19,7 @@ import Button from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { blockUser } from "@/modules/block/api";
-import { updateMatch } from "@/modules/chats/api";
+import { useUserActions } from "@/hooks/use-user-actions";
 import {
   ChatMessage,
   attachChatRealtime,
@@ -39,17 +37,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import Animated, {
   Easing,
   FadeInUp,
   FadeOutDown,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -70,6 +69,15 @@ export default function ChatMessageScreen() {
   const params = useLocalSearchParams<Params>();
   const bottomSheet = useCustomBottomSheet();
   const insets = useSafeAreaInsets();
+
+  // Use the library's dedicated hook for smoother native synchronized animation
+  const { height } = useReanimatedKeyboardAnimation();
+
+  const fakeView = useAnimatedStyle(() => {
+    return {
+      height: Math.abs(height.value),
+    };
+  });
   const dispatch = useAppDispatch();
   const chatId = params.chatId;
   const matchId = params.matchId;
@@ -79,11 +87,26 @@ export default function ChatMessageScreen() {
   const [newMessage, setNewMessage] = useState("");
   const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isBlocking, setIsBlocking] = useState(false);
-  const [isUnmatching, setIsUnmatching] = useState(false);
+
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
-  const [showUnmatchModal, setShowUnmatchModal] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
+
+  const {
+    handleReport,
+    handleBlock,
+    confirmBlock,
+    handleUnmatch,
+    confirmUnmatch,
+    isBlocking,
+    isUnmatching,
+    showBlockModal,
+    setShowBlockModal,
+    showUnmatchModal,
+    setShowUnmatchModal,
+  } = useUserActions({
+    userId: otherUserId,
+    userName: params.name,
+    matchId: matchId,
+  });
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const inputRef = useRef<TextInput>(null);
   const {
@@ -199,84 +222,6 @@ export default function ChatMessageScreen() {
     });
   }, []);
 
-  const handleUnmatch = useCallback(() => {
-    setShowUnmatchModal(true);
-  }, []);
-
-  const handleUnmatchConfirmed = async () => {
-    if (!matchId || !otherUserId || isUnmatching) return;
-
-    try {
-      setIsUnmatching(true);
-      await updateMatch({
-        matchId,
-        status: "unmatched",
-      });
-      setShowUnmatchModal(false);
-      router.back();
-    } catch (err) {
-      logger.error("Unmatch error:", err);
-      Alert.alert(
-        t("screens.chatUnmatch.unmatchErrorTitle"),
-        t("screens.chatUnmatch.unmatchError")
-      );
-    } finally {
-      setIsUnmatching(false);
-    }
-  };
-
-  const handleBlock = useCallback(() => {
-    setShowBlockModal(true);
-  }, []);
-
-  const handleBlockConfirmed = useCallback(async () => {
-    if (!otherUserId || isBlocking) return;
-    try {
-      setIsBlocking(true);
-      await blockUser({ blockedUserId: otherUserId });
-      setShowBlockModal(false);
-      Alert.alert(
-        t("screens.chatBlock.blockSuccessTitle"),
-        t("screens.chatBlock.blockSuccessMessage")
-      );
-      router.back();
-    } catch (err) {
-      logger.error("Block user error:", err);
-      Alert.alert(
-        t("screens.chatBlock.blockErrorTitle"),
-        t("screens.chatBlock.blockError")
-      );
-    } finally {
-      setIsBlocking(false);
-    }
-  }, [isBlocking, otherUserId, t]);
-
-  const openReportReasons = () => {
-    if (!bottomSheet) return;
-    bottomSheet.close();
-    setTimeout(() => {
-      bottomSheet.expand({
-        content: () => (
-          <ReportReasonsBottomSheet
-            userName={params.name ?? t("screens.chat.title")}
-            onSelectReason={(reason) => {
-              bottomSheet.close();
-              router.push({
-                pathname: "/(modals)/report",
-                params: {
-                  reason,
-                  name: params.name ?? "",
-                  reportedUserId: otherUserId ?? "",
-                },
-              });
-            }}
-            onClose={() => bottomSheet.close()}
-          />
-        ),
-      });
-    }, 300);
-  };
-
   const openActionsBottomSheet = () => {
     if (!bottomSheet) return;
     bottomSheet.expand({
@@ -285,7 +230,10 @@ export default function ChatMessageScreen() {
           userName={params.name ?? t("screens.chat.title")}
           onUnmatch={handleUnmatch}
           onBlock={handleBlock}
-          onReport={openReportReasons}
+          onReport={() => {
+            bottomSheet.close();
+            handleReport();
+          }}
           onClose={() => bottomSheet.close()}
         />
       ),
@@ -506,7 +454,7 @@ export default function ChatMessageScreen() {
         actions={[
           {
             label: t("modals.chatActions.unmatchConfirm"),
-            onPress: handleUnmatchConfirmed,
+            onPress: confirmUnmatch,
             variant: "destructive",
             loading: isUnmatching,
             disabled: isUnmatching,
@@ -531,7 +479,7 @@ export default function ChatMessageScreen() {
             label: t("modals.chatActions.blockConfirm", {
               name: params.name ?? "",
             }),
-            onPress: handleBlockConfirmed,
+            onPress: confirmBlock,
             variant: "destructive",
             loading: isBlocking,
             disabled: isBlocking,
@@ -575,7 +523,7 @@ export default function ChatMessageScreen() {
       <BaseTemplateScreen
         TopHeader={header}
         scrollEnabled={false}
-        useKeyboardAvoidingView
+        useKeyboardAvoidingView={false}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 0,
@@ -653,6 +601,7 @@ export default function ChatMessageScreen() {
             />
           </Pressable>
         </View>
+        <Animated.View style={fakeView} />
       </BaseTemplateScreen>
     </>
   );
@@ -700,6 +649,10 @@ function MessageBubble({
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
                 maxWidth: isFailed ? "90%" : "100%",
+                borderTopRightRadius: isMe ? spacing.sm : spacing.md,
+                borderTopLeftRadius: isMe ? spacing.md : spacing.sm,
+                borderBottomRightRadius: isMe ? spacing.md : spacing.sm,
+                borderBottomLeftRadius: isMe ? spacing.sm : spacing.md,
               },
             ]}
           >
@@ -790,7 +743,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   messageBubble: {
-    borderRadius: spacing.lg,
+    borderTopRightRadius: spacing.lg,
+    borderBottomRightRadius: spacing.lg,
+    borderTopLeftRadius: spacing.lg,
+    borderBottomLeftRadius: spacing.lg,
     borderWidth: 1,
   },
   statusRowBelow: {

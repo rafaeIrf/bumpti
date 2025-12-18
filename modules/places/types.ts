@@ -27,21 +27,12 @@ export type NearbyPlacesResponse = { places: Place[] };
 
 // General place categories (mapped to multiple Foursquare IDs in backend)
 export type PlaceCategory = 
-  | "bars" 
-  | "nightlife" 
-  | "cafes" 
-  | "restaurants" 
-  | "fitness" 
+  | "bar" 
+  | "nightclub" 
+  | "cafe" 
+  | "restaurant" 
+  | "gym" 
+  | "fitness_centre" 
   | "university" 
-  | "parks";
-
-// Human-friendly labels for categories
-export const PLACE_CATEGORY_LABEL: Record<PlaceCategory, string> = {
-  bars: "Bar",
-  nightlife: "Nightclub",
-  cafes: "Café",
-  restaurants: "Restaurant",
-  fitness: "Gym",
-  university: "University",
-  parks: "Park",
-};
+  | "college" 
+  | "park";

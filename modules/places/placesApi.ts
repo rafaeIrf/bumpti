@@ -3,11 +3,11 @@ import {
   type DetectPlaceResult,
   getFavoritePlaces as getFavoritePlacesApi,
   getNearbyPlaces as getNearbyPlacesApi,
+  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
   getTrendingPlaces as getTrendingPlacesApi,
+  type PlacesByCategory,
   searchPlacesByText as searchPlacesByTextApi,
   toggleFavoritePlace as toggleFavoritePlaceApi,
-  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
-  type PlacesByCategory,
 } from "@/modules/places/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Place, PlaceCategory } from "./types";
@@ -97,7 +97,7 @@ export const placesApi = createApi({
       {
         latitude: number;
         longitude: number;
-        category: string; // General category name (bars, cafes, etc.)
+        category: string[]; // General category name (bars, cafes, etc.)
       }
     >({
       queryFn: async ({
@@ -109,7 +109,7 @@ export const placesApi = createApi({
           const places = await getNearbyPlacesApi(
             latitude,
             longitude,
-            category
+            category,
           );
           return { data: places as Place[] };
         } catch (error) {
