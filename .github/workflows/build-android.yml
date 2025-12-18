@@ -57,10 +57,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: 🔧 Setup Expo (Prebuild Android)
+      - name: 🔐 Setup .env file
         env:
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          ENV_FILE_BASE64: ${{ secrets.ENV_FILE_BASE64 }}
+        run: |
+          echo "$ENV_FILE_BASE64" | base64 --decode > .env
+
+      - name: 🔧 Setup Expo (Prebuild Android)
         run: npx expo prebuild --platform android --clean
 
       - name: 📦 Install Bundler & Dependencies

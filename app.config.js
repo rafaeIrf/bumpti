@@ -105,9 +105,6 @@ module.exports = {
       eas: {
         projectId: "86403ae5-b135-412f-9a73-92b352f9fda5",
       },
-      // Expose Supabase env vars via extra so they can be accessed via Constants.expoConfig.extra
-      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     },
     owner: "rafaelrrf",
   },
