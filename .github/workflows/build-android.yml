@@ -74,9 +74,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           GOOGLE_PLAY_JSON_KEY_PATH: ${{ github.workspace }}/google-play-key.json
-        run: |
-          cd fastlane
-          fastlane android release
+        run: fastlane android release
 
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
@@ -86,9 +84,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          cd fastlane
-          fastlane android build
+        run: fastlane android build
 
       - name: 📤 Upload AAB Artifact
         uses: actions/upload-artifact@v4
