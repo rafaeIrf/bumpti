@@ -44,7 +44,7 @@ interface Category {
   description: string;
   iconColor: string;
   iconBgColor: string;
-  category?: PlaceCategory; // General category name for backend
+  category?: PlaceCategory[]; // General category name for backend
   color: string;
   illustration?: React.ComponentType<SvgProps>;
 }
@@ -107,7 +107,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.nightlife.description"),
       iconColor: "#FF8A33",
       iconBgColor: "rgba(255, 138, 51, 0.12)",
-      category: "bars",
+      category: ["bar", "nightclub"],
       color: CARD_COLORS.heatBurst,
       illustration: Toast,
     },
@@ -118,7 +118,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.cafes.description"),
       iconColor: "#9B6C4A",
       iconBgColor: "rgba(155, 108, 74, 0.12)",
-      category: "cafes",
+      category: ["cafe"],
       color: CARD_COLORS.apricotPastel,
       illustration: Cocoa,
     },
@@ -129,7 +129,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.university.description"),
       iconColor: "#3DAAFF",
       iconBgColor: "rgba(61, 170, 255, 0.12)",
-      category: "university",
+      category: ["university", "college"],
       color: CARD_COLORS.azurePop,
       illustration: Graduation,
     },
@@ -140,7 +140,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.fitness.description"),
       iconColor: "#1DB954",
       iconBgColor: "rgba(29, 185, 84, 0.12)",
-      category: "fitness",
+      category: ["gym", "fitness_centre"],
       color: CARD_COLORS.aquaPastel,
       illustration: Weight,
     },
@@ -151,7 +151,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.parks.description"),
       iconColor: "#34C759",
       iconBgColor: "rgba(52, 199, 89, 0.12)",
-      category: "parks",
+      category: ["park"],
       color: CARD_COLORS.neonMint,
       illustration: Park,
     },
@@ -162,7 +162,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.restaurants.description"),
       iconColor: "#FF6B35",
       iconBgColor: "rgba(255, 107, 53, 0.12)",
-      category: "restaurants",
+      category: ["restaurant"],
       color: CARD_COLORS.twilightRose,
       illustration: Location,
     },
@@ -179,7 +179,7 @@ export default function HomeScreen() {
           : category.id === "highlighted"
           ? { trending: "true" }
           : {
-              category: category.category, // Pass general category name
+              category: category.category,
             }),
         isPremium: "false", // TODO: Get from user premium status
       },
