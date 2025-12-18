@@ -74,9 +74,9 @@ jobs:
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           GOOGLE_PLAY_JSON_KEY_PATH: ${{ github.workspace }}/google-play-key.json
         run: fastlane android release
 
@@ -85,9 +85,9 @@ jobs:
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: fastlane android build
 
       - name: 📤 Upload AAB Artifact
