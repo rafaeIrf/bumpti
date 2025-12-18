@@ -49,9 +49,7 @@ jobs:
         run: npx expo prebuild --platform ios --clean
 
       - name: 📦 Install CocoaPods
-        run: |
-          cd ios
-          pod install
+        run: cd ios && pod install
 
       - name: 📦 Install Fastlane
         run: gem install fastlane
@@ -75,9 +73,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: |
-          cd ios
-          fastlane release
+        run: fastlane ios release
 
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
@@ -89,9 +85,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: |
-          cd ios
-          fastlane build
+        run: fastlane ios build
 
       - name: 📤 Upload IPA Artifact
         uses: actions/upload-artifact@v4
