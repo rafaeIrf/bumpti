@@ -36,9 +36,10 @@ platform :ios do
     
     # Build the app
     build_app(
-      workspace: "ios/bumpti.xcworkspace",
+      workspace: "ios/Bumpti.xcworkspace",
       scheme: "bumpti",
       export_method: "app-store",
+      configuration: "Release",
       clean: true,
       output_directory: "ios/build",
       output_name: "bumpti.ipa"
@@ -79,9 +80,10 @@ platform :ios do
     )
     
     build_app(
-      workspace: "ios/bumpti.xcworkspace",
+      workspace: "ios/Bumpti.xcworkspace",
       scheme: "bumpti",
       export_method: "app-store",
+      configuration: "Release",
       clean: true,
       output_directory: "ios/build",
       output_name: "bumpti.ipa"
