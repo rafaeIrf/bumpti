@@ -124,7 +124,7 @@ platform :android do
   desc "Set build number for Android"
   lane :set_build_number do |options|
     increment_version_code(
-      gradle_file_path: "./android/app/build.gradle",
+      app_project_dir: "./android/app",
       version_code: options[:build_number].to_i
     )
   end
