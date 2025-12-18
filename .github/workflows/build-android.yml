@@ -68,7 +68,7 @@ jobs:
       - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_NUMBER: ${{ github.run_number + 50 }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -79,7 +79,7 @@ jobs:
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_NUMBER: ${{ github.run_number + 50 }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
