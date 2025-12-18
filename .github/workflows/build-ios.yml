@@ -46,6 +46,9 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: 🔧 Setup Expo (Prebuild iOS)
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo prebuild --platform ios --clean
 
       - name: 📦 Install CocoaPods
