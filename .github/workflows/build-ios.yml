@@ -67,7 +67,7 @@ jobs:
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
-          TEAM_ID: V68Y42WV27
+          TEAM_ID: ${{ secrets.TEAM_ID}}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
@@ -79,7 +79,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
-          TEAM_ID: V68Y42WV27
+          TEAM_ID: ${{ secrets.TEAM_ID}}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
