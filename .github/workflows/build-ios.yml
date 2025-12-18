@@ -19,7 +19,7 @@ env:
 jobs:
   build-ios:
     name: 🍎 Build & Deploy iOS
-    runs-on: macos-14
+    runs-on: macos-15-large
 
     steps:
       - name: 📥 Checkout repository
