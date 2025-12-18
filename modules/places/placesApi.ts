@@ -98,25 +98,18 @@ export const placesApi = createApi({
         latitude: number;
         longitude: number;
         category: string[]; // General category name (bars, cafes, etc.)
-        city: string;
-        countryCode?: string;
       }
     >({
       queryFn: async ({
         latitude,
         longitude,
         category,
-        city,
-        countryCode,
       }) => {
         try {
           const places = await getNearbyPlacesApi(
             latitude,
             longitude,
             category,
-            20000,
-            city,
-            countryCode
           );
           return { data: places as Place[] };
         } catch (error) {
@@ -130,7 +123,7 @@ export const placesApi = createApi({
         return [
           {
             type: "NearbyPlaces",
-            id: `${lat}_${lng}_${arg.category}_${arg.city}`,
+            id: `${lat}_${lng}_${arg.category}`,
           },
         ];
       },

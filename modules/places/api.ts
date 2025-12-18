@@ -56,9 +56,6 @@ export async function getNearbyPlaces(
   latitude: number,
   longitude: number,
   category: string[], // General category name (bars, cafes, etc.)
-  radius: number = 20000,
-  city: string,
-  country_code?: string
 ): Promise<Place[]> {
   console.log('category', category);
   
@@ -67,9 +64,6 @@ export async function getNearbyPlaces(
       lat: latitude,
       lng: longitude,
       category, // Edge function internally maps this to FSQ categories if needed, or we rely on RPC
-      radius,
-      city,
-      country_code
     },
   });
   

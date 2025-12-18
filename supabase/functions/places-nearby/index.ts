@@ -19,14 +19,13 @@ serve(async (req) => {
       });
     }
 
-    const { lat, lng, radius, city, country_code, category } = await req.json();
+    const { lat, lng, category } = await req.json();
 
     // Validation
     const latNum = parseFloat(lat);
     const lngNum = parseFloat(lng);
-    const radiusNum = parseFloat(radius);
 
-    if (isNaN(latNum) || isNaN(lngNum) || isNaN(radiusNum) || !city) {
+    if (isNaN(latNum) || isNaN(lngNum)) {
       return new Response(JSON.stringify({ error: "Invalid parameters" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,7 +57,7 @@ serve(async (req) => {
     const { data: places, error } = await supabase.rpc("search_places_nearby", {
       user_lat: latNum,
       user_lng: lngNum,
-      radius_meters: radiusNum,
+      radius_meters: 50 * 1000,
       filter_categories: categoriesArray,
       max_results: 50,
       requesting_user_id: requestingUserId
