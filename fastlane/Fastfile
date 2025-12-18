@@ -16,13 +16,22 @@ platform :ios do
       is_key_content_base64: true
     )
     
-    # Match for certificate management
-    match(
-      type: "appstore",
-      readonly: is_ci,
-      git_url: ENV["MATCH_GIT_URL"],
-      app_identifier: "com.bumpti",
-      api_key: api_key
+    sync_code_signing(
+        api_key: api_key,
+        type: "appstore",
+        git_branch: "main",
+        app_identifier: "com.bumpti",
+        team_id: ENV['TEAM_ID'],
+        git_url: ENV['MATCH_GIT_URL']
+    )
+    
+    update_code_signing_settings(
+        path: "./ios/Bumpti.xcodeproj",
+        bundle_identifier: "com.bumpti",
+        profile_name: "match AppStore com.bumpti",
+        use_automatic_signing: false,
+        team_id: ENV['TEAM_ID'],
+        code_sign_identity: "Apple Distribution"
     )
     
     # Set build number using GitHub run number
