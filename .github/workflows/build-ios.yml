@@ -65,8 +65,10 @@ jobs:
       - name: 📦 Install CocoaPods
         run: cd ios && pod install
 
-      - name: 📦 Install Fastlane
-        run: gem install fastlane
+      - name: 📦 Install Bundler & Dependencies
+        run: |
+          gem install bundler
+          bundle install
 
       - name: 🔐 Setup SSH for Match
         uses: webfactory/ssh-agent@v0.9.0
@@ -87,7 +89,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: fastlane ios release
+        run: bundle exec fastlane ios release
 
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
@@ -99,7 +101,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: fastlane ios build
+        run: bundle exec fastlane ios build
 
       - name: 📋 Upload Build Logs (on failure)
         if: failure()
