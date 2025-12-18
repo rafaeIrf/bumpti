@@ -53,13 +53,21 @@ platform :ios do
       output_directory: "./ios/build",
       output_name: "bumpti.ipa",
       export_xcargs: "-verbose",
-      buildlog_path: "./ios/build/logs"
+      buildlog_path: "./ios/build/logs",
+      include_symbols: true,
+      include_bitcode: false
     )
     
     # Upload to TestFlight
     upload_to_testflight(
       skip_waiting_for_build_processing: true,
       api_key: api_key
+    )
+    
+    # Upload dSYMs to Firebase Crashlytics
+    upload_symbols_to_crashlytics(
+      gsp_path: "./ios/GoogleService-Info.plist",
+      binary_path: "./ios/Pods/FirebaseCrashlytics/upload-symbols"
     )
   end
 
