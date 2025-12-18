@@ -66,6 +66,9 @@ jobs:
       - name: 📦 Install Fastlane
         run: gem install fastlane
 
+      - name: 📦 Install Fastlane Plugins
+        run: fastlane install_plugins
+
       - name: 🔐 Setup Keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
