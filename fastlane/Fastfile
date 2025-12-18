@@ -88,7 +88,7 @@ platform :android do
     gradle(
       task: "bundle",
       build_type: "Release",
-      project_dir: "../android",
+      project_dir: "./android",
       properties: {
         "android.injected.signing.store.file" => ENV["KEYSTORE_PATH"],
         "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
@@ -102,7 +102,7 @@ platform :android do
     upload_to_play_store(
       track: "internal",
       release_status: "draft",
-      aab: "../android/app/build/outputs/bundle/release/app-release.aab",
+      aab: "./android/app/build/outputs/bundle/release/app-release.aab",
       json_key: ENV["GOOGLE_PLAY_JSON_KEY_PATH"],
       skip_upload_metadata: true,
       skip_upload_images: true,
@@ -115,7 +115,7 @@ platform :android do
     gradle(
       task: "bundle",
       build_type: "Release",
-      project_dir: "../android",
+      project_dir: "./android",
       properties: {
         "android.injected.signing.store.file" => ENV["KEYSTORE_PATH"],
         "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
