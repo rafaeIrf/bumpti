@@ -28,7 +28,7 @@ platform :ios do
     # Set build number using GitHub run number
     update_info_plist(
       xcodeproj: "./ios/Bumpti.xcodeproj",
-      plist_path: "./ios/bumpti/Info.plist",
+      plist_path: "./ios/Bumpti/Info.plist",
       block: proc do |plist|
         plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
       end
@@ -73,7 +73,7 @@ platform :ios do
     
     update_info_plist(
       xcodeproj: "./ios/Bumpti.xcodeproj",
-      plist_path: "./ios/bumpti/Info.plist",
+      plist_path: "./ios/Bumpti/Info.plist",
       block: proc do |plist|
         plist["CFBundleVersion"] = ENV["BUILD_NUMBER"]
       end
