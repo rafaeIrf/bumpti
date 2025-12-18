@@ -64,7 +64,7 @@ jobs:
       - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_NUMBER: ${{ github.run_number + 50 }}
           TEAM_ID: V68Y42WV27
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
@@ -78,7 +78,7 @@ jobs:
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_NUMBER: ${{ github.run_number + 50 }}
           TEAM_ID: V68Y42WV27
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
