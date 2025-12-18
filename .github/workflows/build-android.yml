@@ -65,10 +65,14 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > google-play-key.json
 
+      - name: 🔢 Calculate Build Number
+        id: build_number
+        run: echo "value=$((${{ github.run_number }} + 50))" >> $GITHUB_OUTPUT
+
       - name: 🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
-          BUILD_NUMBER: ${{ github.run_number + 50 }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -79,7 +83,7 @@ jobs:
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
-          BUILD_NUMBER: ${{ github.run_number + 50 }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}

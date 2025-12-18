@@ -61,10 +61,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.MATCH_DEPLOY_KEY }}
 
-      - name: 🚀 Build & Submit with Fastlane
+      - name: � Calculate Build Number
+        id: build_number
+        run: echo "value=$((${{ github.run_number }} + 50))" >> $GITHUB_OUTPUT
+
+      - name: �🚀 Build & Submit with Fastlane
         if: github.event_name == 'push' || github.event.inputs.submit == 'true'
         env:
-          BUILD_NUMBER: ${{ github.run_number + 50 }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           TEAM_ID: V68Y42WV27
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
@@ -78,7 +82,7 @@ jobs:
       - name: 🔨 Build Only with Fastlane
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.submit == 'false'
         env:
-          BUILD_NUMBER: ${{ github.run_number + 50 }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           TEAM_ID: V68Y42WV27
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
