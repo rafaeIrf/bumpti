@@ -6,8 +6,8 @@ import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { PlacesByCategory } from "@/modules/places/api";
-import { PlaceCategory } from "@/modules/places/types";
 import { useGetSuggestedPlacesQuery } from "@/modules/places/placesApi";
+import { PlaceCategory } from "@/modules/places/types";
 import { logger } from "@/utils/logger";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { router } from "expo-router";
@@ -20,24 +20,14 @@ import {
   View,
 } from "react-native";
 
-const CATEGORY_LABELS: Record<PlaceCategory, string> = {
-  bars: "Bares",
-  nightlife: "Baladas",
-  cafes: "Cafés",
-  restaurants: "Restaurantes",
-  fitness: "Academias",
-  university: "Universidades",
-  parks: "Parques",
-};
-
 const CATEGORIES: PlaceCategory[] = [
-  "bars",
-  "nightlife",
-  "cafes",
-  "restaurants",
-  "fitness",
+  "bar",
+  "nightclub",
+  "cafe",
+  "restaurant",
+  "gym",
   "university",
-  "parks",
+  "park",
 ];
 
 const MAX_SELECTIONS = 12;
@@ -235,10 +225,7 @@ export function FavoritePlacesContent({
         >
           <SearchIcon width={18} height={18} color={colors.textSecondary} />
           <ThemedText
-            style={[
-              styles.searchPlaceholder,
-              { color: colors.textSecondary },
-            ]}
+            style={[styles.searchPlaceholder, { color: colors.textSecondary }]}
           >
             {t("screens.onboarding.favoritePlaces.searchPlaceholder")}
           </ThemedText>
@@ -273,7 +260,7 @@ export function FavoritePlacesContent({
                       { color: colors.textSecondary },
                     ]}
                   >
-                    {CATEGORY_LABELS[category]}
+                    {t(`common.placeCategories.${category}`)}
                   </ThemedText>
 
                   {/* Place Cards */}
@@ -285,9 +272,7 @@ export function FavoritePlacesContent({
                       return (
                         <Pressable
                           key={place.placeId}
-                          onPress={() =>
-                            togglePlace(place.placeId, place.name)
-                          }
+                          onPress={() => togglePlace(place.placeId, place.name)}
                           style={({ pressed }) => [
                             styles.placeCard,
                             {

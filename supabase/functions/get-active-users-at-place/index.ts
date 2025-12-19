@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,9 +109,18 @@ Deno.serve(async (req) => {
       )
     ).filter(Boolean) as string[];
 
-    // Resolve details for all favorite places
-    const resolvedPlaces = await resolveFavoritePlaces(allFavoritePlaceIds);
-    const placeMap = new Map(resolvedPlaces.map((p) => [p.id, p]));
+    // Fetch all favorite places from database in a single query
+    let placeMap = new Map();
+    if (allFavoritePlaceIds.length > 0) {
+      const { data: places } = await client
+        .from("places")
+        .select("id, name, category")
+        .in("id", allFavoritePlaceIds);
+      
+      if (places) {
+        placeMap = new Map(places.map((p) => [p.id, p]));
+      }
+    }
 
     const users =
       await Promise.all(
@@ -138,7 +146,7 @@ Deno.serve(async (req) => {
             return {
               id: id,
               name: details?.name || "Unknown Place",
-              emoji: details?.emoji || ""
+              category: details?.category || ""
             };
           });
 

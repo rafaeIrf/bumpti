@@ -1,5 +1,4 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
-import { resolveFavoritePlaces } from "./foursquare/placeDetails.ts";
 
 const SIGNED_URL_EXPIRES = 3600;
 
@@ -45,7 +44,7 @@ export async function getPublicProfile(
       .order("position", { ascending: true }),
     supabaseService
       .from("profile_favorite_places")
-      .select("place_id")
+      .select("place_id, places:places(id, name, category)")
       .eq("user_id", userId),
   ]);
 
@@ -84,21 +83,18 @@ export async function getPublicProfile(
   );
   const photos = signedPhotos.filter((url): url is string => !!url);
 
-  // Favorite Places
-  const favoritePlaceIds = (favoritePlacesResult.data ?? [])
-    .map((row: any) => row.place_id)
-    .filter(Boolean);
-
-  // Resolve place details
-  let favorite_places: { id: string; name: string; emoji: string }[] = [];
-  if (favoritePlaceIds.length > 0) {
-    const resolved = await resolveFavoritePlaces(favoritePlaceIds);
-    favorite_places = resolved.map((p) => ({
-      id: p.id,
-      name: p.name,
-      emoji: p.emoji || "",
-    }));
-  }
+  // Favorite Places - now with joined data
+  const favorite_places = (favoritePlacesResult.data ?? [])
+    .map((row: any) => {
+      const place = row.places;
+      if (!place) return null;
+      return {
+        id: place.id,
+        name: place.name || "",
+        category: place.category || "",
+      };
+    })
+    .filter((p): p is { id: string; name: string; category: string } => p !== null);
 
   // Languages
   const languages =

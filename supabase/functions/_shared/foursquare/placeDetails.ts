@@ -148,7 +148,6 @@ export async function resolveFavoritePlaces(fsq_ids: string[]) {
       id: place.fsq_id,
       name: place.name,
       category: place.categories?.[0]?.name || "",
-      emoji: place.categories?.[0]?.icon?.prefix ? `${place.categories[0].icon.prefix}bg_32${place.categories[0].icon.suffix}` : "",
     }));
   } catch (error) {
     console.error("Error resolving favorite places:", error);

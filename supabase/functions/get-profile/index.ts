@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { resolveFavoritePlaces } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +88,7 @@ Deno.serve(async (req) => {
         .order("position", { ascending: true }),
       supabase
         .from("profile_favorite_places")
-        .select("place_id")
+        .select("place_id, places:places(id, name, category)")
         .eq("user_id", userId),
     ]);
 
@@ -126,12 +125,18 @@ Deno.serve(async (req) => {
       .map((row: any) => row.intention?.key)
       .filter((key: string | null) => key != null);
     
-    // Fetch favorite places details from Foursquare
-    const favoritePlaceIds = (favoritePlacesRows ?? [])
-      .map((row: any) => row.place_id)
-      .filter((id: string | null) => id != null);
-
-    const favoritePlaces = await resolveFavoritePlaces(favoritePlaceIds);
+    // Favorite places with joined data
+    const favoritePlaces = (favoritePlacesRows ?? [])
+      .map((row: any) => {
+        const place = row.places;
+        if (!place) return null;
+        return {
+          id: place.id,
+          name: place.name || "",
+          category: place.category || "",
+        };
+      })
+      .filter((p): p is { id: string; name: string; category: string } => p !== null);
 
     let photos =
       (photoRows ?? [])

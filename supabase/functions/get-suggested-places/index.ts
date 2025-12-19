@@ -1,13 +1,7 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import { CATEGORY_TO_IDS } from "../_shared/foursquare/categories.ts";
-import { searchNearbyPlaces } from "../_shared/foursquare/searchNearby.ts";
-import { FoursquareSortOrder } from "../_shared/foursquare/types.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuth } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 interface PlacesByCategory {
   category: string;
@@ -22,31 +16,29 @@ interface PlacesByCategory {
 
 const LIMIT_PLACES_PER_CATEGORY = 10;
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing auth header" }), {
-        status: 401,
+    const supabase = createAdminClient();
+
+    // Check if it's a POST request
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Authenticate User
+    let requestingUserId: string;
+    try {
+      const user = await requireAuth(req);
+      requestingUserId = user.id;
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -68,42 +60,42 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch places for each category
+    // Validation
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      return new Response(JSON.stringify({ error: "Invalid parameters" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const results: PlacesByCategory[] = [];
-    const seenPlaceIds = new Set<string>();
 
     for (const category of categories) {
-      const categoryIds = CATEGORY_TO_IDS[category];
-      if (!categoryIds) {
-        console.warn(`Unknown category: ${category}`);
-        continue;
-      }
-
-      const fsqPlaces = await searchNearbyPlaces({
-        userLat: lat,
-        userLng: lng,
-        categories: categoryIds,
-        limit: LIMIT_PLACES_PER_CATEGORY,
-        radius: 20000, // 20km radius
-        sort: FoursquareSortOrder.DISTANCE,
-        openNow: false,
+      // Use the category name directly as filter
+      const { data: places, error } = await supabase.rpc("search_places_nearby", {
+        user_lat: latNum,
+        user_lng: lngNum,
+        radius_meters: 50 * 1000, // 50km radius
+        filter_categories: [category],
+        max_results: LIMIT_PLACES_PER_CATEGORY,
+        requesting_user_id: requestingUserId
       });
 
-      // Filter out places already seen in other categories
-      const uniquePlaces = fsqPlaces
-        .filter((place) => {
-          if (seenPlaceIds.has(place.fsq_id)) {
-            return false;
-          }
-          seenPlaceIds.add(place.fsq_id);
-          return true;
-        })
-        .map((place) => ({
-          placeId: place.fsq_id,
+      if (error) {
+        continue; // Skip this category on error
+      }
+      const uniquePlaces = (places || [])
+        .map((place: any) => ({
+          placeId: place.id,
           name: place.name,
-          formattedAddress: place.formatted_address || "Endereço não disponível",
-          types: place.categories.map((cat) => cat.name),
-          distance: Number(place.distance.toFixed(2)),
+          formattedAddress: place.street && place.city 
+            ? `${place.street}, ${place.city}` 
+            : place.street || place.city || "Endereço não disponível",
+          types: place.category ? [place.category] : [],
+          distance: Number((place.dist_meters / 1000).toFixed(2)), // Convert meters to km
         }));
 
       results.push({
