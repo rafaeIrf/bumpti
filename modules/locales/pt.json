@@ -35,7 +35,16 @@
     "skip": "Pular",
     "select": "Selecione",
     "loading": "Carregando...",
-    "of": "de"
+    "of": "de",
+    "placeCategories": {
+      "bar": "Bares",
+      "nightclub": "Baladas",
+      "cafe": "Cafés",
+      "restaurant": "Restaurantes",
+      "gym": "Academias",
+      "university": "Universidades",
+      "park": "Parques"
+    }
   },
   "errors": {
     "generic": "Algo deu errado. Por favor, tente novamente.",

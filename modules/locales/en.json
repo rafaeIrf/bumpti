@@ -34,7 +34,16 @@
     "skip": "Skip",
     "select": "Select",
     "loading": "Loading...",
-    "of": "of"
+    "of": "of",
+    "placeCategories": {
+      "bar": "Bars",
+      "nightclub": "Nightclubs",
+      "cafe": "Cafes",
+      "restaurant": "Restaurants",
+      "gym": "Gyms",
+      "university": "Universities",
+      "park": "Parks"
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

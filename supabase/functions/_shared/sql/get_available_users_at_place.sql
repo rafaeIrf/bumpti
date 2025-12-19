@@ -14,9 +14,10 @@
 -- Returns: Full user data for eligible users at the specified place
 
 DROP FUNCTION IF EXISTS get_available_users_at_place(text, uuid);
+DROP FUNCTION IF EXISTS get_available_users_at_place(uuid, uuid);
 
 create or replace function get_available_users_at_place(
-  p_place_id text,
+  p_place_id uuid,
   viewer_id uuid
 )
 returns table (

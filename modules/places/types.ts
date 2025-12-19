@@ -25,7 +25,6 @@ export type CityPrediction = {
 
 export type NearbyPlacesResponse = { places: Place[] };
 
-// General place categories (mapped to multiple Foursquare IDs in backend)
 export type PlaceCategory = 
   | "bar" 
   | "nightclub" 
