@@ -30,6 +30,7 @@ SELECT
   c.match_id,
   c.created_at AS chat_created_at,
   m.place_id,
+  m.place_name,
 
   -- User A
   m.user_a,

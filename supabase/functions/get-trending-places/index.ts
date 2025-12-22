@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -145,32 +144,62 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch place details using Foursquare
+    // Fetch place details from database
     const placeIds = topPlaces.map((pc: { place_id: string }) => pc.place_id);
-    const placesData = await getPlaceDetails({
-      fsq_ids: placeIds,
-      userLat,
-      userLng,
-    });
+    const { data: placesData, error: placesError } = await serviceSupabase
+      .from("places")
+      .select("id, name, category, lat, lng, street, city")
+      .in("id", placeIds);
+
+    if (placesError) {
+      console.error("Error fetching places:", placesError);
+      return new Response(
+        JSON.stringify({ error: "places_fetch_failed", message: placesError.message }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!placesData || placesData.length === 0) {
+      return new Response(
+        JSON.stringify({ places: [] }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
 
     // Create a map for quick lookup of people_count
     const countMap = new Map(
       topPlaces.map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
     );
 
-    // Combine with active_users count from RPC and filter out places with 0 users
+    // Calculate distance using Haversine formula and combine with active_users count
     const placesWithActiveUsers = placesData
       .map((place) => {
-        const activeCount = countMap.get(place.fsq_id) || 0;
+        const activeCount = countMap.get(place.id) || 0;
+        
+        // Calculate distance using Haversine formula (in meters)
+        const R = 6371000; // Earth's radius in meters
+        const lat1 = userLat * Math.PI / 180;
+        const lat2 = place.lat * Math.PI / 180;
+        const deltaLat = (place.lat - userLat) * Math.PI / 180;
+        const deltaLng = (place.lng - userLng) * Math.PI / 180;
+
+        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                  Math.cos(lat1) * Math.cos(lat2) *
+                  Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        const formattedAddress = [place.street, place.city].filter(Boolean).join(", ");
+
         return {
-          place_id: place.fsq_id,
+          place_id: place.id,
           active_users: activeCount,
           name: place.name,
-          formattedAddress: place.formatted_address || "",
-          distance: place.distance,
-          types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
-          latitude: place.latitude,
-          longitude: place.longitude,
+          formattedAddress: formattedAddress || "",
+          distance: Math.round(distance),
+          types: place.category ? [place.category] : [],
+          latitude: place.lat,
+          longitude: place.lng,
         };
       })
       .filter((place) => place.active_users > 0) // Remove places with 0 active users

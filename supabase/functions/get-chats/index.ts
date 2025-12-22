@@ -1,7 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { decryptMessage, getEncryptionKey } from "../_shared/encryption.ts";
-import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,7 +70,7 @@ Deno.serve(async (req) => {
     const { data: rows, error: viewError } = await reader
       .from("chat_list")
       .select(
-        "chat_id, match_id, chat_created_at, place_id, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message_enc, last_message_iv, last_message_tag, last_message_at, user_a_unread, user_b_unread, first_message_at"
+        "chat_id, match_id, chat_created_at, place_id, place_name, user_a, user_a_name, user_a_photo_url, user_b, user_b_name, user_b_photo_url, last_message_enc, last_message_iv, last_message_tag, last_message_at, user_a_unread, user_b_unread, first_message_at"
       )
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       .order("last_message_at", { ascending: false });
@@ -117,32 +116,6 @@ Deno.serve(async (req) => {
     // Get encryption key once for all messages
     const encryptionKey = await getEncryptionKey();
 
-    // Fetch place names from Foursquare API
-    const placeIds = Array.from(
-      new Set(
-        (rows ?? [])
-          .map((r) => r.place_id)
-          .filter((id): id is string => typeof id === 'string' && id.length > 0)
-      )
-    );
-    
-    const placesMap = new Map<string, string>();
-    if (placeIds.length > 0) {
-      try {
-        const places = await getPlaceDetails({ 
-          fsq_ids: placeIds,
-          userLat: 0,
-          userLng: 0
-        });
-        places.forEach((place) => {
-          placesMap.set(place.fsq_id, place.name);
-        });
-        
-      } catch (error) {
-        console.error("Failed to fetch place names:", error);
-      }
-    }
-
     const chatsPromises =
       rows?.map(async (row: any) => {
         const isUserA = row.user_a === user.id;
@@ -178,7 +151,7 @@ Deno.serve(async (req) => {
           chat_id: row.chat_id,
           match_id: row.match_id,
           place_id: row.place_id ?? null,
-          place_name: row.place_id ? (placesMap.get(row.place_id) ?? null) : null,
+          place_name: row.place_name ?? null,
           other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_photo_url: otherPhotoUrl,

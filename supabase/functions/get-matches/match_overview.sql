@@ -4,6 +4,7 @@ SELECT
   c.id AS chat_id,
   m.matched_at,
   m.place_id,
+  m.place_name,
 
   m.user_a,
   m.user_b,
