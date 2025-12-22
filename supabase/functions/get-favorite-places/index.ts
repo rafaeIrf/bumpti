@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { getPlaceDetails } from "../_shared/foursquare/placeDetails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,30 +57,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data, error } = await supabase
+    const userLat = requestBody.lat ?? 0;
+    const userLng = requestBody.lng ?? 0;
+
+    // Fetch favorite places with details from database using JOIN
+    const { data: favoritePlaces, error } = await supabase
       .from("profile_favorite_places")
-      .select("place_id")
+      .select(`
+        place_id,
+        places:places(
+          id,
+          name,
+          category,
+          lat,
+          lng,
+          street,
+          city
+        )
+      `)
       .eq("user_id", user.id);
 
     if (error) throw error;
 
-    const placeIds = (data ?? []).map((row) => row.place_id);
-
-    if (placeIds.length === 0) {
+    if (!favoritePlaces || favoritePlaces.length === 0) {
       return new Response(JSON.stringify({ places: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userLat = requestBody.lat ?? 0;
-    const userLng = requestBody.lng ?? 0;
-
-    // Fetch place details from Foursquare
-    const places = await getPlaceDetails({
-      fsq_ids: placeIds,
-      userLat,
-      userLng,
-    });
+    // Extract place IDs for RPC call
+    const placeIds = favoritePlaces.map((row: any) => row.place_id).filter(Boolean);
 
     // Get active user counts for these places using RPC
     const { data: placeCounts, error: rpcError } = await supabase
@@ -95,17 +100,39 @@ Deno.serve(async (req) => {
       (placeCounts || []).map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
     );
 
-    // Map places with active users count
-    const placesWithActiveUsers = places.map(place => ({
-      placeId: place.fsq_id,
-      name: place.name,
-      distance: place.distance,
-      formattedAddress: place.formatted_address,
-      types: place.categories?.map(c => c.name.toLowerCase().replace(/\s+/g, '_')) || [],
-      latitude: place.latitude,
-      longitude: place.longitude,
-      active_users: countMap.get(place.fsq_id) || 0,
-    }));
+    // Calculate distance and map places with active users count
+    const placesWithActiveUsers = favoritePlaces
+      .map((row: any) => {
+        const place = row.places;
+        if (!place) return null;
+
+        // Calculate distance using Haversine formula (in meters)
+        const R = 6371000; // Earth's radius in meters
+        const lat1 = userLat * Math.PI / 180;
+        const lat2 = place.lat * Math.PI / 180;
+        const deltaLat = (place.lat - userLat) * Math.PI / 180;
+        const deltaLng = (place.lng - userLng) * Math.PI / 180;
+
+        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                  Math.cos(lat1) * Math.cos(lat2) *
+                  Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        const formattedAddress = [place.street, place.city].filter(Boolean).join(", ");
+
+        return {
+          placeId: place.id,
+          name: place.name,
+          distance: Math.round(distance),
+          formattedAddress: formattedAddress || "",
+          types: place.category ? [place.category] : [],
+          latitude: place.lat,
+          longitude: place.lng,
+          active_users: countMap.get(place.id) || 0,
+        };
+      })
+      .filter((place): place is NonNullable<typeof place> => place !== null);
 
     // Sort by distance (ascending - closest first)
     placesWithActiveUsers.sort((a, b) => (a.distance || 0) - (b.distance || 0));
