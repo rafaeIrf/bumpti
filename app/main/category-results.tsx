@@ -96,7 +96,6 @@ export default function CategoryResultsScreen() {
         active_users: place.active_users,
       })) || [];
   } else if (favoritesMode) {
-    console.log("favoritePlacesData", favoritePlacesData);
     places = favoritePlacesData;
   } else {
     places = placesData || [];
@@ -104,7 +103,6 @@ export default function CategoryResultsScreen() {
 
   const handleConnectionBottomSheet = useCallback(
     (place: Place, venueState: VenueState) => {
-      console.log("venueState", venueState);
       bottomSheet?.expand({
         content: () => (
           <ConnectionBottomSheet
@@ -221,7 +219,6 @@ export default function CategoryResultsScreen() {
   );
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: Place; index: number }) => {
-      console.log(item);
       const placeData = {
         id: item.placeId,
         name: item.name,

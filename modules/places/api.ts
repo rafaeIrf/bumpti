@@ -1,4 +1,5 @@
 import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
 import { CityPrediction, Place, PlaceCategory } from "./types";
 
 export async function searchCities(
@@ -11,7 +12,7 @@ export async function searchCities(
   });
 
   if (error) {
-    console.error("search-cities (edge) error:", error);
+    logger.error("search-cities (edge) error:", error);
     return [];
   }
 
@@ -39,7 +40,7 @@ export async function searchPlacesByText(
   });
 
   if (error) {
-    console.error("places-autocomplete (edge) error:", error);
+    logger.error("places-autocomplete (edge) error:", error);
     return { places: [] };
   }
 
@@ -57,7 +58,7 @@ export async function getNearbyPlaces(
   longitude: number,
   category: string[], // General category name (bars, cafes, etc.)
 ): Promise<Place[]> {
-  console.log('category', category);
+  logger.log('category', category);
   
   const { data, error } = await supabase.functions.invoke<any[]>("places-nearby", {
     body: {
@@ -68,22 +69,39 @@ export async function getNearbyPlaces(
   });
   
   if (error) {
-    console.error("Nearby places (edge) error:", error);
+    logger.error("Nearby places (edge) error:", error);
     return [];
   }
 
   // Map RPC result to Place type
-  // RPC returns: id, name, category, lat, lng, street, city, total_score, active_users, dist_meters
-  return (data || []).map((p: any) => ({
-    placeId: p.id,
-    name: p.name,
-    formattedAddress: [p.street, p.city].filter(Boolean).join(", "),
-    distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
-    latitude: p.lat,
-    longitude: p.lng,
-    types: [p.category], // put category in types
-    active_users: p.active_users
-  }));
+  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, dist_meters
+  return (data || []).map((p: any) => {
+    // Build address parts in proper order
+    const addressParts = [];
+    
+    // Street with house number (e.g., "Rua Augusta, 123")
+    if (p.street && p.house_number) {
+      addressParts.push(`${p.street}, ${p.house_number}`);
+    } else if (p.street) {
+      addressParts.push(p.street);
+    }
+    
+    // City, State, Country
+    if (p.city) addressParts.push(p.city);
+    if (p.state) addressParts.push(p.state);
+    if (p.country) addressParts.push(p.country);
+    
+    return {
+      placeId: p.id,
+      name: p.name,
+      formattedAddress: addressParts.join(", "),
+      distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
+      latitude: p.lat,
+      longitude: p.lng,
+      types: [p.category], // put category in types
+      active_users: p.active_users
+    };
+  });
 }
 
 export async function getTrendingPlaces(
@@ -101,10 +119,10 @@ export async function getTrendingPlaces(
     },
   });
 
-  console.log("getTrendingPlaces data:", data);
+  logger.log("getTrendingPlaces data:", data);
   
   if (error) {
-    console.error("Failed to fetch trending places (edge):", error);
+    logger.error("Failed to fetch trending places (edge):", error);
     return { places: [] };
   }
 
@@ -127,7 +145,7 @@ export async function getFavoritePlaces(
   });
 
   if (error) {
-    console.error("Failed to fetch favorite places (edge):", error);
+    logger.error("Failed to fetch favorite places (edge):", error);
     return { places: [] };
   }
 
@@ -161,7 +179,7 @@ export async function getSuggestedPlacesByCategories(
   });
 
   if (error) {
-    console.error("Failed to fetch suggested places (edge):", error);
+    logger.error("Failed to fetch suggested places (edge):", error);
     return { data: [] };
   }
 
@@ -182,7 +200,7 @@ export async function toggleFavoritePlace({
   });
 
   if (error) {
-    console.error("toggle-favorite-place error:", error);
+    logger.error("toggle-favorite-place error:", error);
     throw error;
   }
 
@@ -225,12 +243,12 @@ export async function detectPlace(
   });
 
   if (error) {
-    console.error("detect-place error:", error);
+    logger.error("detect-place error:", error);
     return null;
   }
 
   if (data?.error) {
-    console.error("detect-place API error:", data.error);
+    logger.error("detect-place API error:", data.error);
     return null;
   }
 
