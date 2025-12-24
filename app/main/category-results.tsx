@@ -24,7 +24,6 @@ import {
 } from "@/modules/places/placesApi";
 import { Place } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
-import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
@@ -97,7 +96,6 @@ export default function CategoryResultsScreen() {
         active_users: place.active_users,
       })) || [];
   } else if (favoritesMode) {
-    logger.log("favoritePlacesData", favoritePlacesData);
     places = favoritePlacesData;
   } else {
     places = placesData || [];
@@ -105,7 +103,6 @@ export default function CategoryResultsScreen() {
 
   const handleConnectionBottomSheet = useCallback(
     (place: Place, venueState: VenueState) => {
-      logger.log("venueState", venueState);
       bottomSheet?.expand({
         content: () => (
           <ConnectionBottomSheet
@@ -222,7 +219,6 @@ export default function CategoryResultsScreen() {
   );
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: Place; index: number }) => {
-      logger.log(item);
       const placeData = {
         id: item.placeId,
         name: item.name,
