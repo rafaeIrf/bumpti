@@ -1,7 +1,13 @@
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -25,6 +31,7 @@ interface CategoryCardProps {
   onClick: () => void;
   color?: string;
   illustration?: React.ComponentType<SvgProps>;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function CategoryCard({
@@ -33,6 +40,7 @@ export function CategoryCard({
   onClick,
   color,
   illustration,
+  style,
 }: CategoryCardProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
@@ -70,7 +78,7 @@ export function CategoryCard({
       onPress={onClick}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[animatedStyle]}
+      style={[animatedStyle, style]}
     >
       <ThemedView
         style={[
@@ -127,58 +135,12 @@ export function CategoryCard({
   );
 }
 
-export const CARD_COLORS = {
-  flameOrange: "#FF6A3D",
-  sunsetCoral: "#FF7E57",
-  hotPeach: "#FF8A65",
-  bloodOrange: "#FF5733",
-  goldenPunch: "#FFB84D",
-  heatBurst: "#FF934F",
-  electricBlue: "#3DA9FF",
-  cyberBlue: "#4CC2FF",
-  azurePop: "#6AC5FF",
-  skyPulse: "#78D6FF",
-  sapphireNeon: "#2F8BFF",
-  iceBlue: "#A2DFFF",
-  neonMint: "#6BFFBA",
-  aquaLeaf: "#76F7C5",
-  digitalGreen: "#48FF9B",
-  iceMint: "#90FFCD",
-  vitalGreen: "#32E68A",
-  limeFlash: "#C1FF72",
-  neonPink: "#FF6DA8",
-  rosePulse: "#FF7BB9",
-  candyMagenta: "#FF4FA7",
-  orchidGlow: "#C87BFF",
-  lavenderPop: "#A38BFF",
-  ultraViolet: "#8E5CFF",
-  apricotPastel: "#FFB08C",
-  softCoral: "#FF9970",
-  lightOrchid: "#D6A8FF",
-  aquaPastel: "#8CFFE1",
-  peachSorbet: "#FFC7A9",
-  lilacMist: "#C5B2FF",
-  neoTurquoise: "#00F7FF",
-  plasmaPurple: "#AA66FF",
-  cyberLemon: "#EFFF57",
-  vaporPink: "#FF4FA3",
-  neonJade: "#4AFFC7",
-  hyperBlue: "#009DFF",
-  midnightPurple: "#433DFF",
-  deepMagenta: "#B54CFF",
-  navyGlow: "#2237FF",
-  darkCoral: "#CC5E59",
-  twilightRose: "#FF85A6",
-  moonlightTeal: "#00C9A7",
-  red: "#f97286ff",
-};
-
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
+    borderRadius: 24,
     overflow: "hidden",
     width: "100%",
-    minHeight: 250,
+    minHeight: 220,
     shadowColor: "#000000",
     shadowOpacity: 0.3,
     shadowRadius: 20,
@@ -186,9 +148,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   cardBackground: {
-    borderRadius: 10,
+    borderRadius: 24,
     overflow: "hidden",
-    minHeight: 250,
+    minHeight: 220,
     position: "relative",
   },
   hoverOverlay: {

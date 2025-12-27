@@ -15,6 +15,7 @@
     "resend": "Reenviar",
     "delete": "Deletar",
     "cancel": "Cancelar",
+    "all": "Todos",
     "close": "Fechar",
     "back": "Voltar",
     "continue": "Continuar",
@@ -42,8 +43,15 @@
       "cafe": "Cafés",
       "restaurant": "Restaurantes",
       "gym": "Academias",
+      "fitness_centre": "Centros Esportivos",
       "university": "Universidades",
-      "park": "Parques"
+      "college": "Faculdades",
+      "park": "Parques",
+      "museum": "Museus",
+      "stadium": "Estádios",
+      "library": "Bibliotecas",
+      "sports_centre": "Centros Esportivos",
+      "club": "Clubes"
     }
   },
   "errors": {
@@ -332,8 +340,10 @@
       "empty": "Você não tem usuários bloqueados."
     },
     "home": {
-      "heroTitle": "Onde você quer se conectar hoje?",
-      "heroSubtitle": "Escolha o tipo de lugar e descubra quem está por lá.",
+      "heroTitle": "Que bom ver você por aqui.",
+      "heroSubtitle": "",
+      "intermediateTitle": "O rolê fica melhor quando a vibe bate.",
+      "intermediateSubtitle": "Encontre lugares e pessoas na mesma sintonia.",
       "placeDetected": {
         "title": "Local detectado",
         "message": "Você está em {{placeName}}?"
@@ -351,7 +361,11 @@
         },
         "favorites": {
           "title": "Locais favoritos",
-          "description": "Seus lugares preferidos para se conectar."
+          "description": "Seus lugares para conectar."
+        },
+        "communityFavorites": {
+          "title": "Favoritos da comunidade",
+          "description": "Veja o que os outros amam."
         },
         "nightlife": {
           "title": "Bares & baladas",
@@ -376,6 +390,30 @@
         "restaurants": {
           "title": "Restaurantes",
           "description": "Conexões que começam à mesa."
+        },
+        "museum": {
+          "title": "Museus e Cultura",
+          "description": "Arte, história e inspiração."
+        },
+        "stadium": {
+          "title": "Estádios e Eventos",
+          "description": "Grandes jogos, grandes públicos."
+        },
+        "club": {
+          "title": "Clubes Sociais",
+          "description": "Clubes esportivos e recreativos."
+        },
+        "library": {
+          "title": "Bibliotecas e Estudos",
+          "description": "Lugares calmos para focar e trabalhar."
+        },
+        "communityFavorites": {
+          "title": "Favoritos da Comunidade",
+          "description": "Lugares mais favoritados por perto."
+        },
+        "nearby": {
+          "title": "O que está por perto",
+          "description": "Veja o movimento ao redor"
         }
       }
     },

@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
+  StarIcon,
   UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
@@ -21,7 +22,7 @@ import {
   Weight,
 } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { CARD_COLORS, CategoryCard } from "@/components/category-card";
+import { CategoryCard } from "@/components/category-card";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -85,9 +86,9 @@ export default function HomeScreen() {
       icon: FlameIcon,
       title: t("screens.home.categories.highlighted.title"),
       description: t("screens.home.categories.highlighted.description"),
-      iconColor: "#FF6B35",
-      iconBgColor: "rgba(41, 151, 255, 0.12)",
-      color: CARD_COLORS.bloodOrange,
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelCoral,
       illustration: Passion,
     },
     {
@@ -96,19 +97,29 @@ export default function HomeScreen() {
       title: t("screens.home.categories.favorites.title"),
       description: t("screens.home.categories.favorites.description"),
       iconColor: "#FFFFFF",
-      iconBgColor: "rgba(41, 151, 255, 0.12)",
-      color: CARD_COLORS.red,
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelTeal,
       illustration: Heart,
+    },
+    {
+      id: "community_favorites",
+      icon: StarIcon,
+      title: t("screens.home.categories.communityFavorites.title"),
+      description: t("screens.home.categories.communityFavorites.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelPink,
+      illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
     },
     {
       id: "bars",
       icon: BeerIcon,
       title: t("screens.home.categories.nightlife.title"),
       description: t("screens.home.categories.nightlife.description"),
-      iconColor: "#FF8A33",
-      iconBgColor: "rgba(255, 138, 51, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["bar", "nightclub"],
-      color: CARD_COLORS.heatBurst,
+      color: colors.pastelPurple,
       illustration: Toast,
     },
     {
@@ -116,10 +127,10 @@ export default function HomeScreen() {
       icon: CoffeeIcon,
       title: t("screens.home.categories.cafes.title"),
       description: t("screens.home.categories.cafes.description"),
-      iconColor: "#9B6C4A",
-      iconBgColor: "rgba(155, 108, 74, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["cafe"],
-      color: CARD_COLORS.apricotPastel,
+      color: colors.pastelCocoa,
       illustration: Cocoa,
     },
     {
@@ -127,10 +138,10 @@ export default function HomeScreen() {
       icon: MapPinIcon,
       title: t("screens.home.categories.university.title"),
       description: t("screens.home.categories.university.description"),
-      iconColor: "#3DAAFF",
-      iconBgColor: "rgba(61, 170, 255, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["university", "college"],
-      color: CARD_COLORS.azurePop,
+      color: colors.pastelBlue,
       illustration: Graduation,
     },
     {
@@ -138,10 +149,10 @@ export default function HomeScreen() {
       icon: DumbbellIcon,
       title: t("screens.home.categories.fitness.title"),
       description: t("screens.home.categories.fitness.description"),
-      iconColor: "#1DB954",
-      iconBgColor: "rgba(29, 185, 84, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["gym", "fitness_centre"],
-      color: CARD_COLORS.aquaPastel,
+      color: colors.pastelGreen,
       illustration: Weight,
     },
     {
@@ -149,10 +160,10 @@ export default function HomeScreen() {
       icon: MapPinIcon,
       title: t("screens.home.categories.parks.title"),
       description: t("screens.home.categories.parks.description"),
-      iconColor: "#34C759",
-      iconBgColor: "rgba(52, 199, 89, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["park"],
-      color: CARD_COLORS.neonMint,
+      color: colors.pastelGreen,
       illustration: Park,
     },
     {
@@ -160,11 +171,55 @@ export default function HomeScreen() {
       icon: UtensilsCrossedIcon,
       title: t("screens.home.categories.restaurants.title"),
       description: t("screens.home.categories.restaurants.description"),
-      iconColor: "#FF6B35",
-      iconBgColor: "rgba(255, 107, 53, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["restaurant"],
-      color: CARD_COLORS.twilightRose,
+      color: colors.pastelCocoa,
       illustration: Location,
+    },
+    {
+      id: "museum",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.museum.title"),
+      description: t("screens.home.categories.museum.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["museum"],
+      color: colors.pastelPurple,
+      illustration: Passion,
+    },
+    {
+      id: "library",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.library.title"),
+      description: t("screens.home.categories.library.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["library"],
+      color: colors.pastelBlue,
+      illustration: Graduation,
+    },
+    {
+      id: "stadium",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.stadium.title"),
+      description: t("screens.home.categories.stadium.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["stadium"],
+      color: colors.pastelGreen,
+      illustration: Weight,
+    },
+    {
+      id: "club",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.club.title"),
+      description: t("screens.home.categories.club.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["club", "sports_centre"],
+      color: colors.pastelPurple,
+      illustration: Passion,
     },
   ];
 
@@ -176,8 +231,21 @@ export default function HomeScreen() {
         categoryName: category.title,
         ...(category.id === "favorites"
           ? { favorites: "true" }
+          : category.id === "nearby"
+          ? {
+              nearby: "true",
+              categoryName: category.title,
+            }
+          : category.id === "community_favorites"
+          ? {
+              communityFavorites: "true",
+              categoryName: category.title,
+            }
           : category.id === "highlighted"
-          ? { trending: "true" }
+          ? {
+              trending: "true",
+              categoryName: category.title,
+            }
           : {
               category: category.category,
             }),
@@ -233,31 +301,75 @@ export default function HomeScreen() {
         />
 
         {/* Categories List */}
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          scrollEnabled={false}
-          renderItem={({ item, index }) => {
-            const isSelected = selectedCategory === item.id;
-            return (
-              <Animated.View
-                entering={FadeInDown.delay(300 + index * 80).springify()}
-                style={styles.categoryItem}
-              >
-                <CategoryCard
-                  category={item}
-                  isSelected={isSelected}
-                  onClick={() => handleCategoryClick(item)}
-                  color={item.color}
-                  illustration={item.illustration}
-                />
-              </Animated.View>
-            );
-          }}
-          columnWrapperStyle={styles.categoryColumnWrapper}
-          contentContainerStyle={styles.categoriesList}
-        />
+        <ThemedView style={styles.contentContainer}>
+          {/* Featured Card */}
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <CategoryCard
+              category={{
+                id: "nearby",
+                icon: MapPinIcon,
+                title: t("screens.home.categories.nearby.title"),
+                description: "",
+                iconColor: "#FFFFFF",
+                iconBgColor: "rgba(255, 255, 255, 0.2)",
+                color: colors.pastelTeal,
+                illustration: Location,
+              }}
+              isSelected={selectedCategory === "nearby"}
+              onClick={() =>
+                handleCategoryClick({
+                  id: "nearby",
+                  icon: MapPinIcon,
+                  title: t("screens.home.categories.nearby.title"),
+                  description: t("screens.home.categories.nearby.description"),
+                  iconColor: "#FFFFFF",
+                  iconBgColor: "rgba(255, 255, 255, 0.2)",
+                  color: colors.pastelTeal,
+                  illustration: Location,
+                })
+              }
+              color={colors.pastelTeal}
+              illustration={Location}
+              style={{ width: "100%" }}
+            />
+          </Animated.View>
+
+          {/* Intermediate Section */}
+          <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <ScreenSectionHeading
+              titleStyle={{ marginTop: 24 }}
+              containerStyle={{ marginBottom: 16 }}
+              title={t("screens.home.intermediateTitle")}
+              subtitle={t("screens.home.intermediateSubtitle")}
+            />
+          </Animated.View>
+
+          <FlatList
+            data={categories}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            scrollEnabled={false}
+            renderItem={({ item, index }) => {
+              const isSelected = selectedCategory === item.id;
+              return (
+                <Animated.View
+                  entering={FadeInDown.delay(300 + index * 80).springify()}
+                  style={styles.categoryItem}
+                >
+                  <CategoryCard
+                    category={item}
+                    isSelected={isSelected}
+                    onClick={() => handleCategoryClick(item)}
+                    color={item.color}
+                    illustration={item.illustration}
+                  />
+                </Animated.View>
+              );
+            }}
+            columnWrapperStyle={styles.categoryColumnWrapper}
+            contentContainerStyle={styles.categoriesList}
+          />
+        </ThemedView>
 
         {/* Info Card */}
         <Animated.View entering={FadeInDown.delay(700).springify()}>
@@ -316,8 +428,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
+  contentContainer: {
+    paddingTop: 16,
+  },
   categoriesList: {
-    paddingTop: 24,
     paddingBottom: 8,
   },
   categoryColumnWrapper: {

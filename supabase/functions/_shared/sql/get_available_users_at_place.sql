@@ -133,6 +133,14 @@ as $$
         AND ub.blocked_id = viewer_id
     )
 
+    -- Filter by Gender Preference
+    AND EXISTS (
+      SELECT 1 FROM profile_connect_with pcw
+      INNER JOIN profiles viewer_profile ON viewer_profile.id = viewer_id
+      WHERE pcw.user_id = a.user_id
+        AND pcw.gender_id = viewer_profile.gender_id
+    )
+
   ORDER BY 
     -- Prioritize users who liked me (like hasn't expired)
     CASE 

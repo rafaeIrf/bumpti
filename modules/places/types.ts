@@ -13,6 +13,7 @@ export type Place = {
   longitude: number;
   types?: string[]; // Para autocomplete - raw Foursquare category names
   active_users?: number; // Optional: number of active users currently at the place
+  favorites_count?: number; // Optional: number of favorites for the place
 };
 
 export type CityPrediction = {
@@ -34,4 +35,9 @@ export type PlaceCategory =
   | "fitness_centre" 
   | "university" 
   | "college" 
-  | "park";
+  | "park"
+  | "museum"
+  | "stadium"
+  | "library"
+  | "sports_centre"
+  | "club";

@@ -3,11 +3,12 @@ import {
   type DetectPlaceResult,
   getFavoritePlaces as getFavoritePlacesApi,
   getNearbyPlaces as getNearbyPlacesApi,
+  getPlacesByFavorites as getPlacesByFavoritesApi,
   getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
   getTrendingPlaces as getTrendingPlacesApi,
   type PlacesByCategory,
   searchPlacesByText as searchPlacesByTextApi,
-  toggleFavoritePlace as toggleFavoritePlaceApi,
+  toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Place, PlaceCategory } from "./types";
@@ -130,6 +131,45 @@ export const placesApi = createApi({
       keepUnusedDataFor: CACHE_TIME.NEARBY_PLACES,
     }),
 
+    // Get places sorted by community favorites count
+    getPlacesByFavorites: builder.query<
+      Place[],
+      {
+        latitude: number;
+        longitude: number;
+        category?: string[]; // Optional category filter
+      }
+    >({
+      queryFn: async ({
+        latitude,
+        longitude,
+        category,
+      }) => {
+        try {
+          const places = await getPlacesByFavoritesApi(
+            latitude,
+            longitude,
+            category,
+          );
+          return { data: places as Place[] };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, arg) => {
+        // Round coordinates to grid (~200m) for cache key
+        const lat = roundToGrid(arg.latitude);
+        const lng = roundToGrid(arg.longitude);
+        return [
+          {
+            type: "NearbyPlaces",
+            id: `favorites_${lat}_${lng}_${arg.category || "all"}`,
+          },
+        ];
+      },
+      keepUnusedDataFor: CACHE_TIME.TRENDING_PLACES, // Short cache for fresh favorites data
+    }),
+
     // Search places by text input
     searchPlacesByText: builder.query<
       { places: (Place & { active_users?: number })[] },
@@ -244,6 +284,7 @@ export const placesApi = createApi({
 export const {
   useDetectPlaceQuery,
   useGetNearbyPlacesQuery,
+  useGetPlacesByFavoritesQuery,
   useSearchPlacesByTextQuery,
   useGetTrendingPlacesQuery,
   useGetFavoritePlacesQuery,

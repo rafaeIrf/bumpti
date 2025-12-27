@@ -21,6 +21,7 @@ export function useFavoritePlacesList(enabled: boolean) {
         placeId: place.placeId || place.id,
         name: place.name,
         type: place.types?.[0] || '',
+        types: place.types || [],
         formattedAddress: place.formattedAddress || place.address || '',
         distance: place.distance || 0,
         latitude: place.latitude,

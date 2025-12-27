@@ -14,6 +14,7 @@
     "retry": "Try again",
     "resend": "Resend",
     "cancel": "Cancel",
+    "all": "All",
     "close": "Close",
     "back": "Back",
     "continue": "Continue",
@@ -41,8 +42,15 @@
       "cafe": "Cafes",
       "restaurant": "Restaurants",
       "gym": "Gyms",
+      "fitness_centre": "Fitness Centers",
       "university": "Universities",
-      "park": "Parks"
+      "college": "Colleges",
+      "park": "Parks",
+      "museum": "Museums",
+      "stadium": "Stadiums",
+      "library": "Libraries",
+      "sports_centre": "Sports Centers",
+      "club": "Clubs"
     }
   },
   "errors": {
@@ -331,12 +339,14 @@
       "empty": "You have no blocked users."
     },
     "home": {
+      "heroTitle": "Good to see you here.",
+      "heroSubtitle": "",
+      "intermediateTitle": "It's better when the vibe matches.",
+      "intermediateSubtitle": "Find places and people on the same wavelength.",
       "placeDetected": {
         "title": "Place detected",
         "message": "Are you at {{placeName}}?"
       },
-      "heroTitle": "Where do you want to connect today?",
-      "heroSubtitle": "Pick the vibe and discover who's already there.",
       "toolbar": {
         "filters": "Filters",
         "search": "Search"
@@ -351,6 +361,10 @@
         "favorites": {
           "title": "Favorite places",
           "description": "Your go-to spots to connect."
+        },
+        "communityFavorites": {
+          "title": "Community Favorites",
+          "description": "See what others love."
         },
         "nightlife": {
           "title": "Bars & nightlife",
@@ -375,6 +389,30 @@
         "restaurants": {
           "title": "Restaurants",
           "description": "Connections that start at the table."
+        },
+        "museum": {
+          "title": "Museums & Culture",
+          "description": "Art, history, and inspiration."
+        },
+        "stadium": {
+          "title": "Stadiums & Events",
+          "description": "Big games, big crowds."
+        },
+        "club": {
+          "title": "Clubs & Social",
+          "description": "Exclusive spots and social clubs."
+        },
+        "library": {
+          "title": "Libraries & Study",
+          "description": "Quiet spots to focus and work."
+        },
+        "communityFavorites": {
+          "title": "Community Favorites",
+          "description": "Most favorited places nearby."
+        },
+        "nearby": {
+          "title": "What's nearby",
+          "description": "See movement around you"
         }
       }
     },
