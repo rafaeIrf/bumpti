@@ -217,7 +217,7 @@ export default function HomeScreen() {
       description: t("screens.home.categories.stadium.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["stadium"],
+      category: ["stadium", "events_venue"],
       color: colors.pastelGreen,
       illustration: Weight,
     },

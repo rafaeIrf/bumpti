@@ -40,4 +40,6 @@ export type PlaceCategory =
   | "stadium"
   | "library"
   | "sports_centre"
+  | "community_centre"
+  | "events_venue"
   | "club";

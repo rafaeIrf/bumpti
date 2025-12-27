@@ -45,6 +45,8 @@ const allCategories: PlaceCategory[] = [
   "stadium",
   "library",
   "sports_centre",
+  "community_centre",
+  "events_venue",
   "club",
 ];
 
@@ -81,24 +83,7 @@ export default function CategoryResultsScreen() {
   const communityFavoritesMode = params.communityFavorites === "true";
 
   // When nearby or communityFavorites mode is active, we fetch ALL categories
-  const targetCategory =
-    nearbyMode || communityFavoritesMode
-      ? [
-          "bar",
-          "nightclub",
-          "cafe",
-          "restaurant",
-          "gym",
-          "fitness_centre",
-          "university",
-          "college",
-          "park",
-          "museum",
-          "stadium",
-          "library",
-          "club",
-        ]
-      : category;
+  const targetCategory = nearbyMode ? allCategories : category;
 
   const shouldFetchNearby =
     !favoritesMode &&
@@ -128,7 +113,7 @@ export default function CategoryResultsScreen() {
       {
         latitude: userLocation?.latitude ?? 0,
         longitude: userLocation?.longitude ?? 0,
-        category: activeFilter !== "all" ? [activeFilter] : undefined,
+        category: targetCategory,
       },
       {
         skip: !shouldFetchCommunityFavorites,
