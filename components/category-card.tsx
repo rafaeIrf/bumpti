@@ -175,21 +175,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
     marginTop: spacing.md,
+    flexShrink: 1,
   },
   iconAndText: {
     flex: 1,
     minWidth: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
+    flexShrink: 1,
   },
   title: {
     fontSize: 18,
     color: "#FFFFFF",
+    flex: 1,
+    flexWrap: "wrap",
   },
   arrowContainer: {
     width: 36,

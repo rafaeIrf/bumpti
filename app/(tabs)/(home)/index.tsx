@@ -431,12 +431,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   featuredList: {
-    gap: 12,
+    gap: 8,
     paddingRight: 16, // Add padding to the end of the scroll
   },
   featuredItem: {
-    width: "48%",
-    maxWidth: "48%",
+    width: "48.5%",
+    maxWidth: "48.5%",
   },
   nearbyCard: {
     width: "100%",
@@ -449,8 +449,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryItem: {
-    width: "48%",
-    maxWidth: "48%",
+    width: "48.5%",
+    maxWidth: "48.5%",
   },
   infoCard: {
     borderWidth: 1,
