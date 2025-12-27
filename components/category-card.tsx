@@ -70,7 +70,7 @@ export function CategoryCard({
     if (!illustration) return null;
 
     const Illustration = illustration as React.ComponentType<SvgProps>;
-    return <Illustration width={100} height={100} />;
+    return <Illustration width={80} height={80} />;
   };
 
   return (

@@ -63,7 +63,7 @@ BEGIN
           -- Filter Active Matches
           AND (requesting_user_id IS NULL OR NOT EXISTS (
             SELECT 1 FROM user_matches um
-            WHERE um.status = 'matched'
+            WHERE um.status = 'active'
               AND (
                   (um.user_a = requesting_user_id AND um.user_b = up.user_id)
                   OR 

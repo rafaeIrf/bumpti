@@ -8,7 +8,6 @@ import {
 } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
-import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -443,15 +442,6 @@ export default function CategoryResultsScreen() {
                   onSelect={setActiveFilter}
                 />
               )}
-              {!favoritesMode &&
-                !trendingMode &&
-                !nearbyMode &&
-                !communityFavoritesMode && (
-                  <ScreenSectionHeading
-                    titleStyle={{ marginTop: 24 }}
-                    title="Populares na sua região"
-                  />
-                )}
               <FlatList
                 data={filteredPlaces}
                 keyExtractor={(item) => item.placeId}
