@@ -34,7 +34,7 @@ import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -79,6 +79,17 @@ export default function HomeScreen() {
       );
     }
   }, [detectedPlaceResult]);
+
+  const nearbyCategory: Category = {
+    id: "nearby",
+    icon: MapPinIcon,
+    title: t("screens.home.categories.nearby.title"),
+    description: t("screens.home.categories.nearby.description"),
+    iconColor: "#FFFFFF",
+    iconBgColor: "rgba(255, 255, 255, 0.2)",
+    color: colors.pastelTeal,
+    illustration: Location,
+  };
 
   const categories: Category[] = [
     {
@@ -223,6 +234,9 @@ export default function HomeScreen() {
     },
   ];
 
+  const featuredCategoriesItems = categories.slice(0, 3);
+  const browseCategories = categories.slice(3);
+
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);
     router.push({
@@ -300,75 +314,66 @@ export default function HomeScreen() {
           subtitle={t("screens.home.heroSubtitle")}
         />
 
-        {/* Categories List */}
         <ThemedView style={styles.contentContainer}>
-          {/* Featured Card */}
+          {/* Featured Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <CategoryCard
-              category={{
-                id: "nearby",
-                icon: MapPinIcon,
-                title: t("screens.home.categories.nearby.title"),
-                description: "",
-                iconColor: "#FFFFFF",
-                iconBgColor: "rgba(255, 255, 255, 0.2)",
-                color: colors.pastelTeal,
-                illustration: Location,
-              }}
-              isSelected={selectedCategory === "nearby"}
-              onClick={() =>
-                handleCategoryClick({
-                  id: "nearby",
-                  icon: MapPinIcon,
-                  title: t("screens.home.categories.nearby.title"),
-                  description: t("screens.home.categories.nearby.description"),
-                  iconColor: "#FFFFFF",
-                  iconBgColor: "rgba(255, 255, 255, 0.2)",
-                  color: colors.pastelTeal,
-                  illustration: Location,
-                })
-              }
-              color={colors.pastelTeal}
-              illustration={Location}
-              style={{ width: "100%" }}
-            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.featuredList}
+            >
+              {featuredCategoriesItems.map((item) => (
+                <CategoryCard
+                  key={item.id}
+                  category={item}
+                  isSelected={selectedCategory === item.id}
+                  onClick={() => handleCategoryClick(item)}
+                  color={item.color}
+                  illustration={item.illustration}
+                  style={styles.featuredItem}
+                />
+              ))}
+            </ScrollView>
           </Animated.View>
 
-          {/* Intermediate Section */}
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
+          {/* Nearby Section - Between Featured and Explore */}
+          {/* Intermediate Section - Nearby & Explore */}
+          <Animated.View entering={FadeInDown.delay(250).springify()}>
             <ScreenSectionHeading
-              titleStyle={{ marginTop: 24 }}
-              containerStyle={{ marginBottom: 16 }}
+              titleStyle={{ marginTop: 16 }}
               title={t("screens.home.intermediateTitle")}
               subtitle={t("screens.home.intermediateSubtitle")}
             />
+            <CategoryCard
+              category={nearbyCategory}
+              isSelected={selectedCategory === nearbyCategory.id}
+              onClick={() => handleCategoryClick(nearbyCategory)}
+              color={nearbyCategory.color}
+              illustration={nearbyCategory.illustration}
+              style={styles.nearbyCard}
+            />
           </Animated.View>
 
-          <FlatList
-            data={categories}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            scrollEnabled={false}
-            renderItem={({ item, index }) => {
-              const isSelected = selectedCategory === item.id;
-              return (
+          {/* Explore Section */}
+          <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <View style={styles.gridContainer}>
+              {browseCategories.map((item, index) => (
                 <Animated.View
+                  key={item.id}
                   entering={FadeInDown.delay(300 + index * 80).springify()}
                   style={styles.categoryItem}
                 >
                   <CategoryCard
                     category={item}
-                    isSelected={isSelected}
+                    isSelected={selectedCategory === item.id}
                     onClick={() => handleCategoryClick(item)}
                     color={item.color}
                     illustration={item.illustration}
                   />
                 </Animated.View>
-              );
-            }}
-            columnWrapperStyle={styles.categoryColumnWrapper}
-            contentContainerStyle={styles.categoriesList}
-          />
+              ))}
+            </View>
+          </Animated.View>
         </ThemedView>
 
         {/* Info Card */}
@@ -419,25 +424,29 @@ const styles = StyleSheet.create({
   section: {
     paddingTop: 24,
   },
-  emptyCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 24,
-  },
-  emptyText: {
-    textAlign: "center",
-    lineHeight: 22,
-  },
   contentContainer: {
     paddingTop: 16,
   },
-  categoriesList: {
-    paddingBottom: 8,
+  sectionHeading: {
+    marginBottom: 12,
   },
-  categoryColumnWrapper: {
-    justifyContent: "flex-start",
-    marginBottom: 4,
-    gap: 4,
+  featuredList: {
+    gap: 12,
+    paddingRight: 16, // Add padding to the end of the scroll
+  },
+  featuredItem: {
+    width: "48%",
+    maxWidth: "48%",
+  },
+  nearbyCard: {
+    width: "100%",
+    marginTop: 16, // Add space from the section above
+    marginBottom: 16,
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
   categoryItem: {
     width: "48%",
