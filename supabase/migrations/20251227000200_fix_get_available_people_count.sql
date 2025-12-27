@@ -47,7 +47,7 @@ BEGIN
     -- Filter Active Matches
     AND NOT EXISTS (
       SELECT 1 FROM user_matches um
-      WHERE um.status = 'matched'
+      WHERE um.status = 'active'
         AND (
             (um.user_a = viewer_id AND um.user_b = up.user_id)
             OR 
