@@ -59,6 +59,22 @@ export const Colors = {
     // Legacy/compat
     tint: "#1D9BF0",
     white: "#E7E9EA",
+
+    
+    // Pastel Palette (Categories)
+    pastelTeal: "#4DB6AC",
+    pastelCoral: "#FF8A65",
+    pastelPink: "#F06292",
+    pastelPurple: "#9575CD",
+    pastelCocoa: "#A1887F", 
+    pastelBlue: "#64B5F6",
+    pastelGreen: "#81C784",
+    pastelLime: "#AED581",
+    pastelOrange: "#FFB74D",
+    pastelLavender: "#BA68C8",
+    pastelCyan: "#4DD0E1",
+    pastelGold: "#FDD835",
+    pastelMagenta: "#F48FB1",
   },
   dark: {
     // Main palette
@@ -112,6 +128,21 @@ export const Colors = {
     // Legacy/compat
     tint: "#1D9BF0",
     white: "#E7E9EA",
+
+    // Pastel Palette (Categories)
+    pastelTeal: "#4DB6AC",
+    pastelCoral: "#FF8A65",
+    pastelPink: "#F06292",
+    pastelPurple: "#9575CD",
+    pastelCocoa: "#A1887F", 
+    pastelBlue: "#64B5F6",
+    pastelGreen: "#81C784",
+    pastelLime: "#AED581",
+    pastelOrange: "#FFB74D",
+    pastelLavender: "#BA68C8",
+    pastelCyan: "#4DD0E1",
+    pastelGold: "#FDD835",
+    pastelMagenta: "#F48FB1",
   },
 };
 

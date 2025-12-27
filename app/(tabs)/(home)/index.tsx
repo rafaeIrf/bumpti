@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
+  StarIcon,
   UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
@@ -21,7 +22,7 @@ import {
   Weight,
 } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { CARD_COLORS, CategoryCard } from "@/components/category-card";
+import { CategoryCard } from "@/components/category-card";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -33,7 +34,7 @@ import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -79,15 +80,26 @@ export default function HomeScreen() {
     }
   }, [detectedPlaceResult]);
 
+  const nearbyCategory: Category = {
+    id: "nearby",
+    icon: MapPinIcon,
+    title: t("screens.home.categories.nearby.title"),
+    description: t("screens.home.categories.nearby.description"),
+    iconColor: "#FFFFFF",
+    iconBgColor: "rgba(255, 255, 255, 0.2)",
+    color: colors.pastelTeal,
+    illustration: Location,
+  };
+
   const categories: Category[] = [
     {
       id: "highlighted",
       icon: FlameIcon,
       title: t("screens.home.categories.highlighted.title"),
       description: t("screens.home.categories.highlighted.description"),
-      iconColor: "#FF6B35",
-      iconBgColor: "rgba(41, 151, 255, 0.12)",
-      color: CARD_COLORS.bloodOrange,
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelCoral,
       illustration: Passion,
     },
     {
@@ -96,19 +108,29 @@ export default function HomeScreen() {
       title: t("screens.home.categories.favorites.title"),
       description: t("screens.home.categories.favorites.description"),
       iconColor: "#FFFFFF",
-      iconBgColor: "rgba(41, 151, 255, 0.12)",
-      color: CARD_COLORS.red,
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelTeal,
       illustration: Heart,
+    },
+    {
+      id: "community_favorites",
+      icon: StarIcon,
+      title: t("screens.home.categories.communityFavorites.title"),
+      description: t("screens.home.categories.communityFavorites.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelPink,
+      illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
     },
     {
       id: "bars",
       icon: BeerIcon,
       title: t("screens.home.categories.nightlife.title"),
       description: t("screens.home.categories.nightlife.description"),
-      iconColor: "#FF8A33",
-      iconBgColor: "rgba(255, 138, 51, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["bar", "nightclub"],
-      color: CARD_COLORS.heatBurst,
+      color: colors.pastelPurple,
       illustration: Toast,
     },
     {
@@ -116,10 +138,10 @@ export default function HomeScreen() {
       icon: CoffeeIcon,
       title: t("screens.home.categories.cafes.title"),
       description: t("screens.home.categories.cafes.description"),
-      iconColor: "#9B6C4A",
-      iconBgColor: "rgba(155, 108, 74, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["cafe"],
-      color: CARD_COLORS.apricotPastel,
+      color: colors.pastelCocoa,
       illustration: Cocoa,
     },
     {
@@ -127,10 +149,10 @@ export default function HomeScreen() {
       icon: MapPinIcon,
       title: t("screens.home.categories.university.title"),
       description: t("screens.home.categories.university.description"),
-      iconColor: "#3DAAFF",
-      iconBgColor: "rgba(61, 170, 255, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["university", "college"],
-      color: CARD_COLORS.azurePop,
+      color: colors.pastelBlue,
       illustration: Graduation,
     },
     {
@@ -138,10 +160,10 @@ export default function HomeScreen() {
       icon: DumbbellIcon,
       title: t("screens.home.categories.fitness.title"),
       description: t("screens.home.categories.fitness.description"),
-      iconColor: "#1DB954",
-      iconBgColor: "rgba(29, 185, 84, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["gym", "fitness_centre"],
-      color: CARD_COLORS.aquaPastel,
+      color: colors.pastelGreen,
       illustration: Weight,
     },
     {
@@ -149,10 +171,10 @@ export default function HomeScreen() {
       icon: MapPinIcon,
       title: t("screens.home.categories.parks.title"),
       description: t("screens.home.categories.parks.description"),
-      iconColor: "#34C759",
-      iconBgColor: "rgba(52, 199, 89, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["park"],
-      color: CARD_COLORS.neonMint,
+      color: colors.pastelGreen,
       illustration: Park,
     },
     {
@@ -160,13 +182,60 @@ export default function HomeScreen() {
       icon: UtensilsCrossedIcon,
       title: t("screens.home.categories.restaurants.title"),
       description: t("screens.home.categories.restaurants.description"),
-      iconColor: "#FF6B35",
-      iconBgColor: "rgba(255, 107, 53, 0.12)",
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["restaurant"],
-      color: CARD_COLORS.twilightRose,
+      color: colors.pastelCocoa,
       illustration: Location,
     },
+    {
+      id: "museum",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.museum.title"),
+      description: t("screens.home.categories.museum.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["museum"],
+      color: colors.pastelPurple,
+      illustration: Passion,
+    },
+    {
+      id: "library",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.library.title"),
+      description: t("screens.home.categories.library.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["library"],
+      color: colors.pastelBlue,
+      illustration: Graduation,
+    },
+    {
+      id: "stadium",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.stadium.title"),
+      description: t("screens.home.categories.stadium.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["stadium"],
+      color: colors.pastelGreen,
+      illustration: Weight,
+    },
+    {
+      id: "club",
+      icon: MapPinIcon,
+      title: t("screens.home.categories.club.title"),
+      description: t("screens.home.categories.club.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      category: ["club", "sports_centre"],
+      color: colors.pastelPurple,
+      illustration: Passion,
+    },
   ];
+
+  const featuredCategoriesItems = categories.slice(0, 3);
+  const browseCategories = categories.slice(3);
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);
@@ -176,8 +245,21 @@ export default function HomeScreen() {
         categoryName: category.title,
         ...(category.id === "favorites"
           ? { favorites: "true" }
+          : category.id === "nearby"
+          ? {
+              nearby: "true",
+              categoryName: category.title,
+            }
+          : category.id === "community_favorites"
+          ? {
+              communityFavorites: "true",
+              categoryName: category.title,
+            }
           : category.id === "highlighted"
-          ? { trending: "true" }
+          ? {
+              trending: "true",
+              categoryName: category.title,
+            }
           : {
               category: category.category,
             }),
@@ -232,32 +314,67 @@ export default function HomeScreen() {
           subtitle={t("screens.home.heroSubtitle")}
         />
 
-        {/* Categories List */}
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          scrollEnabled={false}
-          renderItem={({ item, index }) => {
-            const isSelected = selectedCategory === item.id;
-            return (
-              <Animated.View
-                entering={FadeInDown.delay(300 + index * 80).springify()}
-                style={styles.categoryItem}
-              >
+        <ThemedView style={styles.contentContainer}>
+          {/* Featured Section */}
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.featuredList}
+            >
+              {featuredCategoriesItems.map((item) => (
                 <CategoryCard
+                  key={item.id}
                   category={item}
-                  isSelected={isSelected}
+                  isSelected={selectedCategory === item.id}
                   onClick={() => handleCategoryClick(item)}
                   color={item.color}
                   illustration={item.illustration}
+                  style={styles.featuredItem}
                 />
-              </Animated.View>
-            );
-          }}
-          columnWrapperStyle={styles.categoryColumnWrapper}
-          contentContainerStyle={styles.categoriesList}
-        />
+              ))}
+            </ScrollView>
+          </Animated.View>
+
+          {/* Nearby Section - Between Featured and Explore */}
+          {/* Intermediate Section - Nearby & Explore */}
+          <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <ScreenSectionHeading
+              titleStyle={{ marginTop: 16 }}
+              title={t("screens.home.intermediateTitle")}
+              subtitle={t("screens.home.intermediateSubtitle")}
+            />
+            <CategoryCard
+              category={nearbyCategory}
+              isSelected={selectedCategory === nearbyCategory.id}
+              onClick={() => handleCategoryClick(nearbyCategory)}
+              color={nearbyCategory.color}
+              illustration={nearbyCategory.illustration}
+              style={styles.nearbyCard}
+            />
+          </Animated.View>
+
+          {/* Explore Section */}
+          <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <View style={styles.gridContainer}>
+              {browseCategories.map((item, index) => (
+                <Animated.View
+                  key={item.id}
+                  entering={FadeInDown.delay(300 + index * 80).springify()}
+                  style={styles.categoryItem}
+                >
+                  <CategoryCard
+                    category={item}
+                    isSelected={selectedCategory === item.id}
+                    onClick={() => handleCategoryClick(item)}
+                    color={item.color}
+                    illustration={item.illustration}
+                  />
+                </Animated.View>
+              ))}
+            </View>
+          </Animated.View>
+        </ThemedView>
 
         {/* Info Card */}
         <Animated.View entering={FadeInDown.delay(700).springify()}>
@@ -307,27 +424,33 @@ const styles = StyleSheet.create({
   section: {
     paddingTop: 24,
   },
-  emptyCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 24,
+  contentContainer: {
+    paddingTop: 16,
   },
-  emptyText: {
-    textAlign: "center",
-    lineHeight: 22,
+  sectionHeading: {
+    marginBottom: 12,
   },
-  categoriesList: {
-    paddingTop: 24,
-    paddingBottom: 8,
+  featuredList: {
+    gap: 8,
+    paddingRight: 16, // Add padding to the end of the scroll
   },
-  categoryColumnWrapper: {
-    justifyContent: "flex-start",
-    marginBottom: 4,
-    gap: 4,
+  featuredItem: {
+    width: "48.5%",
+    maxWidth: "48.5%",
+  },
+  nearbyCard: {
+    width: "100%",
+    marginTop: 16, // Add space from the section above
+    marginBottom: 16,
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
   categoryItem: {
-    width: "48%",
-    maxWidth: "48%",
+    width: "48.5%",
+    maxWidth: "48.5%",
   },
   infoCard: {
     borderWidth: 1,

@@ -1,12 +1,15 @@
--- Fix search_places_nearby RPC to work with uuid place_id instead of text
-DROP FUNCTION IF EXISTS search_places_nearby(float, float, float, text[], int, uuid);
+-- Create or replace search_places_autocomplete RPC to include active_users count
+-- Replicating the logic from search_places_nearby for consistency
 
-CREATE OR REPLACE FUNCTION search_places_nearby(
-  user_lat float,
-  user_lng float,
-  radius_meters float,
-  filter_categories text[] default null,
-  max_results int default 50,
+DROP FUNCTION IF EXISTS search_places_autocomplete(text, float, float, float, int);
+DROP FUNCTION IF EXISTS search_places_autocomplete(text, float, float, float, int, uuid);
+
+CREATE OR REPLACE FUNCTION search_places_autocomplete(
+  query_text text,
+  user_lat float default null,
+  user_lng float default null,
+  radius_meters float default 50000, -- Default 50km
+  max_results int default 10,
   requesting_user_id uuid default null
 )
 RETURNS TABLE (
@@ -16,8 +19,10 @@ RETURNS TABLE (
   lat float,
   lng float,
   street text,
+  house_number text,
   city text,
-  total_score int,
+  state text,
+  country text,
   active_users bigint,
   dist_meters float
 )
@@ -33,12 +38,14 @@ BEGIN
     p.lat,
     p.lng,
     p.street,
+    p.house_number,
     p.city,
-    p.total_score,
+    p.state,
+    p.country_code as country,
     (
         SELECT count(*)
         FROM user_presences up
-        WHERE up.place_id = p.id  -- Changed from p.id::text to p.id (both are now uuid)
+        WHERE up.place_id = p.id
           AND up.active = true
           AND up.ended_at IS NULL
           AND up.expires_at > now()
@@ -63,26 +70,45 @@ BEGIN
           -- Filter Active Matches
           AND (requesting_user_id IS NULL OR NOT EXISTS (
             SELECT 1 FROM user_matches um
-            WHERE um.status = 'active'
+            WHERE um.status = 'matched'
               AND (
                   (um.user_a = requesting_user_id AND um.user_b = up.user_id)
                   OR 
                   (um.user_a = up.user_id AND um.user_b = requesting_user_id)
               )
           ))
+          -- Filter by Gender Preference: only count users looking to connect with requesting user's gender
+          AND (requesting_user_id IS NULL OR EXISTS (
+            SELECT 1 FROM profile_connect_with pcw
+            INNER JOIN profiles rp ON rp.id = requesting_user_id
+            WHERE pcw.user_id = up.user_id
+              AND pcw.gender_id = rp.gender_id
+          ))
     ) AS active_users,
-    st_distance(
-      st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
-      st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
-    ) AS dist_meters
+    case 
+      when user_lat is not null and user_lng is not null then
+        st_distance(
+          st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+          st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+        )
+      else
+        null::float
+    end as dist_meters
   FROM places p
-  WHERE st_dwithin(
+  WHERE 
+    -- Accent-insensitive text search using unaccent()
+    unaccent(p.name) ilike '%' || unaccent(query_text) || '%'
+    
+    -- Location filter if coordinates provided
+    AND (
+      user_lat is null or user_lng is null or
+      st_dwithin(
         st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
         st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
         radius_meters
       )
-    AND (filter_categories IS NULL OR lower(p.category) = ANY(SELECT lower(c) FROM unnest(filter_categories) AS c))
-  ORDER BY dist_meters ASC, p.total_score DESC
+    )
+  ORDER BY active_users DESC, p.total_score DESC
   LIMIT max_results;
 END;
 $$;

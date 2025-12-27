@@ -104,6 +104,44 @@ export async function getNearbyPlaces(
   });
 }
 
+// Fetch nearby places sorted by community favorites count
+export async function getPlacesByFavorites(
+  latitude: number,
+  longitude: number,
+  category?: string[], // Optional category filter
+): Promise<Place[]> {
+  logger.log('getPlacesByFavorites category', category);
+
+  const { data, error } = await supabase.functions.invoke<any[]>("places-by-favorites", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+      ...(category && { category }),
+    },
+  });
+  
+  if (error) {
+    logger.error("Places by favorites (edge) error:", error);
+    return [];
+  }
+
+  // Map RPC result to Place type
+  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, favorites_count, dist_meters
+  return (data || []).map((p: any) => {
+    return {
+      placeId: p.id,
+      name: p.name,
+      formattedAddress: p.formatted_address,
+      distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
+      latitude: p.lat,
+      longitude: p.lng,
+      types: [p.category], // put category in types
+      active_users: p.active_users,
+      favorites_count: p.favorites_count
+    };
+  });
+}
+
 export async function getTrendingPlaces(
   latitude?: number,
   longitude?: number
@@ -127,7 +165,16 @@ export async function getTrendingPlaces(
   }
 
   return {
-    places: data?.places || [],
+    places: (data?.places || []).map((p: any) => ({
+      placeId: p.place_id,
+      name: p.name,
+      formattedAddress: p.formattedAddress,
+      distance: p.distance,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      types: p.types,
+      active_users: p.active_users,
+    })),
   };
 }
 

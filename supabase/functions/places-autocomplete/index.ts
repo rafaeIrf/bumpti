@@ -14,8 +14,9 @@ serve(async (req) => {
     const { q, lat, lng, limit } = params;
 
     // Authentication Check
+    let user;
     try {
-        await requireAuth(req);
+        user = await requireAuth(req);
     } catch (e) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
@@ -39,20 +40,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
-        supabase.auth.setSession({
-            access_token: authHeader.replace("Bearer ", ""),
-            refresh_token: "",
-        });
-    }
 
     const { data: localPlaces, error: rpcError } = await supabase.rpc("search_places_autocomplete", {
         query_text: q,
         user_lat: latNum,
         user_lng: lngNum,
         radius_meters: radiusNum * 1000, // km to meters
-        max_results: limitParams
+        max_results: limitParams,
+        requesting_user_id: user.id
     });
 
     if (rpcError) {
@@ -77,7 +72,7 @@ serve(async (req) => {
         latitude: p.lat,
         longitude: p.lng,
         types: [p.category],
-        active_users: 0
+        active_users: p.active_users || 0
     }));
 
     return new Response(JSON.stringify({ places: mappedResults }), {

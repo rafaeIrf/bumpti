@@ -1,4 +1,4 @@
--- Fix search_places_nearby RPC to work with uuid place_id instead of text
+-- Update search_places_nearby to filter active_users by gender preferences
 DROP FUNCTION IF EXISTS search_places_nearby(float, float, float, text[], int, uuid);
 
 CREATE OR REPLACE FUNCTION search_places_nearby(
@@ -16,7 +16,10 @@ RETURNS TABLE (
   lat float,
   lng float,
   street text,
+  house_number text,
   city text,
+  state text,
+  country text,
   total_score int,
   active_users bigint,
   dist_meters float
@@ -33,12 +36,15 @@ BEGIN
     p.lat,
     p.lng,
     p.street,
+    p.house_number,
     p.city,
+    p.state,
+    p.country_code as country,
     p.total_score,
     (
         SELECT count(*)
         FROM user_presences up
-        WHERE up.place_id = p.id  -- Changed from p.id::text to p.id (both are now uuid)
+        WHERE up.place_id = p.id
           AND up.active = true
           AND up.ended_at IS NULL
           AND up.expires_at > now()
@@ -63,12 +69,19 @@ BEGIN
           -- Filter Active Matches
           AND (requesting_user_id IS NULL OR NOT EXISTS (
             SELECT 1 FROM user_matches um
-            WHERE um.status = 'active'
+            WHERE um.status = 'matched'
               AND (
                   (um.user_a = requesting_user_id AND um.user_b = up.user_id)
                   OR 
                   (um.user_a = up.user_id AND um.user_b = requesting_user_id)
               )
+          ))
+          -- Filter by Gender Preference: only count users looking to connect with requesting user's gender
+          AND (requesting_user_id IS NULL OR EXISTS (
+            SELECT 1 FROM profile_connect_with pcw
+            INNER JOIN profiles rp ON rp.id = requesting_user_id
+            WHERE pcw.user_id = up.user_id
+              AND pcw.gender_id = rp.gender_id
           ))
     ) AS active_users,
     st_distance(

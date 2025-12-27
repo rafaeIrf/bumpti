@@ -1,13 +1,13 @@
 import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { CategoryFilterList } from "@/components/category-filter-list";
 import {
   ConnectionBottomSheet,
   VenueState,
 } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
-import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -20,14 +20,33 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import {
   useGetNearbyPlacesQuery,
+  useGetPlacesByFavoritesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
-import { Place } from "@/modules/places/types";
+import { Place, PlaceCategory } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
+import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
+
+const allCategories: PlaceCategory[] = [
+  "bar",
+  "nightclub",
+  "cafe",
+  "restaurant",
+  "gym",
+  "fitness_centre",
+  "university",
+  "college",
+  "park",
+  "museum",
+  "stadium",
+  "library",
+  "sports_centre",
+  "club",
+];
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
@@ -37,6 +56,9 @@ export default function CategoryResultsScreen() {
   const favoritesMode = params.favorites === "true";
   const trendingMode = params.trending === "true";
   const bottomSheet = useCustomBottomSheet();
+  const [activeFilter, setActiveFilter] = useState<PlaceCategory | "all">(
+    "all"
+  );
 
   // Use cached location hook
   const { location: userLocation, loading: locationLoading } =
@@ -55,51 +77,145 @@ export default function CategoryResultsScreen() {
     );
 
   // Use RTK Query hook - only runs when userLocation is available and not in trending mode
-  // City is required for new places-nearby logic (async seeding)
+  const nearbyMode = params.nearby === "true";
+  const communityFavoritesMode = params.communityFavorites === "true";
+
+  // When nearby or communityFavorites mode is active, we fetch ALL categories
+  const targetCategory =
+    nearbyMode || communityFavoritesMode
+      ? [
+          "bar",
+          "nightclub",
+          "cafe",
+          "restaurant",
+          "gym",
+          "fitness_centre",
+          "university",
+          "college",
+          "park",
+          "museum",
+          "stadium",
+          "library",
+          "club",
+        ]
+      : category;
+
   const shouldFetchNearby =
     !favoritesMode &&
     !trendingMode &&
+    !communityFavoritesMode &&
     !!userLocation &&
     !!userLocation.city &&
-    !!category;
+    (!!targetCategory || nearbyMode);
 
   const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
     {
       latitude: userLocation?.latitude ?? 0,
       longitude: userLocation?.longitude ?? 0,
-      category: category,
-      city: userLocation?.city ?? "",
-      countryCode: userLocation?.countryCode,
+      category: targetCategory,
     },
     {
       skip: !shouldFetchNearby, // skip when favorites, trending or missing location/category/city
     }
   );
 
+  // Fetch places sorted by favorites count (community favorites mode)
+  const shouldFetchCommunityFavorites =
+    communityFavoritesMode && !!userLocation && !!userLocation.city;
+
+  const { data: communityFavoritesData, isLoading: communityFavoritesLoading } =
+    useGetPlacesByFavoritesQuery(
+      {
+        latitude: userLocation?.latitude ?? 0,
+        longitude: userLocation?.longitude ?? 0,
+        category: activeFilter !== "all" ? [activeFilter] : undefined,
+      },
+      {
+        skip: !shouldFetchCommunityFavorites,
+      }
+    );
+
+  // ... (lines 138-176 unchanged)
+
   const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
   const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
 
   // Transform API results to Place format
-  let places: Place[] = [];
-  if (trendingMode) {
-    places =
-      trendingData?.places?.map((place: any) => ({
-        placeId: place.place_id,
-        name: place.name,
-        type: place.types?.[0] || undefined,
-        types: place.types || [],
-        distance: place.distance || 0,
-        formattedAddress: place.address || "",
-        latitude: place.latitude,
-        longitude: place.longitude,
-        active_users: place.active_users,
-      })) || [];
-  } else if (favoritesMode) {
-    places = favoritePlacesData;
-  } else {
-    places = placesData || [];
-  }
+  const places: Place[] = useMemo(() => {
+    if (trendingMode) {
+      return (
+        trendingData?.places?.map((place: any) => ({
+          placeId: place.place_id,
+          name: place.name,
+          type: place.types?.[0] || undefined,
+          types: place.types || [],
+          distance: place.distance || 0,
+          formattedAddress: place.formattedAddress || "",
+          latitude: place.latitude,
+          longitude: place.longitude,
+          active_users: place.active_users,
+        })) || []
+      );
+    }
+    if (favoritesMode) {
+      return favoritePlacesData;
+    }
+    if (communityFavoritesMode) {
+      return communityFavoritesData || [];
+    }
+    return placesData || [];
+  }, [
+    trendingMode,
+    favoritesMode,
+    communityFavoritesMode,
+    trendingData,
+    favoritePlacesData,
+    communityFavoritesData,
+    placesData,
+  ]);
+
+  useEffect(() => {
+    if (communityFavoritesMode) {
+      logger.log("CategoryResults - Community Favorites Mode:", {
+        isLoading: communityFavoritesLoading,
+        dataLength: communityFavoritesData?.length,
+        hasPlaces: places.length,
+        firstPlace: places[0],
+      });
+    }
+  }, [
+    communityFavoritesMode,
+    communityFavoritesLoading,
+    communityFavoritesData,
+    places,
+  ]);
+
+  // Filter places based on active filter
+  const filteredPlaces = useMemo(() => {
+    if (activeFilter === "all") return places;
+    return places.filter((place: any) => {
+      // Check if the place type matches the active filter or if it's in the types array
+      const type = place.type || (place.types && place.types[0]);
+      return (
+        type === activeFilter ||
+        place.types?.includes(activeFilter) ||
+        // Fallback: check if the active filter string is part of the place type string
+        (typeof type === "string" && type.includes(activeFilter))
+      );
+    });
+  }, [places, activeFilter]);
+
+  // Only show categories that have items in the list
+  const availableCategories = useMemo(() => {
+    return allCategories.filter((category) =>
+      places.some((place) => place.types?.includes(category))
+    );
+  }, [places]);
+
+  const shouldShowFilters =
+    (nearbyMode || trendingMode || favoritesMode || communityFavoritesMode) &&
+    availableCategories.filter((c) => c !== "all").length > 1;
 
   const handleConnectionBottomSheet = useCallback(
     (place: Place, venueState: VenueState) => {
@@ -272,6 +388,8 @@ export default function CategoryResultsScreen() {
     loadingState = trendingLoading;
   } else if (favoritesMode) {
     loadingState = favoritePlacesLoading;
+  } else if (communityFavoritesMode) {
+    loadingState = locationLoading || communityFavoritesLoading;
   } else {
     loadingState = locationLoading || isLoading;
   }
@@ -317,14 +435,15 @@ export default function CategoryResultsScreen() {
 
           return (
             <>
-              {!favoritesMode && !trendingMode && (
-                <ScreenSectionHeading
-                  titleStyle={{ marginTop: 24 }}
-                  title="Populares na sua região"
+              {shouldShowFilters && (
+                <CategoryFilterList
+                  categories={availableCategories}
+                  selectedCategory={activeFilter}
+                  onSelect={setActiveFilter}
                 />
               )}
               <FlatList
-                data={places}
+                data={filteredPlaces}
                 keyExtractor={(item) => item.placeId}
                 renderItem={renderPlaceItem}
                 contentContainerStyle={styles.listContainer}
