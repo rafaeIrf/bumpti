@@ -60,19 +60,22 @@ Deno.serve(async (req) => {
     const userLat = requestBody.lat ?? 0;
     const userLng = requestBody.lng ?? 0;
 
-    // Fetch favorite places with details from database using JOIN
+    // Fetch favorite places with details from database using places_view (includes review data)
     const { data: favoritePlaces, error } = await supabase
       .from("profile_favorite_places")
       .select(`
         place_id,
-        places:places(
+        places:places_view(
           id,
           name,
           category,
           lat,
           lng,
           street,
-          city
+          city,
+          review_average,
+          review_count,
+          review_tags
         )
       `)
       .eq("user_id", user.id);
@@ -119,7 +122,7 @@ Deno.serve(async (req) => {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
 
-        const formattedAddress = [place.street, place.city].filter(Boolean).join(", ");
+        const formattedAddress = [place.street, place.house_number].filter(Boolean).join(", ");
 
         return {
           placeId: place.id,
@@ -130,6 +133,11 @@ Deno.serve(async (req) => {
           latitude: place.lat,
           longitude: place.lng,
           active_users: countMap.get(place.id) || 0,
+          review: place.review_count > 0 ? {
+            average: place.review_average,
+            count: place.review_count,
+            tags: place.review_tags
+          } : undefined,
         };
       })
       .filter((place): place is NonNullable<typeof place> => place !== null);

@@ -8,7 +8,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
@@ -28,11 +28,18 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 interface SearchResult {
   placeId: string;
   name: string;
-  types: string[];
+  category: string;
   formattedAddress?: string;
   distance?: number; // Distance in km from backend
   active_users?: number;
   rating?: number;
+  lat: number;
+  lng: number;
+  review?: {
+    average: number;
+    count: number;
+    tags?: string[];
+  };
 }
 
 export interface PlaceSearchProps {
@@ -83,11 +90,17 @@ export default function PlaceSearch({
     useCachedLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { favoriteIds, handleToggle } = useFavoriteToggle(
-    userLocation
-      ? { lat: userLocation.latitude, lng: userLocation.longitude }
-      : undefined
+
+  const queryArg = useMemo(
+    () =>
+      userLocation
+        ? { lat: userLocation.latitude, lng: userLocation.longitude }
+        : undefined,
+    [userLocation]
   );
+  const { showPlaceDetails, favoriteIds, handleToggle } = usePlaceDetailsSheet({
+    queryArg,
+  });
 
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(
     initialSelection.map((p) => p.id)
@@ -106,16 +119,21 @@ export default function PlaceSearch({
 
   const searchResults: SearchResult[] = useMemo(() => {
     if (!searchData?.places) return [];
+    console.log("searchData.places", searchData.places);
 
-    return searchData.places.map((p: any) => ({
-      placeId: p.id,
-      name: p.name,
-      formattedAddress: p.formatted_address,
-      types: p.types ?? [],
-      distance: p.distance ?? 0, // Distance already calculated by backend in km
-      active_users: p.active_users || 0,
-      rating: p.rating || p.total_score,
-    }));
+    return searchData.places.map((p: any) => {
+      return {
+        placeId: p.placeId,
+        name: p.name,
+        formattedAddress: p.formattedAddress,
+        category: p.types?.[0],
+        lat: p.latitude,
+        lng: p.longitude,
+        distance: p.distance ?? 0,
+        active_users: p.active_users || 0,
+        review: p.review,
+      };
+    });
   }, [searchData]);
 
   const handleSearch = useCallback(
@@ -156,10 +174,13 @@ export default function PlaceSearch({
 
         onPlaceToggle?.(result.placeId, result.name);
       } else {
+        console.log("AAAA", result);
         enterPlace({
           placeId: result.placeId,
-          lat: userLocation?.latitude ?? null,
-          lng: userLocation?.longitude ?? null,
+          userLat: userLocation?.latitude ?? null,
+          userLng: userLocation?.longitude ?? null,
+          placeLat: result.lat,
+          placeLng: result.lng,
         });
 
         router.push({
@@ -206,13 +227,6 @@ export default function PlaceSearch({
 
   const renderResult = useCallback(
     ({ item }: { item: SearchResult }) => {
-      const tagRaw = item.types?.find(
-        (type) => type !== "point_of_interest" && type !== "establishment"
-      );
-      const tag = (tagRaw || item.types?.[0])
-        ?.replace(/_/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-
       const isSelected = localSelectedIds.includes(item.placeId);
 
       if (multiSelectMode) {
@@ -220,7 +234,7 @@ export default function PlaceSearch({
           <PlaceCardSelection
             placeId={item.placeId}
             name={item.name}
-            category={tag}
+            category={item.category}
             isSelected={isSelected}
             onToggle={() => handleResultPress(item)}
           />
@@ -236,18 +250,32 @@ export default function PlaceSearch({
               item.formattedAddress ?? t("screens.placeSearch.addressFallback"),
             distance: item.distance ?? 0,
             activeUsers: item.active_users || 0,
-            isFavorite: favoriteIds.has(item.placeId),
-            tag,
-            rating: item.rating,
+            tag: item.category,
+            review: item.review,
           }}
           onPress={() => handleResultPress(item)}
-          onToggleFavorite={(id, opts) => handleToggle(id, opts)}
+          onInfoPress={() =>
+            showPlaceDetails({
+              placeId: item.placeId,
+              name: item.name,
+              formattedAddress: item.formattedAddress,
+              distance: item.distance ?? 0,
+              latitude: item.lat,
+              longitude: item.lng,
+              types: item.category ? [item.category] : [],
+              active_users: item.active_users,
+              review: item.review as any,
+            })
+          }
+          isFavorite={favoriteIds.has(item.placeId)}
+          onToggleFavorite={() => handleToggle(item.placeId)}
         />
       );
     },
     [
-      favoriteIds,
       handleResultPress,
+      showPlaceDetails,
+      favoriteIds,
       handleToggle,
       multiSelectMode,
       localSelectedIds,
@@ -410,7 +438,6 @@ export default function PlaceSearch({
   }, [onSelectionComplete, router, localSelectedIds]);
   return (
     <BaseTemplateScreen
-      isModal
       TopHeader={header}
       BottomBar={
         multiSelectMode && localSelectedIds.length > 0 ? (

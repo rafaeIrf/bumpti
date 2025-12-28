@@ -77,10 +77,18 @@ serve(async (req) => {
         } else if (p.street) {
             addressParts.push(p.street);
         }
+
+        // Destructure to remove raw review fields from top-level response
+        const { review_average, review_count, review_tags, ...placeData } = p;
         
         return {
-            ...p,
-            formatted_address: addressParts.join(", ")
+            ...placeData,
+            formatted_address: addressParts.join(", "),
+            review: p.review_count > 0 ? {
+                average: p.review_average,
+                count: p.review_count,
+                tags: p.review_tags
+            } : undefined
         };
     });
 

@@ -42,7 +42,19 @@ export async function searchPlacesByText(
     return [];
   }
 
-  return data || [];
+  return data?.map((p: any) => {
+    return {
+      placeId: p.id,
+      name: p.name,
+      formattedAddress: p.formatted_address,
+      distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
+      latitude: p.lat,
+      longitude: p.lng,
+      types: [p.category], // put category in types
+      active_users: p.active_users,
+      review: p.review
+    };
+  }) || [];
 }
 
 // Fetch nearby places for given category
@@ -58,7 +70,6 @@ export async function getNearbyPlaces(
       category, // Edge function internally maps this to FSQ categories if needed, or we rely on RPC
     },
   });
-  console.log('data', data)
   
   if (error) {
     logger.error("Nearby places (edge) error:", error);
@@ -103,7 +114,7 @@ export async function getPlacesByFavorites(
   }
 
   // Map RPC result to Place type
-  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, favorites_count, dist_meters
+  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, favorites_count, dist_meters, review
   return (data || []).map((p: any) => {
     return {
       placeId: p.id,
@@ -115,7 +126,8 @@ export async function getPlacesByFavorites(
       types: [p.category], // put category in types
       active_users: p.active_users,
       favorites_count: p.favorites_count,
-      rating: p.rating || p.total_score
+      rating: p.rating || p.total_score,
+      review: p.review
     };
   });
 }
@@ -150,6 +162,7 @@ export async function getTrendingPlaces(
       longitude: p.longitude,
       types: p.types,
       active_users: p.active_users,
+      review: p.review,
     })),
   };
 }

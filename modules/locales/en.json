@@ -6,7 +6,8 @@
     "confirm": "Confirm",
     "navigate": "Navigate",
     "save_rating": "Submit rating",
-    "rate": "Rate"
+    "rate": "Rate",
+    "details": "Details"
   },
   "welcome": "Welcome!",
   "explore": "Explore",
@@ -53,7 +54,11 @@
       "community_centre": "Community Center",
       "events_venue": "Events Venue",
       "club": "Club"
-    }
+    },
+    "activeUsersLabel": "people here",
+    "noConnections": "No connections yet",
+    "onePersonConnecting": "1 person connecting",
+    "manyPeopleConnecting": "{{count}} people connecting"
   },
   "matches": "Chat",
   "profile": "Profile",

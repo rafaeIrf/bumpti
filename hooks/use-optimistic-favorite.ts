@@ -24,7 +24,7 @@ export function useOptimisticFavorite({
 
   useEffect(() => {
     setIsFavorite(initialIsFavorite);
-  }, [initialIsFavorite]);
+  }, [initialIsFavorite, placeId]);
 
   const debouncedSync = useMemo(
     () =>

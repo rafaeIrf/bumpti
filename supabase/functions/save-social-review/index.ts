@@ -12,7 +12,7 @@ const corsHeaders = {
 interface SocialReviewPayload {
   placeId: string;
   rating: number;
-  selectedVibes: string[];
+  selectedVibes?: string[];  // Optional
 }
 
 Deno.serve(async (req) => {
@@ -72,14 +72,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!Array.isArray(selectedVibes) || selectedVibes.length === 0) {
-      return new Response(JSON.stringify({ error: "missing_selected_vibes" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
+    // selectedVibes is optional - can be empty array or undefined
+    const vibes = selectedVibes || [];
 
-    if (selectedVibes.length > 3) {
+    if (vibes.length > 3) {
       return new Response(JSON.stringify({ error: "too_many_tags" }), {
         status: 400,
         headers: corsHeaders,
@@ -101,30 +97,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify all tags exist and are active
-    const { data: tags, error: tagsError } = await supabase
-      .from("place_review_tags")
-      .select("id, key")
-      .in("key", selectedVibes)
-      .eq("active", true);
+    // Verify all tags exist and are active (only if vibes provided)
+    let tagIds: string[] = [];
+    if (vibes.length > 0) {
+      const { data: tags, error: tagsError } = await supabase
+        .from("place_review_tags")
+        .select("id, key")
+        .in("key", vibes)
+        .eq("active", true);
 
-    if (tagsError) {
-      throw new Error(`Error fetching tags: ${tagsError.message}`);
+      if (tagsError) {
+        throw new Error(`Error fetching tags: ${tagsError.message}`);
+      }
+
+      if (!tags || tags.length !== vibes.length) {
+        const foundKeys = tags?.map((t) => t.key) || [];
+        const missingKeys = vibes.filter((k) => !foundKeys.includes(k));
+        return new Response(
+          JSON.stringify({
+            error: "invalid_tags",
+            message: `Some tags are invalid or inactive: ${missingKeys.join(", ")}`,
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      tagIds = tags.map((t) => t.id);
     }
-
-    if (!tags || tags.length !== selectedVibes.length) {
-      const foundKeys = tags?.map((t) => t.key) || [];
-      const missingKeys = selectedVibes.filter((k) => !foundKeys.includes(k));
-      return new Response(
-        JSON.stringify({
-          error: "invalid_tags",
-          message: `Some tags are invalid or inactive: ${missingKeys.join(", ")}`,
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const tagIds = tags.map((t) => t.id);
 
     // 4. Upsert Social Review
     // Using upsert on (user_id, place_id)
@@ -177,48 +176,16 @@ Deno.serve(async (req) => {
        throw new Error(`Error inserting new tags: ${insertError.message}`);
     }
 
-    // 6. Calculate updated place stats for cache update
-    // Get average and count
-    const { data: statsData, error: statsError } = await supabase
-      .from("place_social_reviews")
-      .select("stars")
-      .eq("place_id", placeId);
+    // 6. Get updated place stats from places_view
+    const { data: viewData, error: viewError } = await supabase
+      .from("places_view")
+      .select("review_average, review_count, review_tags")
+      .eq("id", placeId)
+      .single();
 
-    if (statsError) {
-      throw new Error(`Error fetching stats: ${statsError.message}`);
-    }
-
-    const reviewCount = statsData?.length || 0;
-    const averageRating = reviewCount > 0
-      ? statsData.reduce((sum, r) => sum + r.stars, 0) / reviewCount
-      : 0;
-
-    // Get top 3 tags for this place
-    const { data: topTagsData, error: topTagsError } = await supabase
-      .from("place_review_tag_relations")
-      .select(`
-        tag_id,
-        place_review_tags!inner(key),
-        place_social_reviews!inner(place_id)
-      `)
-      .eq("place_social_reviews.place_id", placeId);
-
-    let topTags: string[] = [];
-    if (!topTagsError && topTagsData) {
-      // Count occurrences of each tag
-      const tagCounts: Record<string, number> = {};
-      for (const row of topTagsData) {
-        const tagKey = (row as any).place_review_tags?.key;
-        if (tagKey) {
-          tagCounts[tagKey] = (tagCounts[tagKey] || 0) + 1;
-        }
-      }
-      // Sort by count and take top 3
-      topTags = Object.entries(tagCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([key]) => key);
-    }
+    const averageRating = viewData?.review_average ?? 0;
+    const reviewCount = viewData?.review_count ?? 0;
+    const topTags: string[] = viewData?.review_tags ?? [];
 
     // 7. Response with updated stats
     return new Response(
@@ -226,7 +193,7 @@ Deno.serve(async (req) => {
         review_id: review.id,
         place_id: review.place_id,
         stars: review.stars,
-        tags: selectedVibes,
+        tags: vibes,
         message: "Review saved successfully",
         // Updated stats for cache update
         placeStats: {

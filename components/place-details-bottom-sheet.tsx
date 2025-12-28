@@ -15,6 +15,7 @@ import { PlaceReview } from "@/modules/places/types";
 import React, { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ActionButton } from "./ui/action-button";
 
 interface PlaceDetailsBottomSheetProps {
   placeName: string;
@@ -139,25 +140,22 @@ export function PlaceDetailsBottomSheet({
             onPress={onNavigate}
           />
 
-          <Button
-            variant="outline"
-            size="icon"
-            style={[
-              styles.favoriteButton,
-              {
-                borderColor: colors.border,
-                backgroundColor: "transparent",
-              },
-            ]}
+          <ActionButton
+            ariaLabel={
+              localFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+            size={52}
+            iconSize={22}
+            variant={localFavorite ? "accent" : "default"}
             onPress={handleFavorite}
-          >
-            <HeartIcon
-              width={22}
-              height={22}
-              color={localFavorite ? "#FF4D67" : colors.text}
-              fill={localFavorite ? "#FF4D67" : "none"}
-            />
-          </Button>
+            icon={(props) => (
+              <HeartIcon
+                {...props}
+                fill={localFavorite ? colors.accent : "none"}
+              />
+            )}
+            color={localFavorite ? colors.accent : colors.text}
+          />
         </View>
 
         {/* Rate Button */}
@@ -224,6 +222,7 @@ export function PlaceDetailsBottomSheet({
                   key={index}
                   variant="outline"
                   size="sm"
+                  textStyle={{ fontSize: 10 }}
                   label={t(`place.vibes.${tag}`)}
                   onPress={() => {}} // No-op for now, acts as a chip
                 />
@@ -294,14 +293,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: "600",
   },
-  favoriteButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   sectionBlock: {
     borderRadius: 16,
     padding: spacing.md,
@@ -320,7 +311,7 @@ const styles = StyleSheet.create({
   tagsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   vibeChip: {
     // legacy style, can be removed or kept if needed by other components, but for this file it is unused now.

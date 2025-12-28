@@ -278,7 +278,7 @@ export default function HomeScreen() {
   };
 
   const handleOpenSearch = () => {
-    router.push("/place-search");
+    router.push("/main/place-search");
   };
 
   return (

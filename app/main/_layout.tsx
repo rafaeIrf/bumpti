@@ -6,15 +6,13 @@ export default function MainLayout() {
       <Stack.Screen
         name="category-results"
         options={{
-          presentation: "modal",
           headerShown: false,
-          animation: "slide_from_bottom",
+          animation: "slide_from_right",
         }}
       />
       <Stack.Screen
         name="filters"
         options={{
-          presentation: "modal",
           headerShown: false,
           animation: "slide_from_bottom",
         }}
@@ -23,6 +21,13 @@ export default function MainLayout() {
         name="message"
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="place-search"
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
         }}
       />
     </Stack>

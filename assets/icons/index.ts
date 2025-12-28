@@ -22,6 +22,8 @@ export { default as FlameIcon } from "./flame.svg";
 export { default as GraduationCapIcon } from "./graduation-cap.svg";
 export { default as HeartCrackIcon } from "./heart-crack.svg";
 export { default as HeartIcon } from "./heart.svg";
+export { default as InfoRoundedIcon } from "./info-rounded.svg";
+export { default as InfoIcon } from "./info.svg";
 export { default as ListIcon } from "./list.svg";
 export { default as LockOpenIcon } from "./lock-open.svg";
 export { default as LockIcon } from "./lock.svg";

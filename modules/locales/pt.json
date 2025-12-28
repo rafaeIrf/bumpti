@@ -6,7 +6,8 @@
     "confirm": "Confirmar",
     "navigate": "Navegar",
     "save_rating": "Enviar avaliação",
-    "rate": "Avaliar"
+    "rate": "Avaliar",
+    "details": "Detalhes"
   },
   "welcome": "Bem-vindo!",
   "explore": "Explorar",
@@ -53,7 +54,11 @@
       "community_centre": "Centro Comunitário",
       "events_venue": "Local de Eventos",
       "club": "Clube"
-    }
+    },
+    "activeUsersLabel": "pessoas no local",
+    "noConnections": "Nenhuma conexão agora",
+    "onePersonConnecting": "1 pessoa conectando",
+    "manyPeopleConnecting": "{{count}} pessoas se conectando"
   },
   "matches": "Chat",
   "profile": "Perfil",

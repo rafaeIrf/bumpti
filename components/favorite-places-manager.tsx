@@ -136,7 +136,7 @@ export function useFavoritePlaces({
       .map((id) => ({ id, name: placesMap[id] }));
 
     router.push({
-      pathname: "/(modals)/place-search",
+      pathname: "/main/place-search",
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),

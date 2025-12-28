@@ -369,6 +369,15 @@ export const placesApi = createApi({
               );
             }
 
+            // Update getPlacesByFavorites cache (community favorites)
+            if (cacheKey.startsWith("getPlacesByFavorites(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getPlacesByFavorites", entry.originalArgs, (draft) => {
+                  updatePlaceReview(draft);
+                })
+              );
+            }
+
             // Update getSuggestedPlaces caches
             if (cacheKey.startsWith("getSuggestedPlaces(")) {
               dispatch(

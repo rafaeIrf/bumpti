@@ -7,7 +7,6 @@ import {
   VenueState,
 } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
-import { PlaceDetailsBottomSheet } from "@/components/place-details-bottom-sheet";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -16,7 +15,7 @@ import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useFavoritePlacesList } from "@/hooks/use-favorite-places-list";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import {
@@ -31,8 +30,6 @@ import {
   PlaceVibe,
 } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
-import { formatDistance } from "@/utils/distance";
-import { openMaps } from "@/utils/maps";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
@@ -136,7 +133,9 @@ export default function CategoryResultsScreen() {
 
   const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
-  const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
+  const { showPlaceDetails, favoriteIds, handleToggle } = usePlaceDetailsSheet({
+    queryArg: favoriteQueryArg,
+  });
 
   // Transform API results to Place format
   const places: Place[] = useMemo(() => {
@@ -238,50 +237,6 @@ export default function CategoryResultsScreen() {
     [bottomSheet]
   );
 
-  // Function to show PlaceDetailsBottomSheet
-  const handleShowDetails = useCallback(
-    (place: Place) => {
-      console.log("place", place);
-      bottomSheet?.expand({
-        content: () => (
-          <PlaceDetailsBottomSheet
-            placeName={place.name}
-            placeId={place.placeId}
-            category={
-              place.types?.[0]
-                ? t(`place.categories.${place.types[0]}`)
-                : t("common.place")
-            }
-            address={place.formattedAddress || ""}
-            distance={formatDistance(place.distance)}
-            review={place.review}
-            isFavorite={favoriteIds.has(place.placeId)}
-            onNavigate={() => {
-              openMaps(place.formattedAddress || place.name);
-            }}
-            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
-            onClose={() => bottomSheet.close()}
-            onRate={() => {
-              bottomSheet.close();
-              router.push({
-                pathname: "/(modals)/rate-place",
-                params: {
-                  placeId: place.placeId,
-                  name: place.name,
-                  category: place.types?.[0]
-                    ? t(`place.categories.${place.types[0]}`)
-                    : t("common.place"),
-                },
-              });
-            }}
-          />
-        ),
-        draggable: true,
-      });
-    },
-    [bottomSheet, favoriteIds, handleToggle]
-  );
-
   const handlePlaceClick = useCallback(
     async (place: Place) => {
       if (!bottomSheet) return;
@@ -322,7 +277,7 @@ export default function CategoryResultsScreen() {
   );
 
   const handleOpenSearch = () => {
-    router.push("/place-search");
+    router.push("/main/place-search");
   };
 
   const renderEmptyState = () => (
@@ -373,7 +328,6 @@ export default function CategoryResultsScreen() {
         name: item.name,
         address: item.formattedAddress ?? "",
         distance: item.distance,
-        isFavorite: favoriteIds.has(item.placeId),
         activeUsers: (item as any).active_users || 0,
         tag: item.types?.[0] || undefined,
         review: item.review,
@@ -389,13 +343,14 @@ export default function CategoryResultsScreen() {
           <PlaceCard
             place={placeData}
             onPress={() => handlePlaceClick(item)}
-            onInfoPress={() => handleShowDetails(item)}
-            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
+            onInfoPress={() => showPlaceDetails(item)}
+            isFavorite={favoriteIds.has(item.placeId)}
+            onToggleFavorite={() => handleToggle(item.placeId)}
           />
         </Animated.View>
       );
     },
-    [favoriteIds, handleToggle, handlePlaceClick, handleShowDetails]
+    [handlePlaceClick, showPlaceDetails, favoriteIds, handleToggle]
   );
 
   const listFooterComponent = useMemo(
@@ -443,7 +398,7 @@ export default function CategoryResultsScreen() {
             }}
             title={categoryName || ""}
             rightActions={
-              favoritesMode || trendingMode
+              favoritesMode || trendingMode || communityFavoritesMode
                 ? []
                 : [
                     {
