@@ -7,6 +7,7 @@ import {
   getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
   getTrendingPlaces as getTrendingPlacesApi,
   type PlacesByCategory,
+  saveSocialReview,
   searchPlacesByText as searchPlacesByTextApi,
   toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
@@ -276,6 +277,117 @@ export const placesApi = createApi({
           : [], // no refetch on remove; rely on optimistic update
     }),
 
+    // Save social review and update cache with returned stats
+    saveReview: builder.mutation<
+      {
+        review_id: string;
+        place_id: string;
+        stars: number;
+        tags: string[];
+        placeStats: {
+          averageRating: number;
+          reviewCount: number;
+          topTags: string[];
+        };
+      },
+      { placeId: string; rating: number; selectedVibes: string[] }
+    >({
+      queryFn: async ({ placeId, rating, selectedVibes }) => {
+        try {
+          const result = await saveSocialReview({ placeId, rating, selectedVibes });
+          return { data: result };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      onQueryStarted: async ({ placeId }, { dispatch, queryFulfilled, getState }) => {
+        try {
+          const { data } = await queryFulfilled;
+          const { placeStats } = data;
+          
+          // Helper to update a place's review in a cache entry
+          const updatePlaceReview = (places: Place[] | undefined) => {
+            if (!places) return;
+            const place = places.find((p) => p.placeId === placeId);
+            if (place) {
+              place.review = {
+                average: placeStats.averageRating,
+                count: placeStats.reviewCount,
+                tags: placeStats.topTags as any,
+              };
+            }
+          };
+
+          // Get all cache entries from the state
+          const state = getState() as any;
+          const placesApiState = state?.placesApi?.queries || {};
+
+          // Iterate through all cache entries
+          Object.keys(placesApiState).forEach((cacheKey) => {
+            const entry = placesApiState[cacheKey];
+            if (!entry?.data) return;
+
+            // Update getNearbyPlaces caches
+            if (cacheKey.startsWith("getNearbyPlaces(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getNearbyPlaces", entry.originalArgs, (draft) => {
+                  updatePlaceReview(draft);
+                })
+              );
+            }
+
+            // Update getTrendingPlaces cache
+            if (cacheKey.startsWith("getTrendingPlaces(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getTrendingPlaces", entry.originalArgs, (draft) => {
+                  if (draft?.places) {
+                    updatePlaceReview(draft.places as Place[]);
+                  }
+                })
+              );
+            }
+
+            // Update getFavoritePlaces cache
+            if (cacheKey.startsWith("getFavoritePlaces(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getFavoritePlaces", entry.originalArgs, (draft) => {
+                  if (draft?.places) {
+                    updatePlaceReview(draft.places);
+                  }
+                })
+              );
+            }
+
+            // Update searchPlacesByText caches
+            if (cacheKey.startsWith("searchPlacesByText(")) {
+              dispatch(
+                placesApi.util.updateQueryData("searchPlacesByText", entry.originalArgs, (draft) => {
+                  if (draft?.places) {
+                    updatePlaceReview(draft.places as Place[]);
+                  }
+                })
+              );
+            }
+
+            // Update getSuggestedPlaces caches
+            if (cacheKey.startsWith("getSuggestedPlaces(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getSuggestedPlaces", entry.originalArgs, (draft) => {
+                  if (draft?.data) {
+                    for (const category of draft.data) {
+                      updatePlaceReview(category.places as Place[]);
+                    }
+                  }
+                })
+              );
+            }
+          });
+        } catch {
+          // If the mutation fails, no cache update is needed
+        }
+      },
+    }),
+
   }),
 });
 
@@ -290,4 +402,5 @@ export const {
   useLazyGetNearbyPlacesQuery,
   useLazySearchPlacesByTextQuery,
   useGetSuggestedPlacesQuery,
+  useSaveReviewMutation,
 } = placesApi;

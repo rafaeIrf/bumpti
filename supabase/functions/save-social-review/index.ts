@@ -177,7 +177,50 @@ Deno.serve(async (req) => {
        throw new Error(`Error inserting new tags: ${insertError.message}`);
     }
 
-    // 6. Response
+    // 6. Calculate updated place stats for cache update
+    // Get average and count
+    const { data: statsData, error: statsError } = await supabase
+      .from("place_social_reviews")
+      .select("stars")
+      .eq("place_id", placeId);
+
+    if (statsError) {
+      throw new Error(`Error fetching stats: ${statsError.message}`);
+    }
+
+    const reviewCount = statsData?.length || 0;
+    const averageRating = reviewCount > 0
+      ? statsData.reduce((sum, r) => sum + r.stars, 0) / reviewCount
+      : 0;
+
+    // Get top 3 tags for this place
+    const { data: topTagsData, error: topTagsError } = await supabase
+      .from("place_review_tag_relations")
+      .select(`
+        tag_id,
+        place_review_tags!inner(key),
+        place_social_reviews!inner(place_id)
+      `)
+      .eq("place_social_reviews.place_id", placeId);
+
+    let topTags: string[] = [];
+    if (!topTagsError && topTagsData) {
+      // Count occurrences of each tag
+      const tagCounts: Record<string, number> = {};
+      for (const row of topTagsData) {
+        const tagKey = (row as any).place_review_tags?.key;
+        if (tagKey) {
+          tagCounts[tagKey] = (tagCounts[tagKey] || 0) + 1;
+        }
+      }
+      // Sort by count and take top 3
+      topTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([key]) => key);
+    }
+
+    // 7. Response with updated stats
     return new Response(
       JSON.stringify({
         review_id: review.id,
@@ -185,6 +228,12 @@ Deno.serve(async (req) => {
         stars: review.stars,
         tags: selectedVibes,
         message: "Review saved successfully",
+        // Updated stats for cache update
+        placeStats: {
+          averageRating: Math.round(averageRating * 10) / 10,
+          reviewCount,
+          topTags,
+        },
       }),
       { status: 200, headers: corsHeaders }
     );

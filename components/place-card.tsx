@@ -191,14 +191,6 @@ export function PlaceCard({
             </ThemedText>
           </View>
         </View>
-        <Pressable onPress={handleOpenMaps}>
-          <ThemedText
-            style={[styles.address, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {place.address}
-          </ThemedText>
-        </Pressable>
       </View>
     </AnimatedPressable>
   );

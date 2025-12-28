@@ -287,6 +287,11 @@ export async function saveSocialReview(payload: {
   place_id: string;
   stars: number;
   tags: string[];
+  placeStats: {
+    averageRating: number;
+    reviewCount: number;
+    topTags: string[];
+  };
 }> {
   const { data, error } = await supabase.functions.invoke("save-social-review", {
     body: payload,

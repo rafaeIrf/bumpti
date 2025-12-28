@@ -7,7 +7,7 @@ import { VibeSelector } from "@/components/vibe-selector";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { saveSocialReview } from "@/modules/places/api"; // Added import
+import { useSaveReviewMutation } from "@/modules/places/placesApi";
 import { PlaceVibe } from "@/modules/places/types";
 import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
@@ -26,7 +26,7 @@ export default function RatePlaceScreen() {
 
   const [rating, setRating] = useState(0);
   const [selectedVibes, setSelectedVibes] = useState<PlaceVibe[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveReview, { isLoading: isSaving }] = useSaveReviewMutation();
 
   const handleToggleVibe = (vibe: PlaceVibe) => {
     setSelectedVibes((prev) => {
@@ -44,12 +44,11 @@ export default function RatePlaceScreen() {
     if (rating === 0) return;
 
     try {
-      setIsSaving(true);
-      await saveSocialReview({
+      await saveReview({
         placeId,
         rating,
         selectedVibes,
-      });
+      }).unwrap();
 
       router.back();
     } catch (error) {
@@ -61,8 +60,6 @@ export default function RatePlaceScreen() {
             "Não foi possível salvar sua avaliação. Tente novamente.",
         })
       );
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -95,7 +92,7 @@ export default function RatePlaceScreen() {
         >
           <Button
             onPress={handleSave}
-            disabled={rating === 0}
+            disabled={rating === 0 || isSaving}
             style={[styles.saveButton, rating === 0 && { opacity: 0.5 }]}
             textStyle={styles.saveButtonText}
             loading={isSaving}
@@ -209,6 +206,7 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   saveButton: {
     backgroundColor: "#2997FF",

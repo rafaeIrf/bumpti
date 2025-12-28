@@ -5,20 +5,22 @@ export type Coordinates = {
 };
 
 export const PLACE_VIBES = [
-  "lively",
-  "quiet",
-  "energetic",
-  "cozy",
-  "easyConversation",
-  "keepToSelf",
-  "meetPeople",
-  "closedGroups",
-  "goodSolo",
-  "betterAccompanied",
-  "goodDay",
-  "goodNight",
-  "weekendBest",
-
+  "easy_to_connect",
+  "hard_to_connect",
+  "open_crowd",
+  "reserved_crowd",
+  "meet_new_people",
+  "closed_groups",
+  "community_vibe",
+  "solo_friendly",
+  "better_with_company",
+  "easy_to_join_groups",
+  "socially_active",
+  "low_social_interaction",
+  "conversation_focused",
+  "activity_focused",
+  "works_better_daytime",
+  "works_better_nighttime",
 ] as const;
 
 export type PlaceVibe = (typeof PLACE_VIBES)[number];
