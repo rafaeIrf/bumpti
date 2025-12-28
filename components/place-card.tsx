@@ -1,17 +1,13 @@
-import {
-  ArrowRightIcon,
-  HeartIcon,
-  MapIcon,
-  MapPinIcon,
-  UsersIcon,
-} from "@/assets/icons";
+import { HeartIcon, MapPinIcon, StarIcon, UsersIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
+import { useOptimisticFavorite } from "@/hooks/use-optimistic-favorite";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import debounce from "lodash/debounce";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { formatDistance } from "@/utils/distance";
+import { openMaps } from "@/utils/maps";
+import React, { useCallback } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -26,11 +22,17 @@ interface PlaceCardData {
   activeUsers: number;
   isFavorite?: boolean;
   tag?: string;
+  review?: {
+    average: number;
+    count: number;
+    tags?: string[];
+  };
 }
 
 interface PlaceCardProps {
   place: PlaceCardData;
   onPress: () => void;
+  onInfoPress?: () => void;
   onToggleFavorite?: (
     placeId: string,
     options?: {
@@ -43,27 +45,22 @@ interface PlaceCardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const debouncedSyncFavorite = debounce(
-  (placeId: string, fn: (placeId: string) => void) => {
-    fn(placeId);
-  },
-  500
-);
-
 export function PlaceCard({
   place,
   onPress,
+  onInfoPress,
   onToggleFavorite,
 }: PlaceCardProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
   const overlay = useSharedValue(0);
-  const tapLockedRef = useRef(false);
-  const [localFavorite, setLocalFavorite] = useState(Boolean(place.isFavorite));
 
-  useEffect(() => {
-    setLocalFavorite(Boolean(place.isFavorite));
-  }, [place.isFavorite]);
+  const { isFavorite: localFavorite, handleToggle: handleFavorite } =
+    useOptimisticFavorite({
+      initialIsFavorite: Boolean(place.isFavorite),
+      placeId: place.id,
+      onToggleFavorite,
+    });
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -83,43 +80,10 @@ export function PlaceCard({
     overlay.value = withSpring(0);
   };
 
-  const formatDistance = (km: number) => {
-    if (km < 1) {
-      return `${Math.round(km * 1000)}m ${t("common.fromYou")}`;
-    }
-    return `${km.toFixed(1)} km ${t("common.fromYou")}`;
-  };
-
-  const lockTap = () => {
-    if (tapLockedRef.current) return true;
-    tapLockedRef.current = true;
-    setTimeout(() => {
-      tapLockedRef.current = false;
-    }, 300);
-    return false;
-  };
-
-  const handleFavorite = useCallback(
-    (event: any) => {
-      event.stopPropagation();
-      if (lockTap()) return;
-      const nextValue = !localFavorite;
-      setLocalFavorite(nextValue);
-      onToggleFavorite?.(place.id, { optimisticOnly: true, value: nextValue });
-      debouncedSyncFavorite(place.id, (finalPlaceId: string) => {
-        onToggleFavorite?.(finalPlaceId, { sync: true, value: nextValue });
-      });
-    },
-    [localFavorite, onToggleFavorite, place.id]
-  );
-
   const handleOpenMaps = useCallback(
     (event: any) => {
       event.stopPropagation();
-      const encoded = encodeURIComponent(place.address);
-      Linking.openURL(
-        `https://www.google.com/maps/search/?api=1&query=${encoded}`
-      ).catch(() => {});
+      openMaps(place.address);
     },
     [place.address]
   );
@@ -141,6 +105,32 @@ export function PlaceCard({
             {place.name}
           </ThemedText>
           <View style={styles.actions}>
+            {/* Info Button */}
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onInfoPress?.();
+              }}
+              hitSlop={8}
+              style={[
+                styles.actionButton,
+                { borderColor: colors.border, backgroundColor: colors.surface },
+              ]}
+            >
+              <ThemedText
+                style={{
+                  fontSize: 14,
+                  fontWeight: "bold",
+                  fontFamily: "Poppins-Bold",
+                  color: colors.textSecondary,
+                  lineHeight: 18,
+                }}
+              >
+                i
+              </ThemedText>
+            </Pressable>
+
+            {/* Favorite Button */}
             <Pressable
               onPress={handleFavorite}
               hitSlop={8}
@@ -157,19 +147,32 @@ export function PlaceCard({
                 fill={localFavorite ? "#FF4D67" : "none"}
               />
             </Pressable>
-            <Pressable
-              onPress={onPress}
-              hitSlop={8}
-              style={[
-                styles.actionButton,
-                { borderColor: colors.border, backgroundColor: colors.surface },
-              ]}
-            >
-              <ArrowRightIcon width={18} height={18} color="#FFFFFF" />
-            </Pressable>
           </View>
         </View>
 
+        <View style={styles.metaRow}>
+          {place.tag ? (
+            <ThemedText style={styles.tagText}>
+              {t(`place.categories.${place.tag}`).toUpperCase()}
+            </ThemedText>
+          ) : null}
+          {place.review ? (
+            <>
+              {place.tag && <View style={styles.dot} />}
+              <View style={styles.ratingContainer}>
+                <StarIcon
+                  width={12}
+                  height={12}
+                  fill="#3B82F6"
+                  color="#3B82F6"
+                />
+                <ThemedText style={styles.ratingText}>
+                  {place.review.average.toFixed(1)}
+                </ThemedText>
+              </View>
+            </>
+          ) : null}
+        </View>
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
             <MapPinIcon width={14} height={14} color="#FFFFFF" />
@@ -187,34 +190,14 @@ export function PlaceCard({
               {place.activeUsers}
             </ThemedText>
           </View>
-          {place.tag ? (
-            <View style={styles.tag}>
-              <ThemedText style={styles.tagText}>{place.tag}</ThemedText>
-            </View>
-          ) : null}
         </View>
-      </View>
-
-      <View
-        style={[
-          styles.bottomSection,
-          {
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        <ThemedText
-          style={[styles.address, { color: colors.text }]}
-          numberOfLines={1}
-        >
-          {place.address}
-        </ThemedText>
-        <Pressable
-          onPress={handleOpenMaps}
-          hitSlop={8}
-          style={[styles.mapButton, { borderColor: colors.border }]}
-        >
-          <MapIcon width={16} height={16} color={colors.icon} />
+        <Pressable onPress={handleOpenMaps}>
+          <ThemedText
+            style={[styles.address, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {place.address}
+          </ThemedText>
         </Pressable>
       </View>
     </AnimatedPressable>
@@ -223,8 +206,7 @@ export function PlaceCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 24,
     overflow: "hidden",
     backgroundColor: "#0F0F0F",
   },
@@ -296,6 +278,22 @@ const styles = StyleSheet.create({
   },
   tagText: {
     ...typography.caption,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#666666",
+    marginHorizontal: 2,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ratingText: {
+    ...typography.caption,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
   bottomSection: {

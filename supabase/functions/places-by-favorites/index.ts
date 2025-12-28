@@ -70,20 +70,13 @@ serve(async (req) => {
     }
 
     const results = (places || []).map((p: any) => {
-        // Build address parts in proper order
         const addressParts = [];
         
-        // Street with house number (e.g., "Rua Augusta, 123")
         if (p.street && p.house_number) {
             addressParts.push(`${p.street}, ${p.house_number}`);
         } else if (p.street) {
             addressParts.push(p.street);
         }
-        
-        // City, State, Country
-        if (p.city) addressParts.push(p.city);
-        if (p.state) addressParts.push(p.state);
-        if (p.country) addressParts.push(p.country);
         
         return {
             ...p,

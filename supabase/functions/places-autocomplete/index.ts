@@ -75,7 +75,22 @@ serve(async (req) => {
         active_users: p.active_users || 0
     }));
 
-    return new Response(JSON.stringify({ places: mappedResults }), {
+    const results = (localPlaces || []).map((p: any) => {
+        const addressParts = [];
+        
+        if (p.street && p.house_number) {
+            addressParts.push(`${p.street}, ${p.house_number}`);
+        } else if (p.street) {
+            addressParts.push(p.street);
+        }
+        
+        return {
+            ...p,
+            formatted_address: addressParts.join(", ")
+        };
+    });
+
+    return new Response(JSON.stringify(results), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

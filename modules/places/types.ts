@@ -4,6 +4,31 @@ export type Coordinates = {
   accuracy?: number; // horizontal accuracy in meters
 };
 
+export const PLACE_VIBES = [
+  "lively",
+  "quiet",
+  "energetic",
+  "cozy",
+  "easyConversation",
+  "keepToSelf",
+  "meetPeople",
+  "closedGroups",
+  "goodSolo",
+  "betterAccompanied",
+  "goodDay",
+  "goodNight",
+  "weekendBest",
+
+] as const;
+
+export type PlaceVibe = (typeof PLACE_VIBES)[number];
+
+export type PlaceReview = {
+  average: number;
+  count: number;
+  tags?: PlaceVibe[];
+};
+
 export type Place = {
   placeId: string;
   name: string;
@@ -14,6 +39,7 @@ export type Place = {
   types?: string[]; // Para autocomplete - raw Foursquare category names
   active_users?: number; // Optional: number of active users currently at the place
   favorites_count?: number; // Optional: number of favorites for the place
+  review?: PlaceReview;
 };
 
 export type CityPrediction = {

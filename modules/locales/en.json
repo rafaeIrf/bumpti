@@ -3,11 +3,55 @@
     "report": "Report",
     "block": "Block",
     "delete": "Delete",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "navigate": "Navigate",
+    "save_rating": "Submit rating",
+    "rate": "Rate"
   },
   "welcome": "Welcome!",
   "explore": "Explore",
   "discover": "Discover",
+  "place": {
+    "reviews": {
+      "count": "Based on {{count}} experiences"
+    },
+    "new": "New on Bumpti",
+    "beFirst": "Be the first to rate the vibe",
+    "vibeDiscovery": "Vibe is still being discovered",
+    "vibes": {
+      "lively": "Lively",
+      "quiet": "Quiet",
+      "energetic": "Energetic",
+      "cozy": "Cozy",
+      "easyConversation": "Easy conversation",
+      "keepToSelf": "Keep to self",
+      "meetPeople": "Meet new people",
+      "closedGroups": "Closed groups",
+      "goodSolo": "Good for solo",
+      "betterAccompanied": "Better accompanied",
+      "goodDay": "Good in the day",
+      "goodNight": "Good at night",
+      "weekendBest": "Best on weekends"
+    },
+    "categories": {
+      "bar": "Bar",
+      "nightclub": "Nightclub",
+      "cafe": "Cafe",
+      "restaurant": "Restaurant",
+      "gym": "Gym",
+      "fitness_centre": "Fitness Center",
+      "university": "University",
+      "college": "College",
+      "park": "Park",
+      "museum": "Museum",
+      "stadium": "Stadium",
+      "library": "Library",
+      "sports_centre": "Sports Center",
+      "community_centre": "Community Center",
+      "events_venue": "Events Venue",
+      "club": "Club"
+    }
+  },
   "matches": "Chat",
   "profile": "Profile",
   "common": {
@@ -58,6 +102,17 @@
     "profileUnavailable": "Profile unavailable"
   },
   "screens": {
+    "ratePlace": {
+      "header": {
+        "helper": "Help others understand the vibe of this place"
+      },
+      "rating": {
+        "question": "How was the social experience here?"
+      },
+      "vibes": {
+        "question": "How would you describe the vibe?"
+      }
+    },
     "profile": {
       "title": "Profile",
       "settings": "Settings",
@@ -405,10 +460,6 @@
         "library": {
           "title": "Libraries & Study",
           "description": "Quiet spots to focus and work."
-        },
-        "communityFavorites": {
-          "title": "Community Favorites",
-          "description": "Most favorited places nearby."
         },
         "nearby": {
           "title": "What's nearby",

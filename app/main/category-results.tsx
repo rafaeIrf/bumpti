@@ -7,6 +7,7 @@ import {
   VenueState,
 } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
+import { PlaceDetailsBottomSheet } from "@/components/place-details-bottom-sheet";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -23,11 +24,17 @@ import {
   useGetPlacesByFavoritesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
-import { Place, PlaceCategory } from "@/modules/places/types";
+import {
+  Place,
+  PLACE_VIBES,
+  PlaceCategory,
+  PlaceVibe,
+} from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
-import { logger } from "@/utils/logger";
+import { formatDistance } from "@/utils/distance";
+import { openMaps } from "@/utils/maps";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
 
@@ -49,6 +56,11 @@ const allCategories: PlaceCategory[] = [
   "events_venue",
   "club",
 ];
+
+const getRandomVibes = (): PlaceVibe[] => {
+  const shuffled = [...PLACE_VIBES].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3);
+};
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
@@ -140,6 +152,11 @@ export default function CategoryResultsScreen() {
           latitude: place.latitude,
           longitude: place.longitude,
           active_users: place.active_users,
+          review: place.review || {
+            average: place.rating || 0,
+            count: place.user_ratings_total || 0,
+            tags: getRandomVibes(),
+          },
         })) || []
       );
     }
@@ -149,6 +166,7 @@ export default function CategoryResultsScreen() {
     if (communityFavoritesMode) {
       return communityFavoritesData || [];
     }
+    console.log(placesData);
     return placesData || [];
   }, [
     trendingMode,
@@ -158,22 +176,6 @@ export default function CategoryResultsScreen() {
     favoritePlacesData,
     communityFavoritesData,
     placesData,
-  ]);
-
-  useEffect(() => {
-    if (communityFavoritesMode) {
-      logger.log("CategoryResults - Community Favorites Mode:", {
-        isLoading: communityFavoritesLoading,
-        dataLength: communityFavoritesData?.length,
-        hasPlaces: places.length,
-        firstPlace: places[0],
-      });
-    }
-  }, [
-    communityFavoritesMode,
-    communityFavoritesLoading,
-    communityFavoritesData,
-    places,
   ]);
 
   // Filter places based on active filter
@@ -201,6 +203,8 @@ export default function CategoryResultsScreen() {
   const shouldShowFilters =
     (nearbyMode || trendingMode || favoritesMode || communityFavoritesMode) &&
     availableCategories.filter((c) => c !== "all").length > 1;
+
+  // ... existing code ...
 
   const handleConnectionBottomSheet = useCallback(
     (place: Place, venueState: VenueState) => {
@@ -232,6 +236,50 @@ export default function CategoryResultsScreen() {
       });
     },
     [bottomSheet]
+  );
+
+  // Function to show PlaceDetailsBottomSheet
+  const handleShowDetails = useCallback(
+    (place: Place) => {
+      console.log("place", place);
+      bottomSheet?.expand({
+        content: () => (
+          <PlaceDetailsBottomSheet
+            placeName={place.name}
+            placeId={place.placeId}
+            category={
+              place.types?.[0]
+                ? t(`place.categories.${place.types[0]}`)
+                : t("common.place")
+            }
+            address={place.formattedAddress || ""}
+            distance={formatDistance(place.distance)}
+            review={place.review}
+            isFavorite={favoriteIds.has(place.placeId)}
+            onNavigate={() => {
+              openMaps(place.formattedAddress || place.name);
+            }}
+            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
+            onClose={() => bottomSheet.close()}
+            onRate={() => {
+              bottomSheet.close();
+              router.push({
+                pathname: "/(modals)/rate-place",
+                params: {
+                  placeId: place.placeId,
+                  name: place.name,
+                  category: place.types?.[0]
+                    ? t(`place.categories.${place.types[0]}`)
+                    : t("common.place"),
+                },
+              });
+            }}
+          />
+        ),
+        draggable: true,
+      });
+    },
+    [bottomSheet, favoriteIds, handleToggle]
   );
 
   const handlePlaceClick = useCallback(
@@ -328,6 +376,7 @@ export default function CategoryResultsScreen() {
         isFavorite: favoriteIds.has(item.placeId),
         activeUsers: (item as any).active_users || 0,
         tag: item.types?.[0] || undefined,
+        review: item.review,
       };
 
       return (
@@ -340,12 +389,13 @@ export default function CategoryResultsScreen() {
           <PlaceCard
             place={placeData}
             onPress={() => handlePlaceClick(item)}
+            onInfoPress={() => handleShowDetails(item)}
             onToggleFavorite={(id, opts) => handleToggle(id, opts)}
           />
         </Animated.View>
       );
     },
-    [favoriteIds, handleToggle, handlePlaceClick]
+    [favoriteIds, handleToggle, handlePlaceClick, handleShowDetails]
   );
 
   const listFooterComponent = useMemo(

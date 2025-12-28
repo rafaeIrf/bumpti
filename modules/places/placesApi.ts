@@ -183,12 +183,10 @@ export const placesApi = createApi({
     >({
       queryFn: async ({ input, lat, lng, radius = 20000, sessionToken }) => {
         try {
-          const { places } = await searchPlacesByTextApi(
+          const places = await searchPlacesByTextApi(
             input,
             lat,
-            lng,
-            radius,
-            sessionToken
+            lng
           );
 
           return { data: { places } };

@@ -32,6 +32,7 @@ interface SearchResult {
   formattedAddress?: string;
   distance?: number; // Distance in km from backend
   active_users?: number;
+  rating?: number;
 }
 
 export interface PlaceSearchProps {
@@ -107,12 +108,13 @@ export default function PlaceSearch({
     if (!searchData?.places) return [];
 
     return searchData.places.map((p: any) => ({
-      placeId: p.placeId,
+      placeId: p.id,
       name: p.name,
-      formattedAddress: p.formattedAddress,
+      formattedAddress: p.formatted_address,
       types: p.types ?? [],
       distance: p.distance ?? 0, // Distance already calculated by backend in km
       active_users: p.active_users || 0,
+      rating: p.rating || p.total_score,
     }));
   }, [searchData]);
 
@@ -236,6 +238,7 @@ export default function PlaceSearch({
             activeUsers: item.active_users || 0,
             isFavorite: favoriteIds.has(item.placeId),
             tag,
+            rating: item.rating,
           }}
           onPress={() => handleResultPress(item)}
           onToggleFavorite={(id, opts) => handleToggle(id, opts)}

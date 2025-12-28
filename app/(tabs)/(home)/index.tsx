@@ -103,16 +103,6 @@ export default function HomeScreen() {
       illustration: Passion,
     },
     {
-      id: "favorites",
-      icon: HeartIcon,
-      title: t("screens.home.categories.favorites.title"),
-      description: t("screens.home.categories.favorites.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelTeal,
-      illustration: Heart,
-    },
-    {
       id: "community_favorites",
       icon: StarIcon,
       title: t("screens.home.categories.communityFavorites.title"),
@@ -121,6 +111,16 @@ export default function HomeScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPink,
       illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
+    },
+    {
+      id: "favorites",
+      icon: HeartIcon,
+      title: t("screens.home.categories.favorites.title"),
+      description: t("screens.home.categories.favorites.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelTeal,
+      illustration: Heart,
     },
     {
       id: "bars",
@@ -435,8 +435,8 @@ const styles = StyleSheet.create({
     paddingRight: 16, // Add padding to the end of the scroll
   },
   featuredItem: {
-    width: "48.5%",
-    maxWidth: "48.5%",
+    width: "47%",
+    maxWidth: "47%",
   },
   nearbyCard: {
     width: "100%",
