@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, MapPinIcon, SearchIcon } from "@/assets/icons";
+import { ArrowLeftIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CategoryFilterList } from "@/components/category-filter-list";
@@ -8,6 +8,7 @@ import {
 } from "@/components/connection-bottom-sheet";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
+import { PlacesEmptyState } from "@/components/places-empty-state";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -33,7 +34,7 @@ import { enterPlace } from "@/modules/presence/api";
 import { formatDistance } from "@/utils/distance";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
 
 const allCategories: PlaceCategory[] = [
@@ -289,47 +290,14 @@ export default function CategoryResultsScreen() {
     router.push("/main/place-search");
   };
 
-  const renderEmptyState = () => (
-    <Animated.View entering={FadeInDown.delay(0).springify()}>
-      <ThemedView style={styles.emptyContainer}>
-        <ThemedView
-          style={[
-            styles.emptyIcon,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <MapPinIcon width={48} height={48} color={colors.textSecondary} />
-        </ThemedView>
-        <ThemedText
-          style={[
-            styles.emptyTitle,
-            { ...typography.subheading, color: colors.text },
-          ]}
-        >
-          {t("screens.categoryResults.emptyTitle")}
-        </ThemedText>
-        <ThemedText
-          style={[
-            styles.emptyDescription,
-            { ...typography.body, color: colors.textSecondary },
-          ]}
-        >
-          {t("screens.categoryResults.emptyDescription")}
-        </ThemedText>
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.emptyButton, { backgroundColor: colors.accent }]}
-        >
-          <ThemedText style={[styles.emptyButtonText, { color: "#000" }]}>
-            {t("screens.categoryResults.tryAnother")}
-          </ThemedText>
-        </Pressable>
-      </ThemedView>
-    </Animated.View>
-  );
+  const emptyMode = useMemo(() => {
+    if (favoritesMode) return "favorites";
+    if (trendingMode) return "trending";
+    if (nearbyMode) return "nearby";
+    if (communityFavoritesMode) return "communityFavorites";
+    return "default";
+  }, [favoritesMode, trendingMode, nearbyMode, communityFavoritesMode]);
+
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: Place; index: number }) => {
       const placeData = {
@@ -434,7 +402,12 @@ export default function CategoryResultsScreen() {
           }
 
           if (places.length === 0) {
-            return renderEmptyState();
+            return (
+              <PlacesEmptyState
+                mode={emptyMode}
+                onPress={() => router.back()}
+              />
+            );
           }
 
           return (
@@ -470,38 +443,6 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     marginTop: spacing.sm,
-  },
-  // Empty state
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xxl,
-    minHeight: 400,
-  },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.lg,
-  },
-  emptyTitle: {
-    marginBottom: spacing.sm,
-    textAlign: "center",
-  },
-  emptyDescription: {
-    textAlign: "center",
-    maxWidth: 320,
-    marginBottom: spacing.lg,
-  },
-  emptyButton: {
-    paddingVertical: spacing.sm + 4,
-    borderRadius: 999,
-  },
-  emptyButtonText: {
-    fontWeight: "600",
   },
   // Places list
   listContainer: {

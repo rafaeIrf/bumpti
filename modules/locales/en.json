@@ -60,7 +60,7 @@
       "shopping": "Shopping"
     },
     "activeUsersLabel": "people here",
-    "noConnections": "No connections yet",
+    "noConnections": "Start connecting",
     "onePersonConnecting": "1 person connecting",
     "manyPeopleConnecting": "{{count}} people connecting"
   },
@@ -654,8 +654,38 @@
       "subtitle": "See the most popular places in the area",
       "mostPopular": "Most popular near you",
       "placesCount": "{{count}} places",
-      "emptyTitle": "No places of this category around here",
-      "emptyDescription": "There are no places of this category around here yet. How about exploring another vibe? 👀",
+      "emptyStates": {
+        "favorites": {
+          "title": "Your favorite spots are quiet",
+          "description": "Save the places you love most to know exactly when the vibe starts picking up.",
+          "button": "Discover new spots"
+        },
+        "trending": {
+          "title": "The vibe is just warming up",
+          "description": "We haven't detected a peak in activity just yet, but the best connections often happen when you least expect them.",
+          "button": "Explore other vibes"
+        },
+        "nearby": {
+          "title": "Exploring new horizons?",
+          "description": "We couldn't find any places around here. How about trying another category?",
+          "button": "Try another category"
+        },
+        "communityFavorites": {
+          "title": "Where does everyone meet?",
+          "description": "The community is still discovering the best secrets in this area. Why not be the first to favorite a spot?",
+          "button": "Explore surroundings"
+        },
+        "default": {
+          "title": "No places of this category around here",
+          "description": "There are no places of this category around here yet. How about exploring another vibe? 👀",
+          "button": "Try another category"
+        },
+        "search": {
+          "title": "No places found",
+          "description": "We couldn't find anything with that name. Try simplifying or searching by category.",
+          "button": "Clear search"
+        }
+      },
       "tryAnother": "Try another category 👇",
       "searchFallback": "Didn't find what you're looking for?",
       "searchCta": "Search places"

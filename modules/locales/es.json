@@ -60,7 +60,7 @@
       "shopping": "Centro comercial"
     },
     "activeUsersLabel": "personas aquí",
-    "noConnections": "Sin conexiones ahora",
+    "noConnections": "Inicia la conexión",
     "onePersonConnecting": "1 persona conectando",
     "manyPeopleConnecting": "{{count}} personas conectando"
   },
@@ -653,8 +653,38 @@
       "subtitle": "Vea los lugares más populares de la región",
       "mostPopular": "Más populares cerca de ti",
       "placesCount": "{{count}} lugares",
-      "emptyTitle": "No hay lugares de esta categoría por aquí",
-      "emptyDescription": "Todavía no hay lugares de esta categoría por aquí. ¿Qué tal explorar otra vibra? 👀",
+      "emptyStates": {
+        "favorites": {
+          "title": "Tus lugares favoritos están tranquilos",
+          "description": "Guarda los sitios que más te gustan para saber exactamente cuándo empieza el movimiento.",
+          "button": "Descubrir nuevos sitios"
+        },
+        "trending": {
+          "title": "El ambiente se está calentando",
+          "description": "Aún no detectamos un pico de movimiento, pero las mejores conexiones suelen ocurrir por sorpresa.",
+          "button": "Explorar otras vibras"
+        },
+        "nearby": {
+          "title": "¿Explorando nuevos horizontes?",
+          "description": "No encontramos lugares por aquí. ¿Qué tal probar con otra categoría?",
+          "button": "Probar otra categoría"
+        },
+        "communityFavorites": {
+          "title": "¿Dónde se encuentra todo el mundo?",
+          "description": "La comunidad aún está descubriendo los mejores secretos de esta zona. ¡Sé el primero en marcar un lugar como favorito!",
+          "button": "Explorar alrededores"
+        },
+        "default": {
+          "title": "No hay lugares de esta categoría por aquí",
+          "description": "Todavía no hay lugares de esta categoría por aquí. ¿Qué tal explorar otra vibra? 👀",
+          "button": "Probar otra categoría"
+        },
+        "search": {
+          "title": "No se encontraron lugares",
+          "description": "No pudimos encontrar nada con ese nombre. Intenta simplificar o buscar por una categoría.",
+          "button": "Limpiar búsqueda"
+        }
+      },
       "tryAnother": "Prueba otra categoría 👇",
       "infoText": "Los lugares están ordenados por popularidad. Toca una tarjeta para ver más detalles y conectarte con las personas que están allí.",
       "searchFallback": "¿No encontraste lo que buscabas?",

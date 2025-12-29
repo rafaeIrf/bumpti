@@ -1,6 +1,7 @@
-import { MapPinIcon, SearchIcon } from "@/assets/icons";
+import { SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { PlaceCard } from "@/components/place-card";
+import { PlacesEmptyState } from "@/components/places-empty-state";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -389,45 +390,7 @@ export function PlaceSearchContent({
       />
     );
   } else {
-    content = (
-      <ThemedView style={styles.noResults}>
-        <ThemedView
-          style={[
-            styles.emptyIcon,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <MapPinIcon width={40} height={40} color={colors.textSecondary} />
-        </ThemedView>
-        <ThemedText
-          style={{
-            color: colors.text,
-            fontSize: 18,
-            marginBottom: spacing.xs,
-          }}
-        >
-          {t("screens.placeSearch.noResultsTitle")}
-        </ThemedText>
-        <ThemedText
-          style={{
-            color: colors.textSecondary,
-            textAlign: "center",
-            maxWidth: 280,
-          }}
-        >
-          {t("screens.placeSearch.noResultsDescription")}
-        </ThemedText>
-        <Pressable onPress={clearSearch}>
-          <ThemedView
-            style={[styles.clearButton, { backgroundColor: colors.accent }]}
-          >
-            <ThemedText style={{ color: "#000", fontWeight: "600" }}>
-              {t("screens.placeSearch.clearButton")}
-            </ThemedText>
-          </ThemedView>
-        </Pressable>
-      </ThemedView>
-    );
+    content = <PlacesEmptyState mode="search" onPress={clearSearch} />;
   }
 
   const handleDone = useCallback(() => {
