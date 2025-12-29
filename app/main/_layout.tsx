@@ -30,6 +30,13 @@ export default function MainLayout() {
           animation: "slide_from_right",
         }}
       />
+      <Stack.Screen
+        name="favorite-places"
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }

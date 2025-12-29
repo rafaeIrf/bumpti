@@ -10,12 +10,6 @@ export default function ProfileLayout() {
           presentation: "modal",
         }}
       />
-      <Stack.Screen
-        name="edit/favorite-places"
-        options={{
-          presentation: "modal",
-        }}
-      />
     </Stack>
   );
 }

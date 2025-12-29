@@ -72,7 +72,6 @@ export default function EditFavoritePlacesScreen() {
 
   return (
     <BaseTemplateScreen
-      isModal
       TopHeader={
         <ScreenToolbar
           title={t("screens.profile.profileEdit.interests.spots")}
@@ -104,7 +103,6 @@ export default function EditFavoritePlacesScreen() {
       }
     >
       <FavoritePlacesContent
-        showHeader={false}
         selectedPlaceIds={selectedPlaceIds}
         togglePlace={togglePlace}
         handleOpenSearch={handleOpenSearch}

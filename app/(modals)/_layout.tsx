@@ -11,6 +11,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="premium-paywall" />
       <Stack.Screen name="report" />
       <Stack.Screen name="profile-preview" />
+      <Stack.Screen name="place-search" />
     </Stack>
   );
 }

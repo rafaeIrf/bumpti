@@ -160,7 +160,7 @@ export default function ProfileEditScreen() {
 
   const handleFieldPress = (field: FieldType) => {
     if (field === "spots") {
-      router.push("/(tabs)/(profile)/edit/favorite-places");
+      router.push("/main/favorite-places");
       return;
     }
     router.push({
