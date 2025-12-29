@@ -157,7 +157,7 @@ export async function getTrendingPlaces(
       placeId: p.place_id,
       name: p.name,
       formattedAddress: p.formattedAddress,
-      distance: p.distance,
+      distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
       latitude: p.latitude,
       longitude: p.longitude,
       types: p.types,
@@ -186,7 +186,10 @@ export async function getFavoritePlaces(
   }
 
   return {
-    places: data?.places || [],
+    places: (data?.places || []).map((p: any) => ({
+      ...p,
+      distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
+    })),
   };
 }
 

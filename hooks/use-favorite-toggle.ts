@@ -1,6 +1,6 @@
 import {
-    useGetFavoritePlacesQuery,
-    useToggleFavoritePlaceMutation,
+  useGetFavoritePlacesQuery,
+  useToggleFavoritePlaceMutation,
 } from "@/modules/places/placesApi";
 import { useCallback, useMemo, useState } from "react";
 
@@ -33,10 +33,17 @@ export function useFavoriteToggle(queryArg?: { lat?: number; lng?: number }) {
   }, [data?.places, optimisticOverrides]);
 
   const handleToggle = useCallback(
-    (placeId: string, options?: ToggleOptions) => {
+    (
+      placeId: string,
+      options?: ToggleOptions & {
+        details?: { name: string; emoji?: string };
+        place?: any;
+      }
+    ) => {
       // Determine new value
       const currentValue = favoriteIds.has(placeId);
-      const nextValue = typeof options?.value === "boolean" ? options.value : !currentValue;
+      const nextValue =
+        typeof options?.value === "boolean" ? options.value : !currentValue;
 
       // Update local optimistic state immediately
       setOptimisticOverrides((prev) => ({
@@ -44,14 +51,16 @@ export function useFavoriteToggle(queryArg?: { lat?: number; lng?: number }) {
         [placeId]: nextValue,
       }));
 
-      if (options?.optimisticOnly) {
-        return;
-      }
+      // Determine if we should sync to server
+      const shouldSync = options?.sync ?? !options?.optimisticOnly;
 
-      if (options?.sync) {
+      if (shouldSync) {
         toggleFavoritePlace({
           placeId,
           action: nextValue ? "add" : "remove",
+          name: options?.details?.name,
+          emoji: options?.details?.emoji,
+          place: options?.place,
           queryArg,
         });
       }

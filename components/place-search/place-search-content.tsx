@@ -1,11 +1,11 @@
 import { MapPinIcon, SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { PlaceCard } from "@/components/place-card";
-import { PlaceCardSelection } from "@/components/place-card-selection";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
@@ -13,6 +13,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { enterPlace } from "@/modules/presence/api";
+import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -181,6 +182,8 @@ export function PlaceSearchContent({
           params: {
             placeId: result.placeId,
             placeName: result.name,
+            distance: formatDistance(result.distance ?? 0),
+            distanceKm: (result.distance ?? 0).toString(),
           },
         });
       }
@@ -223,13 +226,22 @@ export function PlaceSearchContent({
       const isSelected = localSelectedIds.includes(item.placeId);
 
       if (multiSelectMode) {
+        const categoryLabel = item.category
+          ? t(`place.categories.${item.category}`)
+          : "";
+        const distanceLabel = item.distance
+          ? formatDistance(item.distance)
+          : "";
+        const description = [categoryLabel, distanceLabel]
+          .filter(Boolean)
+          .join(" • ");
+
         return (
-          <PlaceCardSelection
-            placeId={item.placeId}
-            name={item.name}
-            category={item.category}
+          <SelectionCard
+            label={item.name}
+            description={description || undefined}
             isSelected={isSelected}
-            onToggle={() => handleResultPress(item)}
+            onPress={() => handleResultPress(item)}
           />
         );
       }
@@ -261,7 +273,22 @@ export function PlaceSearchContent({
             })
           }
           isFavorite={favoriteIds.has(item.placeId)}
-          onToggleFavorite={() => handleToggle(item.placeId)}
+          onToggleFavorite={() =>
+            handleToggle(item.placeId, {
+              place: {
+                placeId: item.placeId,
+                name: item.name,
+                formattedAddress: item.formattedAddress,
+                distance: item.distance,
+                latitude: item.lat,
+                longitude: item.lng,
+                types: [item.category],
+                active_users: item.active_users,
+                review: item.review as any,
+              },
+              details: { name: item.name, emoji: (item as any).emoji },
+            })
+          }
         />
       );
     },

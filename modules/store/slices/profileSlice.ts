@@ -57,11 +57,20 @@ const profileSlice = createSlice({
     setProfileLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setFavoritePlaces: (state, action: PayloadAction<any[]>) => {
+      if (state.data) {
+        state.data.favoritePlaces = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
 
-export const { setProfile, setProfileLoading, resetProfile } =
-  profileSlice.actions;
+export const {
+  setProfile,
+  setProfileLoading,
+  setFavoritePlaces,
+  resetProfile,
+} = profileSlice.actions;
 
 export default profileSlice.reducer;
