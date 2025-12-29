@@ -1,12 +1,11 @@
+import { ActionButton } from "@/components/ui/action-button";
 import { typography } from "@/constants/theme";
 import { ComponentType } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   SharedValue,
   interpolate,
   useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -30,8 +29,6 @@ interface ScreenToolbarProps {
   scrollY?: SharedValue<number>;
   customTitleView?: React.ReactNode; // Custom title (ex: connected state)
 }
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function ScreenToolbar({
   leftAction,
@@ -161,52 +158,6 @@ export function ScreenToolbar({
         </View>
       </View>
     </View>
-  );
-}
-
-function ActionButton({
-  icon: IconComponent,
-  label,
-  onPress,
-  ariaLabel,
-  color = "#FFF",
-}: {
-  icon?: ComponentType<SvgProps>;
-  label?: string;
-  onPress: () => void;
-  ariaLabel: string;
-  color?: string;
-}) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95);
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
-
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={[styles.actionButton, animatedStyle]}
-      accessibilityLabel={ariaLabel}
-    >
-      {IconComponent ? (
-        <IconComponent width={24} height={24} color={color} stroke={color} />
-      ) : (
-        <Text style={[typography.body, { color, fontWeight: "600" }]}>
-          {label}
-        </Text>
-      )}
-    </AnimatedPressable>
   );
 }
 

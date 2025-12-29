@@ -15,7 +15,7 @@ import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useFavoritePlacesList } from "@/hooks/use-favorite-places-list";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import {
@@ -23,11 +23,15 @@ import {
   useGetPlacesByFavoritesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
-import { Place, PlaceCategory } from "@/modules/places/types";
+import {
+  Place,
+  PLACE_VIBES,
+  PlaceCategory,
+  PlaceVibe,
+} from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
-import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
 
@@ -45,8 +49,15 @@ const allCategories: PlaceCategory[] = [
   "stadium",
   "library",
   "sports_centre",
+  "community_centre",
+  "events_venue",
   "club",
 ];
+
+const getRandomVibes = (): PlaceVibe[] => {
+  const shuffled = [...PLACE_VIBES].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3);
+};
 
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
@@ -81,24 +92,7 @@ export default function CategoryResultsScreen() {
   const communityFavoritesMode = params.communityFavorites === "true";
 
   // When nearby or communityFavorites mode is active, we fetch ALL categories
-  const targetCategory =
-    nearbyMode || communityFavoritesMode
-      ? [
-          "bar",
-          "nightclub",
-          "cafe",
-          "restaurant",
-          "gym",
-          "fitness_centre",
-          "university",
-          "college",
-          "park",
-          "museum",
-          "stadium",
-          "library",
-          "club",
-        ]
-      : category;
+  const targetCategory = nearbyMode ? allCategories : category;
 
   const shouldFetchNearby =
     !favoritesMode &&
@@ -128,7 +122,7 @@ export default function CategoryResultsScreen() {
       {
         latitude: userLocation?.latitude ?? 0,
         longitude: userLocation?.longitude ?? 0,
-        category: activeFilter !== "all" ? [activeFilter] : undefined,
+        category: targetCategory,
       },
       {
         skip: !shouldFetchCommunityFavorites,
@@ -139,7 +133,9 @@ export default function CategoryResultsScreen() {
 
   const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
-  const { favoriteIds, handleToggle } = useFavoriteToggle(favoriteQueryArg);
+  const { showPlaceDetails, favoriteIds, handleToggle } = usePlaceDetailsSheet({
+    queryArg: favoriteQueryArg,
+  });
 
   // Transform API results to Place format
   const places: Place[] = useMemo(() => {
@@ -155,6 +151,11 @@ export default function CategoryResultsScreen() {
           latitude: place.latitude,
           longitude: place.longitude,
           active_users: place.active_users,
+          review: place.review || {
+            average: place.rating || 0,
+            count: place.user_ratings_total || 0,
+            tags: getRandomVibes(),
+          },
         })) || []
       );
     }
@@ -164,6 +165,7 @@ export default function CategoryResultsScreen() {
     if (communityFavoritesMode) {
       return communityFavoritesData || [];
     }
+    console.log(placesData);
     return placesData || [];
   }, [
     trendingMode,
@@ -173,22 +175,6 @@ export default function CategoryResultsScreen() {
     favoritePlacesData,
     communityFavoritesData,
     placesData,
-  ]);
-
-  useEffect(() => {
-    if (communityFavoritesMode) {
-      logger.log("CategoryResults - Community Favorites Mode:", {
-        isLoading: communityFavoritesLoading,
-        dataLength: communityFavoritesData?.length,
-        hasPlaces: places.length,
-        firstPlace: places[0],
-      });
-    }
-  }, [
-    communityFavoritesMode,
-    communityFavoritesLoading,
-    communityFavoritesData,
-    places,
   ]);
 
   // Filter places based on active filter
@@ -216,6 +202,8 @@ export default function CategoryResultsScreen() {
   const shouldShowFilters =
     (nearbyMode || trendingMode || favoritesMode || communityFavoritesMode) &&
     availableCategories.filter((c) => c !== "all").length > 1;
+
+  // ... existing code ...
 
   const handleConnectionBottomSheet = useCallback(
     (place: Place, venueState: VenueState) => {
@@ -289,7 +277,7 @@ export default function CategoryResultsScreen() {
   );
 
   const handleOpenSearch = () => {
-    router.push("/place-search");
+    router.push("/main/place-search");
   };
 
   const renderEmptyState = () => (
@@ -340,9 +328,9 @@ export default function CategoryResultsScreen() {
         name: item.name,
         address: item.formattedAddress ?? "",
         distance: item.distance,
-        isFavorite: favoriteIds.has(item.placeId),
         activeUsers: (item as any).active_users || 0,
         tag: item.types?.[0] || undefined,
+        review: item.review,
       };
 
       return (
@@ -355,12 +343,14 @@ export default function CategoryResultsScreen() {
           <PlaceCard
             place={placeData}
             onPress={() => handlePlaceClick(item)}
-            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
+            onInfoPress={() => showPlaceDetails(item)}
+            isFavorite={favoriteIds.has(item.placeId)}
+            onToggleFavorite={() => handleToggle(item.placeId)}
           />
         </Animated.View>
       );
     },
-    [favoriteIds, handleToggle, handlePlaceClick]
+    [handlePlaceClick, showPlaceDetails, favoriteIds, handleToggle]
   );
 
   const listFooterComponent = useMemo(
@@ -408,7 +398,7 @@ export default function CategoryResultsScreen() {
             }}
             title={categoryName || ""}
             rightActions={
-              favoritesMode || trendingMode
+              favoritesMode || trendingMode || communityFavoritesMode
                 ? []
                 : [
                     {

@@ -58,24 +58,30 @@ serve(async (req) => {
         });
     }
 
-    const mappedResults = (localPlaces || []).map((p: any) => ({
-        placeId: p.id,
-        name: p.name,
-        formattedAddress: [
-            p.street, 
-            p.house_number, 
-            p.city, 
-            p.state, 
-            p.country
-        ].filter(Boolean).join(", "),
-        distance: p.dist_meters ? p.dist_meters / 1000 : 0, // meters to km
-        latitude: p.lat,
-        longitude: p.lng,
-        types: [p.category],
-        active_users: p.active_users || 0
-    }));
+    const results = (localPlaces || []).map((p: any) => {
+        const addressParts = [];
+        
+        if (p.street && p.house_number) {
+            addressParts.push(`${p.street}, ${p.house_number}`);
+        } else if (p.street) {
+            addressParts.push(p.street);
+        }
 
-    return new Response(JSON.stringify({ places: mappedResults }), {
+        // Destructure to remove raw review fields from top-level response
+        const { review_average, review_count, review_tags, ...placeData } = p;
+        
+        return {
+            ...placeData,
+            formatted_address: addressParts.join(", "),
+            review: p.review_count > 0 ? {
+                average: p.review_average,
+                count: p.review_count,
+                tags: p.review_tags
+            } : undefined
+        };
+    });
+
+    return new Response(JSON.stringify(results), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -126,7 +126,7 @@ export default function EditFieldScreen() {
 
       if (nextFieldKey) {
         if (nextFieldKey === "spots") {
-          router.replace("/(tabs)/(profile)/edit/favorite-places");
+          router.replace("/main/favorite-places");
         } else {
           router.setParams({ field: nextFieldKey });
         }
@@ -143,7 +143,7 @@ export default function EditFieldScreen() {
     if (currentIndex !== -1 && currentIndex < PROFILE_FIELDS_ORDER.length - 1) {
       const nextField = PROFILE_FIELDS_ORDER[currentIndex + 1];
       if (nextField === "spots") {
-        router.replace("/(tabs)/(profile)/edit/favorite-places");
+        router.replace("/main/favorite-places");
       } else {
         router.setParams({ field: nextField });
       }

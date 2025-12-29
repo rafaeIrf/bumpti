@@ -144,11 +144,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch place details from database
+    // Fetch place details from database using places_view (includes review data)
     const placeIds = topPlaces.map((pc: { place_id: string }) => pc.place_id);
     const { data: placesData, error: placesError } = await serviceSupabase
-      .from("places")
-      .select("id, name, category, lat, lng, street, city")
+      .from("places_view")
+      .select("id, name, category, lat, lng, street, city, review_average, review_count, review_tags")
       .in("id", placeIds);
 
     if (placesError) {
@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
 
-        const formattedAddress = [place.street, place.city].filter(Boolean).join(", ");
+        const formattedAddress = [place.street, place.house_number].filter(Boolean).join(", ");
 
         return {
           place_id: place.id,
@@ -200,6 +200,11 @@ Deno.serve(async (req) => {
           types: place.category ? [place.category] : [],
           latitude: place.lat,
           longitude: place.lng,
+          review: place.review_count > 0 ? {
+            average: place.review_average,
+            count: place.review_count,
+            tags: place.review_tags
+          } : undefined,
         };
       })
       .filter((place) => place.active_users > 0) // Remove places with 0 active users

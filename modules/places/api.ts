@@ -23,9 +23,7 @@ export async function searchPlacesByText(
   input: string,
   lat: number,
   lng: number,
-  radius?: number,
-  sessionToken?: string
-): Promise<{ places: (Place & { active_users?: number })[] }> {
+): Promise<Place[]> {
   // We use the new places-autocomplete function which uses Photon
   // It expects GET with q, lat, lng
   const params = new URLSearchParams({
@@ -35,21 +33,28 @@ export async function searchPlacesByText(
     limit: "10"
   });
 
-  const { data, error } = await supabase.functions.invoke<{ places: any[] }>(`places-autocomplete?${params.toString()}`, {
+  const { data, error } = await supabase.functions.invoke<Place[]>(`places-autocomplete?${params.toString()}`, {
     method: "GET"
   });
 
   if (error) {
     logger.error("places-autocomplete (edge) error:", error);
-    return { places: [] };
+    return [];
   }
 
-  // The edge function now does the mapping and distance calculation
-  const places: Place[] = (data?.places || []);
-
-  return {
-    places: places,
-  };
+  return data?.map((p: any) => {
+    return {
+      placeId: p.id,
+      name: p.name,
+      formattedAddress: p.formatted_address,
+      distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
+      latitude: p.lat,
+      longitude: p.lng,
+      types: [p.category], // put category in types
+      active_users: p.active_users,
+      review: p.review
+    };
+  }) || [];
 }
 
 // Fetch nearby places for given category
@@ -58,8 +63,6 @@ export async function getNearbyPlaces(
   longitude: number,
   category: string[], // General category name (bars, cafes, etc.)
 ): Promise<Place[]> {
-  logger.log('category', category);
-  
   const { data, error } = await supabase.functions.invoke<any[]>("places-nearby", {
     body: {
       lat: latitude,
@@ -76,30 +79,16 @@ export async function getNearbyPlaces(
   // Map RPC result to Place type
   // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, dist_meters
   return (data || []).map((p: any) => {
-    // Build address parts in proper order
-    const addressParts = [];
-    
-    // Street with house number (e.g., "Rua Augusta, 123")
-    if (p.street && p.house_number) {
-      addressParts.push(`${p.street}, ${p.house_number}`);
-    } else if (p.street) {
-      addressParts.push(p.street);
-    }
-    
-    // City, State, Country
-    if (p.city) addressParts.push(p.city);
-    if (p.state) addressParts.push(p.state);
-    if (p.country) addressParts.push(p.country);
-    
     return {
       placeId: p.id,
       name: p.name,
-      formattedAddress: addressParts.join(", "),
+      formattedAddress: p.formatted_address,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
       latitude: p.lat,
       longitude: p.lng,
       types: [p.category], // put category in types
-      active_users: p.active_users
+      active_users: p.active_users,
+      review: p.review
     };
   });
 }
@@ -110,7 +99,6 @@ export async function getPlacesByFavorites(
   longitude: number,
   category?: string[], // Optional category filter
 ): Promise<Place[]> {
-  logger.log('getPlacesByFavorites category', category);
 
   const { data, error } = await supabase.functions.invoke<any[]>("places-by-favorites", {
     body: {
@@ -126,7 +114,7 @@ export async function getPlacesByFavorites(
   }
 
   // Map RPC result to Place type
-  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, favorites_count, dist_meters
+  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, favorites_count, dist_meters, review
   return (data || []).map((p: any) => {
     return {
       placeId: p.id,
@@ -137,7 +125,9 @@ export async function getPlacesByFavorites(
       longitude: p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
-      favorites_count: p.favorites_count
+      favorites_count: p.favorites_count,
+      rating: p.rating || p.total_score,
+      review: p.review
     };
   });
 }
@@ -157,8 +147,6 @@ export async function getTrendingPlaces(
     },
   });
 
-  logger.log("getTrendingPlaces data:", data);
-  
   if (error) {
     logger.error("Failed to fetch trending places (edge):", error);
     return { places: [] };
@@ -174,6 +162,7 @@ export async function getTrendingPlaces(
       longitude: p.longitude,
       types: p.types,
       active_users: p.active_users,
+      review: p.review,
     })),
   };
 }
@@ -301,3 +290,31 @@ export async function detectPlace(
 
   return data?.data || null;
 }
+
+export async function saveSocialReview(payload: {
+  placeId: string;
+  rating: number;
+  selectedVibes: string[];
+}): Promise<{
+  review_id: string;
+  place_id: string;
+  stars: number;
+  tags: string[];
+  placeStats: {
+    averageRating: number;
+    reviewCount: number;
+    topTags: string[];
+  };
+}> {
+  const { data, error } = await supabase.functions.invoke("save-social-review", {
+    body: payload,
+  });
+
+  if (error) {
+    logger.error("save-social-review error:", error);
+    throw error;
+  }
+
+  return data;
+}
+

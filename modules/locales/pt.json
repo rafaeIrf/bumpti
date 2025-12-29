@@ -3,11 +3,63 @@
     "report": "Denunciar",
     "block": "Bloquear",
     "delete": "Excluir",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "navigate": "Navegar",
+    "save_rating": "Enviar avaliação",
+    "rate": "Avaliar",
+    "details": "Detalhes"
   },
   "welcome": "Bem-vindo!",
   "explore": "Explorar",
   "discover": "Descubra",
+  "place": {
+    "reviews": {
+      "count": "Baseado em {{count}} experiências"
+    },
+    "new": "Novo no Bumpti",
+    "beFirst": "Seja o primeiro a avaliar a vibe",
+    "vibeDiscovery": "A vibe ainda está sendo descoberta",
+    "vibes": {
+      "easy_to_connect": "Conexão flui fácil",
+      "hard_to_connect": "Difícil se conectar",
+      "open_crowd": "Pessoas abertas",
+      "reserved_crowd": "Pessoas mais reservadas",
+      "meet_new_people": "Bom para conhecer pessoas novas",
+      "closed_groups": "Grupos fechados predominam",
+      "community_vibe": "Clima de comunidade",
+      "solo_friendly": "Funciona bem indo sozinho",
+      "better_with_company": "Funciona melhor acompanhado",
+      "easy_to_join_groups": "Fácil se integrar a grupos",
+      "socially_active": "Interação social frequente",
+      "low_social_interaction": "Pouca interação social",
+      "conversation_focused": "Conversas são o foco",
+      "activity_focused": "Atividades importam mais",
+      "works_better_daytime": "Funciona melhor de dia",
+      "works_better_nighttime": "Funciona melhor à noite"
+    },
+    "categories": {
+      "bar": "Bar",
+      "nightclub": "Balada",
+      "cafe": "Café",
+      "restaurant": "Restaurante",
+      "gym": "Academia",
+      "fitness_centre": "Centro Fitness",
+      "university": "Universidade",
+      "college": "Faculdade",
+      "park": "Parque",
+      "museum": "Museu",
+      "stadium": "Estádio",
+      "library": "Biblioteca",
+      "sports_centre": "Centro Esportivo",
+      "community_centre": "Centro Comunitário",
+      "events_venue": "Local de Eventos",
+      "club": "Clube"
+    },
+    "activeUsersLabel": "pessoas no local",
+    "noConnections": "Nenhuma conexão agora",
+    "onePersonConnecting": "1 pessoa conectando",
+    "manyPeopleConnecting": "{{count}} pessoas se conectando"
+  },
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
@@ -59,6 +111,17 @@
     "profileUnavailable": "Perfil indisponível"
   },
   "screens": {
+    "ratePlace": {
+      "header": {
+        "helper": "Ajude outras pessoas a entender a vibe desse lugar"
+      },
+      "rating": {
+        "question": "Como foi a experiência social aqui?"
+      },
+      "vibes": {
+        "question": "Como você descreveria a vibe?"
+      }
+    },
     "profile": {
       "title": "Perfil",
       "settings": "Configurações",
@@ -406,10 +469,6 @@
         "library": {
           "title": "Bibliotecas e Estudos",
           "description": "Lugares calmos para focar e trabalhar."
-        },
-        "communityFavorites": {
-          "title": "Favoritos da Comunidade",
-          "description": "Lugares mais favoritados por perto."
         },
         "nearby": {
           "title": "O que está por perto",

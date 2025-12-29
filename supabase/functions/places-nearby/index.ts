@@ -73,7 +73,30 @@ serve(async (req) => {
       });
     }
 
-    const results = places || [];
+    const results = (places || []).map((p: any) => {
+        // Build address parts in proper order
+        const addressParts = [];
+        
+        // Street with house number (e.g., "Rua Augusta, 123")
+        if (p.street && p.house_number) {
+            addressParts.push(`${p.street}, ${p.house_number}`);
+        } else if (p.street) {
+            addressParts.push(p.street);
+        }
+
+        // Destructure to remove raw review fields from top-level response
+        const { review_average, review_count, review_tags, ...placeData } = p;
+        
+        return {
+            ...placeData,
+            formatted_address: addressParts.join(", "),
+            review: p.review_count > 0 ? {
+                average: p.review_average,
+                count: p.review_count,
+                tags: p.review_tags
+            } : undefined
+        };
+    });
 
     // Note: The auto-seed logic was removed since places are now populated manually.
     // If no places are found in a city, they need to be imported manually.

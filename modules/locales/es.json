@@ -3,11 +3,63 @@
     "report": "Reportar",
     "block": "Bloquear",
     "delete": "Eliminar",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "navigate": "Navegar",
+    "save_rating": "Enviar evaluación",
+    "rate": "Calificar",
+    "details": "Detalles"
   },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",
   "discover": "Descubrir",
+  "place": {
+    "reviews": {
+      "count": "Basado en {{count}} experiencias"
+    },
+    "new": "Nuevo en Bumpti",
+    "beFirst": "Sé el primero en calificar la vibra",
+    "vibeDiscovery": "La vibra aún se está descubriendo",
+    "vibes": {
+      "easy_to_connect": "Fácil conectar",
+      "hard_to_connect": "Difícil conectar",
+      "open_crowd": "Gente abierta",
+      "reserved_crowd": "Gente reservada",
+      "meet_new_people": "Bueno para conocer gente",
+      "closed_groups": "Predominan grupos cerrados",
+      "community_vibe": "Ambiente de comunidad",
+      "solo_friendly": "Bueno para ir solo",
+      "better_with_company": "Mejor acompañado",
+      "easy_to_join_groups": "Fácil unirse a grupos",
+      "socially_active": "Interacción social frecuente",
+      "low_social_interaction": "Poca interacción social",
+      "conversation_focused": "Enfocado en conversar",
+      "activity_focused": "Enfocado en actividades",
+      "works_better_daytime": "Mejor de día",
+      "works_better_nighttime": "Mejor de noche"
+    },
+    "categories": {
+      "bar": "Bar",
+      "nightclub": "Discoteca",
+      "cafe": "Cafetería",
+      "restaurant": "Restaurante",
+      "gym": "Gimnasio",
+      "fitness_centre": "Centro Fitness",
+      "university": "Universidad",
+      "college": "Universidad",
+      "park": "Parque",
+      "museum": "Museo",
+      "stadium": "Estadio",
+      "library": "Biblioteca",
+      "sports_centre": "Centro Deportivo",
+      "community_centre": "Centro Comunitario",
+      "events_venue": "Lugar de Eventos",
+      "club": "Club"
+    },
+    "activeUsersLabel": "personas aquí",
+    "noConnections": "Sin conexiones ahora",
+    "onePersonConnecting": "1 persona conectando",
+    "manyPeopleConnecting": "{{count}} personas conectando"
+  },
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
@@ -59,6 +111,17 @@
     "profileUnavailable": "Perfil no disponible"
   },
   "screens": {
+    "ratePlace": {
+      "header": {
+        "helper": "Ayuda a otros a entender la vibra de este lugar"
+      },
+      "rating": {
+        "question": "¿Cómo fue la experiencia social aquí?"
+      },
+      "vibes": {
+        "question": "¿Cómo describirías la vibra?"
+      }
+    },
     "profile": {
       "title": "Perfil",
       "settings": "Configuración",
@@ -405,10 +468,6 @@
         "library": {
           "title": "Bibliotecas y Estudio",
           "description": "Lugares tranquilos para concentrarse."
-        },
-        "communityFavorites": {
-          "title": "Favoritos de la Comunidad",
-          "description": "Lugares más favoritos cercanos."
         },
         "nearby": {
           "title": "Qué hay cerca",
