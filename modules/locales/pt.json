@@ -53,7 +53,11 @@
       "sports_centre": "Centro Esportivo",
       "community_centre": "Centro Comunitário",
       "events_venue": "Local de Eventos",
-      "club": "Clube"
+      "club": "Clube",
+      "dance_club": "Dança",
+      "theatre": "Teatro",
+      "casino": "Cassino",
+      "shopping": "Shopping"
     },
     "activeUsersLabel": "pessoas no local",
     "noConnections": "Nenhuma conexão agora",
@@ -103,7 +107,11 @@
       "stadium": "Estádios",
       "library": "Bibliotecas",
       "sports_centre": "Centros Esportivos",
-      "club": "Clubes"
+      "club": "Clubes",
+      "dance_club": "Escolas de Dança",
+      "theatre": "Teatros",
+      "casino": "Cassinos",
+      "shopping": "Shopping Centers"
     }
   },
   "errors": {
