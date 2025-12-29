@@ -9,8 +9,9 @@ import {
   type PlacesByCategory,
   saveSocialReview,
   searchPlacesByText as searchPlacesByTextApi,
-  toggleFavoritePlace as toggleFavoritePlaceApi
+  toggleFavoritePlace as toggleFavoritePlaceApi,
 } from "@/modules/places/api";
+import { setFavoritePlaces } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Place, PlaceCategory } from "./types";
 
@@ -235,46 +236,108 @@ export const placesApi = createApi({
     }),
 
     toggleFavoritePlace: builder.mutation<
-      void,
-      { placeId: string; action: "add" | "remove"; queryArg?: { lat?: number; lng?: number } }
+      any,
+      {
+        placeId: string;
+        action: "add" | "remove";
+        name?: string;
+        emoji?: string;
+        place?: Partial<Place>;
+        queryArg?: { lat?: number; lng?: number };
+      }
     >({
-          queryFn: async ({ placeId, action }) => {
-            try {
-              await toggleFavoritePlaceApi({ placeId, action });
-              return { data: { success: true } };
-            } catch (error) {
-              return { error: { status: "CUSTOM_ERROR", error: String(error) } };
-            }
-          },
-      onQueryStarted: ({ placeId, action, queryArg }, { dispatch, queryFulfilled }) => {
+      queryFn: async ({ placeId, action }) => {
+        try {
+          await toggleFavoritePlaceApi({ placeId, action });
+          return { data: null };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      onQueryStarted: (
+        { placeId, action, queryArg, name, emoji, place },
+        { dispatch, queryFulfilled, getState }
+      ) => {
+        // 1. Sync getFavoritePlaces cache
         const targets = [
           queryArg ?? undefined,
           undefined, // default cache entry
         ].filter(
-          (value, index, self) => self.findIndex((v) => JSON.stringify(v) === JSON.stringify(value)) === index
+          (value, index, self) =>
+            self.findIndex((v) => JSON.stringify(v) === JSON.stringify(value)) ===
+            index
         );
 
         const patches = targets.map((target) =>
           dispatch(
-            placesApi.util.updateQueryData("getFavoritePlaces", target as any, (draft) => {
-              if (!draft?.places) return;
-              if (action === "add") {
-                // Without place details we can't insert; rely on refetch
-                return;
+            placesApi.util.updateQueryData(
+              "getFavoritePlaces",
+              target as any,
+              (draft) => {
+                if (!draft?.places) return;
+                if (action === "add") {
+                  if (
+                    !draft.places.some((p: any) => (p.placeId || p.id) === placeId)
+                  ) {
+                    const newPlace = {
+                      placeId,
+                      name: place?.name || name || placeId,
+                      emoji: emoji || (place as any)?.emoji || "📍",
+                      formattedAddress: place?.formattedAddress,
+                      distance: place?.distance || 0,
+                      latitude: place?.latitude || 0,
+                      longitude: place?.longitude || 0,
+                      types: place?.types || [],
+                      review: place?.review,
+                      active_users: place?.active_users || 0,
+                    };
+                    draft.places.push(newPlace as any);
+                  }
+                  return;
+                }
+                draft.places = draft.places.filter(
+                  (p: any) => (p.placeId || p.id) !== placeId
+                );
               }
-              draft.places = draft.places.filter(
-                (p: any) => (p.placeId || p.id) !== placeId
-              );
-            })
+            )
           )
         );
 
-        queryFulfilled.catch(() => patches.forEach((p) => p.undo()));
+        // 2. Sync Redux profile state
+        const state = getState() as any;
+        const currentProfileFavorites = state.profile.data?.favoritePlaces || [];
+        let newProfileFavorites = [...currentProfileFavorites];
+
+        if (action === "add") {
+          if (
+            !newProfileFavorites.some((p: any) => (p.placeId || p.id) === placeId)
+          ) {
+            newProfileFavorites.push({
+              placeId,
+              name: place?.name || name || placeId,
+              emoji: emoji || (place as any)?.emoji || "📍",
+              formattedAddress: place?.formattedAddress,
+              distance: place?.distance || 0,
+              review: place?.review,
+            });
+          }
+        } else {
+          newProfileFavorites = newProfileFavorites.filter(
+            (p: any) => (p.placeId || p.id) !== placeId
+          );
+        }
+
+        dispatch(setFavoritePlaces(newProfileFavorites));
+
+        queryFulfilled.catch(() => {
+          patches.forEach((p) => p.undo());
+          dispatch(setFavoritePlaces(currentProfileFavorites));
+        });
       },
       invalidatesTags: (result, error, arg) =>
-        arg.action === "add"
+        arg.action === "add" && !arg.name && !arg.place
           ? [{ type: "FavoritePlaces", id: "list" }]
-          : [], // no refetch on remove; rely on optimistic update
+          : [],
     }),
 
     // Save social review and update cache with returned stats

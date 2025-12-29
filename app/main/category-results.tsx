@@ -30,6 +30,7 @@ import {
   PlaceVibe,
 } from "@/modules/places/types";
 import { enterPlace } from "@/modules/presence/api";
+import { formatDistance } from "@/utils/distance";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet } from "react-native";
@@ -179,8 +180,16 @@ export default function CategoryResultsScreen() {
 
   // Filter places based on active filter
   const filteredPlaces = useMemo(() => {
-    if (activeFilter === "all") return places;
-    return places.filter((place: any) => {
+    let result = places;
+
+    // In favorites mode, exclude places that were optimistically unfavorited
+    if (favoritesMode) {
+      result = result.filter((p) => favoriteIds.has(p.placeId));
+    }
+
+    if (activeFilter === "all") return result;
+
+    return result.filter((place: any) => {
       // Check if the place type matches the active filter or if it's in the types array
       const type = place.type || (place.types && place.types[0]);
       return (
@@ -190,7 +199,7 @@ export default function CategoryResultsScreen() {
         (typeof type === "string" && type.includes(activeFilter))
       );
     });
-  }, [places, activeFilter]);
+  }, [places, activeFilter, favoriteIds, favoritesMode]);
 
   // Only show categories that have items in the list
   const availableCategories = useMemo(() => {
@@ -219,7 +228,7 @@ export default function CategoryResultsScreen() {
                 params: {
                   placeId: place.placeId,
                   placeName: place.name,
-                  distance: "1.2 km", // TODO: Calculate real distance
+                  distance: formatDistance(place.distance),
                 },
               });
             }}
@@ -264,7 +273,7 @@ export default function CategoryResultsScreen() {
         params: {
           placeId: place.placeId,
           placeName: place.name,
-          distance: `${place.distance} km`, // TODO: Calculate real distance
+          distance: formatDistance(place.distance),
         },
       });
     },
@@ -345,7 +354,12 @@ export default function CategoryResultsScreen() {
             onPress={() => handlePlaceClick(item)}
             onInfoPress={() => showPlaceDetails(item)}
             isFavorite={favoriteIds.has(item.placeId)}
-            onToggleFavorite={() => handleToggle(item.placeId)}
+            onToggleFavorite={() =>
+              handleToggle(item.placeId, {
+                place: item,
+                details: { name: item.name, emoji: (item as any).emoji },
+              })
+            }
           />
         </Animated.View>
       );

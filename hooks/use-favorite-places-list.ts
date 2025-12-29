@@ -35,7 +35,8 @@ export function useFavoritePlacesList(enabled: boolean) {
   return useMemo(
     () => ({
       favoritePlacesData,
-      favoritePlacesLoading: isLoading || isFetching,
+      favoritePlacesLoading: isLoading,
+      isFetching,
       favoriteQueryArg: queryArg,
     }),
     [favoritePlacesData, isLoading, isFetching, queryArg]

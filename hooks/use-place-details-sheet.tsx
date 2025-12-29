@@ -44,7 +44,13 @@ export function usePlaceDetailsSheet(
             onNavigate={() => {
               openMaps(place.formattedAddress || place.name);
             }}
-            onToggleFavorite={(id, opts) => handleToggle(id, opts)}
+            onToggleFavorite={(id, opts) =>
+              handleToggle(id, {
+                ...opts,
+                place: place,
+                details: { name: place.name, emoji: (place as any).emoji },
+              })
+            }
             onClose={() => bottomSheet.close()}
             onRate={() => {
               bottomSheet.close();

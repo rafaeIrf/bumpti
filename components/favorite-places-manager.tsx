@@ -88,8 +88,8 @@ export function useFavoritePlaces({
         {} as Record<string, string>
       );
 
-      setSelectedPlaceIds((prev) => Array.from(new Set([...prev, ...newIds])));
-      setPlacesMap((prev) => ({ ...prev, ...newPlacesMap }));
+      setSelectedPlaceIds(newIds);
+      setPlacesMap(newPlacesMap);
 
       // Ensure sheet stays collapsed when returning from search
       setIsExpanded(false);
