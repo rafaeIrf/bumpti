@@ -48,9 +48,10 @@ export async function enterPlace(params: {
   userLng: number;
   placeLat: number;
   placeLng: number;
+  isCheckinPlus?: boolean;
 }): Promise<PresenceRecord | null> {
   try {
-    const { placeId, userLat, userLng, placeLat, placeLng } = params;
+    const { placeId, userLat, userLng, placeLat, placeLng, isCheckinPlus } = params;
 
     console.log("enterPlace params:", params)
 
@@ -63,6 +64,7 @@ export async function enterPlace(params: {
         userLng,
         place_lat: placeLat,
         place_lng: placeLng,
+        is_checkin_plus: isCheckinPlus,
       },
     });
 

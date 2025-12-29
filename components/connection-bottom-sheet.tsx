@@ -1,3 +1,10 @@
+import {
+  CompassIcon,
+  ExclamationCircleIcon,
+  LockIcon,
+  SparklesIcon,
+  UsersIcon,
+} from "@/assets/icons";
 import { GenericConnectionBottomSheet } from "@/components/generic-connection-bottom-sheet";
 import { t } from "@/modules/locales";
 
@@ -14,6 +21,7 @@ interface ConnectionBottomSheetProps {
   readonly onConnect: () => void;
   readonly onCancel?: () => void;
   readonly onClose?: () => void;
+  readonly onPremiumPress?: () => void;
   readonly currentVenue?: string; // Nome do local atual onde o usuário está conectado
 }
 
@@ -36,6 +44,7 @@ export function ConnectionBottomSheet({
   onConnect,
   onCancel,
   onClose,
+  onPremiumPress,
   currentVenue,
 }: ConnectionBottomSheetProps) {
   // Configuração de conteúdo baseado no estado
@@ -51,6 +60,7 @@ export function ConnectionBottomSheet({
             onClick: onConnect,
           },
           microcopy: t("venue.connection.active.microcopy"),
+          icon: UsersIcon,
         };
 
       case "quiet":
@@ -62,7 +72,12 @@ export function ConnectionBottomSheet({
             text: t("venue.connection.quiet.button"),
             onClick: onConnect,
           },
-          microcopy: t("venue.connection.quiet.microcopy"),
+          secondaryButton: {
+            text: t("venue.connection.quiet.buttonSecondary"),
+            onClick: onClose || (() => {}),
+            variant: "secondary" as const,
+          },
+          icon: CompassIcon,
         };
 
       case "premium":
@@ -75,6 +90,7 @@ export function ConnectionBottomSheet({
             onClick: onConnect,
           },
           microcopy: t("venue.connection.premium.microcopy"),
+          icon: SparklesIcon,
         };
 
       case "locked":
@@ -84,9 +100,14 @@ export function ConnectionBottomSheet({
           supportText: t("venue.connection.locked.supportText"),
           primaryButton: {
             text: t("venue.connection.locked.button"),
-            onClick: onConnect,
+            onClick: onClose || (() => {}),
           },
-          microcopy: t("venue.connection.locked.microcopy"),
+          secondaryButton: {
+            text: t("venue.connection.locked.buttonPremium"),
+            onClick: onPremiumPress || (() => {}),
+            variant: "secondary" as const,
+          },
+          icon: LockIcon,
         };
 
       case "alreadyConnected":
@@ -106,6 +127,7 @@ export function ConnectionBottomSheet({
             variant: "secondary" as const,
           },
           microcopy: t("venue.connection.alreadyConnected.microcopy"),
+          icon: ExclamationCircleIcon,
         };
 
       default:
@@ -131,6 +153,7 @@ export function ConnectionBottomSheet({
       secondaryButton={content.secondaryButton}
       microcopy={content.microcopy}
       onClose={onClose}
+      Icon={content.icon}
     />
   );
 }

@@ -766,10 +766,10 @@
         "microcopy": "Podrás ver y chatear con personas que están en este lugar ahora."
       },
       "quiet": {
-        "subtitle": "Está un poco vacío aquí ahora...",
-        "supportText": "Aún no hay nadie conectado, ¡pero puedes ser el primero!",
-        "button": "Conectar de todos modos",
-        "microcopy": "Cuando otras personas lleguen, las verás aparecer aquí."
+        "subtitle": "Rompe el hielo",
+        "supportText": "Todo está tranquilo por ahora. Indica tu presencia aquí y te avisaremos en cuanto empiece el movimiento.",
+        "button": "Iniciar conexiones",
+        "buttonSecondary": "Seguir explorando"
       },
       "premium": {
         "subtitle": "Te estás adelantando. ⚡",
@@ -778,10 +778,10 @@
         "microcopy": "Cuando te acerques, la app te notificará automáticamente."
       },
       "locked": {
-        "subtitle": "Este lugar está fuera de tu alcance ahora.",
-        "supportText": "Solo los miembros Premium pueden conectarse anticipadamente en lugares distantes.",
-        "button": "Hazte Premium",
-        "microcopy": "Desbloquea conexiones anticipadas y mira quién está en los lugares antes de llegar."
+        "subtitle": "¡Vaya! Estás un poco lejos.",
+        "supportText": "Para asegurar interacciones reales, solo puedes conectarte cuando estés en el lugar. Si quieres entrar ahora desde cualquier lugar, usa Early Check-in con Check-in+.",
+        "button": "Seguir explorando",
+        "buttonPremium": "Entrar con Check-in+"
       },
       "alreadyConnected": {
         "subtitle": "¡Ya estás conectado en {{currentVenue}}!",

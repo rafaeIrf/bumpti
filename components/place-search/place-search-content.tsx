@@ -9,11 +9,11 @@ import { ThemedView } from "@/components/themed-view";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
-import { enterPlace } from "@/modules/presence/api";
 import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -89,6 +89,7 @@ export function PlaceSearchContent({
 
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
+  const { handlePlaceClick } = usePlaceClick();
   const [searchQuery, setSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -170,26 +171,16 @@ export function PlaceSearchContent({
 
         onPlaceToggle?.(result.placeId, result.name);
       } else {
-        enterPlace({
+        handlePlaceClick({
           placeId: result.placeId,
-          userLat: userLocation?.latitude ?? null,
-          userLng: userLocation?.longitude ?? null,
-          placeLat: result.lat,
-          placeLng: result.lng,
-        });
-
-        router.push({
-          pathname: "/(modals)/place-people",
-          params: {
-            placeId: result.placeId,
-            placeName: result.name,
-            distance: formatDistance(result.distance ?? 0),
-            distanceKm: (result.distance ?? 0).toString(),
-          },
+          name: result.name,
+          latitude: result.lat,
+          longitude: result.lng,
+          distance: result.distance ?? 0,
         });
       }
     },
-    [router, multiSelectMode, onPlaceToggle, localSelectedIds, userLocation]
+    [handlePlaceClick, multiSelectMode, onPlaceToggle, localSelectedIds]
   );
 
   const clearSearch = useCallback(() => {
