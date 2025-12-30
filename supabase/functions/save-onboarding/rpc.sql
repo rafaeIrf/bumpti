@@ -1,3 +1,6 @@
+-- Drop the old version to avoid overloading conflicts
+drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], text[]);
+
 -- Creates a transactional RPC to save onboarding data atomically
 create or replace function public.save_onboarding_txn(
   p_user_id uuid,
@@ -8,7 +11,7 @@ create or replace function public.save_onboarding_txn(
   p_intention_ids int[],
   p_photo_urls text[] default array[]::text[],
   p_photo_positions int[] default array[]::int[],
-  p_favorite_place_ids text[] default array[]::text[]
+  p_favorite_place_ids uuid[] default array[]::uuid[]
 ) returns void
 language plpgsql
 security definer

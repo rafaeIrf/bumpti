@@ -21,17 +21,18 @@ interface GenericConnectionBottomSheetProps {
   readonly microcopy?: string | ReactNode;
   readonly customContent?: ReactNode;
   readonly onClose?: () => void;
+  readonly Icon?: React.FC<{
+    width?: number;
+    height?: number;
+    color?: string;
+    style?: any;
+  }>;
 }
 
 /**
  * GenericConnectionBottomSheet - Conteúdo reutilizável para Bottom Sheets de conexão
  *
  * Estilo Dark Social Premium refinado
- * Usa tema do app e cores customizadas para dark mode
- * Tipografia: Poppins SemiBold / Medium / Regular (via typography tokens)
- *
- * Este componente contém apenas o conteúdo.
- * Use o hook `useBottomSheet()` do projeto para exibir.
  */
 export function GenericConnectionBottomSheet({
   title,
@@ -42,11 +43,26 @@ export function GenericConnectionBottomSheet({
   microcopy,
   customContent,
   onClose,
+  Icon,
 }: GenericConnectionBottomSheetProps) {
   const colors = useThemeColors();
 
   return (
     <View style={styles.container}>
+      {/* Visual Header (Icon Anchor) */}
+      {Icon && (
+        <View style={styles.iconWrapper}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.accent + "15" },
+            ]}
+          >
+            <Icon width={32} height={32} color={colors.accent} />
+          </View>
+        </View>
+      )}
+
       {/* Close Button */}
       {onClose && (
         <Pressable
@@ -63,33 +79,37 @@ export function GenericConnectionBottomSheet({
       {/* Custom Content ou Layout Padrão */}
       {customContent || (
         <View style={styles.defaultContent}>
-          {/* Título */}
+          {/* Título (Venue Name - Context) */}
           <ThemedText
-            style={[styles.title, typography.heading, { color: colors.text }]}
+            style={[
+              styles.title,
+              typography.subheading,
+              { color: colors.textSecondary },
+            ]}
           >
             {title}
           </ThemedText>
 
-          {/* Subtítulo */}
+          {/* Subtítulo (Main Message - Hero) */}
           {subtitle && (
             <ThemedText
               style={[
                 styles.subtitle,
-                typography.body,
-                { color: colors.textSecondary },
+                typography.heading1,
+                { color: colors.text },
               ]}
             >
               {subtitle}
             </ThemedText>
           )}
 
-          {/* Texto de apoio */}
+          {/* Texto de apoio (Details - Secondary) */}
           {supportText && (
             <ThemedText
               style={[
                 styles.supportText,
                 typography.body,
-                { color: colors.text },
+                { color: colors.textSecondary },
               ]}
             >
               {supportText}
@@ -152,13 +172,27 @@ export function GenericConnectionBottomSheet({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
     position: "relative",
   },
+  iconWrapper: {
+    alignItems: "center",
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  iconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+  },
   closeButton: {
     position: "absolute",
-    top: spacing.lg,
+    top: spacing.md,
     right: spacing.lg,
     zIndex: 10,
     width: 32,
@@ -171,29 +205,34 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: "center",
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: "600",
+    opacity: 0.8,
   },
   subtitle: {
-    fontSize: 17,
     textAlign: "center",
-    lineHeight: 24,
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+    lineHeight: 32,
   },
   supportText: {
-    fontSize: 15,
     textAlign: "center",
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
     lineHeight: 22,
-    marginBottom: spacing.xxl,
+    opacity: 0.9,
   },
   buttonsContainer: {
     width: "100%",
     gap: spacing.sm,
   },
   microcopy: {
-    fontSize: 13,
     textAlign: "center",
-    lineHeight: 18,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    opacity: 0.6,
   },
 });

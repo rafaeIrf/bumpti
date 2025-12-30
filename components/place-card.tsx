@@ -11,7 +11,6 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { ActionButton } from "./ui/action-button";
 
 interface PlaceCardData {
   id: string;
@@ -84,23 +83,14 @@ export function PlaceCard({
             <ThemedText style={styles.placeTitle} numberOfLines={1}>
               {place.name}
             </ThemedText>
-            <ActionButton
-              ariaLabel={
-                isFavorite ? "Remove from favorites" : "Add to favorites"
-              }
-              size="sm"
-              variant={isFavorite ? "accent" : "default"}
-              onPress={() => {
-                onToggleFavorite?.();
-              }}
-              icon={(props) => (
-                <HeartIcon
-                  {...props}
-                  fill={isFavorite ? colors.accent : "none"}
-                />
-              )}
-              color={isFavorite ? colors.accent : colors.textSecondary}
-            />
+            <Pressable onPress={() => onToggleFavorite?.()}>
+              <HeartIcon
+                width={16}
+                height={16}
+                color={isFavorite ? colors.accent : colors.textSecondary}
+                fill={isFavorite ? colors.accent : "none"}
+              />
+            </Pressable>
           </View>
           <ArrowRightIcon width={18} height={18} color={colors.text} />
         </View>

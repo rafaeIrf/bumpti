@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
     const userLng = typeof body?.userLng === "number" ? body.userLng : null;
     const place_lat = typeof body?.place_lat === "number" ? body.place_lat : null;
     const place_lng = typeof body?.place_lng === "number" ? body.place_lng : null;
+    const is_checkin_plus = body?.is_checkin_plus === true;
 
     if (!place_id || typeof place_id !== "string") {
       return new Response(JSON.stringify({ error: "invalid_place_id" }), {
@@ -75,12 +76,12 @@ Deno.serve(async (req) => {
     }
 
     // Validate distance if user and place coordinates are provided
+    // Skip distance validation if is_checkin_plus is true
     if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
       const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
       const MAX_DISTANCE_METERS = 60;
 
-      // if (distanceInMeters > MAX_DISTANCE_METERS) {
-      if (false) {
+      if (distanceInMeters > MAX_DISTANCE_METERS && !is_checkin_plus) {
         console.warn(`User too far from place: ${distanceInMeters.toFixed(0)}m (max: ${MAX_DISTANCE_METERS}m)`);
         return new Response(
           JSON.stringify({ 
@@ -94,7 +95,11 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
+      if (is_checkin_plus && distanceInMeters > MAX_DISTANCE_METERS) {
+        console.log(`Distance validation bypassed via Check-in+: ${distanceInMeters.toFixed(0)}m`);
+      } else {
+        console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
+      }
     } else {
       console.warn("Distance validation skipped - missing coordinates");
     }

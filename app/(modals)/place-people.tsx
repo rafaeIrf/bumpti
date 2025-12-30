@@ -48,6 +48,7 @@ export default function PlacePeopleScreen() {
     placeId: string;
     placeName: string;
     distance?: string;
+    distanceKm?: string;
     initialUsers?: string;
   }>();
   const [loading, setLoading] = useState(true);
@@ -186,7 +187,9 @@ export default function PlacePeopleScreen() {
   }, []);
 
   // Parse distance from string to number
-  const distanceInKm = Number.parseFloat(place.distance.replace(" km", ""));
+  const distanceInKm = params.distanceKm
+    ? Number.parseFloat(params.distanceKm)
+    : Number.parseFloat(place.distance.replace(" km", ""));
   const isFarAway = distanceInKm > 3;
 
   // No more profiles or Premium logic handled within unified return

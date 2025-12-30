@@ -53,10 +53,14 @@
       "sports_centre": "Centro Esportivo",
       "community_centre": "Centro Comunitário",
       "events_venue": "Local de Eventos",
-      "club": "Clube"
+      "club": "Clube",
+      "dance_club": "Dança",
+      "theatre": "Teatro",
+      "casino": "Cassino",
+      "shopping": "Shopping"
     },
     "activeUsersLabel": "pessoas no local",
-    "noConnections": "Nenhuma conexão agora",
+    "noConnections": "Inicie a conexão",
     "onePersonConnecting": "1 pessoa conectando",
     "manyPeopleConnecting": "{{count}} pessoas se conectando"
   },
@@ -103,7 +107,11 @@
       "stadium": "Estádios",
       "library": "Bibliotecas",
       "sports_centre": "Centros Esportivos",
-      "club": "Clubes"
+      "club": "Clubes",
+      "dance_club": "Escolas de Dança",
+      "theatre": "Teatros",
+      "casino": "Cassinos",
+      "shopping": "Shopping Centers"
     }
   },
   "errors": {
@@ -646,8 +654,38 @@
       "subtitle": "Veja os lugares mais populares da região",
       "mostPopular": "Mais populares perto de você",
       "placesCount": "{{count}} lugares",
-      "emptyTitle": "Nenhum lugar dessa categoria por aqui",
-      "emptyDescription": "Ainda não há lugares dessa categoria por aqui. Que tal explorar outra vibe? 👀",
+      "emptyStates": {
+        "favorites": {
+          "title": "Seus lugares favoritos estão quietos",
+          "description": "Salve os lugares que você mais curte para saber exatamente quando o movimento começar.",
+          "button": "Descobrir novos picos"
+        },
+        "trending": {
+          "title": "A vibe está se aquecendo",
+          "description": "Ainda não detectamos um pico de movimento agora, mas as melhores conexões costumam acontecer de surpresa.",
+          "button": "Explorar outras vibes"
+        },
+        "nearby": {
+          "title": "Explorando novos horizontes?",
+          "description": "Não encontramos lugares por aqui. Que tal tentar uma outra categoria?",
+          "button": "Tentar outra categoria"
+        },
+        "communityFavorites": {
+          "title": "Onde todo mundo se encontra?",
+          "description": "A comunidade ainda está descobindo os segredos desta região. Seja o primeiro a favoritar um lugar!",
+          "button": "Explorar arredores"
+        },
+        "default": {
+          "title": "Nenhum lugar dessa categoria por aqui",
+          "description": "Ainda não há lugares dessa categoria por aqui. Que tal explorar outra vibe? 👀",
+          "button": "Tentar outra categoria"
+        },
+        "search": {
+          "title": "Nenhum lugar encontrado",
+          "description": "Não conseguimos encontrar nada com esse nome. Tente simplificar ou buscar por uma categoria.",
+          "button": "Limpar busca"
+        }
+      },
       "tryAnother": "Tente outra categoria 👇",
       "infoText": "Os lugares são ordenados por popularidade. Toque em um card para ver mais detalhes e conectar com as pessoas que estão lá.",
       "searchFallback": "Não encontrou o que procurava?",
@@ -723,16 +761,16 @@
   "venue": {
     "connection": {
       "active": {
-        "subtitle": "Tem gente conectada aqui agora!",
-        "supportText": "Se conecte e veja quem tá por lá.",
+        "subtitle": "O clima está ótimo!",
+        "supportText": "Tem gente incrível conectada agora. Entre para ver quem está por perto e puxar um papo.",
         "button": "Conectar agora",
         "microcopy": "Você poderá ver e conversar com pessoas que estão nesse lugar agora."
       },
       "quiet": {
-        "subtitle": "Tá meio vazio aqui agora...",
-        "supportText": "Ainda não tem ninguém conectado, mas você pode ser o primeiro!",
-        "button": "Conectar mesmo assim",
-        "microcopy": "Quando outras pessoas chegarem, você verá elas aparecerem aqui."
+        "subtitle": "Quebre o gelo",
+        "supportText": "Tudo calmo por enquanto. Sinalize sua presença por aqui e nós te avisamos assim que o movimento começar.",
+        "button": "Iniciar conexões",
+        "buttonSecondary": "Continuar explorando"
       },
       "premium": {
         "subtitle": "Você tá se adiantando. ⚡",
@@ -741,10 +779,10 @@
         "microcopy": "Quando você chegar perto, o app vai notificar você automaticamente."
       },
       "locked": {
-        "subtitle": "Esse lugar está fora do seu alcance agora.",
-        "supportText": "Apenas membros Premium podem se conectar antecipadamente em locais distantes.",
-        "button": "Seja Premium",
-        "microcopy": "Desbloqueie conexões antecipadas e veja quem tá nos lugares antes de chegar."
+        "subtitle": "Opa! Você está um pouco longe.",
+        "supportText": "Para garantir interações reais, você só pode se conectar quando estiver no local. Se quiser entrar agora de onde estiver, use o Early Check-in com o Check-in+.",
+        "button": "Continuar explorando",
+        "buttonPremium": "Entrar com Check-in+"
       },
       "alreadyConnected": {
         "subtitle": "Você já está conectado em {{currentVenue}}!",
