@@ -7,7 +7,9 @@
     "navigate": "Navigate",
     "save_rating": "Submit rating",
     "rate": "Rate",
-    "details": "Details"
+    "details": "Details",
+    "favorite": "Favorite",
+    "saved": "Favorited"
   },
   "welcome": "Welcome!",
   "explore": "Explore",

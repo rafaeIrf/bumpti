@@ -137,19 +137,11 @@ export default function CategoryResultsScreen() {
   const places: Place[] = useMemo(() => {
     if (trendingMode) {
       return (
-        trendingData?.places?.map((place: any) => ({
-          placeId: place.place_id,
-          name: place.name,
-          type: place.types?.[0] || undefined,
-          types: place.types || [],
-          distance: place.distance || 0,
-          formattedAddress: place.formattedAddress || "",
-          latitude: place.latitude,
-          longitude: place.longitude,
-          active_users: place.active_users,
+        trendingData?.places?.map((place: Place) => ({
+          ...place,
           review: place.review || {
-            average: place.rating || 0,
-            count: place.user_ratings_total || 0,
+            average: 0,
+            count: 0,
             tags: getRandomVibes(),
           },
         })) || []

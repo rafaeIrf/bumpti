@@ -7,6 +7,7 @@ import {
 import { PowerUpBottomSheet } from "@/components/power-up-bottom-sheet";
 import { enterPlace } from "@/modules/presence/api";
 import { formatDistance } from "@/utils/distance";
+import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import { useCachedLocation } from "./use-cached-location";
@@ -80,6 +81,7 @@ export function usePlaceClick() {
         }, 300);
       };
 
+      logger.log("[PlaceClick] handleConnectionBottomSheet", venueState);
       bottomSheet.expand({
         content: () => (
           <ConnectionBottomSheet
@@ -135,9 +137,19 @@ export function usePlaceClick() {
 
   const handlePlaceClick = useCallback(
     async (params: PlaceInteractionParams) => {
-      if (!bottomSheet) return;
+      logger.log("[PlaceClick] handlePlaceClick start", params.placeId, {
+        distance: params.distance,
+        lat: params.latitude,
+        lng: params.longitude,
+      });
+
+      if (!bottomSheet) {
+        logger.warn("[PlaceClick] No bottomSheet available");
+        return;
+      }
 
       if (!userLocation?.latitude || !userLocation?.longitude) {
+        logger.info("[PlaceClick] Missing user location, forcing locked state");
         handleConnectionBottomSheet(params, "locked");
         return;
       }
@@ -179,5 +191,6 @@ export function usePlaceClick() {
 
   return {
     handlePlaceClick,
+    navigateToPlacePeople,
   };
 }

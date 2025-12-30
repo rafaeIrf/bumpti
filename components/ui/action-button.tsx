@@ -79,7 +79,7 @@ export function ActionButton({
       (colors as any).accentBlueLight ??
       colors.border
     : "#16181C";
-  const borderColor = isAccent ? "transparent" : "#2F3336";
+  const borderColor = isAccent ? colors.accent : "#2F3336";
   const iconColor = color ?? (isAccent ? colors.accent : "#FFF");
 
   return (

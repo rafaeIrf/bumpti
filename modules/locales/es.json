@@ -7,7 +7,9 @@
     "navigate": "Navegar",
     "save_rating": "Enviar evaluación",
     "rate": "Calificar",
-    "details": "Detalles"
+    "details": "Detalles",
+    "favorite": "Favoritar",
+    "saved": "Favorito"
   },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",

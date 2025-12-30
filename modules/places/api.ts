@@ -48,8 +48,8 @@ export async function searchPlacesByText(
       name: p.name,
       formattedAddress: p.formatted_address,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
-      latitude: p.lat,
-      longitude: p.lng,
+      latitude: p.latitude ?? p.lat,
+      longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
       review: p.review
@@ -84,8 +84,8 @@ export async function getNearbyPlaces(
       name: p.name,
       formattedAddress: p.formatted_address,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
-      latitude: p.lat,
-      longitude: p.lng,
+      latitude: p.latitude ?? p.lat,
+      longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
       review: p.review
@@ -121,8 +121,8 @@ export async function getPlacesByFavorites(
       name: p.name,
       formattedAddress: p.formatted_address,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
-      latitude: p.lat,
-      longitude: p.lng,
+      latitude: p.latitude ?? p.lat,
+      longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
       favorites_count: p.favorites_count,
@@ -158,8 +158,8 @@ export async function getTrendingPlaces(
       name: p.name,
       formattedAddress: p.formattedAddress,
       distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
-      latitude: p.latitude,
-      longitude: p.longitude,
+      latitude: p.latitude ?? p.lat,
+      longitude: p.longitude ?? p.lng,
       types: p.types,
       active_users: p.active_users,
       review: p.review,

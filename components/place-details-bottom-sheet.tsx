@@ -3,6 +3,7 @@ import {
   MapPinIcon,
   NavigationIcon,
   StarIcon,
+  UsersIcon,
   XIcon,
 } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
@@ -13,9 +14,10 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { PlaceReview } from "@/modules/places/types";
 import React, { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionButton } from "./ui/action-button";
+import { BrandIcon } from "./ui/brand-icon";
 
 interface PlaceDetailsBottomSheetProps {
   placeName: string;
@@ -25,6 +27,7 @@ interface PlaceDetailsBottomSheetProps {
   review?: PlaceReview;
   isFavorite?: boolean;
   placeId: string;
+  activeUsers?: number;
   onNavigate?: () => void;
   onToggleFavorite?: (
     placeId: string,
@@ -36,6 +39,7 @@ interface PlaceDetailsBottomSheetProps {
   ) => void;
   onClose?: () => void;
   onRate?: () => void;
+  onConnect?: () => void;
 }
 
 export function PlaceDetailsBottomSheet({
@@ -45,11 +49,13 @@ export function PlaceDetailsBottomSheet({
   distance,
   review,
   placeId,
+  activeUsers = 0,
   isFavorite = false,
   onNavigate,
   onToggleFavorite,
   onClose,
   onRate,
+  onConnect,
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -67,8 +73,14 @@ export function PlaceDetailsBottomSheet({
   const ratingCount = review?.count || 0;
 
   const vibeTagsDisplay = useMemo(() => {
-    if (review?.tags && review.tags.length > 0) return review.tags;
-    return [];
+    if (!review?.tags || review.tags.length === 0) return [];
+
+    // Sort tags by the length of their translated text (shortest to longest)
+    return [...review.tags].sort((a, b) => {
+      const textA = t(`place.vibes.${a}`);
+      const textB = t(`place.vibes.${b}`);
+      return textA.length - textB.length;
+    });
   }, [review]);
 
   const hasRating = review?.average !== undefined && review.average > 0;
@@ -79,243 +91,327 @@ export function PlaceDetailsBottomSheet({
         styles.container,
         {
           paddingBottom: insets.bottom + spacing.md,
+          backgroundColor: colors.surface,
         },
       ]}
     >
-      {/* Drag Handle Area is usually handled by the BottomSheet wrapper, but we add padding */}
+      <Pressable
+        onPress={onClose}
+        style={styles.closeButton}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Fechar"
+      >
+        <XIcon width={24} height={24} color={colors.textSecondary} />
+      </Pressable>
+
       <View style={styles.content}>
-        {/* Header Section */}
-        {/* Header Section */}
-        <View style={styles.header}>
-          <View style={styles.titleContainer}>
+        {/* Brand Icon Header - Simplified & Floating */}
+        <View style={styles.iconWrapper}>
+          <BrandIcon icon={MapPinIcon} size="lg" color={colors.accent} />
+        </View>
+
+        {/* Identity Section - Tight & Focused */}
+        <View style={styles.identitySection}>
+          <ThemedText style={typography.heading} numberOfLines={1}>
+            {placeName}
+          </ThemedText>
+
+          <View style={styles.metaRow}>
             <ThemedText
-              style={[typography.heading, { color: colors.text }]}
-              numberOfLines={2}
-            >
-              {placeName}
-            </ThemedText>
-            <ThemedText
-              style={[typography.body, { color: colors.textSecondary }]}
+              style={[typography.caption, { color: colors.textSecondary }]}
             >
               {category}
             </ThemedText>
+            <View style={[styles.dot, { backgroundColor: colors.border }]} />
+            <ThemedText
+              style={[typography.caption, { color: colors.textSecondary }]}
+            >
+              {distance}
+            </ThemedText>
+            {hasRating && (
+              <>
+                <View
+                  style={[styles.dot, { backgroundColor: colors.border }]}
+                />
+                <View style={styles.ratingHeaderMini}>
+                  <StarIcon
+                    width={12}
+                    height={12}
+                    color={colors.accent}
+                    fill={colors.accent}
+                  />
+                  <ThemedText
+                    style={[typography.captionBold, { color: colors.text }]}
+                  >
+                    {formattedRating}
+                  </ThemedText>
+                </View>
+              </>
+            )}
           </View>
-          <Button
-            variant="ghost"
-            size="icon"
-            onPress={onClose}
-            style={styles.closeButton}
-            hitSlop={8}
-          >
-            <XIcon width={24} height={24} color={colors.text} />
-          </Button>
-        </View>
 
-        {/* Address & Distance */}
-        <View style={styles.locationInfo}>
           <ThemedText
-            style={[typography.body, { color: colors.text }]}
-            numberOfLines={1}
+            style={[
+              typography.caption,
+              {
+                color: colors.textSecondary,
+                textAlign: "center",
+                marginTop: spacing.xs,
+              },
+            ]}
+            numberOfLines={2}
           >
             {address}
           </ThemedText>
-          <View style={styles.distanceBadge}>
-            <MapPinIcon width={12} height={12} color={colors.accent} />
-            <ThemedText style={[typography.caption, { color: colors.accent }]}>
-              {distance}
-            </ThemedText>
-          </View>
         </View>
 
-        {/* Actions Row */}
-        {/* Actions Row */}
-        <View style={styles.actionsRow}>
+        {/* Actions Section - Command Center Layout */}
+        <View style={styles.actionsContainer}>
           <Button
             variant="default"
-            size="default"
+            size="lg"
             fullWidth
-            style={[styles.navigateButton, { backgroundColor: colors.accent }]}
-            leftIcon={<NavigationIcon width={20} height={20} color="#FFFFFF" />}
-            label={t("actions.navigate")}
-            onPress={onNavigate}
+            label={t("venue.connection.active.button")}
+            onPress={onConnect || (() => {})}
           />
 
-          <ActionButton
-            ariaLabel={
-              localFavorite ? "Remove from favorites" : "Add to favorites"
-            }
-            size={52}
-            iconSize={22}
-            variant={localFavorite ? "accent" : "default"}
-            onPress={handleFavorite}
-            icon={(props) => (
-              <HeartIcon
-                {...props}
-                fill={localFavorite ? colors.accent : "none"}
+          <View style={styles.secondaryRow}>
+            <View style={styles.fabItem}>
+              <ActionButton
+                ariaLabel={t("actions.navigate")}
+                size={48}
+                iconSize={22}
+                variant="default"
+                onPress={onNavigate || (() => {})}
+                icon={(props) => <NavigationIcon {...props} />}
+                color={colors.text}
               />
-            )}
-            color={localFavorite ? colors.accent : colors.text}
-          />
+              <ThemedText
+                style={[styles.fabLabel, { color: colors.textSecondary }]}
+              >
+                {t("actions.navigate")}
+              </ThemedText>
+            </View>
+
+            <View style={styles.fabItem}>
+              <ActionButton
+                ariaLabel={t("actions.rate")}
+                size={48}
+                iconSize={22}
+                variant="default"
+                onPress={onRate || (() => {})}
+                icon={(props) => <StarIcon {...props} />}
+                color={colors.text}
+              />
+              <ThemedText
+                style={[styles.fabLabel, { color: colors.textSecondary }]}
+              >
+                {t("actions.rate")}
+              </ThemedText>
+            </View>
+
+            <View style={styles.fabItem}>
+              <ActionButton
+                ariaLabel={
+                  localFavorite ? "Remove from favorites" : "Add to favorites"
+                }
+                size={48}
+                iconSize={22}
+                variant={localFavorite ? "accent" : "default"}
+                onPress={handleFavorite}
+                icon={(props) => (
+                  <HeartIcon
+                    {...props}
+                    fill={localFavorite ? colors.accent : "none"}
+                  />
+                )}
+                color={localFavorite ? colors.accent : colors.text}
+              />
+              <ThemedText
+                style={[styles.fabLabel, { color: colors.textSecondary }]}
+              >
+                {localFavorite ? t("actions.saved") : t("actions.favorite")}
+              </ThemedText>
+            </View>
+          </View>
         </View>
-
-        {/* Rate Button */}
-        <Button
-          variant="outline"
-          size="default"
-          fullWidth
-          label={t("actions.rate")}
-          leftIcon={<StarIcon width={16} height={16} color={colors.text} />}
-          onPress={onRate}
-          style={{ borderColor: colors.border }}
-        />
-
-        {/* Rating Section */}
+      </View>
+      {/* Community & Insights Section (Distinct Background) */}
+      {(hasRating || activeUsers > 0 || vibeTagsDisplay.length > 0) && (
         <View
-          style={[styles.sectionBlock, { backgroundColor: colors.background }]}
+          style={[
+            styles.communitySection,
+            {
+              backgroundColor: colors.surface,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+            },
+          ]}
         >
-          {hasRating ? (
-            <View style={styles.ratingContent}>
-              <View style={styles.ratingScore}>
-                <StarIcon
-                  width={20}
-                  height={20}
-                  color={colors.accent}
-                  fill={colors.accent}
-                />
-                <ThemedText
-                  style={[typography.subheading, { color: colors.text }]}
-                >
-                  {formattedRating}
-                </ThemedText>
-              </View>
+          {activeUsers > 0 && (
+            <View
+              style={[
+                styles.socialBanner,
+                { backgroundColor: colors.accentBlueLighter },
+              ]}
+            >
+              <UsersIcon width={14} height={14} color={colors.accent} />
+              <ThemedText
+                style={[typography.captionBold, { color: colors.accent }]}
+              >
+                {t("place.manyPeopleConnecting", { count: activeUsers })}
+              </ThemedText>
+            </View>
+          )}
+
+          <View style={styles.ratingScale}>
+            {hasRating ? (
               <ThemedText
                 style={[typography.caption, { color: colors.textSecondary }]}
               >
                 {t("place.reviews.count", { count: ratingCount })}
               </ThemedText>
-            </View>
-          ) : (
-            <View style={styles.ratingContent}>
-              <View style={styles.ratingScore}>
-                <StarIcon width={20} height={20} color={colors.accent} />
-                <ThemedText
-                  style={[typography.subheading, { color: colors.text }]}
-                >
-                  {t("place.new")}
-                </ThemedText>
-              </View>
+            ) : (
               <ThemedText
                 style={[typography.caption, { color: colors.textSecondary }]}
               >
-                {t("place.beFirst")}
+                {t("place.new")} • {t("place.beFirst")}
               </ThemedText>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
 
-        {/* Vibe Tags Section */}
-        <View style={styles.vibeContainer}>
-          {vibeTagsDisplay.length > 0 ? (
-            <View style={styles.tagsRow}>
-              {vibeTagsDisplay.map((tag, index) => (
-                <Button
+          {vibeTagsDisplay.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {vibeTagsDisplay.slice(0, 5).map((tag, index) => (
+                <View
                   key={index}
-                  variant="outline"
-                  size="sm"
-                  textStyle={{ fontSize: 10 }}
-                  label={t(`place.vibes.${tag}`)}
-                  onPress={() => {}} // No-op for now, acts as a chip
-                />
+                  style={[
+                    styles.vibeTag,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      { color: colors.textSecondary, fontSize: 10 },
+                    ]}
+                  >
+                    {t(`place.vibes.${tag}`)}
+                  </ThemedText>
+                </View>
               ))}
             </View>
-          ) : (
-            <View style={styles.tagsRow}>
-              <Button
-                variant="outline"
-                size="sm"
-                label={t("place.vibeDiscovery")}
-                disabled
-                style={{ borderColor: colors.border, opacity: 0.7 }}
-              />
-            </View>
           )}
         </View>
-      </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: spacing.md,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    overflow: "hidden",
+    paddingTop: spacing.md,
+    position: "relative",
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: spacing.sm,
+    opacity: 0.5,
   },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    gap: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: spacing.md,
+  iconWrapper: {
+    alignItems: "center",
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
-  titleContainer: {
-    flex: 1,
+  identitySection: {
+    alignItems: "center",
     gap: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    marginHorizontal: spacing.sm,
+  },
+  ratingHeaderMini: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   closeButton: {
-    marginTop: -4,
-    marginRight: -4,
-  },
-  locationInfo: {
-    gap: spacing.xs,
-  },
-  distanceBadge: {
-    flexDirection: "row",
+    position: "absolute",
+    top: spacing.sm,
+    right: spacing.sm,
+    zIndex: 10,
+    width: 44,
+    height: 44,
     alignItems: "center",
-    gap: spacing.xs,
+    justifyContent: "center",
   },
-  actionsRow: {
+  actionsContainer: {
+    gap: spacing.lg,
+  },
+  secondaryRow: {
     flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
-  navigateButton: {
+  fabItem: {
     flex: 1,
-    height: 52,
-    borderRadius: 999,
-  },
-  navigateButtonText: {
-    ...typography.body,
-    fontWeight: "600",
-  },
-  sectionBlock: {
-    borderRadius: 16,
-    padding: spacing.md,
-  },
-  ratingContent: {
+    alignItems: "center",
+    justifyContent: "flex-start",
     gap: spacing.xs,
   },
-  ratingScore: {
+  fabLabel: {
+    ...typography.caption,
+    textAlign: "center",
+  },
+  communitySection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    gap: spacing.md,
+  },
+  socialBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: 12,
   },
-  vibeContainer: {
-    marginTop: spacing.xs,
+  ratingScale: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  tagsRow: {
+  tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.xs,
+    gap: 4,
+    width: "100%",
   },
-  vibeChip: {
-    // legacy style, can be removed or kept if needed by other components, but for this file it is unused now.
-    // keeping empty or removing.
-    // removing to clean up
+  vibeTag: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
 });

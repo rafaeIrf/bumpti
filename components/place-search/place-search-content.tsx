@@ -331,35 +331,41 @@ export function PlaceSearchContent({
           >
             {t("screens.placeSearch.suggestionsLabel")}
           </ThemedText>
-          {["bar", "cafe", "club", "restaurant"].map((suggestion) => (
-            <Pressable
-              key={suggestion}
-              onPress={() =>
-                handleSearch(
-                  t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
-                )
-              }
-            >
-              <ThemedView
-                style={[
-                  styles.suggestionButton,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+          {["bar", "cafe", "club", "restaurant"]
+            .sort((a, b) => {
+              const textA = t(`screens.placeSearch.suggestionsOptions.${a}`);
+              const textB = t(`screens.placeSearch.suggestionsOptions.${b}`);
+              return textA.length - textB.length;
+            })
+            .map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                onPress={() =>
+                  handleSearch(
+                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
+                  )
+                }
               >
-                <SearchIcon
-                  width={16}
-                  height={16}
-                  color={colors.textSecondary}
-                />
-                <ThemedText style={{ color: colors.text }}>
-                  {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          ))}
+                <ThemedView
+                  style={[
+                    styles.suggestionButton,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SearchIcon
+                    width={16}
+                    height={16}
+                    color={colors.textSecondary}
+                  />
+                  <ThemedText style={{ color: colors.text }}>
+                    {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
+                  </ThemedText>
+                </ThemedView>
+              </Pressable>
+            ))}
         </ThemedView>
       </Animated.View>
     );
