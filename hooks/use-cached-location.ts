@@ -1,3 +1,4 @@
+import { useLocationPermission } from "@/hooks/use-location-permission";
 import { getUserPosition } from "@/modules/places";
 import { logger } from "@/utils/logger";
 import * as Location from "expo-location";
@@ -12,7 +13,7 @@ let cachedLocation: {
   countryCode?: string;
 } | null = null;
 let lastFetchTime = 0;
-const LOCATION_CACHE_TIME = 1 * 60 * 1000; // 5 minutes in milliseconds
+const LOCATION_CACHE_TIME = 1 * 60 * 1000; // 1 minute in milliseconds
 
 export const useCachedLocation = () => {
   const [location, setLocation] = useState<{
@@ -23,11 +24,18 @@ export const useCachedLocation = () => {
     countryCode?: string;
   } | null>(cachedLocation);
   const [loading, setLoading] = useState(!cachedLocation);
+  const { hasPermission } = useLocationPermission();
 
   useEffect(() => {
     const fetchLocation = async () => {
+      // Only fetch if we have permission
+      if (!hasPermission) {
+        setLoading(false);
+        return;
+      }
+
       const now = Date.now();
-      // If we have cached location and it's less than 5 minutes old, use it
+      // If we have cached location and it's less than CACHE_TIME old, use it
       if (cachedLocation && now - lastFetchTime < LOCATION_CACHE_TIME) {
         logger.info("Using cached location:", cachedLocation);
         setLocation(cachedLocation);
@@ -44,7 +52,7 @@ export const useCachedLocation = () => {
         let countryCode: string | undefined;
 
         try {
-          // Reverse geocode to get city and country for efficient backend searching/seeding
+          // Reverse geocode to get city and country
           const address = await Location.reverseGeocodeAsync({ latitude, longitude });
           if (address && address.length > 0) {
             city = address[0].city ?? address[0].subregion ?? undefined;
@@ -61,17 +69,17 @@ export const useCachedLocation = () => {
 
         logger.info("Fresh location obtained:", newLocation);
         setLocation(newLocation);
-        setLoading(false);
       } catch (error) {
-        console.error("Failed to get user location:", error);
+        logger.error("Failed to get user location:", error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchLocation();
-  }, []);
-  // return { location: { ...location, city: "Curitiba", countryCode: "BR", latitude: -25.40303156447935, longitude: -49.24624665524243 }, loading };
-  return { location,  loading };
+  }, [hasPermission]);
+
+  return { location, loading };
 };
 
 // Function to manually invalidate the location cache

@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "location": {
+      "title": "Localização necessária",
+      "subtitle": "Para encontrar os melhores lugares e pessoas ao seu redor, precisamos saber sua localização.",
+      "button": "Ativar localização",
+      "buttonSettings": "Abrir Configurações",
+      "requesting": "Solicitando...",
+      "skip": "Agora não"
+    }
+  },
   "actions": {
     "report": "Denunciar",
     "block": "Bloquear",

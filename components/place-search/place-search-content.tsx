@@ -1,5 +1,6 @@
 import { SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { LocationPermissionState } from "@/components/location-permission-state";
 import { PlaceCard } from "@/components/place-card";
 import { PlacesEmptyState } from "@/components/places-empty-state";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -9,7 +10,7 @@ import { ThemedView } from "@/components/themed-view";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
-import { usePermissionSheet } from "@/hooks/use-permission-sheet";
+import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -18,13 +19,7 @@ import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -96,14 +91,13 @@ export function PlaceSearchContent({
 
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
-  const { showLocationSheet, hasLocationPermission } = usePermissionSheet();
+  const {
+    hasPermission: hasLocationPermission,
+    canAskAgain,
+    request: requestLocationPermission,
+    openSettings,
+  } = useLocationPermission();
   const { handlePlaceClick } = usePlaceClick();
-
-  useEffect(() => {
-    if (!hasLocationPermission) {
-      showLocationSheet();
-    }
-  }, [hasLocationPermission, showLocationSheet]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -312,7 +306,15 @@ export function PlaceSearchContent({
   const ItemSeparator: React.FC = () => <View style={{ height: spacing.sm }} />;
 
   let content: React.ReactNode;
-  if (searchQuery.trim().length === 0) {
+  if (!hasLocationPermission) {
+    content = (
+      <LocationPermissionState
+        canAskAgain={canAskAgain}
+        onRequest={requestLocationPermission}
+        onOpenSettings={openSettings}
+      />
+    );
+  } else if (searchQuery.trim().length === 0) {
     content = (
       <Animated.View entering={FadeInDown.delay(150).springify()}>
         <ThemedView style={styles.emptyState}>
