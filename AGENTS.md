@@ -35,6 +35,7 @@ These guidelines steer GitHub Copilot (Chat and inline suggestions) when generat
   1. Remove the translation keys from all i18n files (`modules/locales/en.json`, `pt.json`, `es.json`)
   2. Remove the `t()` function calls from the code
   3. Keep locale files synchronized - if a key is removed from one file, remove it from all three
+- **Start clean:** If you remove code that uses a translation string, you **MUST** remove the corresponding key from all locale files. Do not leave unused strings.
 - **Key naming conventions:**
   - Group by feature/screen: `"screens.explore.subtitle"`
   - Common strings: `"common.save"`, `"common.cancel"`

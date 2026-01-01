@@ -13,6 +13,7 @@ import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { ReduxProvider } from "@/components/redux-provider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
 import {
   Poppins_400Regular,
@@ -59,39 +60,41 @@ export default function RootLayout() {
         >
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
-              <BottomSheetProvider>
-                <ChatRealtimeProvider>
-                  <Stack>
-                    <Stack.Screen
-                      name="index"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="(onboarding)"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="(tabs)"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="main"
-                      options={{
-                        headerShown: false,
-                      }}
-                    />
-                    <Stack.Screen
-                      name="(modals)"
-                      options={{
-                        presentation: "modal",
-                        headerShown: false,
-                        animation: "slide_from_bottom",
-                      }}
-                    />
-                  </Stack>
-                  <StatusBar style="auto" />
-                </ChatRealtimeProvider>
-              </BottomSheetProvider>
+              <IAPProvider>
+                <BottomSheetProvider>
+                  <ChatRealtimeProvider>
+                    <Stack>
+                      <Stack.Screen
+                        name="index"
+                        options={{ headerShown: false }}
+                      />
+                      <Stack.Screen
+                        name="(onboarding)"
+                        options={{ headerShown: false }}
+                      />
+                      <Stack.Screen
+                        name="(tabs)"
+                        options={{ headerShown: false }}
+                      />
+                      <Stack.Screen
+                        name="main"
+                        options={{
+                          headerShown: false,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="(modals)"
+                        options={{
+                          presentation: "modal",
+                          headerShown: false,
+                          animation: "slide_from_bottom",
+                        }}
+                      />
+                    </Stack>
+                    <StatusBar style="auto" />
+                  </ChatRealtimeProvider>
+                </BottomSheetProvider>
+              </IAPProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </ThemeProvider>

@@ -3,20 +3,18 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { SvgProps } from "react-native-svg";
+import { BrandIcon } from "./ui/brand-icon";
 
 interface ProfileActionCardProps {
-  readonly icon: React.ComponentType<{
-    width: number;
-    height: number;
-    color: string;
-  }>;
-  readonly titleKey: string;
+  readonly icon: React.ComponentType<SvgProps>;
+  readonly title: string;
   readonly onPress: () => void;
 }
 
 export function ProfileActionCard({
   icon: Icon,
-  titleKey,
+  title,
   onPress,
 }: ProfileActionCardProps) {
   const colors = useThemeColors();
@@ -29,26 +27,14 @@ export function ProfileActionCard({
           { backgroundColor: colors.background },
         ]}
       >
-        <View
-          style={[
-            styles.actionCardIcon,
-            {
-              backgroundColor:
-                (colors as any).accentBorderFaint ??
-                (colors as any).accentBlueLight ??
-                colors.border,
-            },
-          ]}
-        >
-          <Icon width={20} height={20} color={colors.accent} />
-        </View>
+        <BrandIcon icon={Icon} size="sm" />
         <ThemedText
           style={[
             typography.captionBold,
             { color: colors.text, textAlign: "center" },
           ]}
         >
-          {titleKey}
+          {title}
         </ThemedText>
       </View>
     </Pressable>
@@ -72,12 +58,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 5,
     borderWidth: 1,
-  },
-  actionCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

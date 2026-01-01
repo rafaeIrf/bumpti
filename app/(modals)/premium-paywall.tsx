@@ -13,58 +13,66 @@ import { PlanRadioButton } from "@/components/plan-radio-button";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { IAP_SKUS } from "@/modules/iap/config";
+import { useIAP, useSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-interface Plan {
-  id: string;
-  nameKey: string;
-  price: string;
-  period: string | null;
-  badgeKey: string | null;
-  savingsKey: string | null;
-  isHighlighted: boolean;
-}
+// Map our internal IDs to IAP SKUs
+const SKU_MAP: Record<string, string> = {
+  "1-semana": IAP_SKUS.subscriptions.week,
+  "1-mes": IAP_SKUS.subscriptions.month,
+  "3-meses": IAP_SKUS.subscriptions.threeMonths,
+  "12-meses": IAP_SKUS.subscriptions.year,
+};
 
-const PLANS: Plan[] = [
+// Duration in months for calculation
+const PLAN_MONTHS: Record<string, number> = {
+  "1-semana": 0.25,
+  "1-mes": 1,
+  "3-meses": 3,
+  "12-meses": 12,
+};
+
+const PLAN_DEFAULTS = [
   {
     id: "1-semana",
     nameKey: "screens.premiumPaywall.plans.week",
-    price: "19,90",
     period: null,
     badgeKey: "screens.premiumPaywall.plans.mostPopular",
-    savingsKey: null,
     isHighlighted: false,
   },
   {
     id: "1-mes",
     nameKey: "screens.premiumPaywall.plans.month",
-    price: "49,90",
     period: "screens.premiumPaywall.plans.perMonth",
     badgeKey: null,
-    savingsKey: null,
     isHighlighted: true,
   },
   {
     id: "3-meses",
     nameKey: "screens.premiumPaywall.plans.threeMonths",
-    price: "39,90",
     period: "screens.premiumPaywall.plans.perMonth",
     badgeKey: "screens.premiumPaywall.plans.bestValue",
-    savingsKey: "screens.premiumPaywall.plans.save20",
     isHighlighted: false,
   },
   {
     id: "12-meses",
     nameKey: "screens.premiumPaywall.plans.year",
-    price: "29,90",
     period: "screens.premiumPaywall.plans.perMonth",
     badgeKey: null,
-    savingsKey: "screens.premiumPaywall.plans.save40",
     isHighlighted: false,
   },
 ];
@@ -126,20 +134,38 @@ const BENEFITS: Benefit[] = [
 export default function PremiumPaywallScreen() {
   const colors = useThemeColors();
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState("1-mes");
+  const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
+
+  const { requestSubscription, purchasing, restorePurchases } = useIAP();
+
+  // Get base monthly price for calculations
+  const monthlySku = SKU_MAP["1-mes"];
+  const monthlySub = useSubscription(monthlySku);
+  const baseMonthlyPrice = monthlySub?.priceValue ?? null;
 
   const handleClose = () => {
     router.back();
   };
 
-  const handleSubscribe = () => {
-    // TODO: Implement subscription logic
-    console.log("Subscribe to plan:", selectedPlan);
-    router.back();
+  const handleSubscribe = async () => {
+    if (purchasing) return;
+
+    const sku = SKU_MAP[selectedPlanId];
+    if (sku) {
+      await requestSubscription(sku);
+    } else {
+      console.warn("No SKU found for plan", selectedPlanId);
+    }
   };
 
-  const selectedPlanData = PLANS.find((plan) => plan.id === selectedPlan);
-  const selectedPlanPrice = selectedPlanData?.price || "0,00";
+  const handleRestore = async () => {
+    await restorePurchases();
+    // Optionally show alert on success/failure based on context state
+    Alert.alert(
+      t("common.success"),
+      t("screens.premiumPaywall.restoreSuccess")
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -210,56 +236,19 @@ export default function PremiumPaywallScreen() {
           </Animated.View>
         </View>
 
-        {/* Plans Section */}
         <Animated.View
           entering={FadeInDown.duration(400).delay(300)}
           style={[styles.plansSection, { paddingHorizontal: spacing.md }]}
         >
-          {PLANS.map((plan, index) => (
-            <Pressable
+          {PLAN_DEFAULTS.map((plan) => (
+            <PlanItem
               key={plan.id}
-              onPress={() => setSelectedPlan(plan.id)}
-              style={[
-                styles.planCard,
-                {
-                  borderWidth: 2,
-                  borderColor:
-                    selectedPlan === plan.id && !plan.isHighlighted
-                      ? colors.accent
-                      : "transparent",
-                },
-              ]}
-            >
-              {plan.isHighlighted && selectedPlan === plan.id ? (
-                <LinearGradient
-                  colors={["#2997FF", "#1D7FD9"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.planCardGradient, { borderRadius: 16 }]}
-                >
-                  {renderPlanContent(plan, selectedPlan, colors, true)}
-                </LinearGradient>
-              ) : (
-                <View
-                  style={[
-                    styles.planCardGradient,
-                    {
-                      backgroundColor: plan.isHighlighted
-                        ? colors.accent
-                        : "#16181C",
-                      borderRadius: 16,
-                    },
-                  ]}
-                >
-                  {renderPlanContent(
-                    plan,
-                    selectedPlan,
-                    colors,
-                    plan.isHighlighted
-                  )}
-                </View>
-              )}
-            </Pressable>
+              plan={plan}
+              selectedPlanId={selectedPlanId}
+              onSelect={setSelectedPlanId}
+              colors={colors}
+              baseMonthlyPrice={baseMonthlyPrice}
+            />
           ))}
         </Animated.View>
 
@@ -301,14 +290,39 @@ export default function PremiumPaywallScreen() {
       </ScrollView>
 
       {/* Fixed CTA at bottom */}
-      <Animated.View
-        entering={FadeInUp.duration(400).delay(600)}
-        style={[styles.ctaContainer, { borderTopColor: colors.border }]}
+      <BottomCTA
+        selectedPlanId={selectedPlanId}
+        handleSubscribe={handleSubscribe}
+        handleRestore={handleRestore}
+        purchasing={purchasing}
+        colors={colors}
+      />
+    </View>
+  );
+}
+
+function BottomCTA({
+  selectedPlanId,
+  handleSubscribe,
+  handleRestore,
+  purchasing,
+  colors,
+}: any) {
+  const sku = SKU_MAP[selectedPlanId];
+  const subscription = useSubscription(sku);
+  // Find default price for fallback
+  const price = subscription?.formattedPrice || "";
+
+  return (
+    <Animated.View
+      entering={FadeInUp.duration(400).delay(600)}
+      style={[styles.ctaContainer, { borderTopColor: colors.border }]}
+    >
+      <View
+        style={[styles.ctaGradient, { backgroundColor: colors.background }]}
       >
-        <View
-          style={[styles.ctaGradient, { backgroundColor: colors.background }]}
-        >
-          {/* Terms */}
+        {/* Terms & Restore */}
+        <View style={{ gap: 4, marginBottom: spacing.sm }}>
           <ThemedText
             style={[
               typography.caption,
@@ -317,38 +331,171 @@ export default function PremiumPaywallScreen() {
           >
             {t("screens.premiumPaywall.terms")}
           </ThemedText>
-
-          {/* CTA Button */}
-          <Pressable onPress={handleSubscribe}>
-            <LinearGradient
-              colors={["#2997FF", "#1D7FD9"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.ctaButton}
+          <Pressable onPress={handleRestore}>
+            <ThemedText
+              style={[
+                typography.caption,
+                {
+                  color: colors.textSecondary,
+                  textAlign: "center",
+                  textDecorationLine: "underline",
+                },
+              ]}
             >
+              {t("actions.restore")}
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        {/* CTA Button */}
+        <Pressable onPress={handleSubscribe}>
+          <LinearGradient
+            colors={["#2997FF", "#1D7FD9"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ctaButton}
+          >
+            {purchasing ? (
+              <ActivityIndicator color="white" />
+            ) : (
               <ThemedText
                 style={[
                   typography.body1,
                   { color: "#FFFFFF", fontWeight: "600" },
                 ]}
               >
-                Assinar - R$ {selectedPlanPrice}
+                {t("common.subscribe")} - {price}
               </ThemedText>
-            </LinearGradient>
-          </Pressable>
+            )}
+          </LinearGradient>
+        </Pressable>
+      </View>
+    </Animated.View>
+  );
+}
+
+function PlanItem({
+  plan,
+  selectedPlanId,
+  onSelect,
+  colors,
+  baseMonthlyPrice,
+}: {
+  plan: any;
+  selectedPlanId: string;
+  onSelect: (id: string) => void;
+  colors: any;
+  baseMonthlyPrice: number | null;
+}) {
+  const isSelected = selectedPlanId === plan.id;
+
+  // Use the new reusable hook
+  const sku = SKU_MAP[plan.id];
+  const subscription = useSubscription(sku);
+
+  // Calculate display price (monthly equivalent for multi-month plans)
+  const displayPrice = useMemo(() => {
+    if (!subscription) return "";
+
+    // For multi-month plans, we want to show the monthly price
+    if (PLAN_MONTHS[plan.id] > 1 && subscription.priceValue) {
+      const rawMonthly = subscription.priceValue / PLAN_MONTHS[plan.id];
+      // Explicitly round: 3rd decimal >= 5 rounds up (standard Math.round behavior)
+      const monthlyValue = Math.round(rawMonthly * 100) / 100;
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: subscription.currency || "BRL", // Fallback to BRL if currency missing
+        }).format(monthlyValue);
+      } catch {
+        // Fallback formatting if Intl fails
+        return monthlyValue.toFixed(2);
+      }
+    }
+
+    return subscription.formattedPrice || "";
+  }, [plan.id, subscription]);
+
+  // Calculate dynamic savings
+  const savingsLabel = useMemo(() => {
+    if (
+      baseMonthlyPrice &&
+      subscription?.priceValue &&
+      PLAN_MONTHS[plan.id] > 1
+    ) {
+      const months = PLAN_MONTHS[plan.id];
+      const unitPrice = subscription.priceValue / months;
+      const discount =
+        ((baseMonthlyPrice - unitPrice) / baseMonthlyPrice) * 100;
+      if (discount > 0) {
+        return t("screens.premiumPaywall.plans.savePercent", {
+          percent: Math.round(discount),
+        });
+      }
+    }
+    return null;
+  }, [plan.id, baseMonthlyPrice, subscription?.priceValue]);
+
+  return (
+    <Pressable
+      onPress={() => onSelect(plan.id)}
+      style={[
+        styles.planCard,
+        {
+          borderWidth: 2,
+          borderColor:
+            isSelected && !plan.isHighlighted ? colors.accent : "transparent",
+        },
+      ]}
+    >
+      {plan.isHighlighted && isSelected ? (
+        <LinearGradient
+          colors={["#2997FF", "#1D7FD9"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.planCardGradient, { borderRadius: 16 }]}
+        >
+          {renderPlanContent(
+            plan,
+            displayPrice,
+            savingsLabel,
+            isSelected,
+            colors,
+            true
+          )}
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.planCardGradient,
+            {
+              backgroundColor: plan.isHighlighted ? colors.accent : "#16181C",
+              borderRadius: 16,
+            },
+          ]}
+        >
+          {renderPlanContent(
+            plan,
+            displayPrice,
+            savingsLabel,
+            isSelected,
+            colors,
+            plan.isHighlighted
+          )}
         </View>
-      </Animated.View>
-    </View>
+      )}
+    </Pressable>
   );
 }
 
 function renderPlanContent(
-  plan: Plan,
-  selectedPlan: string,
+  plan: any,
+  price: string, // Price passed explicitly
+  savingsLabel: string | null, // Pre-calculated savings label
+  isSelected: boolean,
   colors: any,
   isHighlighted: boolean
 ) {
-  const isSelected = selectedPlan === plan.id;
   const textColor = isHighlighted ? "#FFFFFF" : colors.text;
   const secondaryColor = isHighlighted
     ? "rgba(255, 255, 255, 0.8)"
@@ -387,7 +534,7 @@ function renderPlanContent(
           </ThemedText>
 
           {/* Savings */}
-          {plan.savingsKey && (
+          {savingsLabel && (
             <ThemedText
               style={[
                 typography.caption,
@@ -399,7 +546,7 @@ function renderPlanContent(
                 },
               ]}
             >
-              {t(plan.savingsKey)}
+              {savingsLabel}
             </ThemedText>
           )}
         </View>
@@ -410,7 +557,7 @@ function renderPlanContent(
             <ThemedText
               style={[typography.heading, { color: textColor, fontSize: 22 }]}
             >
-              R$ {plan.price}
+              {price}
             </ThemedText>
             {plan.period && (
               <ThemedText

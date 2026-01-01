@@ -4,6 +4,7 @@ export interface BSProps {
   content: () => React.ReactNode;
   draggable?: boolean;
   snapPoints?: (string | number)[]; // e.g., ['100%'] for full-screen
+  onClose?: () => void;
 }
 
 export interface BottomSheetContextValue {

@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 
 /**
@@ -274,4 +275,11 @@ export function calculateDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c; // Distance in meters
+}
+
+/**
+ * Open device settings for location permissions
+ */
+export async function openLocationSettings() {
+  await Linking.openSettings();
 }

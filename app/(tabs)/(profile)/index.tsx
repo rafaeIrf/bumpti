@@ -360,17 +360,17 @@ export default function ProfileScreen() {
           >
             <ProfileActionCard
               icon={FlameIcon}
-              titleKey={t("screens.profile.turbo.title")}
+              title={t("screens.profile.turbo.title")}
               onPress={handleTurboClick}
             />
             <ProfileActionCard
               icon={NavigationIcon}
-              titleKey={t("screens.profile.pings.title")}
+              title={t("screens.profile.pings.title")}
               onPress={handlePingsClick}
             />
             <ProfileActionCard
               icon={MapPinIcon}
-              titleKey={t("screens.profile.earlyCheckin.title")}
+              title={t("screens.profile.earlyCheckin.title")}
               onPress={handleEarlyCheckinClick}
             />
           </Animated.View>

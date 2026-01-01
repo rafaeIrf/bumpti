@@ -1,4 +1,6 @@
 import { useAuthState } from "@/hooks/use-auth-state";
+import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
@@ -14,6 +16,8 @@ export default function RootIndex() {
     enabled: !!isAuthenticated,
     force: true, // sempre confirma no backend se o perfil existe
   });
+  const { isLoading: isLocationLoading } = useLocationPermission();
+  const { isLoading: isNotificationLoading } = useNotificationPermission();
   const onboardingState = useAppSelector((state) => state.onboarding);
 
   useEffect(() => {
@@ -34,8 +38,13 @@ export default function RootIndex() {
     onboardingState.currentStep,
   ]);
 
-  // Show loading while checking auth state
-  if (isAuthLoading || (isAuthenticated && isProfileLoading)) {
+  // Show loading while checking auth state or permissions
+  if (
+    isAuthLoading ||
+    (isAuthenticated && isProfileLoading) ||
+    isLocationLoading ||
+    isNotificationLoading
+  ) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -66,7 +75,7 @@ export default function RootIndex() {
       ? `/(onboarding)/${targetStep}`
       : "/(onboarding)/user-name";
 
-  return <Redirect href={onboardingRoute} />;
+  return <Redirect href={onboardingRoute as any} />;
 }
 
 const styles = StyleSheet.create({

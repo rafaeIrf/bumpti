@@ -1,10 +1,11 @@
 import {
-  getCurrentLocation,
-  hasLocationPermission,
-  requestLocationPermission,
-  shouldShowLocationScreen,
-  type LocationCoordinates,
-  type LocationPermissionResult,
+    checkLocationPermission,
+    getCurrentLocation,
+    openLocationSettings,
+    requestLocationPermission,
+    shouldShowLocationScreen,
+    type LocationCoordinates,
+    type LocationPermissionResult
 } from "@/modules/location";
 import { useCallback, useEffect, useState } from "react";
 
@@ -34,16 +35,18 @@ export function useLocationPermission() {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [shouldShowScreen, setShouldShowScreen] = useState<boolean>(false);
+  const [canAskAgain, setCanAskAgain] = useState<boolean>(true);
   const [location, setLocation] = useState<LocationCoordinates | null>(null);
 
   const checkPermission = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [permitted, shouldShow] = await Promise.all([
-        hasLocationPermission(),
+      const [result, shouldShow] = await Promise.all([
+        checkLocationPermission(),
         shouldShowLocationScreen(),
       ]);
-      setHasPermission(permitted);
+      setHasPermission(result.status === "granted");
+      setCanAskAgain(result.canAskAgain);
       setShouldShowScreen(shouldShow);
     } catch (error) {
       console.error("Error checking location permission:", error);
@@ -64,6 +67,7 @@ export function useLocationPermission() {
     try {
       const result = await requestLocationPermission();
       setHasPermission(result.status === "granted");
+      setCanAskAgain(result.canAskAgain);
       setShouldShowScreen(result.status !== "granted");
       return result;
     } catch (error) {
@@ -97,10 +101,12 @@ export function useLocationPermission() {
     hasPermission,
     isLoading,
     shouldShowScreen,
+    canAskAgain,
     location,
     request,
     getLocation,
     refresh,
     checkPermission,
+    openSettings: openLocationSettings,
   };
 }

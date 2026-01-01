@@ -5,6 +5,8 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React, { ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { SvgProps } from "react-native-svg";
+import { BrandIcon } from "./ui/brand-icon";
 
 interface ConnectionButton {
   text: string;
@@ -21,12 +23,7 @@ interface GenericConnectionBottomSheetProps {
   readonly microcopy?: string | ReactNode;
   readonly customContent?: ReactNode;
   readonly onClose?: () => void;
-  readonly Icon?: React.FC<{
-    width?: number;
-    height?: number;
-    color?: string;
-    style?: any;
-  }>;
+  readonly Icon?: React.ComponentType<SvgProps>;
 }
 
 /**
@@ -52,14 +49,7 @@ export function GenericConnectionBottomSheet({
       {/* Visual Header (Icon Anchor) */}
       {Icon && (
         <View style={styles.iconWrapper}>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.accent + "15" },
-            ]}
-          >
-            <Icon width={32} height={32} color={colors.accent} />
-          </View>
+          <BrandIcon icon={Icon} size="lg" />
         </View>
       )}
 
@@ -180,15 +170,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.md,
     marginBottom: spacing.lg,
-  },
-  iconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
   },
   closeButton: {
     position: "absolute",

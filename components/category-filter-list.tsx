@@ -3,7 +3,7 @@ import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { PlaceCategory } from "@/modules/places/types";
-import React from "react";
+import React, { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -19,6 +19,13 @@ export function CategoryFilterList({
   onSelect,
 }: CategoryFilterListProps) {
   const colors = useThemeColors();
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      const textA = t(`common.placeCategories.${a}`);
+      const textB = t(`common.placeCategories.${b}`);
+      return textA.length - textB.length;
+    });
+  }, [categories]);
 
   return (
     <View style={styles.container}>
@@ -31,7 +38,7 @@ export function CategoryFilterList({
             colors={colors}
           />
 
-          {categories.map((category) => (
+          {sortedCategories.map((category) => (
             <FilterChip
               key={category}
               label={t(`common.placeCategories.${category}`)}

@@ -9,6 +9,7 @@ import { ThemedView } from "@/components/themed-view";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -17,7 +18,13 @@ import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -89,7 +96,15 @@ export function PlaceSearchContent({
 
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
+  const { showLocationSheet, hasLocationPermission } = usePermissionSheet();
   const { handlePlaceClick } = usePlaceClick();
+
+  useEffect(() => {
+    if (!hasLocationPermission) {
+      showLocationSheet();
+    }
+  }, [hasLocationPermission, showLocationSheet]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -331,35 +346,41 @@ export function PlaceSearchContent({
           >
             {t("screens.placeSearch.suggestionsLabel")}
           </ThemedText>
-          {["bar", "cafe", "club", "restaurant"].map((suggestion) => (
-            <Pressable
-              key={suggestion}
-              onPress={() =>
-                handleSearch(
-                  t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
-                )
-              }
-            >
-              <ThemedView
-                style={[
-                  styles.suggestionButton,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+          {["bar", "cafe", "club", "restaurant"]
+            .sort((a, b) => {
+              const textA = t(`screens.placeSearch.suggestionsOptions.${a}`);
+              const textB = t(`screens.placeSearch.suggestionsOptions.${b}`);
+              return textA.length - textB.length;
+            })
+            .map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                onPress={() =>
+                  handleSearch(
+                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
+                  )
+                }
               >
-                <SearchIcon
-                  width={16}
-                  height={16}
-                  color={colors.textSecondary}
-                />
-                <ThemedText style={{ color: colors.text }}>
-                  {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          ))}
+                <ThemedView
+                  style={[
+                    styles.suggestionButton,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SearchIcon
+                    width={16}
+                    height={16}
+                    color={colors.textSecondary}
+                  />
+                  <ThemedText style={{ color: colors.text }}>
+                    {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
+                  </ThemedText>
+                </ThemedView>
+              </Pressable>
+            ))}
         </ThemedView>
       </Animated.View>
     );

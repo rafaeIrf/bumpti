@@ -7,7 +7,12 @@
     "navigate": "Navegar",
     "save_rating": "Enviar evaluación",
     "rate": "Calificar",
-    "details": "Detalles"
+    "details": "Detalles",
+    "favorite": "Favoritar",
+    "saved": "Favorito",
+    "restore": "Restaurar",
+    "openSettings": "Abrir Ajustes",
+    "skip": "Omitir"
   },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",
@@ -69,6 +74,7 @@
   "common": {
     "retry": "Intentar de nuevo",
     "resend": "Reenviar",
+    "subscribe": "Suscribirse",
     "delete": "Eliminar",
     "cancel": "Cancelar",
     "all": "Todos",
@@ -494,9 +500,9 @@
         "year": "12 meses",
         "perMonth": "mes",
         "mostPopular": "Más popular",
+        "popular": "Popular",
         "bestValue": "Mejor valor",
-        "save20": "Ahorra 20%",
-        "save40": "Ahorra 40%"
+        "savePercent": "Ahorra {{percent}}%"
       },
       "benefits": {
         "unlimitedLikes": {
@@ -624,7 +630,8 @@
         "title": "¿Cuáles son tus spots favoritos?",
         "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",
         "searchPlaceholder": "Buscar lugar...",
-        "selectAtLeastOne": "Selecciona al menos 1 spot"
+        "selectAtLeastOne": "Selecciona al menos 1 spot",
+        "locationNeeded": "Para sugerirte lugares cercanos, necesitamos tu ubicación."
       },
       "locationTitle": "Permitir ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
