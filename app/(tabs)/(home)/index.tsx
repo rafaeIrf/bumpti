@@ -28,6 +28,7 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useDetectPlaceQuery } from "@/modules/places/placesApi";
@@ -67,6 +68,28 @@ export default function HomeScreen() {
       skip: !location?.latitude || !location?.longitude,
     }
   );
+
+  const {
+    showLocationSheet,
+    showNotificationSheet,
+    locationHandled,
+    notificationHandled,
+  } = usePermissionSheet();
+
+  useEffect(() => {
+    // Show location sheet first if not yet handled (granted or dismissed)
+    if (!locationHandled) {
+      showLocationSheet();
+    } else if (!notificationHandled) {
+      // Once location is handled, show notification sheet if not yet handled
+      showNotificationSheet();
+    }
+  }, [
+    locationHandled,
+    notificationHandled,
+    showLocationSheet,
+    showNotificationSheet,
+  ]);
 
   useEffect(() => {
     if (detectedPlaceResult?.suggested) {

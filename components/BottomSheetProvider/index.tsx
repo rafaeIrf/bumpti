@@ -32,25 +32,31 @@ export default function BottomSheetProvider({
   const screenTitleRef = useRef<string>("");
   const [bsProps, setBSProps] = useState<BSProps | null>(null);
 
-  const handleExpandPress = useCallback(() => {
-    bottomSheetRef.current?.snapToIndex(0);
+  const handleExpandPress = useCallback((props: BSProps) => {
+    dismissKeyboard();
+    setBSProps(props);
+    setIsBottomSheetOpen(true);
   }, []);
+
   const handleClosePress = useCallback(() => {
+    if (bsProps?.onClose) {
+      bsProps.onClose();
+    }
     setIsBottomSheetOpen(false);
     dismissKeyboard();
     bottomSheetRef.current?.close();
-  }, []);
+    setBSProps(null);
+  }, [bsProps]);
 
   const colors = useThemeColors();
 
   useEffect(() => {
     if (bsProps) {
-      handleExpandPress();
-      setIsBottomSheetOpen(true);
+      bottomSheetRef.current?.snapToIndex(0);
     } else {
-      handleClosePress();
+      bottomSheetRef.current?.close();
     }
-  }, [bsProps, handleClosePress, handleExpandPress]);
+  }, [bsProps]);
 
   // Handle Android back button
   useEffect(() => {
@@ -70,32 +76,29 @@ export default function BottomSheetProvider({
     return () => backHandler.remove();
   }, [isBottomSheetOpen, handleClosePress]);
 
-  const renderBackDrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop
-      {...props}
-      style={[props.style, styles.backdrop]}
-      opacity={0.48}
-      appearsOnIndex={0}
-      disappearsOnIndex={-1}
-      pressBehavior="close"
-      onPress={() => {
-        dismissKeyboard();
-        setIsBottomSheetOpen(false);
-      }}
-    />
+  const renderBackDrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        style={[props.style, styles.backdrop]}
+        opacity={0.48}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+        onPress={handleClosePress}
+      />
+    ),
+    [handleClosePress]
   );
 
   const bottomSheetContext: BottomSheetContextValue = useMemo(
     () => ({
-      expand: (props) => {
-        dismissKeyboard();
-        setBSProps(props);
-      },
+      expand: handleExpandPress,
       close: handleClosePress,
       screenTitle: screenTitleRef,
       isBottomSheetOpen,
     }),
-    [isBottomSheetOpen, handleClosePress]
+    [isBottomSheetOpen, handleExpandPress, handleClosePress]
   );
 
   const dismissKeyboard = () => Keyboard.dismiss();

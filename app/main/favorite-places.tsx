@@ -7,6 +7,7 @@ import {
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
+import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { t } from "@/modules/locales";
 import {
   placesApi,
@@ -18,12 +19,13 @@ import { setProfile } from "@/modules/store/slices/profileSlice";
 import { logger } from "@/utils/logger";
 import { navigateToNextProfileField } from "@/utils/profile-flow";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function EditFavoritePlacesScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
+  const { showLocationSheet, hasLocationPermission } = usePermissionSheet();
 
   const { data: globalFavorites } = useGetFavoritePlacesQuery();
   const profileFavorites = profile?.favoritePlaces || [];
@@ -56,6 +58,13 @@ export default function EditFavoritePlacesScreen() {
         {}
       ) || {},
   });
+
+  // Show location sheet if permission not granted
+  useEffect(() => {
+    if (!hasLocationPermission) {
+      showLocationSheet();
+    }
+  }, [hasLocationPermission, showLocationSheet]);
 
   const handleSave = () => {
     if (profile) {

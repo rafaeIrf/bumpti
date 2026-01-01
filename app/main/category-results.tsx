@@ -11,6 +11,7 @@ import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useFavoritePlacesList } from "@/hooks/use-favorite-places-list";
+import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -27,7 +28,7 @@ import {
   PlaceVibe,
 } from "@/modules/places/types";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
 
@@ -63,6 +64,7 @@ export default function CategoryResultsScreen() {
   const favoritesMode = params.favorites === "true";
   const trendingMode = params.trending === "true";
   const { handlePlaceClick } = usePlaceClick();
+  const { showLocationSheet, hasLocationPermission } = usePermissionSheet();
   const [activeFilter, setActiveFilter] = useState<PlaceCategory | "all">(
     "all"
   );
@@ -70,6 +72,13 @@ export default function CategoryResultsScreen() {
   // Use cached location hook
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
+
+  useEffect(() => {
+    // Missing location permission? Prompt.
+    if (!hasLocationPermission) {
+      showLocationSheet();
+    }
+  }, [hasLocationPermission, showLocationSheet]);
 
   // Trending places query
   const { data: trendingData, isLoading: trendingLoading } =

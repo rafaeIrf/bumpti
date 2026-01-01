@@ -9,7 +9,10 @@
     "rate": "Rate",
     "details": "Details",
     "favorite": "Favorite",
-    "saved": "Favorited"
+    "saved": "Favorited",
+    "restore": "Restore",
+    "openSettings": "Open Settings",
+    "skip": "Skip"
   },
   "welcome": "Welcome!",
   "explore": "Explore",
@@ -71,6 +74,7 @@
   "common": {
     "retry": "Try again",
     "resend": "Resend",
+    "subscribe": "Subscribe",
     "cancel": "Cancel",
     "all": "All",
     "close": "Close",
@@ -496,9 +500,9 @@
         "year": "12 months",
         "perMonth": "month",
         "mostPopular": "Most popular",
+        "popular": "Popular",
         "bestValue": "Best value",
-        "save20": "Save 20%",
-        "save40": "Save 40%"
+        "savePercent": "Save {{percent}}%"
       },
       "benefits": {
         "unlimitedLikes": {
@@ -626,7 +630,8 @@
         "title": "What are your favorite spots?",
         "subtitle": "Increase your connections by choosing your favorite spots.",
         "searchPlaceholder": "Search place...",
-        "selectAtLeastOne": "Select at least 1 spot"
+        "selectAtLeastOne": "Select at least 1 spot",
+        "locationNeeded": "To suggest places near you, we need your location."
       },
       "locationTitle": "Allow location",
       "locationSubtitle": "To find people and places near you, we need your location. You can turn this off anytime",

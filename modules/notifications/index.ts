@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 
 /**
@@ -173,4 +174,11 @@ export async function cancelAllNotifications() {
   } catch (error) {
     console.error("Error canceling notifications:", error);
   }
+}
+
+/**
+ * Open device settings for notification permissions
+ */
+export async function openNotificationSettings() {
+  await Linking.openSettings();
 }

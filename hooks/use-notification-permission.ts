@@ -1,8 +1,9 @@
 import {
-  hasNotificationPermission,
+  checkNotificationPermission,
+  openNotificationSettings,
   requestNotificationPermission,
   shouldShowNotificationScreen,
-  type NotificationPermissionResult,
+  type NotificationPermissionResult
 } from "@/modules/notifications";
 import { useCallback, useEffect, useState } from "react";
 
@@ -29,15 +30,17 @@ export function useNotificationPermission() {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [shouldShowScreen, setShouldShowScreen] = useState<boolean>(false);
+  const [canAskAgain, setCanAskAgain] = useState<boolean>(true);
 
   const checkPermission = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [permitted, shouldShow] = await Promise.all([
-        hasNotificationPermission(),
+      const [result, shouldShow] = await Promise.all([
+        checkNotificationPermission(),
         shouldShowNotificationScreen(),
       ]);
-      setHasPermission(permitted);
+      setHasPermission(result.status === "granted");
+      setCanAskAgain(result.canAskAgain);
       setShouldShowScreen(shouldShow);
     } catch (error) {
       console.error("Error checking notification permission:", error);
@@ -59,6 +62,7 @@ export function useNotificationPermission() {
       try {
         const result = await requestNotificationPermission();
         setHasPermission(result.status === "granted");
+        setCanAskAgain(result.canAskAgain);
         setShouldShowScreen(result.status !== "granted");
         return result;
       } catch (error) {
@@ -80,8 +84,10 @@ export function useNotificationPermission() {
     hasPermission,
     isLoading,
     shouldShowScreen,
+    canAskAgain,
     request,
     refresh,
     checkPermission,
+    openSettings: openNotificationSettings,
   };
 }
