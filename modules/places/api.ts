@@ -2,6 +2,8 @@ import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { CityPrediction, Place, PlaceCategory } from "./types";
 
+type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating";
+
 export async function searchCities(
   input: string
 ): Promise<CityPrediction[]> {
@@ -62,12 +64,23 @@ export async function getNearbyPlaces(
   latitude: number,
   longitude: number,
   category: string[], // General category name (bars, cafes, etc.)
+  options?: {
+    page?: number;
+    pageSize?: number;
+    sortBy?: PlacesSortOption;
+    minRating?: number | null;
+  },
 ): Promise<Place[]> {
+  const { page, pageSize, sortBy, minRating } = options ?? {};
   const { data, error } = await supabase.functions.invoke<any[]>("places-nearby", {
     body: {
       lat: latitude,
       lng: longitude,
       category, // Edge function internally maps this to FSQ categories if needed, or we rely on RPC
+      page,
+      pageSize,
+      sortBy,
+      minRating,
     },
   });
   
@@ -320,4 +333,3 @@ export async function saveSocialReview(payload: {
 
   return data;
 }
-

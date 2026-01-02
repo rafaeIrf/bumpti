@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "location": {
+      "title": "Localização necessária",
+      "subtitle": "Para encontrar os melhores lugares e pessoas ao seu redor, precisamos saber sua localização.",
+      "button": "Ativar localização",
+      "buttonSettings": "Abrir Configurações",
+      "requesting": "Solicitando...",
+      "skip": "Agora não"
+    }
+  },
   "actions": {
     "report": "Denunciar",
     "block": "Bloquear",
@@ -58,6 +68,7 @@
       "sports_centre": "Centro Esportivo",
       "community_centre": "Centro Comunitário",
       "events_venue": "Local de Eventos",
+      "language_school": "Escola de Idiomas",
       "club": "Clube",
       "dance_club": "Dança",
       "theatre": "Teatro",
@@ -113,6 +124,9 @@
       "stadium": "Estádios",
       "library": "Bibliotecas",
       "sports_centre": "Centros Esportivos",
+      "community_centre": "Centros Comunitários",
+      "events_venue": "Locais de Eventos",
+      "language_school": "Escolas de Idiomas",
       "club": "Clubes",
       "dance_club": "Escolas de Dança",
       "theatre": "Teatros",
@@ -856,6 +870,18 @@
   },
   "filters": {
     "title": "Filtros",
+    "apply": "Aplicar",
+    "clear": "Limpar",
+    "sortBy": {
+      "title": "Ordenar por",
+      "relevance": "Relevância",
+      "distance": "Distância",
+      "popularity": "Popularidade",
+      "rating": "Avaliação"
+    },
+    "minRating": {
+      "title": "Avaliação mínima"
+    },
     "gender": {
       "title": "Gênero",
       "all": "Todos os gêneros",

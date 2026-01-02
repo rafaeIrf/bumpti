@@ -19,7 +19,7 @@ serve(async (req) => {
       });
     }
 
-    const { lat, lng, category } = await req.json();
+    const { lat, lng, category, page, pageSize, sortBy, minRating } = await req.json();
 
     // Validation
     const latNum = parseFloat(lat);
@@ -54,13 +54,35 @@ serve(async (req) => {
         });
     }
 
+    const parsedPage = Number(page);
+    const pageNumber =
+      Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const parsedPageSize = Number(pageSize);
+    const pageSizeNumber =
+      Number.isFinite(parsedPageSize) && parsedPageSize > 0
+        ? parsedPageSize
+        : 20;
+    const minRatingNumber =
+      minRating === null || minRating === undefined
+        ? null
+        : Number.isFinite(Number(minRating))
+          ? Number(minRating)
+          : null;
+    const sortByValue = typeof sortBy === "string" ? sortBy : "relevance";
+
+    const pageOffset = (pageNumber - 1) * pageSizeNumber;
+
     const { data: places, error } = await supabase.rpc("search_places_nearby", {
       user_lat: latNum,
       user_lng: lngNum,
       radius_meters: 50 * 1000,
       filter_categories: categoriesArray,
-      max_results: 50,
-      requesting_user_id: requestingUserId
+      max_results: 60,
+      requesting_user_id: requestingUserId,
+      sort_by: sortByValue,
+      min_rating: minRatingNumber,
+      page_offset: pageOffset,
+      page_size: pageSizeNumber,
     });
 
     if (error) {

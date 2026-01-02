@@ -70,4 +70,5 @@ export type PlaceCategory =
   | "sports_centre"
   | "community_centre"
   | "events_venue"
+  | "language_school"
   | "club";

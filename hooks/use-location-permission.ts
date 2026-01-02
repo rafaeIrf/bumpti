@@ -1,13 +1,14 @@
 import {
-    checkLocationPermission,
-    getCurrentLocation,
-    openLocationSettings,
-    requestLocationPermission,
-    shouldShowLocationScreen,
-    type LocationCoordinates,
-    type LocationPermissionResult
+  checkLocationPermission,
+  getCurrentLocation,
+  openLocationSettings,
+  requestLocationPermission,
+  shouldShowLocationScreen,
+  type LocationCoordinates,
+  type LocationPermissionResult
 } from "@/modules/location";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 
 /**
  * Hook to manage location permissions
@@ -37,6 +38,7 @@ export function useLocationPermission() {
   const [shouldShowScreen, setShouldShowScreen] = useState<boolean>(false);
   const [canAskAgain, setCanAskAgain] = useState<boolean>(true);
   const [location, setLocation] = useState<LocationCoordinates | null>(null);
+  const appState = useRef(AppState.currentState);
 
   const checkPermission = useCallback(async () => {
     setIsLoading(true);
@@ -61,6 +63,23 @@ export function useLocationPermission() {
   useEffect(() => {
     checkPermission();
   }, [checkPermission]);
+
+  // Re-check permission when app comes back to foreground (e.g., after changing settings)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        checkPermission();
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => subscription.remove();
+  }, [checkPermission]);
+
 
   const request = useCallback(async (): Promise<LocationPermissionResult> => {
     setIsLoading(true);

@@ -13,22 +13,26 @@ import {
 } from "@/modules/places/api";
 import { setFavoritePlaces } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  buildNearbyCacheKey,
+  mergeNearbyPlaces,
+  roundToGrid,
+  shouldRefetchNearby,
+} from "./nearby-cache";
 import { Place, PlaceCategory } from "./types";
 
 // TTL configurations (in seconds)
-// Google Places API allows caching lat/lng for up to 30 days
-// Reference: https://cloud.google.com/maps-platform/terms/maps-service-terms Section 10.3
-const CACHE_TIME = {
-  NEARBY_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - Google's maximum allowed cache time
-  SEARCH_PLACES: __DEV__ ? 1 * 60 : 30 * 24 * 60 * 60, // 30 days - search results cache
-  FAVORITE_PLACES: __DEV__ ? 30 : 5 * 60, // shorter cache; keep fresh
-  TRENDING_PLACES: __DEV__ ? 10 : 30, // 30 seconds - very short cache for real-time updates
-};
+// Default to short cache in dev for easier testing.
+const DEV_CACHE_TTL = 60;
 
-// Round coordinates to create cache grid (approximately 200m precision)
-// 0.002 degrees ≈ 222m at equator
-const roundToGrid = (coord: number): number => {
-  return Math.round(coord / 0.002) * 0.002;
+const CACHE_TIME = {
+  NEARBY_PLACES: __DEV__ ? DEV_CACHE_TTL : 60,
+  TRENDING_PLACES: __DEV__ ? DEV_CACHE_TTL : 30,
+  FAVORITE_PLACES: __DEV__ ? DEV_CACHE_TTL : 300,
+  PLACES_BY_FAVORITES: __DEV__ ? DEV_CACHE_TTL : 120,
+  SEARCH_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
+  SUGGESTED_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
+  DETECTED_PLACE: __DEV__ ? DEV_CACHE_TTL : 60,
 };
 
 export const placesApi = createApi({
@@ -65,7 +69,7 @@ export const placesApi = createApi({
           id: `${roundToGrid(arg.latitude)}_${roundToGrid(arg.longitude)}_${arg.categories.join(",")}`,
         },
       ],
-      keepUnusedDataFor: CACHE_TIME.FAVORITE_PLACES,
+      keepUnusedDataFor: CACHE_TIME.SUGGESTED_PLACES,
     }),
 
     // Detect place based on user location
@@ -92,7 +96,7 @@ export const placesApi = createApi({
           id: `${roundToGrid(arg.latitude)}_${roundToGrid(arg.longitude)}`,
         },
       ],
-      keepUnusedDataFor: 60, // Cache for 1 minute only
+      keepUnusedDataFor: CACHE_TIME.DETECTED_PLACE,
     }),
     // Get nearby places by category
     getNearbyPlaces: builder.query<
@@ -101,18 +105,38 @@ export const placesApi = createApi({
         latitude: number;
         longitude: number;
         category: string[]; // General category name (bars, cafes, etc.)
+        page?: number;
+        pageSize?: number;
+        sortBy?: "relevance" | "distance" | "popularity" | "rating";
+        minRating?: number | null;
       }
     >({
+      serializeQueryArgs: ({ endpointName, queryArgs }) =>
+        buildNearbyCacheKey(queryArgs, endpointName),
+      merge: (currentCache, newItems, { arg }) =>
+        mergeNearbyPlaces(currentCache, newItems, arg.page ?? 1),
+      forceRefetch: ({ currentArg, previousArg }) =>
+        shouldRefetchNearby(currentArg, previousArg),
       queryFn: async ({
         latitude,
         longitude,
         category,
+        page,
+        pageSize,
+        sortBy,
+        minRating,
       }) => {
         try {
           const places = await getNearbyPlacesApi(
             latitude,
             longitude,
             category,
+            {
+              page,
+              pageSize,
+              sortBy,
+              minRating,
+            }
           );
           return { data: places as Place[] };
         } catch (error) {
@@ -123,10 +147,11 @@ export const placesApi = createApi({
         // Round coordinates to grid (~200m) for cache key
         const lat = roundToGrid(arg.latitude);
         const lng = roundToGrid(arg.longitude);
+        const categoryKey = arg.category.join(",");
         return [
           {
             type: "NearbyPlaces",
-            id: `${lat}_${lng}_${arg.category}`,
+            id: `${lat}_${lng}_${categoryKey}_${arg.page ?? 1}_${arg.pageSize ?? 20}_${arg.sortBy ?? "relevance"}_${arg.minRating ?? "all"}`,
           },
         ];
       },
@@ -151,7 +176,7 @@ export const placesApi = createApi({
           const places = await getPlacesByFavoritesApi(
             latitude,
             longitude,
-            category,
+            category
           );
           return { data: places as Place[] };
         } catch (error) {
@@ -169,7 +194,7 @@ export const placesApi = createApi({
           },
         ];
       },
-      keepUnusedDataFor: CACHE_TIME.TRENDING_PLACES, // Short cache for fresh favorites data
+      keepUnusedDataFor: CACHE_TIME.PLACES_BY_FAVORITES,
     }),
 
     // Search places by text input
@@ -390,8 +415,11 @@ export const placesApi = createApi({
             const entry = placesApiState[cacheKey];
             if (!entry?.data) return;
 
-            // Update getNearbyPlaces caches
-            if (cacheKey.startsWith("getNearbyPlaces(")) {
+            // Update getNearbyPlaces caches (supports serialized keys)
+            if (
+              entry?.endpointName === "getNearbyPlaces" ||
+              cacheKey.startsWith("getNearbyPlaces(")
+            ) {
               dispatch(
                 placesApi.util.updateQueryData("getNearbyPlaces", entry.originalArgs, (draft) => {
                   updatePlaceReview(draft);

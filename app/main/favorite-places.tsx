@@ -4,10 +4,11 @@ import {
   FavoritePlacesContent,
   useFavoritePlaces,
 } from "@/components/favorite-places-manager";
+import { LocationPermissionState } from "@/components/location-permission-state";
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
-import { usePermissionSheet } from "@/hooks/use-permission-sheet";
+import { useLocationPermission } from "@/hooks/use-location-permission";
 import { t } from "@/modules/locales";
 import {
   placesApi,
@@ -19,13 +20,18 @@ import { setProfile } from "@/modules/store/slices/profileSlice";
 import { logger } from "@/utils/logger";
 import { navigateToNextProfileField } from "@/utils/profile-flow";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React from "react";
 
 export default function EditFavoritePlacesScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile.data);
-  const { showLocationSheet, hasLocationPermission } = usePermissionSheet();
+  const {
+    hasPermission: hasLocationPermission,
+    canAskAgain,
+    request: requestLocationPermission,
+    openSettings,
+  } = useLocationPermission();
 
   const { data: globalFavorites } = useGetFavoritePlacesQuery();
   const profileFavorites = profile?.favoritePlaces || [];
@@ -58,13 +64,6 @@ export default function EditFavoritePlacesScreen() {
         {}
       ) || {},
   });
-
-  // Show location sheet if permission not granted
-  useEffect(() => {
-    if (!hasLocationPermission) {
-      showLocationSheet();
-    }
-  }, [hasLocationPermission, showLocationSheet]);
 
   const handleSave = () => {
     if (profile) {
@@ -134,17 +133,25 @@ export default function EditFavoritePlacesScreen() {
         />
       }
     >
-      <FavoritePlacesContent
-        selectedPlaceIds={selectedPlaceIds}
-        togglePlace={togglePlace}
-        handleOpenSearch={handleOpenSearch}
-        suggestedPlaces={suggestedPlaces}
-        isLoadingPlaces={isLoadingPlaces}
-        locationLoading={locationLoading}
-        getPlacesByCategory={getPlacesByCategory}
-        isExpanded={isExpanded}
-        setIsExpanded={setIsExpanded}
-      />
+      {!hasLocationPermission ? (
+        <LocationPermissionState
+          canAskAgain={canAskAgain}
+          onRequest={requestLocationPermission}
+          onOpenSettings={openSettings}
+        />
+      ) : (
+        <FavoritePlacesContent
+          selectedPlaceIds={selectedPlaceIds}
+          togglePlace={togglePlace}
+          handleOpenSearch={handleOpenSearch}
+          suggestedPlaces={suggestedPlaces}
+          isLoadingPlaces={isLoadingPlaces}
+          locationLoading={locationLoading}
+          getPlacesByCategory={getPlacesByCategory}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+        />
+      )}
     </BaseTemplateScreen>
   );
 }
