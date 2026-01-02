@@ -65,14 +65,14 @@ const PLAN_DEFAULTS = [
     id: "3-meses",
     nameKey: "screens.premiumPaywall.plans.threeMonths",
     period: "screens.premiumPaywall.plans.perMonth",
-    badgeKey: "screens.premiumPaywall.plans.bestValue",
+    badgeKey: null,
     isHighlighted: false,
   },
   {
     id: "12-meses",
     nameKey: "screens.premiumPaywall.plans.year",
     period: "screens.premiumPaywall.plans.perMonth",
-    badgeKey: null,
+    badgeKey: "screens.premiumPaywall.plans.bestValue",
     isHighlighted: false,
   },
 ];
