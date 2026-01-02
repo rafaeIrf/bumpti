@@ -50,7 +50,7 @@ import React, {
   useState,
 } from "react";
 import { FlatList, StyleSheet } from "react-native";
-import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const allCategories: PlaceCategory[] = [
@@ -128,6 +128,7 @@ export default function CategoryResultsScreen() {
   const endReachedDuringMomentumRef = useRef(true);
   const [resetKey, setResetKey] = useState("");
   const hasUserScrolledSinceChangeRef = useRef(false);
+  const lastCategoryKeyRef = useRef("");
 
   // Use cached location hook
   const { location: userLocation, loading: locationLoading } =
@@ -255,9 +256,13 @@ export default function CategoryResultsScreen() {
     lastAppendedPageRef.current = 0;
     endReachedDuringMomentumRef.current = true;
     hasUserScrolledSinceChangeRef.current = false;
-    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    const categoryKey = targetCategory.join(",");
+    if (lastCategoryKeyRef.current !== categoryKey) {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      lastCategoryKeyRef.current = categoryKey;
+    }
     setResetKey(paginationKey);
-  }, [cachedPagesCount, isPaginatedMode, paginationKey]);
+  }, [cachedPagesCount, isPaginatedMode, paginationKey, targetCategory]);
 
   useEffect(() => {
     if (!isPaginatedMode || !shouldFetchNearby) return;
@@ -455,7 +460,6 @@ export default function CategoryResultsScreen() {
         <Animated.View
           entering={FadeInDown.delay(index * 40).springify()}
           exiting={FadeOut.duration(220)}
-          layout={Layout.springify()}
           style={styles.placeCardWrapper}
         >
           <PlaceCard
@@ -595,10 +599,9 @@ export default function CategoryResultsScreen() {
           return (
             <>
               <FlatList
-                key={paginationKey}
                 ref={listRef}
                 data={filteredPlaces}
-                keyExtractor={(item, index) => `${item.placeId}-${index}`}
+                keyExtractor={(item) => item.placeId}
                 renderItem={renderPlaceItem}
                 contentContainerStyle={[
                   styles.listContainer,
