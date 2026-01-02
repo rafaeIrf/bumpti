@@ -212,10 +212,16 @@ const colors = useThemeColors();
 - `hooks/` — reusable hooks (e.g., `use-color-scheme`, `use-theme-color`).
 - `constants/` — themes, tokens, and simple configs.
 
-## Testing (when requested)
+## Testing
 
-- Unit: React Native Testing Library + Jest (only when asked).
+- **Always add unit tests** for new or changed business logic in modules/utilities and for reusable components.
+- **Do not add unit tests for screens** (files under `app/`).
+- Unit: Jest (use React Native Testing Library for component tests when needed).
 - E2E: Detox (optional; do not auto-configure without a request).
+- Prefer testing logic via pure helpers/hooks instead of full screen renders.
+- Mock native modules and side effects (AsyncStorage, Location, Haptics, Navigation) at the test boundary.
+- Keep tests deterministic: avoid timers and random data; when needed, use fake timers and fixed seeds.
+- Assert user-visible outcomes and state changes, not implementation details.
 
 ## Builds and scripts
 

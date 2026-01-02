@@ -865,6 +865,18 @@
   },
   "filters": {
     "title": "Filters",
+    "apply": "Apply",
+    "clear": "Clear",
+    "sortBy": {
+      "title": "Sort by",
+      "relevance": "Relevance",
+      "distance": "Distance",
+      "popularity": "Popularity",
+      "rating": "Rating"
+    },
+    "minRating": {
+      "title": "Minimum rating"
+    },
     "gender": {
       "title": "Gender",
       "all": "All genders",

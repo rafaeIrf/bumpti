@@ -1,10 +1,19 @@
-import { ArrowLeftIcon, SearchIcon } from "@/assets/icons";
+import {
+  ArrowLeftIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CategoryFilterList } from "@/components/category-filter-list";
 import { LocationPermissionState } from "@/components/location-permission-state";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { PlacesEmptyState } from "@/components/places-empty-state";
+import {
+  PlacesFilterBottomSheet,
+  SortOption,
+} from "@/components/places-filter-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -18,6 +27,7 @@ import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import {
+  placesApi,
   useGetNearbyPlacesQuery,
   useGetPlacesByFavoritesQuery,
   useGetTrendingPlacesQuery,
@@ -28,10 +38,19 @@ import {
   PlaceCategory,
   PlaceVibe,
 } from "@/modules/places/types";
+import { useAppSelector } from "@/modules/store/hooks";
+import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { FlatList, StyleSheet } from "react-native";
 import Animated, { FadeInDown, FadeOut, Layout } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const allCategories: PlaceCategory[] = [
   "bar",
@@ -57,14 +76,35 @@ const getRandomVibes = (): PlaceVibe[] => {
   return shuffled.slice(0, 3);
 };
 
+const PAGE_SIZE = 20;
+const MAX_RESULTS = 60;
+const MAX_PAGES = Math.ceil(MAX_RESULTS / PAGE_SIZE);
+
 export default function CategoryResultsScreen() {
   const colors = useThemeColors();
   const params = useLocalSearchParams();
-  const categoryName = params.categoryName as string;
-  const category = params.category as string[];
+  const bottomSheet = useCustomBottomSheet();
+  const categoryName =
+    typeof params.categoryName === "string" ? params.categoryName : "";
+  const categoryParam = params.category;
+  const category = useMemo<PlaceCategory[]>(() => {
+    if (Array.isArray(categoryParam)) {
+      return categoryParam as PlaceCategory[];
+    }
+    if (typeof categoryParam === "string" && categoryParam.length > 0) {
+      return categoryParam
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean) as PlaceCategory[];
+    }
+    return [];
+  }, [categoryParam]);
   const favoritesMode = params.favorites === "true";
   const trendingMode = params.trending === "true";
+  const nearbyMode = params.nearby === "true";
+  const communityFavoritesMode = params.communityFavorites === "true";
   const { handlePlaceClick } = usePlaceClick();
+  const insets = useSafeAreaInsets();
   const {
     hasPermission: hasLocationPermission,
     isLoading: permissionLoading,
@@ -75,6 +115,18 @@ export default function CategoryResultsScreen() {
   const [activeFilter, setActiveFilter] = useState<PlaceCategory | "all">(
     "all"
   );
+  const [sortBy, setSortBy] = useState<SortOption>("relevance");
+  const [minRating, setMinRating] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastAvailableCategories, setLastAvailableCategories] = useState<
+    PlaceCategory[]
+  >([]);
+  const listRef = useRef<FlatList<Place>>(null);
+  const lastAppendedPageRef = useRef(1);
+  const endReachedDuringMomentumRef = useRef(true);
+  const [resetKey, setResetKey] = useState("");
+  const hasUserScrolledSinceChangeRef = useRef(false);
 
   // Use cached location hook
   const { location: userLocation, loading: locationLoading } =
@@ -92,12 +144,12 @@ export default function CategoryResultsScreen() {
       }
     );
 
-  // Use RTK Query hook - only runs when userLocation is available and not in trending mode
-  const nearbyMode = params.nearby === "true";
-  const communityFavoritesMode = params.communityFavorites === "true";
-
-  // When nearby or communityFavorites mode is active, we fetch ALL categories
-  const targetCategory = nearbyMode ? allCategories : category;
+  const targetCategory = useMemo<PlaceCategory[]>(() => {
+    if (nearbyMode) {
+      return activeFilter === "all" ? allCategories : [activeFilter];
+    }
+    return category;
+  }, [activeFilter, category, nearbyMode]);
 
   const shouldFetchNearby =
     !favoritesMode &&
@@ -105,18 +157,75 @@ export default function CategoryResultsScreen() {
     !communityFavoritesMode &&
     !!userLocation &&
     !!userLocation.city &&
-    (!!targetCategory || nearbyMode);
+    targetCategory.length > 0;
 
-  const { data: placesData, isLoading } = useGetNearbyPlacesQuery(
-    {
+  const isPaginatedMode = shouldFetchNearby;
+  const effectiveSortBy = nearbyMode ? "distance" : sortBy;
+
+  const cachedPlacesForKey = useAppSelector((state) => {
+    const result = placesApi.endpoints.getNearbyPlaces.select({
       latitude: userLocation?.latitude ?? 0,
       longitude: userLocation?.longitude ?? 0,
       category: targetCategory,
-    },
-    {
-      skip: !shouldFetchNearby, // skip when favorites, trending or missing location/category/city
-    }
+      page: 1,
+      pageSize: PAGE_SIZE,
+      sortBy: effectiveSortBy,
+      minRating,
+    })(state);
+    return result?.data ?? [];
+  });
+  const cachedPagesCount =
+    cachedPlacesForKey.length > 0
+      ? Math.ceil(cachedPlacesForKey.length / PAGE_SIZE)
+      : 0;
+
+  const paginationKey = useMemo(() => {
+    if (!isPaginatedMode) return "";
+    const categoryKey = targetCategory.join(",");
+    return `${nearbyMode ? "nearby" : "category"}_${
+      userLocation?.latitude ?? 0
+    }_${userLocation?.longitude ?? 0}_${categoryKey}_${effectiveSortBy}_${
+      minRating ?? "all"
+    }`;
+  }, [
+    isPaginatedMode,
+    targetCategory,
+    nearbyMode,
+    userLocation?.latitude,
+    userLocation?.longitude,
+    effectiveSortBy,
+    minRating,
+  ]);
+
+  const isResettingKey = paginationKey !== resetKey;
+  const activePage = isResettingKey ? 1 : page;
+  const queryPage =
+    isResettingKey && cachedPagesCount > 0 ? cachedPagesCount : activePage;
+
+  const nearbyQueryArgs = useMemo(
+    () => ({
+      latitude: userLocation?.latitude ?? 0,
+      longitude: userLocation?.longitude ?? 0,
+      category: targetCategory,
+      page: queryPage,
+      pageSize: PAGE_SIZE,
+      sortBy: effectiveSortBy,
+      minRating,
+    }),
+    [
+      minRating,
+      queryPage,
+      effectiveSortBy,
+      targetCategory,
+      userLocation?.latitude,
+      userLocation?.longitude,
+    ]
   );
+
+  const { data: nearbyPlacesData, isFetching: nearbyFetching } =
+    useGetNearbyPlacesQuery(nearbyQueryArgs, {
+      skip: !shouldFetchNearby,
+    });
 
   // Fetch places sorted by favorites count (community favorites mode)
   const shouldFetchCommunityFavorites =
@@ -127,14 +236,68 @@ export default function CategoryResultsScreen() {
       {
         latitude: userLocation?.latitude ?? 0,
         longitude: userLocation?.longitude ?? 0,
-        category: targetCategory,
       },
       {
         skip: !shouldFetchCommunityFavorites,
       }
     );
 
-  // ... (lines 138-176 unchanged)
+  const paginatedPlaces = useMemo<Place[]>(
+    () => nearbyPlacesData ?? [],
+    [nearbyPlacesData]
+  );
+
+  useEffect(() => {
+    if (!isPaginatedMode) return;
+    setPage(cachedPagesCount > 0 ? cachedPagesCount : 1);
+    setHasMore(true);
+    lastAppendedPageRef.current = 0;
+    endReachedDuringMomentumRef.current = true;
+    hasUserScrolledSinceChangeRef.current = false;
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setResetKey(paginationKey);
+  }, [cachedPagesCount, isPaginatedMode, paginationKey]);
+
+  useEffect(() => {
+    if (!isPaginatedMode || !shouldFetchNearby) return;
+    if (paginatedPlaces.length === 0) return;
+    if (paginationKey !== resetKey && activePage !== 1) return;
+    const fetchedCount = Math.max(
+      0,
+      paginatedPlaces.length - (activePage - 1) * PAGE_SIZE
+    );
+    setHasMore(
+      shouldHaveMorePages({
+        page: activePage,
+        pageSize: PAGE_SIZE,
+        totalLoaded:
+          activePage >= 2 ? paginatedPlaces.length : fetchedCount,
+        maxPages: MAX_PAGES,
+      })
+    );
+    lastAppendedPageRef.current = activePage;
+  }, [
+    isPaginatedMode,
+    minRating,
+    activePage,
+    paginationKey,
+    resetKey,
+    shouldFetchNearby,
+    sortBy,
+    targetCategory,
+    userLocation?.latitude,
+    userLocation?.longitude,
+    paginatedPlaces,
+  ]);
+
+  const isPaginatedFetching = shouldFetchNearby ? nearbyFetching : false;
+  const isFetchingMore =
+    isPaginatedMode && activePage > 1 && isPaginatedFetching;
+  const isPaginatedInitialLoading =
+    isPaginatedMode &&
+    activePage === 1 &&
+    isPaginatedFetching &&
+    paginatedPlaces.length === 0;
 
   const { favoritePlacesData, favoritePlacesLoading, favoriteQueryArg } =
     useFavoritePlacesList(favoritesMode);
@@ -162,8 +325,7 @@ export default function CategoryResultsScreen() {
     if (communityFavoritesMode) {
       return communityFavoritesData || [];
     }
-    console.log(placesData);
-    return placesData || [];
+    return paginatedPlaces;
   }, [
     trendingMode,
     favoritesMode,
@@ -171,7 +333,7 @@ export default function CategoryResultsScreen() {
     trendingData,
     favoritePlacesData,
     communityFavoritesData,
-    placesData,
+    paginatedPlaces,
   ]);
 
   // Filter places based on active filter
@@ -183,36 +345,95 @@ export default function CategoryResultsScreen() {
       result = result.filter((p) => favoriteIds.has(p.placeId));
     }
 
-    if (activeFilter === "all") return result;
+    if (activeFilter !== "all") {
+      result = result.filter((place) => {
+        const type = place.types?.[0];
+        return (
+          type === activeFilter ||
+          place.types?.includes(activeFilter) ||
+          (typeof type === "string" && type.includes(activeFilter))
+        );
+      });
+    }
 
-    return result.filter((place: any) => {
-      // Check if the place type matches the active filter or if it's in the types array
-      const type = place.type || (place.types && place.types[0]);
-      return (
-        type === activeFilter ||
-        place.types?.includes(activeFilter) ||
-        // Fallback: check if the active filter string is part of the place type string
-        (typeof type === "string" && type.includes(activeFilter))
-      );
-    });
+    return result;
   }, [places, activeFilter, favoriteIds, favoritesMode]);
 
   // Only show categories that have items in the list
   const availableCategories = useMemo(() => {
+    if (nearbyMode) return allCategories;
     return allCategories.filter((category) =>
       places.some((place) => place.types?.includes(category))
     );
-  }, [places]);
+  }, [nearbyMode, places]);
+
+  useEffect(() => {
+    if (availableCategories.length > 0) {
+      setLastAvailableCategories(availableCategories);
+    }
+  }, [availableCategories]);
+
+  const visibleCategories =
+    availableCategories.length > 0
+      ? availableCategories
+      : lastAvailableCategories;
 
   const shouldShowFilters =
-    (nearbyMode || trendingMode || favoritesMode || communityFavoritesMode) &&
-    availableCategories.filter((c) => c !== "all").length > 1;
+    !favoritesMode &&
+    !trendingMode &&
+    !communityFavoritesMode &&
+    visibleCategories.filter((c) => c !== "all").length > 1;
 
-  // ... existing code ...
+  const handleApplyFilters = useCallback(
+    (nextSortBy: SortOption, nextMinRating: number | null) => {
+      setSortBy(nextSortBy);
+      setMinRating(nextMinRating);
+      bottomSheet?.close();
+    },
+    [bottomSheet]
+  );
+
+  const handleOpenFilters = useCallback(() => {
+    bottomSheet?.expand({
+      content: () => (
+        <PlacesFilterBottomSheet
+          initialSortBy={sortBy}
+          initialMinRating={minRating}
+          onApply={handleApplyFilters}
+          onClose={() => bottomSheet?.close()}
+        />
+      ),
+    });
+  }, [bottomSheet, handleApplyFilters, minRating, sortBy]);
 
   const handleOpenSearch = () => {
     router.push("/main/place-search");
   };
+
+  const handleEndReached = useCallback(() => {
+    if (
+      !isPaginatedMode ||
+      isResettingKey ||
+      !hasMore ||
+      isFetchingMore ||
+      isPaginatedInitialLoading ||
+      !hasUserScrolledSinceChangeRef.current ||
+      lastAppendedPageRef.current !== activePage ||
+      endReachedDuringMomentumRef.current ||
+      activePage >= MAX_PAGES
+    ) {
+      return;
+    }
+    endReachedDuringMomentumRef.current = true;
+    setPage((prev) => prev + 1);
+  }, [
+    hasMore,
+    isFetchingMore,
+    isPaginatedInitialLoading,
+    isPaginatedMode,
+    isResettingKey,
+    activePage,
+  ]);
 
   const emptyMode = useMemo(() => {
     if (favoritesMode) return "favorites";
@@ -259,7 +480,7 @@ export default function CategoryResultsScreen() {
     [handlePlaceClick, showPlaceDetails, favoriteIds, handleToggle]
   );
 
-  const listFooterComponent = useMemo(
+  const searchFooterComponent = useMemo(
     () => (
       <ThemedView style={styles.footerContainer}>
         <ThemedText
@@ -276,8 +497,21 @@ export default function CategoryResultsScreen() {
         />
       </ThemedView>
     ),
-    [colors.accent, colors.textSecondary, handleOpenSearch, t]
+    [colors.text, colors.textSecondary, handleOpenSearch, t]
   );
+
+  const shouldShowSearchFooter =
+    !favoritesMode && !trendingMode && !communityFavoritesMode;
+
+  const listFooterComponent = useMemo(() => {
+    if (isFetchingMore) {
+      return <PlaceLoadingSkeleton count={2} />;
+    }
+    if (shouldShowSearchFooter && !hasMore) {
+      return searchFooterComponent;
+    }
+    return null;
+  }, [hasMore, isFetchingMore, searchFooterComponent, shouldShowSearchFooter]);
 
   let loadingState: boolean;
   if (trendingMode) {
@@ -287,13 +521,14 @@ export default function CategoryResultsScreen() {
   } else if (communityFavoritesMode) {
     loadingState = locationLoading || communityFavoritesLoading;
   } else {
-    loadingState = locationLoading || isLoading;
+    loadingState = locationLoading || isPaginatedInitialLoading;
   }
 
   const isLoadingState = useMemo(() => loadingState, [loadingState]);
 
   return (
     <BaseTemplateScreen
+      scrollEnabled={false}
       TopHeader={
         <ThemedView>
           <ScreenToolbar
@@ -304,9 +539,18 @@ export default function CategoryResultsScreen() {
             }}
             title={categoryName || ""}
             rightActions={
-              favoritesMode || trendingMode || communityFavoritesMode
-                ? []
-                : [
+              !favoritesMode && !trendingMode && !communityFavoritesMode
+                ? [
+                    ...(nearbyMode
+                      ? []
+                      : [
+                          {
+                            icon: SlidersHorizontalIcon,
+                            onClick: handleOpenFilters,
+                            ariaLabel: t("filters.title"),
+                            color: colors.icon,
+                          },
+                        ]),
                     {
                       icon: SearchIcon,
                       onClick: handleOpenSearch,
@@ -314,17 +558,21 @@ export default function CategoryResultsScreen() {
                       color: colors.icon,
                     },
                   ]
+                : []
             }
           />
         </ThemedView>
       }
     >
       <ThemedView>
+        {shouldShowFilters && (
+          <CategoryFilterList
+            categories={visibleCategories}
+            selectedCategory={activeFilter}
+            onSelect={setActiveFilter}
+          />
+        )}
         {(() => {
-          if (isLoadingState || permissionLoading) {
-            return <PlaceLoadingSkeleton count={6} />;
-          }
-
           if (!hasLocationPermission) {
             return (
               <LocationPermissionState
@@ -333,6 +581,10 @@ export default function CategoryResultsScreen() {
                 onOpenSettings={openSettings}
               />
             );
+          }
+
+          if (isLoadingState || permissionLoading) {
+            return <PlaceLoadingSkeleton count={6} />;
           }
 
           if (places.length === 0) {
@@ -346,24 +598,33 @@ export default function CategoryResultsScreen() {
 
           return (
             <>
-              {shouldShowFilters && (
-                <CategoryFilterList
-                  categories={availableCategories}
-                  selectedCategory={activeFilter}
-                  onSelect={setActiveFilter}
-                />
-              )}
               <FlatList
+                key={paginationKey}
+                ref={listRef}
                 data={filteredPlaces}
-                keyExtractor={(item) => item.placeId}
+                keyExtractor={(item, index) => `${item.placeId}-${index}`}
                 renderItem={renderPlaceItem}
-                contentContainerStyle={styles.listContainer}
+                contentContainerStyle={[
+                  styles.listContainer,
+                  { paddingBottom: spacing.xl + insets.bottom },
+                ]}
                 showsVerticalScrollIndicator={false}
-                ListFooterComponent={
-                  favoritesMode || trendingMode
-                    ? undefined
-                    : listFooterComponent
-                }
+                ListFooterComponent={listFooterComponent}
+                onEndReached={handleEndReached}
+                onEndReachedThreshold={0.4}
+                onMomentumScrollBegin={() => {
+                  endReachedDuringMomentumRef.current = false;
+                }}
+                onScrollBeginDrag={() => {
+                  endReachedDuringMomentumRef.current = false;
+                  hasUserScrolledSinceChangeRef.current = true;
+                }}
+                initialNumToRender={8}
+                maxToRenderPerBatch={8}
+                windowSize={7}
+                removeClippedSubviews
+                updateCellsBatchingPeriod={50}
+                keyboardShouldPersistTaps="handled"
               />
             </>
           );
@@ -374,17 +635,10 @@ export default function CategoryResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: spacing.sm,
-  },
   // Places list
   listContainer: {
     paddingVertical: spacing.lg,
     gap: spacing.md,
-  },
-  placesCount: {
-    fontSize: 14,
   },
   placeCardWrapper: {
     position: "relative",
@@ -392,16 +646,12 @@ const styles = StyleSheet.create({
   footerContainer: {
     marginTop: spacing.lg,
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: spacing.lg,
     alignItems: "center",
     gap: spacing.md,
   },
   footerCopy: {
     textAlign: "center",
     ...typography.caption,
-  },
-  footerButtonLabel: {
-    fontWeight: "600",
-    color: "#000",
   },
 });

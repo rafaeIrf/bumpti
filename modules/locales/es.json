@@ -865,6 +865,18 @@
   },
   "filters": {
     "title": "Filtros",
+    "apply": "Aplicar",
+    "clear": "Borrar",
+    "sortBy": {
+      "title": "Ordenar por",
+      "relevance": "Relevancia",
+      "distance": "Distancia",
+      "popularity": "Popularidad",
+      "rating": "Calificación"
+    },
+    "minRating": {
+      "title": "Calificación mínima"
+    },
     "gender": {
       "title": "Género",
       "all": "Todos los géneros",
