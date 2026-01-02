@@ -26,6 +26,8 @@ import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
+import { getEffectiveSortBy } from "@/modules/places/nearby-sort";
 import {
   placesApi,
   useGetNearbyPlacesQuery,
@@ -39,7 +41,6 @@ import {
   PlaceVibe,
 } from "@/modules/places/types";
 import { useAppSelector } from "@/modules/store/hooks";
-import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
 import { router, useLocalSearchParams } from "expo-router";
 import React, {
   useCallback,
@@ -160,7 +161,7 @@ export default function CategoryResultsScreen() {
     targetCategory.length > 0;
 
   const isPaginatedMode = shouldFetchNearby;
-  const effectiveSortBy = nearbyMode ? "distance" : sortBy;
+  const effectiveSortBy = getEffectiveSortBy(nearbyMode, sortBy);
 
   const cachedPlacesForKey = useAppSelector((state) => {
     const result = placesApi.endpoints.getNearbyPlaces.select({
@@ -270,8 +271,7 @@ export default function CategoryResultsScreen() {
       shouldHaveMorePages({
         page: activePage,
         pageSize: PAGE_SIZE,
-        totalLoaded:
-          activePage >= 2 ? paginatedPlaces.length : fetchedCount,
+        totalLoaded: activePage >= 2 ? paginatedPlaces.length : fetchedCount,
         maxPages: MAX_PAGES,
       })
     );
@@ -378,11 +378,7 @@ export default function CategoryResultsScreen() {
       ? availableCategories
       : lastAvailableCategories;
 
-  const shouldShowFilters =
-    !favoritesMode &&
-    !trendingMode &&
-    !communityFavoritesMode &&
-    visibleCategories.filter((c) => c !== "all").length > 1;
+  const shouldShowFilters = nearbyMode;
 
   const handleApplyFilters = useCallback(
     (nextSortBy: SortOption, nextMinRating: number | null) => {

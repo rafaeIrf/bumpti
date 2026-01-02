@@ -50,12 +50,6 @@ export function PlacesFilterBottomSheet({
 
   return (
     <View style={styles.container}>
-      <View style={styles.dragIndicatorWrapper}>
-        <View
-          style={[styles.dragIndicator, { backgroundColor: colors.border }]}
-        />
-      </View>
-
       <Pressable
         onPress={onClose}
         hitSlop={12}
@@ -175,18 +169,9 @@ export function PlacesFilterBottomSheet({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.xl,
-  },
-  dragIndicatorWrapper: {
-    alignItems: "center",
-    paddingBottom: spacing.lg,
-  },
-  dragIndicator: {
-    width: spacing.xxl,
-    height: spacing.xs,
-    borderRadius: spacing.xs,
   },
   closeButton: {
     position: "absolute",
