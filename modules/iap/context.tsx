@@ -21,6 +21,7 @@ import React, {
 import { Platform } from "react-native";
 
 import { t } from "@/modules/locales";
+import { getCurrentUserId } from "@/modules/store/selectors/profile";
 import { logger } from "@/utils/logger";
 import { validateReceiptWithBackend } from "./api";
 import { CONSUMABLE_SKUS, SUBSCRIPTION_SKUS } from "./config";
@@ -102,9 +103,10 @@ export function IAPProvider({ children }: PropsWithChildren) {
       async (purchase: any) => {
         // 'purchase' type might vary, casting to any or generic Purchase structure
         const receipt = purchase.transactionReceipt;
-        logger.debug("[IAP] Purchase update received:", purchase);
+        const token = purchase.purchaseToken; // Android
+        console.log("[IAP] Purchase update received:", purchase);
 
-        if (receipt) {
+        if (receipt || token) {
           try {
             // Determine if it's a consumable based on SKU
             const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
@@ -169,10 +171,21 @@ export function IAPProvider({ children }: PropsWithChildren) {
 
       // Use standard requestPurchase with correct type
       // Assuming consumables are 'in-app'
+      // Get current user ID for linking
+      const userId = getCurrentUserId();
+      // On iOS, appAccountToken must be a UUID. Supabase IDs are UUIDs.
+      // On Android, use obfuscatedAccountIdAndroid.
+
       await iapRequestPurchase({
         request: {
-          apple: { sku },
-          google: { skus: [sku] },
+          apple: {
+            sku,
+            ...(userId ? { appAccountToken: userId } : {}),
+          },
+          google: {
+            skus: [sku],
+            ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
+          },
         },
         type: "in-app",
       });
@@ -208,9 +221,15 @@ export function IAPProvider({ children }: PropsWithChildren) {
         return;
       }
 
+      // Get current user ID for linking
+      const userId = getCurrentUserId();
+
       await iapRequestPurchase({
         request: {
-          apple: { sku },
+          apple: {
+            sku,
+            ...(userId ? { appAccountToken: userId } : {}),
+          },
           google: {
             skus: [sku],
             ...(androidOfferToken
@@ -218,6 +237,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
                   subscriptionOffers: [{ sku, offerToken: androidOfferToken }],
                 }
               : {}),
+            ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
           },
         },
         type: "subs",

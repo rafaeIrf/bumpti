@@ -1,3 +1,4 @@
+import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { Platform } from "react-native";
 
@@ -17,20 +18,35 @@ export async function validateReceiptWithBackend(
   isConsumable: boolean
 ): Promise<boolean> {
   try {
-    logger.log("[IAP] Validating receipt with backend:", {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error("User not authenticated");
+
+    logger.log("[IAP] Validating receipt with backend edge function:", {
       isConsumable,
       transactionId: transaction.transactionId,
       platform: Platform.OS,
     });
 
-    // TODO: Replace with actual API call
-    // const response = await supabase.functions.invoke('iap-webhook', { body: { ... } })
+    const { data, error } = await supabase.functions.invoke("iap-validate", {
+      body: {
+        platform: Platform.OS,
+        purchase: transaction,
+      },
+    });
 
-    // SIMULATION DELAY
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (error) {
+      throw error;
+    }
 
-    // SIMULATION SUCCESS
-    logger.log("[IAP] Backend validation successful");
+    if (!data?.success) {
+      throw new Error("Validation returned unsuccessful status");
+    }
+
+    logger.log("[IAP] Backend validation successful. Entitlements:", data.entitlements);
+
+    // TODO: Ideally we should update the local Redux store with the new entitlements here
+    // e.g., dispatch(setProfile({ ...profile, ...entitlements })) or invalidate tags
+
     return true;
   } catch (error) {
     logger.error("[IAP] Backend validation failed:", error);
