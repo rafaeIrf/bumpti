@@ -20,10 +20,12 @@ import React, {
 } from "react";
 import { Platform } from "react-native";
 
+import { t } from "@/modules/locales";
 import { logger } from "@/utils/logger";
 import { validateReceiptWithBackend } from "./api";
 import { CONSUMABLE_SKUS, SUBSCRIPTION_SKUS } from "./config";
 import { IAPContextValue, IAPState } from "./types";
+import { getAndroidSubscriptionOfferToken } from "./utils";
 
 const initialState: IAPState = {
   connected: false,
@@ -69,7 +71,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
         fetchProducts({ skus: CONSUMABLE_SKUS, type: "in-app" }),
         fetchProducts({ skus: SUBSCRIPTION_SKUS, type: "subs" }),
       ]);
-      console.log("AAA subs", subscriptions);
+      logger.log("[IAP] Subscriptions fetched:", subscriptions);
 
       // Note: fetchProducts returns Product[], we cast subscriptions if necessary
       // or expo-iap unified types. Subscription type usually extends Product.
@@ -100,7 +102,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
       async (purchase: any) => {
         // 'purchase' type might vary, casting to any or generic Purchase structure
         const receipt = purchase.transactionReceipt;
-        console.log("AAA purchase", purchase);
+        logger.debug("[IAP] Purchase update received:", purchase);
 
         if (receipt) {
           try {
@@ -168,24 +170,6 @@ export function IAPProvider({ children }: PropsWithChildren) {
       // Use standard requestPurchase with correct type
       // Assuming consumables are 'in-app'
       await iapRequestPurchase({
-        sku, // legacy/simple param
-        andDangerouslyFinishTransactionAutomaticallyIOS: false,
-        type: "in-app", // explicit type
-      } as any);
-      // Note: type definition might require object structure { skus: [sku] } or plain string depending on version.
-      // The exported `requestPurchase` usually takes an object configuration now.
-      // Based on d.ts: requestPurchase needs `requestObj`
-      /*
-       * await requestPurchase({
-       *   request: {
-       *     apple: { sku: productId },
-       *     google: { skus: [productId] }
-       *   },
-       *   type: 'in-app'
-       * });
-       */
-
-      await iapRequestPurchase({
         request: {
           apple: { sku },
           google: { skus: [sku] },
@@ -202,10 +186,39 @@ export function IAPProvider({ children }: PropsWithChildren) {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
 
+      const subscription = state.subscriptions.find(
+        (item) => item.id === sku || (item as any).productId === sku
+      );
+
+      const androidOfferToken =
+        Platform.OS === "android"
+          ? getAndroidSubscriptionOfferToken(subscription)
+          : null;
+
+      if (Platform.OS === "android" && !androidOfferToken) {
+        logger.error(
+          "[IAP] Missing Android subscription offer token for SKU:",
+          sku
+        );
+        setState((prev) => ({
+          ...prev,
+          purchasing: false,
+          error: t("errors.generic"),
+        }));
+        return;
+      }
+
       await iapRequestPurchase({
         request: {
           apple: { sku },
-          google: { skus: [sku] },
+          google: {
+            skus: [sku],
+            ...(androidOfferToken
+              ? {
+                  subscriptionOffers: [{ sku, offerToken: androidOfferToken }],
+                }
+              : {}),
+          },
         },
         type: "subs",
       });

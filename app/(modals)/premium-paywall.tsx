@@ -29,6 +29,7 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Map our internal IDs to IAP SKUs
 const SKU_MAP: Record<string, string> = {
@@ -135,6 +136,7 @@ export default function PremiumPaywallScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
+  const insets = useSafeAreaInsets();
 
   const { requestSubscription, purchasing, restorePurchases } = useIAP();
 
@@ -152,6 +154,7 @@ export default function PremiumPaywallScreen() {
 
     const sku = SKU_MAP[selectedPlanId];
     if (sku) {
+      console.log("Subscribing to SKU:", sku);
       await requestSubscription(sku);
     } else {
       console.warn("No SKU found for plan", selectedPlanId);
@@ -168,7 +171,16 @@ export default function PremiumPaywallScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          marginBottom: insets.bottom,
+          marginTop: insets.top,
+        },
+      ]}
+    >
       {/* Close Button */}
       <Animated.View
         entering={FadeInUp.duration(400)}

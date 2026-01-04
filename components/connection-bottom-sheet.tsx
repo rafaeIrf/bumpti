@@ -7,6 +7,7 @@ import {
 } from "@/assets/icons";
 import { GenericConnectionBottomSheet } from "@/components/generic-connection-bottom-sheet";
 import { t } from "@/modules/locales";
+import { useCallback, useState } from "react";
 
 export type VenueState =
   | "active"
@@ -18,7 +19,7 @@ export type VenueState =
 interface ConnectionBottomSheetProps {
   readonly venueName: string;
   readonly venueState: VenueState;
-  readonly onConnect: () => void;
+  readonly onConnect: () => void | Promise<void>;
   readonly onCancel?: () => void;
   readonly onClose?: () => void;
   readonly onPremiumPress?: () => void;
@@ -47,8 +48,31 @@ export function ConnectionBottomSheet({
   onPremiumPress,
   currentVenue,
 }: ConnectionBottomSheetProps) {
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnect = useCallback(() => {
+    if (isConnecting) return;
+    setIsConnecting(true);
+    try {
+      const result = onConnect();
+      if (result && typeof (result as Promise<void>).then === "function") {
+        void (result as Promise<void>).catch(() => {
+          setIsConnecting(false);
+        });
+      }
+    } catch (_error) {
+      setIsConnecting(false);
+    }
+  }, [isConnecting, onConnect]);
+
   // Configuração de conteúdo baseado no estado
   const getContent = () => {
+    const primaryButtonState = {
+      onClick: handleConnect,
+      disabled: isConnecting,
+      loading: isConnecting,
+    };
+
     switch (venueState) {
       case "active":
         return {
@@ -57,9 +81,8 @@ export function ConnectionBottomSheet({
           supportText: t("venue.connection.active.supportText"),
           primaryButton: {
             text: t("venue.connection.active.button"),
-            onClick: onConnect,
+            ...primaryButtonState,
           },
-          microcopy: t("venue.connection.active.microcopy"),
           icon: UsersIcon,
         };
 
@@ -70,7 +93,7 @@ export function ConnectionBottomSheet({
           supportText: t("venue.connection.quiet.supportText"),
           primaryButton: {
             text: t("venue.connection.quiet.button"),
-            onClick: onConnect,
+            ...primaryButtonState,
           },
           secondaryButton: {
             text: t("venue.connection.quiet.buttonSecondary"),
@@ -87,7 +110,7 @@ export function ConnectionBottomSheet({
           supportText: t("venue.connection.premium.supportText"),
           primaryButton: {
             text: t("venue.connection.premium.button"),
-            onClick: onConnect,
+            ...primaryButtonState,
           },
           microcopy: t("venue.connection.premium.microcopy"),
           icon: SparklesIcon,
@@ -119,7 +142,7 @@ export function ConnectionBottomSheet({
           supportText: t("venue.connection.alreadyConnected.supportText"),
           primaryButton: {
             text: t("venue.connection.alreadyConnected.button"),
-            onClick: onConnect,
+            ...primaryButtonState,
           },
           secondaryButton: {
             text: t("venue.connection.alreadyConnected.buttonCancel"),
@@ -136,7 +159,7 @@ export function ConnectionBottomSheet({
           subtitle: t("venue.connection.default.subtitle"),
           primaryButton: {
             text: t("venue.connection.default.button"),
-            onClick: onConnect,
+            ...primaryButtonState,
           },
         };
     }

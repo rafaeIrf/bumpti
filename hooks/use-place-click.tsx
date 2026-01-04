@@ -100,12 +100,28 @@ export function usePlaceClick() {
 
               if (result) {
                 bottomSheet.close();
+                if (
+                  venueState === "locked" &&
+                  !isClose &&
+                  (params.active_users ?? 0) === 0
+                ) {
+                  handleConnectionBottomSheet(params, "quiet");
+                  return;
+                }
                 navigateToPlacePeople(
                   params.placeId,
                   params.name,
                   params.distance
                 );
               } else {
+                if (
+                  venueState === "locked" &&
+                  !isClose &&
+                  (params.active_users ?? 0) === 0
+                ) {
+                  handleConnectionBottomSheet(params, "quiet");
+                  return;
+                }
                 // If enterPlace fails (even with checkin plus, likely no credits or API error)
                 // Transition to buy flow
                 showPowerUp();
@@ -118,14 +134,7 @@ export function usePlaceClick() {
               bottomSheet.close();
             }}
             onPremiumPress={() => {
-              if (venueState === "locked") {
-                // Transition to preview (active or quiet)
-                const nextState =
-                  (params.active_users ?? 0) > 0 ? "active" : "quiet";
-                handleConnectionBottomSheet(params, nextState);
-              } else {
-                showPowerUp();
-              }
+              showPowerUp();
             }}
           />
         ),

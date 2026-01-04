@@ -12,6 +12,8 @@ interface ConnectionButton {
   text: string;
   onClick: () => void;
   variant?: "primary" | "secondary";
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 interface GenericConnectionBottomSheetProps {
@@ -113,6 +115,8 @@ export function GenericConnectionBottomSheet({
               {primaryButton && (
                 <Button
                   onPress={primaryButton.onClick}
+                  disabled={primaryButton.disabled}
+                  loading={primaryButton.loading}
                   variant={
                     primaryButton.variant === "secondary"
                       ? "secondary"
@@ -128,6 +132,8 @@ export function GenericConnectionBottomSheet({
               {secondaryButton && (
                 <Button
                   onPress={secondaryButton.onClick}
+                  disabled={secondaryButton.disabled}
+                  loading={secondaryButton.loading}
                   variant={
                     secondaryButton.variant === "primary"
                       ? "default"

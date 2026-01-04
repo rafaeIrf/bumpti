@@ -122,7 +122,6 @@ export function PermissionPromptView({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingVertical: spacing.lg,
     justifyContent: "center",
     alignItems: "center",
