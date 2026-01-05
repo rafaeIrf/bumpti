@@ -22,7 +22,7 @@ import profileReducer from "./slices/profileSlice";
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile", "messagesApi"], // Persist onboarding, profile
+  whitelist: ["onboarding", "profile"], // Don't persist API states (RTKQ)
 };
 
 // Define action type
