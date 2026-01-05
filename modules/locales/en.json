@@ -556,7 +556,8 @@
           "subtitle": "Send special social signals to get someone's attention."
         }
       },
-      "terms": "You can cancel anytime through the App Store / Google Play.",
+      "terms": "Your subscription automatically renews for the same price and duration unless canceled in your {{store}} settings. By confirming your purchase, you agree to our",
+      "termsLink": "Terms of Use",
       "subscribe": "Subscribe to Bumpti Premium",
       "close": "Close"
     },

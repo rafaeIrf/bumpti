@@ -11,22 +11,19 @@ import {
 } from "@/assets/icons";
 import { PlanRadioButton } from "@/components/plan-radio-button";
 import { ThemedText } from "@/components/themed-text";
+import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { IAP_SKUS } from "@/modules/iap/config";
-import {
-  useIAP,
-  useSubscription,
-  useUserSubscription,
-} from "@/modules/iap/hooks";
+import { useIAP, useSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
+import { openTermsOfUse } from "@/utils";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -141,8 +138,7 @@ export default function PremiumPaywallScreen() {
   const router = useRouter();
   const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
   const insets = useSafeAreaInsets();
-  const { isPremium } = useUserSubscription();
-  const { requestSubscription, purchasing, restorePurchases } = useIAP();
+  const { requestSubscription, purchasing } = useIAP();
 
   // Get base monthly price for calculations
   const monthlySku = SKU_MAP["1-mes"];
@@ -165,30 +161,27 @@ export default function PremiumPaywallScreen() {
     }
   };
 
-  const handleRestore = async () => {
-    await restorePurchases();
-    // Optionally show alert on success/failure based on context state
-    Alert.alert(
-      t("common.success"),
-      t("screens.premiumPaywall.restoreSuccess")
-    );
-  };
-
   return (
     <View
       style={[
         styles.container,
         {
           backgroundColor: colors.background,
-          marginBottom: insets.bottom,
-          marginTop: insets.top,
         },
       ]}
     >
       {/* Close Button */}
       <Animated.View
         entering={FadeInUp.duration(400)}
-        style={styles.closeButton}
+        style={[
+          styles.closeButton,
+          {
+            top: Platform.select({
+              ios: spacing.md,
+              android: insets.top + spacing.md,
+            }),
+          },
+        ]}
       >
         <Pressable
           onPress={handleClose}
@@ -207,7 +200,10 @@ export default function PremiumPaywallScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 160 + insets.bottom },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Image Section */}
@@ -309,9 +305,9 @@ export default function PremiumPaywallScreen() {
       <BottomCTA
         selectedPlanId={selectedPlanId}
         handleSubscribe={handleSubscribe}
-        handleRestore={handleRestore}
         purchasing={purchasing}
         colors={colors}
+        insets={insets}
       />
     </View>
   );
@@ -320,9 +316,9 @@ export default function PremiumPaywallScreen() {
 function BottomCTA({
   selectedPlanId,
   handleSubscribe,
-  handleRestore,
   purchasing,
   colors,
+  insets,
 }: any) {
   const sku = SKU_MAP[selectedPlanId];
   const subscription = useSubscription(sku);
@@ -335,56 +331,47 @@ function BottomCTA({
       style={[styles.ctaContainer, { borderTopColor: colors.border }]}
     >
       <View
-        style={[styles.ctaGradient, { backgroundColor: colors.background }]}
+        style={[
+          styles.ctaGradient,
+          {
+            backgroundColor: colors.background,
+            paddingBottom: spacing.md + (insets?.bottom ?? 0),
+          },
+        ]}
       >
-        {/* Terms & Restore */}
-        <View style={{ gap: 4, marginBottom: spacing.sm }}>
+        {/* Terms */}
+        <ThemedText
+          style={[
+            typography.caption,
+            {
+              color: colors.textSecondary,
+              textAlign: "center",
+              marginBottom: spacing.xs,
+              paddingHorizontal: spacing.sm,
+            },
+          ]}
+        >
+          {t("screens.premiumPaywall.terms", {
+            store: Platform.OS === "ios" ? "App Store" : "Play Store",
+          })}{" "}
           <ThemedText
-            style={[
-              typography.caption,
-              { color: colors.textSecondary, textAlign: "center" },
-            ]}
+            variant="caption"
+            onPress={openTermsOfUse}
+            style={{ color: colors.accent, fontWeight: "600" }}
           >
-            {t("screens.premiumPaywall.terms")}
+            {t("screens.premiumPaywall.termsLink")}
           </ThemedText>
-          <Pressable onPress={handleRestore}>
-            <ThemedText
-              style={[
-                typography.caption,
-                {
-                  color: colors.textSecondary,
-                  textAlign: "center",
-                  textDecorationLine: "underline",
-                },
-              ]}
-            >
-              {t("actions.restore")}
-            </ThemedText>
-          </Pressable>
-        </View>
+          .
+        </ThemedText>
 
         {/* CTA Button */}
-        <Pressable onPress={handleSubscribe}>
-          <LinearGradient
-            colors={["#2997FF", "#1D7FD9"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaButton}
-          >
-            {purchasing ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <ThemedText
-                style={[
-                  typography.body1,
-                  { color: "#FFFFFF", fontWeight: "600" },
-                ]}
-              >
-                {t("common.subscribe")} - {price}
-              </ThemedText>
-            )}
-          </LinearGradient>
-        </Pressable>
+        <Button
+          onPress={handleSubscribe}
+          label={`${t("common.subscribe")} - ${price}`}
+          loading={purchasing}
+          fullWidth
+          size="lg"
+        />
       </View>
     </Animated.View>
   );
@@ -620,7 +607,7 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
   heroSection: {
-    height: 256,
+    height: Platform.select({ ios: 220, android: 260, default: 256 }),
     position: "relative",
   },
   heroImage: {
@@ -726,9 +713,9 @@ const styles = StyleSheet.create({
   },
   ctaGradient: {
     padding: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.xs,
   },
   ctaButton: {
     paddingVertical: spacing.md,

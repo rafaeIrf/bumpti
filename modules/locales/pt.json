@@ -557,7 +557,8 @@
           "subtitle": "Envie sinais sociais especiais para chamar atenção de alguém."
         }
       },
-      "terms": "Você pode cancelar a qualquer momento pela App Store / Google Play.",
+      "terms": "A renovação da sua assinatura é automática pelo mesmo valor e período, a menos que seja cancelada nas configurações da {{store}}. Ao confirmar a assinatura, você concorda com nossos",
+      "termsLink": "Termos de Uso",
       "subscribe": "Assinar Bumpti Premium",
       "close": "Fechar"
     },

@@ -556,7 +556,8 @@
           "subtitle": "Envía señales sociales especiales para llamar la atención de alguien."
         }
       },
-      "terms": "Puedes cancelar en cualquier momento desde la App Store / Google Play.",
+      "terms": "Tu suscripción se renovará automáticamente al mismo precio y duración a menos que se cancele en los ajustes de {{store}}. Al confirmar tu suscripción, aceptas nuestros",
+      "termsLink": "Términos de Uso",
       "subscribe": "Suscribirse a Bumpti Premium",
       "close": "Cerrar"
     },

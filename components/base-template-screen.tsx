@@ -1,4 +1,5 @@
 import { spacing } from "@/constants/theme";
+import { isIOS } from "@/utils";
 import { StatusBar } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
 import {
@@ -158,8 +159,8 @@ export function BaseTemplateScreen({
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
         // and if useSafeArea is true
         hasStackHeader || isModal || !useSafeArea
-          ? { paddingTop: useSafeArea ? 16 : 0 }
-          : { paddingTop: insets.top },
+          ? { paddingTop: useSafeArea ? (isIOS ? 16 : insets.top + 16) : 0 }
+          : { paddingTop: isIOS ? insets.top : insets.top + 16 },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}
