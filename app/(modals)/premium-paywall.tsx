@@ -14,7 +14,11 @@ import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { IAP_SKUS } from "@/modules/iap/config";
-import { useIAP, useSubscription } from "@/modules/iap/hooks";
+import {
+  useIAP,
+  useSubscription,
+  useUserSubscription,
+} from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -137,7 +141,7 @@ export default function PremiumPaywallScreen() {
   const router = useRouter();
   const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
   const insets = useSafeAreaInsets();
-
+  const { isPremium } = useUserSubscription();
   const { requestSubscription, purchasing, restorePurchases } = useIAP();
 
   // Get base monthly price for calculations

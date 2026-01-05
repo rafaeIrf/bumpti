@@ -1,4 +1,5 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
+import { useAppSelector } from "../store/hooks";
 import { IAPContext } from "./context";
 import { IAPContextValue } from "./types";
 import { getPriceValue } from "./utils";
@@ -42,4 +43,19 @@ export function useSubscription(sku: string | null) {
         priceValue: getPriceValue(subscription),
       }
     : null;
+}
+
+export function useUserSubscription() {
+  const subscription = useAppSelector((state) => state.profile.data?.subscription);
+
+  return useMemo(() => {
+    return {
+      subscription,
+      isPremium: subscription?.is_premium ?? false,
+      plan: subscription?.plan,
+      checkinCredits: subscription?.checkin_credits ?? 0,
+      premiumExpiresAt: subscription?.premium_expires_at,
+      showSubscriptionBonus: subscription?.show_subscription_bonus ?? false,
+    };
+  }, [subscription]);
 }

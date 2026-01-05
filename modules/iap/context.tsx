@@ -22,6 +22,7 @@ import { Platform } from "react-native";
 
 import { t } from "@/modules/locales";
 import { getCurrentUserId } from "@/modules/store/selectors/profile";
+import { handlePurchaseSuccess } from "@/modules/store/slices/profileActions";
 import { logger } from "@/utils/logger";
 import { validateReceiptWithBackend } from "./api";
 import { CONSUMABLE_SKUS, SUBSCRIPTION_SKUS } from "./config";
@@ -112,18 +113,21 @@ export function IAPProvider({ children }: PropsWithChildren) {
             const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
 
             // Backend Validation
-            const isValid = await validateReceiptWithBackend(
+            const entitlements = await validateReceiptWithBackend(
               purchase,
               isConsumable
             );
 
-            if (isValid) {
+            if (entitlements) {
               // finishTransaction consumes consumables if configured or platform dependent
               // For expo-iap/react-native-iap, passing isConsumable: true helps on Android?
               // Standard API: finishTransaction({ purchase, isConsumable })
               // Check typings: finishTransaction expects (purchase: Purchase, isConsumable?: boolean, developerPayloadAndroid?: string)
 
               await finishTransaction({ purchase, isConsumable });
+
+              // Update Redux
+              handlePurchaseSuccess(entitlements);
 
               logger.log(
                 "[IAP] Purchase finished successfully:",
@@ -276,8 +280,13 @@ export function IAPProvider({ children }: PropsWithChildren) {
         const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
 
         if (!isConsumable) {
-          const isValid = await validateReceiptWithBackend(purchase, false);
-          // Logic to update local state logic if backend confirms
+          const entitlements = await validateReceiptWithBackend(
+            purchase,
+            false
+          );
+          if (entitlements) {
+            handlePurchaseSuccess(entitlements);
+          }
         }
       }
 

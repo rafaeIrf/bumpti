@@ -1,3 +1,4 @@
+import { SubscriptionData } from "@/modules/store/slices/profileSlice";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { Platform } from "react-native";
@@ -16,7 +17,7 @@ interface ValidateReceiptParams {
 export async function validateReceiptWithBackend(
   transaction: any,
   isConsumable: boolean
-): Promise<boolean> {
+): Promise<SubscriptionData | null> {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error("User not authenticated");
@@ -44,12 +45,9 @@ export async function validateReceiptWithBackend(
 
     logger.log("[IAP] Backend validation successful. Entitlements:", data.entitlements);
 
-    // TODO: Ideally we should update the local Redux store with the new entitlements here
-    // e.g., dispatch(setProfile({ ...profile, ...entitlements })) or invalidate tags
-
-    return true;
+    return data.entitlements;
   } catch (error) {
     logger.error("[IAP] Backend validation failed:", error);
-    return false;
+    return null;
   }
 }

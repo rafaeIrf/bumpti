@@ -25,7 +25,16 @@ export type ProfileData = {
   zodiac_key?: string | null;
   relationship_key?: string | null;
   favoritePlaces?: any[] | null;
+  subscription?: SubscriptionData | null;
 };
+
+export interface SubscriptionData {
+  is_premium: boolean;
+  plan?: string;
+  premium_expires_at?: string;
+  checkin_credits: number;
+  show_subscription_bonus?: boolean;
+}
 
 export interface ProfileState {
   data: ProfileData | null;
@@ -62,6 +71,11 @@ const profileSlice = createSlice({
         state.data.favoritePlaces = action.payload;
       }
     },
+    setSubscription: (state, action: PayloadAction<SubscriptionData>) => {
+      if (state.data) {
+        state.data.subscription = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
@@ -70,6 +84,7 @@ export const {
   setProfile,
   setProfileLoading,
   setFavoritePlaces,
+  setSubscription,
   resetProfile,
 } = profileSlice.actions;
 
