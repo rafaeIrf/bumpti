@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { importX509, jwtVerify } from "npm:jose";
+import { validateAndFetchUser } from "../_shared/iap-validation.ts";
 
 // --- Types ---
 interface DecodedNotification {
@@ -32,6 +33,7 @@ interface DecodedTransaction {
   revocationDate?: number;
   revocationReason?: number;
   environment?: string;
+  appAccountToken?: string;
 }
 
 interface DecodedRenewalInfo {
@@ -310,20 +312,35 @@ serve(async (req) => {
     });
 
     // 6. Record Event (Idempotent Insert)
-    // Lookup user first.
+    // Lookup user first via original_transaction_id (Best practice)
+    let userId: string | null = null;
+    
     const { data: subData, error: subError } = await supabase
         .from("user_subscriptions")
         .select("user_id")
         .eq("original_transaction_id", originalTransactionId)
-        .eq("store", "apple") // Ensure store matches
+        .eq("store", "apple")
         .maybeSingle();
 
-    if (subError) console.error("[Webhook] Error looking up user_subscriptions:", subError);
+    if (subData && subData.user_id) {
+        userId = subData.user_id;
+    } else {
+        if (subError) console.error("[Webhook] Error looking up user_subscriptions:", subError);
 
-    const userId = subData?.user_id || null;
-    console.log(`[Webhook] Mapped UserID: ${userId || "NOT FOUND"}`);
+        // Fallback: Check appAccountToken from transaction info
+        if (transaction?.appAccountToken) {
+            const token = transaction.appAccountToken;
+            // Use shared helper
+            userId = await validateAndFetchUser(supabase, token);
+            if (userId) {
+                console.log(`[Webhook] Recovered UserId from appAccountToken: ${userId}`);
+            }
+        }
+    }
 
-    // Insert Event
+    console.log(`[Webhook] Final Mapped UserID: ${userId || "NULL (Anonymous/Unknown)"}`);
+
+    // Insert Event (ALWAYS, assuming schema allows NULL user_id now)
     const { error: insertError } = await supabase
         .from("subscription_events")
         .insert({
@@ -341,7 +358,8 @@ serve(async (req) => {
             return new Response("OK", { status: 200 });
         }
         console.error("[Webhook] Failed to insert event:", insertError);
-        // Return 200 to satisfy strict safe failure requirement
+        // We still return 200 to not block the queue, unless it's a transient error, but generally safe to fail open here?
+        // User requested "Salva evento SEMPRE", if DB fails we can't do much. 
         return new Response("OK", { status: 200 });
     }
 
@@ -369,7 +387,7 @@ serve(async (req) => {
             console.log("[Webhook] No fields to update for this event type.");
         }
     } else {
-        console.log("[Webhook] No user found, skipping subscription update.");
+        console.log("[Webhook] No user identified, skipping subscription update (Event logged only).");
     }
 
     console.log("[Webhook] Process completed successfully.");

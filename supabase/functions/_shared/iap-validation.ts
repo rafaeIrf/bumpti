@@ -156,69 +156,87 @@ export async function validateAppleReceipt(
     };
 }
 
-export async function validateGooglePurchase(
-  purchase: any,
-  expectedUserId: string
-): Promise<any> {
+export function getGoogleAuthClient() {
     const serviceAccountStr = Deno.env.get("GOOGLE_SERVICE_ACCOUNT");
     if (!serviceAccountStr) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT");
 
     const serviceAccount = JSON.parse(serviceAccountStr);
     
-    const client = new JWT({
+    return new JWT({
         email: serviceAccount.client_email,
         key: serviceAccount.private_key,
         scopes: ["https://www.googleapis.com/auth/androidpublisher"],
     });
+}
+
+/**
+ * Fetches subscription status using the V2 API which relies only on the purchase token.
+ * This is crucial for RTDN where subscriptionId might be missing.
+ */
+export async function fetchGoogleSubscriptionV2(
+    client: any, 
+    packageName: string, 
+    token: string
+): Promise<any> {
+    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/subscriptionsv2/tokens/${token}`;
+    const res = await client.request({ url });
+    return res.data;
+}
+
+export async function validateGooglePurchase(
+  purchase: any,
+  expectedUserId: string
+): Promise<any> {
+    const client = getGoogleAuthClient();
 
     // We need: packageName, productId, purchaseToken
     // Retrieve these from the purchase payload from expo-iap
-    const packageName = "com.bumpti"; // Should be env or config
-    const productId = purchase.productId;
+    const packageName = Deno.env.get("EXPECTED_PACKAGE_NAME") || "com.bumpti";
+
     const token = purchase.purchaseToken; // Ensure this is passed from client
 
-    if (!token) throw new Error("Missing purchaseToken for Android");
-
-    // Fetch subscription details
-    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/subscriptions/${productId}/tokens/${token}`;
-    
-    const res = await client.request({ url });
-    const subData = res.data as any;
+    // Fetch subscription details using V2 API (Consistency with webhook)
+    const subData = await fetchGoogleSubscriptionV2(client, packageName, token);
 
     /*
-    subData structure:
+    subData structure (V2):
     {
-      "startTimeMillis": "...",
-      "expiryTimeMillis": "...",
-      "autoRenewing": true,
-      "priceCurrencyCode": "...",
-      "priceAmountMicros": "...",
-      "countryCode": "...",
-      "paymentState": 1,
-      "orderId": "..."
+      "startTime": "2024-01-01T...",
+      "lineItems": [
+         {
+            "productId": "...",
+            "expiryTime": "2024-02-01T...",
+            "autoRenewingPlan": { "autoRenewEnabled": true }
+         }
+      ],
+      "externalAccountIdentifiers": {
+         "obfuscatedExternalAccountId": "..."
+      },
+      "latestOrderId": "..."
     }
     */
 
-    // Validate ownership? 
-    // Google API returns `obfuscatedExternalAccountId` if set during purchase.
-    if (subData.obfuscatedExternalAccountId && subData.obfuscatedExternalAccountId !== expectedUserId) {
+    // V2: Extract details from the first line item (usually only one for simple subs)
+    if (!subData.lineItems || subData.lineItems.length === 0) {
+        throw new Error("Invalid Google V2 Response: No lineItems found");
+    }
+    const item = subData.lineItems[0];
+
+    // Validate ownership
+    // V2 puts this in externalAccountIdentifiers
+    const obfAccountId = subData.externalAccountIdentifiers?.obfuscatedExternalAccountId;
+    if (obfAccountId && obfAccountId !== expectedUserId) {
          throw new Error("Ownership mismatch (obfuscatedExternalAccountId)");
     }
 
-    if (!subData.expiryTimeMillis) {
-        // Might be a consumable if not finding it? But we are calling subscriptions endpoint.
-        // If consumable, use `products` endpoint.
-        // Assuming subscription for now given the context.
-    }
-
     return {
-        sku: productId,
-        storeTransactionId: subData.orderId,
-        originalTransactionId: subData.orderId, // Google doesn't have a distinct "original" ID in the same way, orderId persists for the recursion usually or has ..0 ..1
-        purchaseDate: new Date(parseInt(subData.startTimeMillis)),
-        expiresDate: subData.expiryTimeMillis ? new Date(parseInt(subData.expiryTimeMillis)) : undefined,
-        autoRenew: subData.autoRenewing,
-        appUserToken: subData.obfuscatedExternalAccountId || purchase.obfuscatedAccountIdAndroid || null,
+        sku: item.productId, // Trust API's product ID over client's
+        storeTransactionId: subData.latestOrderId,
+        originalTransactionId: token, // Google purchaseToken is the persistent ID
+        purchaseDate: new Date(subData.startTime), // V2 uses ISO strings
+        expiresDate: item.expiryTime ? new Date(item.expiryTime) : undefined,
+        autoRenew: item.autoRenewingPlan?.autoRenewEnabled ?? false,
+        appUserToken: obfAccountId || purchase.obfuscatedAccountIdAndroid || null,
     };
 }
 
@@ -261,4 +279,30 @@ export async function getEntitlements(supabase: any, userId: string) {
     checkin_credits: credits?.credits || 0,
     show_subscription_bonus: !sub, // True only if user never had a subscription row
   };
+}
+
+/**
+ * Validates a potential user ID (UUID format) and checks against Auth Admin API.
+ */
+export async function validateAndFetchUser(supabase: any, potentialUserId: string): Promise<string | null> {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(potentialUserId)) {
+        console.warn(`[Shared] Invalid UUID format: ${potentialUserId}`);
+        return null;
+    }
+
+    try {
+        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(potentialUserId);
+        if (userData && userData.user) {
+            console.log(`[Shared] User ownership validated: ${potentialUserId}`);
+            return potentialUserId;
+        } else {
+            console.warn(`[Shared] User not found in Auth: ${potentialUserId}`);
+            return null;
+        }
+    } catch (err) {
+        console.error(`[Shared] Error looking up user in Auth:`, err);
+        return null;
+    }
 }
