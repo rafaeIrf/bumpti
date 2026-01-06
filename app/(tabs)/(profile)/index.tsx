@@ -142,7 +142,7 @@ export default function ProfileScreen() {
   };
 
   const handleCompleteProfile = () => {
-    router.push("/(tabs)/(profile)/edit");
+    router.push("/(profile)/edit");
   };
 
   const handlePowerUpPurchase = (type: PowerUpType, quantity: number) => {

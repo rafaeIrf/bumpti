@@ -1,4 +1,5 @@
 import { SearchIcon } from "@/assets/icons";
+import { LoadingView } from "@/components/loading-view";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -7,20 +8,37 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { searchCities } from "@/modules/places/api";
 import { CityPrediction } from "@/modules/places/types";
+import { logger } from "@/utils/logger";
 import debounce from "lodash/debounce";
-import React, { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 interface LocationStepProps {
-  value: string;
-  onChange: (value: any) => void;
+  value: LocationValue;
+  onChange: (value: LocationValue) => void;
 }
+
+type LocationValue =
+  | string
+  | {
+      location?: string | null;
+      city_name?: string | null;
+    };
+
+const getQueryFromValue = (currentValue: LocationValue) => {
+  if (typeof currentValue === "string") return currentValue;
+  return currentValue?.location || currentValue?.city_name || "";
+};
 
 export function LocationStep({ value, onChange }: LocationStepProps) {
   const colors = useThemeColors();
-  const [searchQuery, setSearchQuery] = useState(value || "");
+  const [searchQuery, setSearchQuery] = useState(getQueryFromValue(value));
   const [predictions, setPredictions] = useState<CityPrediction[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSearchQuery(getQueryFromValue(value));
+  }, [value]);
 
   const handleSearchCities = async (input: string) => {
     if (!input || input.length < 3) {
@@ -33,7 +51,7 @@ export function LocationStep({ value, onChange }: LocationStepProps) {
       const places = await searchCities(input);
       setPredictions(places);
     } catch (error) {
-      console.error("Error searching cities:", error);
+      logger.error("Error searching cities:", error);
     } finally {
       setLoading(false);
     }
@@ -70,8 +88,8 @@ export function LocationStep({ value, onChange }: LocationStepProps) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ marginBottom: spacing.md }}>
+    <View style={styles.container}>
+      <View style={styles.inputWrapper}>
         <InputText
           value={searchQuery}
           onChangeText={handleSearchChange}
@@ -82,15 +100,11 @@ export function LocationStep({ value, onChange }: LocationStepProps) {
             setPredictions([]);
             onChange("");
           }}
-          containerStyle={{ flex: 0 }}
+          containerStyle={styles.inputContainer}
         />
       </View>
 
-      {loading && (
-        <View style={{ padding: spacing.md }}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
-      )}
+      {loading && <LoadingView size="small" style={styles.loadingView} />}
 
       <ScrollView
         contentContainerStyle={styles.listContainer}
@@ -123,6 +137,19 @@ export function LocationStep({ value, onChange }: LocationStepProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  inputWrapper: {
+    marginBottom: spacing.md,
+  },
+  inputContainer: {
+    flex: 0,
+  },
+  loadingView: {
+    flex: 0,
+    padding: spacing.md,
+  },
   listContainer: {
     paddingBottom: spacing.xl,
   },

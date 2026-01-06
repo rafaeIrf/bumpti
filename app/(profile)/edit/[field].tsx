@@ -131,10 +131,11 @@ export default function EditFieldScreen() {
           router.setParams({ field: nextFieldKey });
         }
       } else {
-        router.back();
+        // All fields complete - go back to edit profile
+        router.replace("/(profile)/edit");
       }
     } else {
-      router.back();
+      router.replace("/(profile)/edit");
     }
   };
 
@@ -320,7 +321,6 @@ export default function EditFieldScreen() {
 
   return (
     <BaseTemplateScreen
-      isModal
       useKeyboardAvoidingView
       scrollEnabled={
         field !== "height" && field !== "languages" && field !== "location"

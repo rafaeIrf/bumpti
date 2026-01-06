@@ -117,7 +117,8 @@ export function ScreenBottomBar({
   } else if (isKeyboardVisible) {
     paddingBottom = spacing.md;
   } else {
-    paddingBottom = Math.max(spacing.xl, insets.bottom + spacing.md);
+    // Both iOS and Android: use safe area bottom when keyboard is hidden
+    paddingBottom = Math.max(insets.bottom, spacing.md);
   }
 
   const containerStyle = [

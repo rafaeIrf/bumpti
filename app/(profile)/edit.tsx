@@ -164,7 +164,7 @@ export default function ProfileEditScreen() {
       return;
     }
     router.push({
-      pathname: "/(tabs)/(profile)/edit/[field]",
+      pathname: "/(profile)/edit/[field]",
       params: { field },
     });
   };
