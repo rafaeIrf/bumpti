@@ -75,35 +75,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate distance if user and place coordinates are provided
-    // Skip distance validation if is_checkin_plus is true
-    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
-      const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
-      const MAX_DISTANCE_METERS = 60;
-
-      if (distanceInMeters > MAX_DISTANCE_METERS && !is_checkin_plus) {
-        console.warn(`User too far from place: ${distanceInMeters.toFixed(0)}m (max: ${MAX_DISTANCE_METERS}m)`);
-        return new Response(
-          JSON.stringify({ 
-            error: "too_far_from_place",
-            message: `You must be within ${MAX_DISTANCE_METERS}m of the place to enter. Current distance: ${Math.round(distanceInMeters)}m`
-          }), 
-          {
-            status: 400,
-            headers: corsHeaders,
-          }
-        );
-      }
-
-      if (is_checkin_plus && distanceInMeters > MAX_DISTANCE_METERS) {
-        console.log(`Distance validation bypassed via Check-in+: ${distanceInMeters.toFixed(0)}m`);
-      } else {
-        console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
-      }
-    } else {
-      console.warn("Distance validation skipped - missing coordinates");
-    }
-
+    // FIRST: Check for existing active presence - bypass all validations if exists
     const existingPresence = await refreshPresenceForPlace(
       serviceClient,
       user.id,
@@ -111,10 +83,72 @@ Deno.serve(async (req) => {
     );
 
     if (existingPresence) {
+      console.log(`User ${user.id} has existing presence at ${place_id}, refreshing`);
       return new Response(JSON.stringify({ presence: existingPresence }), {
         status: 200,
         headers: corsHeaders,
       });
+    }
+
+    // SECOND: Validate distance for NEW entries only
+    // Skip distance validation if is_checkin_plus is true AND user has credits
+    let usedCheckinPlus = false;
+    
+    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
+      const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
+      const MAX_DISTANCE_METERS = 60;
+
+      if (distanceInMeters > MAX_DISTANCE_METERS) {
+        if (is_checkin_plus) {
+          // Check if user has check-in credits
+          const { data: creditsData, error: creditsError } = await serviceClient
+            .from("user_checkin_credits")
+            .select("credits")
+            .eq("user_id", user.id)
+            .single();
+          
+          const availableCredits = creditsData?.credits ?? 0;
+          
+          if (creditsError && creditsError.code !== "PGRST116") {
+            // PGRST116 = no rows returned, which is fine (means 0 credits)
+            console.error("Error checking credits:", creditsError);
+            throw creditsError;
+          }
+          
+          if (availableCredits <= 0) {
+            console.warn(`User has no check-in credits. Distance: ${distanceInMeters.toFixed(0)}m`);
+            return new Response(
+              JSON.stringify({ 
+                error: "no_checkin_credits",
+                message: "You don't have any Check-in+ credits available"
+              }), 
+              {
+                status: 400,
+                headers: corsHeaders,
+              }
+            );
+          }
+          
+          console.log(`Distance validation bypassed via Check-in+ (credits: ${availableCredits}): ${distanceInMeters.toFixed(0)}m`);
+          usedCheckinPlus = true;
+        } else {
+          console.warn(`User too far from place: ${distanceInMeters.toFixed(0)}m (max: ${MAX_DISTANCE_METERS}m)`);
+          return new Response(
+            JSON.stringify({ 
+              error: "too_far_from_place",
+              message: `You must be within ${MAX_DISTANCE_METERS}m of the place to enter. Current distance: ${Math.round(distanceInMeters)}m`
+            }), 
+            {
+              status: 400,
+              headers: corsHeaders,
+            }
+          );
+        }
+      } else {
+        console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
+      }
+    } else {
+      console.warn("Distance validation skipped - missing coordinates");
     }
 
     const { data, error } = await serviceClient
@@ -130,6 +164,22 @@ Deno.serve(async (req) => {
       .single();
 
     if (error) throw error;
+
+    // Consume check-in credit if used
+    if (usedCheckinPlus) {
+      const { error: decrementError } = await serviceClient.rpc(
+        "decrement_checkin_credit",
+        { p_user_id: user.id }
+      );
+      
+      if (decrementError) {
+        console.error("Error decrementing check-in credit:", decrementError);
+        // Note: We don't throw here because the entry was successful
+        // The credit will be manually adjusted if needed
+      } else {
+        console.log(`Check-in credit consumed for user ${user.id}`);
+      }
+    }
 
     return new Response(JSON.stringify({ presence: data }), {
       status: 201,

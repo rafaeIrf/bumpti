@@ -22,7 +22,7 @@ interface ConnectionBottomSheetProps {
   readonly onConnect: () => void | Promise<void>;
   readonly onCancel?: () => void;
   readonly onClose?: () => void;
-  readonly onPremiumPress?: () => void;
+  readonly onPremiumPress?: () => void | Promise<void>;
   readonly currentVenue?: string; // Nome do local atual onde o usuário está conectado
 }
 
@@ -49,6 +49,7 @@ export function ConnectionBottomSheet({
   currentVenue,
 }: ConnectionBottomSheetProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isPremiumConnecting, setIsPremiumConnecting] = useState(false);
 
   const handleConnect = useCallback(() => {
     if (isConnecting) return;
@@ -64,6 +65,21 @@ export function ConnectionBottomSheet({
       setIsConnecting(false);
     }
   }, [isConnecting, onConnect]);
+
+  const handlePremiumConnect = useCallback(() => {
+    if (isPremiumConnecting || !onPremiumPress) return;
+    setIsPremiumConnecting(true);
+    try {
+      const result = onPremiumPress();
+      if (result && typeof (result as Promise<void>).then === "function") {
+        void (result as Promise<void>).catch(() => {
+          setIsPremiumConnecting(false);
+        });
+      }
+    } catch (_error) {
+      setIsPremiumConnecting(false);
+    }
+  }, [isPremiumConnecting, onPremiumPress]);
 
   // Configuração de conteúdo baseado no estado
   const getContent = () => {
@@ -127,8 +143,10 @@ export function ConnectionBottomSheet({
           },
           secondaryButton: {
             text: t("venue.connection.locked.buttonPremium"),
-            onClick: onPremiumPress || (() => {}),
+            onClick: handlePremiumConnect,
             variant: "secondary" as const,
+            loading: isPremiumConnecting,
+            disabled: isPremiumConnecting,
           },
           icon: LockIcon,
         };
