@@ -40,6 +40,7 @@ export async function fetchAndSetUserProfile() {
       languages: data.languages ?? [],
       zodiac_key: data.zodiac_key ?? null,
       relationship_key: data.relationship_key ?? null,
+      subscription: data.subscription ?? null,
     };
 
     setProfile(profileData);

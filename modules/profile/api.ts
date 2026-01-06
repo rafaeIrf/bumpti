@@ -26,6 +26,7 @@ export type ProfilePayload = {
   relationship_key?: string | null;
   smoking_key?: string | null;
   height_cm?: number | null;
+  subscription?: any;
 };
 
 export type UpdateProfilePayload = {
