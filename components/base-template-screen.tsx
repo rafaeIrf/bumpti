@@ -1,16 +1,13 @@
 import { spacing } from "@/constants/theme";
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { isIOS } from "@/utils";
 import { StatusBar } from "expo-status-bar";
 import { ReactNode, cloneElement, isValidElement } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from "react-native";
+import { RefreshControl, StyleSheet, View, ViewStyle } from "react-native";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import Animated, {
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -77,7 +74,7 @@ interface BaseTemplateScreenProps {
   // Whether to apply safe area padding automatically (default: true)
   useSafeArea?: boolean;
 
-  // Enable keyboard avoiding view (default: true)
+  // Enable keyboard avoiding behavior for the BottomBar (default: false)
   useKeyboardAvoidingView?: boolean;
 
   // Status bar style (default: 'light')
@@ -102,11 +99,26 @@ export function BaseTemplateScreen({
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+
+  // Get keyboard height for animating BottomBar
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
+  });
+
+  // Animated style for BottomBar - moves up with keyboard
+  const bottomBarAnimatedStyle = useAnimatedStyle(() => {
+    if (!useKeyboardAvoidingView) {
+      return { bottom: 0 };
+    }
+    // keyboardHeight is negative when keyboard is shown
+    return {
+      bottom: -keyboardHeight.value,
+    };
   });
 
   // Clone TopHeader and inject scrollY prop if it's a valid React element
@@ -120,33 +132,17 @@ export function BaseTemplateScreen({
     return TopHeader;
   };
 
-  const ContentWrapper = ({ children }: { children: ReactNode }) => {
-    if (!useKeyboardAvoidingView) {
-      return <View style={{ flex: 1 }}>{children}</View>;
-    }
-
-    if (scrollEnabled) {
-      return (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
-        >
-          {children}
-        </KeyboardAvoidingView>
-      );
-    }
+  // Render BottomBar with keyboard animation
+  const renderBottomBar = () => {
+    if (!BottomBar) return null;
 
     return (
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" && !scrollEnabled && isModal ? 70 : 0
-        }
+      <Animated.View
+        style={[styles.bottomBarContainer, bottomBarAnimatedStyle]}
+        pointerEvents="box-none"
       >
-        {children}
-      </KeyboardAvoidingView>
+        {BottomBar}
+      </Animated.View>
     );
   };
 
@@ -155,11 +151,12 @@ export function BaseTemplateScreen({
       style={[
         styles.wrapper,
         containerStyle,
+        { backgroundColor: colors.background },
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
         // and if useSafeArea is true
         hasStackHeader || isModal || !useSafeArea
-          ? { paddingTop: useSafeArea ? 16 : 0 }
-          : { paddingTop: insets.top },
+          ? { paddingTop: useSafeArea ? (isIOS ? 16 : insets.top + 16) : 0 }
+          : { paddingTop: isIOS ? insets.top : insets.top + 16 },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}
@@ -175,7 +172,7 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      <ContentWrapper>
+      <View style={{ flex: 1 }}>
         {scrollEnabled ? (
           <View style={{ flex: 1 }}>
             <Animated.ScrollView
@@ -199,7 +196,6 @@ export function BaseTemplateScreen({
             >
               {children}
             </Animated.ScrollView>
-            {/* Bottom Bar - positioned absolutely to stay at bottom */}
           </View>
         ) : (
           <View
@@ -210,25 +206,12 @@ export function BaseTemplateScreen({
             }}
           >
             {children}
-            {/* Bottom Bar - positioned absolutely to stay at bottom */}
-            {BottomBar && (
-              <View style={styles.bottomBarContainer} pointerEvents="box-none">
-                {BottomBar}
-              </View>
-            )}
           </View>
         )}
 
-        {/* Bottom Bar for scrollEnabled case needs to be outside ScrollView but inside Wrapper? 
-            Original code had BottomBar OUTSIDE ScrollView inside the KAV.
-            Let's check the structure carefully.
-        */}
-        {scrollEnabled && BottomBar && (
-          <View style={styles.bottomBarContainer} pointerEvents="box-none">
-            {BottomBar}
-          </View>
-        )}
-      </ContentWrapper>
+        {/* Bottom Bar - animated with keyboard */}
+        {renderBottomBar()}
+      </View>
     </View>
   );
 }
@@ -249,6 +232,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {},
   bottomBarContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 10,
   },
 });

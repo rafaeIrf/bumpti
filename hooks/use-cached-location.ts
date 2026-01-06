@@ -79,7 +79,6 @@ export const useCachedLocation = () => {
     fetchLocation();
   }, [hasPermission]);
 
-  // return { location: { ...location, city: "Curitiba", countryCode: "BR", latitude: -25.40303156447935, longitude: -49.24624665524243 }, loading };
   return { location, loading };
 };
 

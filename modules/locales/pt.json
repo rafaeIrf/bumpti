@@ -68,6 +68,7 @@
       "sports_centre": "Centro Esportivo",
       "community_centre": "Centro Comunitário",
       "events_venue": "Local de Eventos",
+      "event_venue": "Local de Evento",
       "language_school": "Escola de Idiomas",
       "club": "Clube",
       "dance_club": "Dança",
@@ -126,6 +127,7 @@
       "sports_centre": "Centros Esportivos",
       "community_centre": "Centros Comunitários",
       "events_venue": "Locais de Eventos",
+      "event_venue": "Locais de Eventos",
       "language_school": "Escolas de Idiomas",
       "club": "Clubes",
       "dance_club": "Escolas de Dança",
@@ -557,7 +559,8 @@
           "subtitle": "Envie sinais sociais especiais para chamar atenção de alguém."
         }
       },
-      "terms": "Você pode cancelar a qualquer momento pela App Store / Google Play.",
+      "terms": "A renovação da sua assinatura é automática pelo mesmo valor e período, a menos que seja cancelada nas configurações da {{store}}. Ao confirmar a assinatura, você concorda com nossos",
+      "termsLink": "Termos de Uso",
       "subscribe": "Assinar Bumpti Premium",
       "close": "Fechar"
     },

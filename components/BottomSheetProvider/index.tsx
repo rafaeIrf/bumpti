@@ -1,9 +1,13 @@
 import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import BottomSheet, {
+import { logger } from "@/utils/logger";
+import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetModalProvider,
   BottomSheetScrollView,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import React, {
   useCallback,
@@ -28,33 +32,32 @@ export default function BottomSheetProvider({
   children,
 }: BottomSheetProviderProps) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState<boolean>(false);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const screenTitleRef = useRef<string>("");
   const [bsProps, setBSProps] = useState<BSProps | null>(null);
 
   const handleExpandPress = useCallback((props: BSProps) => {
     dismissKeyboard();
+    logger.info("[BottomSheet] Expand requested", {
+      draggable: props.draggable,
+      snapPoints: props.snapPoints,
+    });
     setBSProps(props);
     setIsBottomSheetOpen(true);
   }, []);
 
   const handleClosePress = useCallback(() => {
-    if (bsProps?.onClose) {
-      bsProps.onClose();
-    }
+    logger.info("[BottomSheet] Close requested");
     setIsBottomSheetOpen(false);
     dismissKeyboard();
-    bottomSheetRef.current?.close();
-    setBSProps(null);
-  }, [bsProps]);
+    bottomSheetRef.current?.dismiss();
+  }, []);
 
   const colors = useThemeColors();
 
   useEffect(() => {
     if (bsProps) {
-      bottomSheetRef.current?.snapToIndex(0);
-    } else {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.present();
     }
   }, [bsProps]);
 
@@ -104,52 +107,77 @@ export default function BottomSheetProvider({
   const dismissKeyboard = () => Keyboard.dismiss();
 
   const isDraggable = bsProps?.draggable || bsProps?.draggable === undefined;
-  const isFullScreen = bsProps?.snapPoints?.[0] === "100%";
+  const snapPoints = bsProps?.snapPoints;
+  const enableDynamicSizing = !snapPoints;
+  const isFullScreen = snapPoints?.[0] === "100%";
 
   const insets = useSafeAreaInsets();
-  const paddingBottom = Platform.OS === "ios" ? insets.bottom + 24 : 24;
+  const paddingBottom = Platform.OS === "ios" ? 0 : 24;
 
   // Para telas fullscreen, não precisa de padding bottom
   const contentPaddingBottom = isFullScreen ? 0 : paddingBottom;
 
+  const handleModalDismiss = useCallback(() => {
+    if (bsProps?.onClose) {
+      bsProps.onClose();
+    }
+    setIsBottomSheetOpen(false);
+    setBSProps(null);
+  }, [bsProps]);
+
   return (
-    <BottomSheetContext.Provider value={bottomSheetContext}>
-      {children}
-      <BottomSheet
-        index={-1}
-        snapPoints={bsProps?.snapPoints}
-        handleIndicatorStyle={styles.handleIndicatorStyle}
-        ref={bottomSheetRef}
-        enablePanDownToClose={isDraggable}
-        enableContentPanningGesture={isDraggable}
-        enableHandlePanningGesture={isDraggable}
-        handleStyle={styles.componentStyle}
-        backgroundStyle={{
-          ...styles.bottomSheetBg,
-          backgroundColor: colors.surface,
-          borderTopRightRadius: isFullScreen ? 0 : spacing.lg,
-          borderTopLeftRadius: isFullScreen ? 0 : spacing.lg,
-        }}
-        backdropComponent={bsProps ? renderBackDrop : undefined}
-        animateOnMount
-        topInset={isFullScreen ? 0 : undefined}
-        android_keyboardInputMode="adjustResize"
-      >
-        <BottomSheetScrollView
-          enableFooterMarginAdjustment={true}
-          contentContainerStyle={[
-            {
-              paddingBottom: contentPaddingBottom,
-            },
-            bsProps?.snapPoints && { flexGrow: 1 },
-          ]}
-          showsVerticalScrollIndicator={false}
-          style={{ flex: 1 }}
+    <BottomSheetModalProvider>
+      <BottomSheetContext.Provider value={bottomSheetContext}>
+        {children}
+        <BottomSheetModal
+          index={0}
+          snapPoints={snapPoints}
+          enableDynamicSizing={enableDynamicSizing}
+          handleIndicatorStyle={styles.handleIndicatorStyle}
+          ref={bottomSheetRef}
+          enablePanDownToClose={isDraggable}
+          enableContentPanningGesture={isDraggable}
+          enableHandlePanningGesture={isDraggable}
+          handleStyle={styles.componentStyle}
+          backgroundStyle={{
+            ...styles.bottomSheetBg,
+            backgroundColor: colors.surface,
+            borderTopRightRadius: isFullScreen ? 0 : spacing.lg,
+            borderTopLeftRadius: isFullScreen ? 0 : spacing.lg,
+          }}
+          backdropComponent={bsProps ? renderBackDrop : undefined}
+          animateOnMount
+          topInset={isFullScreen ? 0 : undefined}
+          android_keyboardInputMode="adjustResize"
+          onDismiss={handleModalDismiss}
         >
-          {bsProps?.content()}
-        </BottomSheetScrollView>
-      </BottomSheet>
-    </BottomSheetContext.Provider>
+          {enableDynamicSizing ? (
+            <BottomSheetView
+              style={[
+                styles.dynamicContent,
+                { paddingBottom: contentPaddingBottom },
+              ]}
+            >
+              {bsProps?.content()}
+            </BottomSheetView>
+          ) : (
+            <BottomSheetScrollView
+              enableFooterMarginAdjustment={true}
+              contentContainerStyle={[
+                {
+                  paddingBottom: contentPaddingBottom,
+                },
+                snapPoints && { flexGrow: 1 },
+              ]}
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollView}
+            >
+              {bsProps?.content()}
+            </BottomSheetScrollView>
+          )}
+        </BottomSheetModal>
+      </BottomSheetContext.Provider>
+    </BottomSheetModalProvider>
   );
 }
 
@@ -167,5 +195,9 @@ const styles = StyleSheet.create({
   },
   handleIndicatorStyle: {
     backgroundColor: "transparent",
+  },
+  dynamicContent: {},
+  scrollView: {
+    flex: 1,
   },
 });

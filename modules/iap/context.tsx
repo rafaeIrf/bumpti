@@ -20,10 +20,14 @@ import React, {
 } from "react";
 import { Platform } from "react-native";
 
+import { t } from "@/modules/locales";
+import { getCurrentUserId } from "@/modules/store/selectors/profile";
+import { handlePurchaseSuccess } from "@/modules/store/slices/profileActions";
 import { logger } from "@/utils/logger";
 import { validateReceiptWithBackend } from "./api";
 import { CONSUMABLE_SKUS, SUBSCRIPTION_SKUS } from "./config";
 import { IAPContextValue, IAPState } from "./types";
+import { getAndroidSubscriptionOfferToken } from "./utils";
 
 const initialState: IAPState = {
   connected: false,
@@ -69,7 +73,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
         fetchProducts({ skus: CONSUMABLE_SKUS, type: "in-app" }),
         fetchProducts({ skus: SUBSCRIPTION_SKUS, type: "subs" }),
       ]);
-      console.log("AAA subs", subscriptions);
+      logger.log("[IAP] Subscriptions fetched:", subscriptions);
 
       // Note: fetchProducts returns Product[], we cast subscriptions if necessary
       // or expo-iap unified types. Subscription type usually extends Product.
@@ -100,26 +104,30 @@ export function IAPProvider({ children }: PropsWithChildren) {
       async (purchase: any) => {
         // 'purchase' type might vary, casting to any or generic Purchase structure
         const receipt = purchase.transactionReceipt;
-        console.log("AAA purchase", purchase);
+        const token = purchase.purchaseToken; // Android
+        console.log("[IAP] Purchase update received:", purchase);
 
-        if (receipt) {
+        if (receipt || token) {
           try {
             // Determine if it's a consumable based on SKU
             const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
 
             // Backend Validation
-            const isValid = await validateReceiptWithBackend(
+            const entitlements = await validateReceiptWithBackend(
               purchase,
               isConsumable
             );
 
-            if (isValid) {
+            if (entitlements) {
               // finishTransaction consumes consumables if configured or platform dependent
               // For expo-iap/react-native-iap, passing isConsumable: true helps on Android?
               // Standard API: finishTransaction({ purchase, isConsumable })
               // Check typings: finishTransaction expects (purchase: Purchase, isConsumable?: boolean, developerPayloadAndroid?: string)
 
               await finishTransaction({ purchase, isConsumable });
+
+              // Update Redux
+              handlePurchaseSuccess(entitlements);
 
               logger.log(
                 "[IAP] Purchase finished successfully:",
@@ -167,28 +175,21 @@ export function IAPProvider({ children }: PropsWithChildren) {
 
       // Use standard requestPurchase with correct type
       // Assuming consumables are 'in-app'
-      await iapRequestPurchase({
-        sku, // legacy/simple param
-        andDangerouslyFinishTransactionAutomaticallyIOS: false,
-        type: "in-app", // explicit type
-      } as any);
-      // Note: type definition might require object structure { skus: [sku] } or plain string depending on version.
-      // The exported `requestPurchase` usually takes an object configuration now.
-      // Based on d.ts: requestPurchase needs `requestObj`
-      /*
-       * await requestPurchase({
-       *   request: {
-       *     apple: { sku: productId },
-       *     google: { skus: [productId] }
-       *   },
-       *   type: 'in-app'
-       * });
-       */
+      // Get current user ID for linking
+      const userId = getCurrentUserId();
+      // On iOS, appAccountToken must be a UUID. Supabase IDs are UUIDs.
+      // On Android, use obfuscatedAccountIdAndroid.
 
       await iapRequestPurchase({
         request: {
-          apple: { sku },
-          google: { skus: [sku] },
+          apple: {
+            sku,
+            ...(userId ? { appAccountToken: userId } : {}),
+          },
+          google: {
+            skus: [sku],
+            ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
+          },
         },
         type: "in-app",
       });
@@ -202,10 +203,46 @@ export function IAPProvider({ children }: PropsWithChildren) {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
 
+      const subscription = state.subscriptions.find(
+        (item) => item.id === sku || (item as any).productId === sku
+      );
+
+      const androidOfferToken =
+        Platform.OS === "android"
+          ? getAndroidSubscriptionOfferToken(subscription)
+          : null;
+
+      if (Platform.OS === "android" && !androidOfferToken) {
+        logger.error(
+          "[IAP] Missing Android subscription offer token for SKU:",
+          sku
+        );
+        setState((prev) => ({
+          ...prev,
+          purchasing: false,
+          error: t("errors.generic"),
+        }));
+        return;
+      }
+
+      // Get current user ID for linking
+      const userId = getCurrentUserId();
+
       await iapRequestPurchase({
         request: {
-          apple: { sku },
-          google: { skus: [sku] },
+          apple: {
+            sku,
+            ...(userId ? { appAccountToken: userId } : {}),
+          },
+          google: {
+            skus: [sku],
+            ...(androidOfferToken
+              ? {
+                  subscriptionOffers: [{ sku, offerToken: androidOfferToken }],
+                }
+              : {}),
+            ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
+          },
         },
         type: "subs",
       });
@@ -243,8 +280,13 @@ export function IAPProvider({ children }: PropsWithChildren) {
         const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
 
         if (!isConsumable) {
-          const isValid = await validateReceiptWithBackend(purchase, false);
-          // Logic to update local state logic if backend confirms
+          const entitlements = await validateReceiptWithBackend(
+            purchase,
+            false
+          );
+          if (entitlements) {
+            handlePurchaseSuccess(entitlements);
+          }
         }
       }
 

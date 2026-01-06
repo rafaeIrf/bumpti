@@ -75,42 +75,47 @@ BEGIN
     ) AS dist_meters
   FROM places_view pv
   LEFT JOIN LATERAL (
-    SELECT count(*)::bigint as active_users
+    SELECT
+      count(*) FILTER (
+        WHERE (requesting_user_id IS NULL OR up.user_id != requesting_user_id)
+          AND (requesting_user_id IS NULL OR NOT EXISTS (
+            SELECT 1 FROM user_blocks b 
+            WHERE (b.blocker_id = requesting_user_id AND b.blocked_id = up.user_id) 
+               OR (b.blocker_id = up.user_id AND b.blocked_id = requesting_user_id)
+          ))
+          AND (requesting_user_id IS NULL OR NOT EXISTS (
+            SELECT 1 FROM user_interactions ui 
+            WHERE ui.action = 'dislike'
+              AND (
+                  (ui.from_user_id = requesting_user_id AND ui.to_user_id = up.user_id) 
+                  OR 
+                  (ui.from_user_id = up.user_id AND ui.to_user_id = requesting_user_id)
+              )
+          ))
+          AND (requesting_user_id IS NULL OR NOT EXISTS (
+            SELECT 1 FROM user_matches um
+            WHERE um.status = 'matched'
+              AND (
+                  (um.user_a = requesting_user_id AND um.user_b = up.user_id)
+                  OR 
+                  (um.user_a = up.user_id AND um.user_b = requesting_user_id)
+              )
+          ))
+          AND (requesting_user_id IS NULL OR EXISTS (
+            SELECT 1 FROM profile_connect_with pcw
+            INNER JOIN profiles rp ON rp.id = requesting_user_id
+            WHERE pcw.user_id = up.user_id
+              AND pcw.gender_id = rp.gender_id
+          ))
+      )::bigint as active_users,
+      count(*) FILTER (
+        WHERE (requesting_user_id IS NULL OR up.user_id != requesting_user_id)
+      )::bigint as active_users_sort
     FROM user_presences up
     WHERE up.place_id = pv.id
       AND up.active = true
       AND up.ended_at IS NULL
       AND up.expires_at > now()
-      AND (requesting_user_id IS NULL OR up.user_id != requesting_user_id)
-      AND (requesting_user_id IS NULL OR NOT EXISTS (
-        SELECT 1 FROM user_blocks b 
-        WHERE (b.blocker_id = requesting_user_id AND b.blocked_id = up.user_id) 
-           OR (b.blocker_id = up.user_id AND b.blocked_id = requesting_user_id)
-      ))
-      AND (requesting_user_id IS NULL OR NOT EXISTS (
-        SELECT 1 FROM user_interactions ui 
-        WHERE ui.action = 'dislike'
-          AND (
-              (ui.from_user_id = requesting_user_id AND ui.to_user_id = up.user_id) 
-              OR 
-              (ui.from_user_id = up.user_id AND ui.to_user_id = requesting_user_id)
-          )
-      ))
-      AND (requesting_user_id IS NULL OR NOT EXISTS (
-        SELECT 1 FROM user_matches um
-        WHERE um.status = 'matched'
-          AND (
-              (um.user_a = requesting_user_id AND um.user_b = up.user_id)
-              OR 
-              (um.user_a = up.user_id AND um.user_b = requesting_user_id)
-          )
-      ))
-      AND (requesting_user_id IS NULL OR EXISTS (
-        SELECT 1 FROM profile_connect_with pcw
-        INNER JOIN profiles rp ON rp.id = requesting_user_id
-        WHERE pcw.user_id = up.user_id
-          AND pcw.gender_id = rp.gender_id
-      ))
   ) au ON true
   WHERE
     st_dwithin(
@@ -126,7 +131,7 @@ BEGIN
     CASE WHEN sort_by = 'rating' THEN pv.review_count END DESC,
     CASE WHEN sort_by = 'popularity' THEN pv.total_checkins END DESC,
     CASE WHEN sort_by = 'popularity' THEN pv.last_activity_at END DESC,
-    CASE WHEN sort_by = 'relevance' THEN COALESCE(au.active_users, 0) END DESC,
+    CASE WHEN sort_by = 'relevance' THEN COALESCE(au.active_users_sort, 0) END DESC,
     CASE WHEN sort_by = 'relevance' THEN pv.last_activity_at END DESC,
     CASE WHEN sort_by = 'relevance' THEN pv.relevance_score END DESC,
     CASE WHEN sort_by = 'relevance' THEN pv.confidence END DESC,

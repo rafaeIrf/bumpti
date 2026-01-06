@@ -231,7 +231,6 @@ export async function updateMatch(params: {
       ...(markOpened ? { mark_opened: true } : {}),
     },
   });
-  console.log("updateMatch data:", data);
 
   if (error) {
     const message = await extractEdgeErrorMessage(

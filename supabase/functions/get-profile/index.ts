@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { getEntitlements } from "../_shared/iap-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,7 @@ Deno.serve(async (req) => {
       intentionResult,
       photosResult,
       favoritePlacesResult,
+      subscription,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -90,6 +92,7 @@ Deno.serve(async (req) => {
         .from("profile_favorite_places")
         .select("place_id, places:places(id, name, category)")
         .eq("user_id", userId),
+      getEntitlements(supabase, userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -197,6 +200,7 @@ Deno.serve(async (req) => {
         intentions,
         favoritePlaces,
         photos,
+        subscription,
         education_key: education?.key ?? null,
         zodiac_key: zodiac?.key ?? null,
         smoking_key: smoking?.key ?? null,

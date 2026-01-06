@@ -68,6 +68,7 @@
       "sports_centre": "Sports Center",
       "community_centre": "Community Center",
       "events_venue": "Events Venue",
+      "event_venue": "Event Venue",
       "language_school": "Language School",
       "club": "Club",
       "dance_club": "Dance Club",
@@ -125,6 +126,7 @@
       "sports_centre": "Sports Centers",
       "community_centre": "Community Centers",
       "events_venue": "Event Venues",
+      "event_venue": "Event Venues",
       "language_school": "Language Schools",
       "club": "Clubs",
       "dance_club": "Dance Clubs",
@@ -556,7 +558,8 @@
           "subtitle": "Send special social signals to get someone's attention."
         }
       },
-      "terms": "You can cancel anytime through the App Store / Google Play.",
+      "terms": "Your subscription automatically renews for the same price and duration unless canceled in your {{store}} settings. By confirming your purchase, you agree to our",
+      "termsLink": "Terms of Use",
       "subscribe": "Subscribe to Bumpti Premium",
       "close": "Close"
     },

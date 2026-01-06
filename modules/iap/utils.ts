@@ -23,3 +23,29 @@ export function getPriceValue(subscription: any): number | null {
 
   return null;
 }
+
+export function getAndroidSubscriptionOfferToken(subscription: any): string | null {
+  if (!subscription) return null;
+
+  const offerDetails =
+    subscription.subscriptionOfferDetailsAndroid ||
+    subscription.subscriptionOfferDetails;
+
+  if (!Array.isArray(offerDetails) || offerDetails.length === 0) {
+    return null;
+  }
+
+  const basePlanOffer = offerDetails.find(
+    (offer: any) => offer && !offer.offerId && offer.offerToken
+  );
+
+  if (basePlanOffer?.offerToken) {
+    return basePlanOffer.offerToken;
+  }
+
+  const firstOffer = offerDetails.find(
+    (offer: any) => offer && offer.offerToken
+  );
+
+  return firstOffer?.offerToken ?? null;
+}

@@ -63,16 +63,17 @@ export function navigateToNextProfileField(
 
   if (nextFieldKey) {
     if (nextFieldKey === "spots") {
-      router.replace("/(tabs)/(profile)/edit/favorite-places");
+      router.push("/main/favorite-places");
     } else {
+      // Use replace to remove current screen (favorites) from stack
       router.replace({
-        pathname: "/(tabs)/(profile)/edit/[field]",
+        pathname: "/(profile)/edit/[field]",
         params: { field: nextFieldKey },
       });
     }
     return;
   }
 
-  // If no empty fields found, go back
-  router.back();
+  // If no empty fields found, go back to edit profile
+  router.replace("/(profile)/edit");
 }

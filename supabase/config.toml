@@ -354,4 +354,9 @@ s3_region = "env(S3_REGION)"
 # Configures AWS_ACCESS_KEY_ID for S3 bucket
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
-s3_secret_key = "env(S3_SECRET_KEY)"
+
+[functions.iap-webhook-apple]
+verify_jwt = false
+
+[functions.iap-webhook-google]
+verify_jwt = false

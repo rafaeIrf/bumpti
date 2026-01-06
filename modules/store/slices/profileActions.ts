@@ -5,6 +5,8 @@ import {
   resetProfile as resetProfileAction,
   setProfile as setProfileAction,
   setProfileLoading as setProfileLoadingAction,
+  setSubscription as setSubscriptionAction,
+  SubscriptionData,
 } from "./profileSlice";
 
 import { t } from "@/modules/locales";
@@ -107,4 +109,8 @@ export const updateProfilePhotosAction = async (newPhotos: string[]) => {
     
     throw error;
   }
+};
+
+export const handlePurchaseSuccess = (entitlements: SubscriptionData) => {
+  store.dispatch(setSubscriptionAction(entitlements));
 };
