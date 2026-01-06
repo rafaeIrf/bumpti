@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { fetchGoogleSubscriptionV2, getGoogleAuthClient, validateAndFetchUser } from "../_shared/iap-validation.ts";
+import { fetchGoogleProduct, fetchGoogleSubscriptionV2, getGoogleAuthClient, validateAndFetchUser } from "../_shared/iap-validation.ts";
 
 // --- Types ---
 interface PubSubMessage {
@@ -94,8 +94,12 @@ serve(async (req) => {
     // We try to find the user_id if purchaseToken is available
     let userId: string | null = null;
     let subState = null; // Store API response if we fetch it early
+    let prodState = null; // Store API response for products
+
     const subNotif = notification.subscriptionNotification;
+    const prodNotif = notification.oneTimeProductNotification;
     
+    // Strategy: Try to resolve User ID
     if (subNotif) {
         const token = subNotif.purchaseToken;
         const { data: sub } = await supabase
@@ -127,6 +131,27 @@ serve(async (req) => {
                  console.error("[Webhook] Failed to fetch user from Google API fallback:", err);
              }
         }
+    } else if (prodNotif) {
+        // Validation for One-Time Products
+        const token = prodNotif.purchaseToken;
+        const sku = prodNotif.sku;
+        
+        try {
+            console.log(`[Webhook] Processing One-Time Product: ${sku}`);
+            const client = getGoogleAuthClient();
+            prodState = await fetchGoogleProduct(client, notification.packageName, sku, token);
+            
+            /* prodState structure:
+               { kind, purchaseTimeMillis, purchaseState, consumptionState, obfuscatedExternalAccountId, orderId }
+            */
+            const obfId = prodState.obfuscatedExternalAccountId;
+            if (obfId) {
+                userId = await validateAndFetchUser(supabase, obfId);
+                if (userId) console.log(`[Webhook] Recovered UserId from Product API: ${userId}`);
+            }
+        } catch (err) {
+             console.error("[Webhook] Failed to fetch user from Google Product API:", err);
+        }
     }
 
     console.log(`[Webhook] Final Mapped UserID: ${userId || "NULL (Anonymous/Unknown)"}`);
@@ -153,9 +178,20 @@ serve(async (req) => {
         22: "SUBSCRIPTION_PRICE_STEP_UP_CONSENT_UPDATED"
     };
 
+    const ONE_TIME_TYPE_MAP: Record<number, string> = {
+        1: "ONE_TIME_PRODUCT_PURCHASED",
+        2: "ONE_TIME_PRODUCT_CANCELED"
+    };
+
     // Insert Event
-    const eventTypeInt = subNotif?.notificationType;
-    const eventTypeStr = eventTypeInt ? (NOTIFICATION_TYPE_MAP[eventTypeInt] || `SUBSCRIPTION:${eventTypeInt}`) : "OTHER";
+    let eventTypeStr = "OTHER";
+    if (subNotif) {
+        const t = subNotif.notificationType;
+        eventTypeStr = NOTIFICATION_TYPE_MAP[t] || `SUBSCRIPTION:${t}`;
+    } else if (prodNotif) {
+        const t = prodNotif.notificationType;
+        eventTypeStr = ONE_TIME_TYPE_MAP[t] || `ONE_TIME:${t}`;
+    }
 
     const { error: insertError } = await supabase
         .from("subscription_events")

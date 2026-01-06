@@ -1,37 +1,38 @@
 import {
   CheckIcon,
   CircleCheckDashedIcon,
-  CrownIcon,
-  FlameIcon,
   MapPinIcon,
-  NavigationIcon,
   PencilIcon,
   SettingsIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { CheckinCreditsCard } from "@/components/checkin-credits-card";
 import {
   PowerUpBottomSheet,
   PowerUpOptionConfig,
+  PowerUpType,
 } from "@/components/power-up-bottom-sheet";
-import { ProfileActionCard } from "@/components/profile-action-card";
+import { PremiumStatusCard } from "@/components/premium/premium-status-card";
+import { ProfilePhotoProgress } from "@/components/profile/profile-photo-progress";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
-import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
+import { logger } from "@/utils/logger";
 import { calculateProfileCompletion } from "@/utils/profile-completion";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, SvgProps } from "react-native-svg";
+import { SvgProps } from "react-native-svg";
 
 interface BenefitRow {
   labelKey: string;
@@ -39,42 +40,23 @@ interface BenefitRow {
   premium: boolean;
 }
 
-type PowerUpType = "earlyCheckin" | "pings" | "turbo";
-
+// Only earlyCheckin is currently supported for purchase
 interface PowerUpConfig {
   icon: React.ComponentType<SvgProps>;
   translationKey: string;
   options: PowerUpOptionConfig[];
+  powerUpType: PowerUpType;
 }
 
-const POWER_UP_CONFIGS: Record<PowerUpType, PowerUpConfig> = {
-  earlyCheckin: {
-    icon: MapPinIcon,
-    translationKey: "screens.profile.powerUps.earlyCheckin",
-    options: [
-      { quantity: 1, id: "single" },
-      { quantity: 5, id: "bundle", badgeId: "popular", isHighlighted: true },
-      { quantity: 10, id: "max" },
-    ],
-  },
-  pings: {
-    icon: NavigationIcon,
-    translationKey: "screens.profile.powerUps.pings",
-    options: [
-      { quantity: 1, id: "single" },
-      { quantity: 5, id: "bundle", badgeId: "popular", isHighlighted: true },
-      { quantity: 10, id: "max" },
-    ],
-  },
-  turbo: {
-    icon: FlameIcon,
-    translationKey: "screens.profile.powerUps.turbo",
-    options: [
-      { quantity: 1, id: "single" },
-      { quantity: 3, id: "bundle", badgeId: "popular", isHighlighted: true },
-      { quantity: 6, id: "max" },
-    ],
-  },
+const EARLY_CHECKIN_CONFIG: PowerUpConfig = {
+  icon: MapPinIcon,
+  translationKey: "screens.profile.powerUps.earlyCheckin",
+  powerUpType: "earlyCheckin",
+  options: [
+    { quantity: 1, id: "single" },
+    { quantity: 5, id: "bundle", badgeId: "popular", isHighlighted: true },
+    { quantity: 10, id: "max" },
+  ],
 };
 
 const BENEFITS: BenefitRow[] = [
@@ -136,6 +118,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
 
   const [profileProgress, setProfileProgress] = React.useState<number>(0.65);
+  const { checkinCredits, isPremium } = useUserSubscription();
+
+  // const isPremium = false;
 
   const handleSettingsClick = () => {
     router.push("/main/settings");
@@ -145,23 +130,20 @@ export default function ProfileScreen() {
     router.push("/(profile)/edit");
   };
 
-  const handlePowerUpPurchase = (type: PowerUpType, quantity: number) => {
-    console.log("Power-up purchase", type, quantity);
-  };
-
-  const openPowerUpSheet = (type: PowerUpType) => {
+  const openEarlyCheckinSheet = () => {
     if (!bottomSheet) return;
-    const config = POWER_UP_CONFIGS[type];
+    const config = EARLY_CHECKIN_CONFIG;
 
     bottomSheet.expand({
       content: () => (
         <PowerUpBottomSheet
           translationKey={config.translationKey}
+          powerUpType={config.powerUpType}
           icon={config.icon}
           options={config.options}
           onClose={() => bottomSheet.close()}
-          onPurchase={(quantity) => {
-            handlePowerUpPurchase(type, quantity);
+          onPurchaseComplete={() => {
+            logger.log("[Profile] Power-up purchase completed: earlyCheckin");
             bottomSheet.close();
           }}
           onUpgradeToPremium={() => {
@@ -174,20 +156,16 @@ export default function ProfileScreen() {
     });
   };
 
-  const handleTurboClick = () => {
-    openPowerUpSheet("turbo");
-  };
-
-  const handlePingsClick = () => {
-    openPowerUpSheet("pings");
-  };
-
   const handleEarlyCheckinClick = () => {
-    openPowerUpSheet("earlyCheckin");
+    openEarlyCheckinSheet();
   };
 
   const handlePremiumClick = () => {
-    router.push("/(modals)/premium-paywall");
+    if (isPremium) {
+      router.push("/(modals)/manage-subscription");
+    } else {
+      router.push("/(modals)/premium-paywall");
+    }
   };
 
   const handleOpenProfilePreview = () => {
@@ -248,80 +226,12 @@ export default function ProfileScreen() {
             style={styles.profileHeader}
           >
             {/* Profile Photo */}
-            <Pressable
+            <ProfilePhotoProgress
+              photoUrl={profilePhoto}
+              progress={profileProgress}
               onPress={handleOpenProfilePreview}
-              accessibilityRole="button"
-              style={styles.photoContainer}
-            >
-              <View style={styles.photoRing}>
-                <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
-                  {/* Background circle */}
-                  <Circle
-                    cx="40"
-                    cy="40"
-                    r="37"
-                    stroke={(colors as any).border ?? colors.surface}
-                    strokeWidth="5"
-                    fill="none"
-                  />
-                  {/* Progress circle */}
-                  <Circle
-                    cx="40"
-                    cy="40"
-                    r="37"
-                    stroke={(colors as any).premiumBlue ?? colors.accent}
-                    strokeWidth="5"
-                    fill="none"
-                    strokeDasharray={`${2 * Math.PI * 37}`}
-                    strokeDashoffset={`${
-                      2 * Math.PI * 37 * (1 - profileProgress)
-                    }`}
-                    strokeLinecap="round"
-                    rotation="-90"
-                    origin="40, 40"
-                  />
-                </Svg>
-                <View
-                  style={[
-                    styles.photoTrack,
-                    { backgroundColor: colors.background },
-                  ]}
-                >
-                  {profilePhoto ? (
-                    <RemoteImage
-                      source={{ uri: profilePhoto }}
-                      style={styles.photo}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.photoPlaceholder,
-                        { backgroundColor: colors.surface },
-                      ]}
-                    />
-                  )}
-                </View>
-              </View>
-              {shouldShowCompletionBadge && (
-                <View
-                  style={[
-                    styles.progressBadge,
-                    {
-                      backgroundColor:
-                        (colors as any).cardGradientStart ?? colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    style={[typography.captionBold, { color: colors.text }]}
-                  >
-                    {completionText}
-                  </ThemedText>
-                </View>
-              )}
-            </Pressable>
+              completionText={completionText}
+            />
 
             {/* Profile Info */}
             <View style={styles.profileInfo}>
@@ -353,25 +263,14 @@ export default function ProfileScreen() {
             </View>
           </Animated.View>
 
-          {/* Action Cards */}
+          {/* Check-in+ Card */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(100)}
-            style={styles.actionCardsContainer}
+            style={styles.checkinCardContainer}
           >
-            <ProfileActionCard
-              icon={FlameIcon}
-              title={t("screens.profile.turbo.title")}
-              onPress={handleTurboClick}
-            />
-            <ProfileActionCard
-              icon={NavigationIcon}
-              title={t("screens.profile.pings.title")}
-              onPress={handlePingsClick}
-            />
-            <ProfileActionCard
-              icon={MapPinIcon}
-              title={t("screens.profile.earlyCheckin.title")}
-              onPress={handleEarlyCheckinClick}
+            <CheckinCreditsCard
+              credits={checkinCredits}
+              onPurchase={handleEarlyCheckinClick}
             />
           </Animated.View>
         </View>
@@ -380,61 +279,10 @@ export default function ProfileScreen() {
         <View style={styles.bodyContent}>
           {/* Premium Hero Card */}
           <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-            <Pressable onPress={handlePremiumClick}>
-              <LinearGradient
-                colors={[
-                  (colors as any).premiumBlue ?? colors.accent,
-                  (colors as any).premiumBlueDark ?? colors.surface,
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[
-                  styles.premiumCard,
-                  {
-                    shadowColor: (colors as any).premiumBlue ?? colors.accent,
-                  },
-                ]}
-              >
-                <View style={styles.premiumHeader}>
-                  <View
-                    style={[
-                      styles.premiumIconContainer,
-                      { backgroundColor: "rgba(255, 255, 255, 0.15)" },
-                    ]}
-                  >
-                    <CrownIcon width={24} height={24} color={colors.text} />
-                  </View>
-                  <View style={styles.premiumTextContainer}>
-                    <ThemedText
-                      style={[typography.body1, { color: colors.text }]}
-                    >
-                      {t("screens.profile.premium.title")}
-                    </ThemedText>
-
-                    <ThemedText
-                      style={[typography.caption, { color: colors.text }]}
-                    >
-                      {t("screens.profile.premium.description")}
-                    </ThemedText>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.premiumButton,
-                    {
-                      backgroundColor:
-                        (colors as any).cardGradientStart ?? colors.surface,
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    style={[typography.captionBold, { color: colors.text }]}
-                  >
-                    {t("screens.profile.premium.cta")}
-                  </ThemedText>
-                </View>
-              </LinearGradient>
-            </Pressable>
+            <PremiumStatusCard
+              isPremium={isPremium}
+              onPress={handlePremiumClick}
+            />
           </Animated.View>
 
           {/* Benefits Table */}
@@ -563,35 +411,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
   },
-  photoContainer: {
-    flexShrink: 0,
-  },
-  photoRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    position: "relative",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  photoTrack: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  photo: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
-  photoPlaceholder: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
   profileInfo: {
     flex: 1,
     gap: spacing.xs,
@@ -600,54 +419,17 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginTop: spacing.xs,
   },
-  actionCardsContainer: {
-    flexDirection: "row",
-    gap: spacing.sm,
+  checkinCardContainer: {
     marginTop: spacing.lg,
-    alignItems: "stretch",
   },
   progressBadge: {
     position: "absolute",
-    bottom: -spacing.sm,
+    bottom: -spacing.xs,
     alignSelf: "center",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs / 2,
     borderRadius: spacing.lg,
     borderWidth: 1,
-  },
-  premiumCard: {
-    borderRadius: spacing.xl,
-    padding: spacing.xl,
-    minHeight: 160,
-    gap: spacing.sm,
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
-  premiumHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  premiumTextContainer: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  premiumIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  premiumButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-    backgroundColor: undefined,
-    borderRadius: spacing.lg,
-    alignSelf: "flex-start",
   },
   benefitsCard: {
     borderRadius: spacing.xl,

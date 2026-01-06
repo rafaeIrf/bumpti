@@ -106,6 +106,7 @@
     "selected": "Selected",
     "done": "Done",
     "save": "Save",
+    "buy": "Buy",
     "skip": "Skip",
     "select": "Select",
     "loading": "Loading...",
@@ -277,7 +278,8 @@
       },
       "earlyCheckin": {
         "title": "Check-in+",
-        "subtitle": "Connect before you arrive"
+        "subtitle": "Connect before you arrive",
+        "description": "Enter places from afar"
       },
       "profileEdit": {
         "title": "Edit Profile",
@@ -325,7 +327,12 @@
       "premium": {
         "title": "Go Premium",
         "description": "Access exclusive features and unlock the full potential of the app.",
-        "cta": "View plans"
+        "cta": "View plans",
+        "active": {
+          "title": "Bumpti Premium",
+          "description": "You have already unlocked exclusive features",
+          "cta": "View my benefits"
+        }
       },
       "benefits": {
         "title": "Compare plans",
@@ -518,7 +525,8 @@
         "mostPopular": "Most popular",
         "popular": "Popular",
         "bestValue": "Best value",
-        "savePercent": "Save {{percent}}%"
+        "savePercent": "Save {{percent}}%",
+        "checkinBonus": "+ {{count}} Check-ins"
       },
       "benefits": {
         "unlimitedLikes": {
@@ -551,7 +559,10 @@
         },
         "earlyCheckin": {
           "title": "Check-in+ (5 per week)",
-          "subtitle": "Show up at the venue before you arrive and increase your chances of being discovered."
+          "subtitle": "Show up at the venue before you arrive and increase your chances of being discovered.",
+          "month": "1 Check-in",
+          "quarter": "5 Check-ins",
+          "year": "12 Check-ins"
         },
         "pings": {
           "title": "Pings unlocked (5 per week)",
@@ -562,6 +573,13 @@
       "termsLink": "Terms of Use",
       "subscribe": "Subscribe to Bumpti Premium",
       "close": "Close"
+    },
+    "manageSubscription": {
+      "title": "You have Bumpti Premium 🎉",
+      "subtitle": "View your benefits and change your plan whenever you want.",
+      "currentPlan": "Your current plan",
+      "manage": "Manage subscription",
+      "updatePlan": "Update plan"
     },
     "onboarding": {
       "title": "Meet real people,\nin real places",

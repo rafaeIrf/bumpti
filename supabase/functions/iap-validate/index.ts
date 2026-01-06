@@ -3,13 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
-    CONSUMABLE_CREDITS,
-    SUBSCRIPTION_CREDITS_AWARD,
-    SUBSCRIPTION_PLANS,
-    getEntitlements,
-    grantCheckinCredits,
-    validateAppleReceipt,
-    validateGooglePurchase,
+  CONSUMABLE_CREDITS,
+  SUBSCRIPTION_CREDITS_AWARD,
+  SUBSCRIPTION_PLANS,
+  getEntitlements,
+  grantCheckinCredits,
+  validateAppleReceipt,
+  validateGooglePurchase,
 } from "../_shared/iap-validation.ts";
 
 serve(async (req) => {
@@ -27,7 +27,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 2. Parse Request
-    const { platform, purchase } = await req.json();
+    const { platform, purchase, isConsumable: isConsumableRequest } = await req.json();
     if (!purchase) throw new Error("Missing purchase data");
 
     let validatedData: any = null;
@@ -36,7 +36,7 @@ serve(async (req) => {
     if (platform === "ios") {
       validatedData = await validateAppleReceipt(purchase, userId);
     } else if (platform === "android") {
-      validatedData = await validateGooglePurchase(purchase, userId);
+      validatedData = await validateGooglePurchase(purchase, userId, isConsumableRequest);
     } else {
       throw new Error("Invalid platform");
     }
@@ -53,7 +53,8 @@ serve(async (req) => {
       appUserToken,
     } = validatedData;
 
-    // 4. Idempotency Check
+    // 4. Idempotency Check - by exact transaction ID
+    // Each billing event (renewal, initial purchase) has a unique transactionId
     const { data: existingPurchase } = await supabase
       .from("store_purchases")
       .select("id")

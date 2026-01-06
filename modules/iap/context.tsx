@@ -1,6 +1,5 @@
 import {
   Product,
-  PurchaseError,
   Subscription,
   endConnection,
   fetchProducts,
@@ -25,9 +24,17 @@ import { getCurrentUserId } from "@/modules/store/selectors/profile";
 import { handlePurchaseSuccess } from "@/modules/store/slices/profileActions";
 import { logger } from "@/utils/logger";
 import { validateReceiptWithBackend } from "./api";
-import { CONSUMABLE_SKUS, SUBSCRIPTION_SKUS } from "./config";
-import { IAPContextValue, IAPState } from "./types";
-import { getAndroidSubscriptionOfferToken } from "./utils";
+import {
+  ANDROID_BASE_PLAN_MAP,
+  ANDROID_SUBSCRIPTION_PRODUCT_ID,
+  CONSUMABLE_SKUS,
+  SUBSCRIPTION_SKUS,
+} from "./config";
+import { IAPContextValue, IAPState, PlanType } from "./types";
+import {
+  getAndroidSubscriptionOfferToken,
+  getOfferTokenByBasePlan,
+} from "./utils";
 
 const initialState: IAPState = {
   connected: false,
@@ -47,9 +54,6 @@ export function IAPProvider({ children }: PropsWithChildren) {
   const initializeIAP = useCallback(async () => {
     try {
       const connected = await initConnection();
-
-      // Note: flushFailedPurchasesCachedAsPendingAndroid is not strictly needed with modern finishTransaction
-      // or might be auto-handled by initConnection in this wrapper version.
 
       setState((prev) => ({ ...prev, connected, loading: true }));
 
@@ -74,9 +78,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
         fetchProducts({ skus: SUBSCRIPTION_SKUS, type: "subs" }),
       ]);
       logger.log("[IAP] Subscriptions fetched:", subscriptions);
-
-      // Note: fetchProducts returns Product[], we cast subscriptions if necessary
-      // or expo-iap unified types. Subscription type usually extends Product.
+      logger.log("[IAP] Products fetched:", products);
 
       setState((prev) => ({
         ...prev,
@@ -102,31 +104,21 @@ export function IAPProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const purchaseUpdateSubscription = purchaseUpdatedListener(
       async (purchase: any) => {
-        // 'purchase' type might vary, casting to any or generic Purchase structure
         const receipt = purchase.transactionReceipt;
-        const token = purchase.purchaseToken; // Android
-        console.log("[IAP] Purchase update received:", purchase);
+        const token = purchase.purchaseToken;
+        logger.log("[IAP] Purchase update received:", purchase);
 
         if (receipt || token) {
           try {
-            // Determine if it's a consumable based on SKU
             const isConsumable = CONSUMABLE_SKUS.includes(purchase.productId);
 
-            // Backend Validation
             const entitlements = await validateReceiptWithBackend(
               purchase,
               isConsumable
             );
 
             if (entitlements) {
-              // finishTransaction consumes consumables if configured or platform dependent
-              // For expo-iap/react-native-iap, passing isConsumable: true helps on Android?
-              // Standard API: finishTransaction({ purchase, isConsumable })
-              // Check typings: finishTransaction expects (purchase: Purchase, isConsumable?: boolean, developerPayloadAndroid?: string)
-
               await finishTransaction({ purchase, isConsumable });
-
-              // Update Redux
               handlePurchaseSuccess(entitlements);
 
               logger.log(
@@ -148,16 +140,14 @@ export function IAPProvider({ children }: PropsWithChildren) {
       }
     );
 
-    const purchaseErrorSubscription = purchaseErrorListener(
-      (error: PurchaseError) => {
-        logger.warn("[IAP] Purchase error:", error);
-        setState((prev) => ({
-          ...prev,
-          purchasing: false,
-          error: error.message,
-        }));
-      }
-    );
+    const purchaseErrorSubscription = purchaseErrorListener((error: any) => {
+      logger.warn("[IAP] Purchase error:", error);
+      setState((prev) => ({
+        ...prev,
+        purchasing: false,
+        error: error.message || "Purchase failed",
+      }));
+    });
 
     return () => {
       if (purchaseUpdateSubscription) {
@@ -173,12 +163,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
 
-      // Use standard requestPurchase with correct type
-      // Assuming consumables are 'in-app'
-      // Get current user ID for linking
       const userId = getCurrentUserId();
-      // On iOS, appAccountToken must be a UUID. Supabase IDs are UUIDs.
-      // On Android, use obfuscatedAccountIdAndroid.
 
       await iapRequestPurchase({
         request: {
@@ -199,53 +184,74 @@ export function IAPProvider({ children }: PropsWithChildren) {
     }
   };
 
-  const requestSubscription = async (sku: string) => {
+  const requestSubscription = async (sku: string, planType?: PlanType) => {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
 
-      const subscription = state.subscriptions.find(
-        (item) => item.id === sku || (item as any).productId === sku
-      );
-
-      const androidOfferToken =
-        Platform.OS === "android"
-          ? getAndroidSubscriptionOfferToken(subscription)
-          : null;
-
-      if (Platform.OS === "android" && !androidOfferToken) {
-        logger.error(
-          "[IAP] Missing Android subscription offer token for SKU:",
-          sku
-        );
-        setState((prev) => ({
-          ...prev,
-          purchasing: false,
-          error: t("errors.generic"),
-        }));
-        return;
-      }
-
-      // Get current user ID for linking
       const userId = getCurrentUserId();
 
-      await iapRequestPurchase({
-        request: {
-          apple: {
+      if (Platform.OS === "android") {
+        // Novo modelo Android: 1 subscription com base plans
+        const subscription = state.subscriptions.find(
+          (item) =>
+            item.id === ANDROID_SUBSCRIPTION_PRODUCT_ID ||
+            (item as any).productId === ANDROID_SUBSCRIPTION_PRODUCT_ID
+        );
+
+        const basePlanId = planType ? ANDROID_BASE_PLAN_MAP[planType] : null;
+
+        // Tenta primeiro pelo basePlanId, fallback para legacy
+        const offerToken = basePlanId
+          ? getOfferTokenByBasePlan(subscription, basePlanId)
+          : getAndroidSubscriptionOfferToken(subscription);
+
+        if (!offerToken) {
+          logger.error("[IAP] Missing Android offer token", {
             sku,
-            ...(userId ? { appAccountToken: userId } : {}),
+            planType,
+            basePlanId,
+          });
+          setState((prev) => ({
+            ...prev,
+            purchasing: false,
+            error: t("errors.generic"),
+          }));
+          return;
+        }
+
+        logger.log("[IAP] Android subscription purchase:", {
+          productId: ANDROID_SUBSCRIPTION_PRODUCT_ID,
+          basePlanId,
+          offerToken: offerToken.substring(0, 20) + "...",
+        });
+
+        await iapRequestPurchase({
+          request: {
+            google: {
+              skus: [ANDROID_SUBSCRIPTION_PRODUCT_ID],
+              subscriptionOffers: [
+                {
+                  sku: ANDROID_SUBSCRIPTION_PRODUCT_ID,
+                  offerToken,
+                },
+              ],
+              ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
+            },
           },
-          google: {
-            skus: [sku],
-            ...(androidOfferToken
-              ? {
-                  subscriptionOffers: [{ sku, offerToken: androidOfferToken }],
-                }
-              : {}),
-            ...(userId ? { obfuscatedAccountIdAndroid: userId } : {}),
+          type: "subs",
+        });
+      } else {
+        // iOS: continua usando SKUs separados
+        await iapRequestPurchase({
+          request: {
+            apple: {
+              sku,
+              ...(userId ? { appAccountToken: userId } : {}),
+            },
           },
-        },
-        type: "subs",
-      });
+          type: "subs",
+        });
+      }
     } catch (error) {
       logger.error("[IAP] Request subscription failed:", error);
       setState((prev) => ({ ...prev, purchasing: false }));
@@ -256,23 +262,6 @@ export function IAPProvider({ children }: PropsWithChildren) {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
       logger.log("[IAP] Restoring purchases...");
-
-      // restorePurchases returns void in this version, it triggers updates via listener?
-      // Or returns purchases? d.ts says "does not return the purchases; consumers should call getAvailablePurchases"
-
-      await iapRequestPurchase({
-        type: "restore", // This effectively triggers restore or use restorePurchases() fn
-      } as any);
-      // WAIT, restorePurchases is exported as a function.
-
-      // Using the exported function
-      // It says: "Only strictly supported for iOS... Android just uses getAvailablePurchases"
-      if (Platform.OS === "ios") {
-        // expo-iap restorePurchases might require password
-        // Actually, expo-iap d.ts says restorePurchases is a MutationField.
-        // @ts-ignore
-        await RNIap.restorePurchases();
-      }
 
       const purchases = await getAvailablePurchases();
 

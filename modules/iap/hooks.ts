@@ -1,8 +1,14 @@
 import { useContext, useMemo } from "react";
+import { Platform } from "react-native";
+
 import { useAppSelector } from "../store/hooks";
+import {
+    ANDROID_BASE_PLAN_MAP,
+    ANDROID_SUBSCRIPTION_PRODUCT_ID,
+} from "./config";
 import { IAPContext } from "./context";
-import { IAPContextValue } from "./types";
-import { getPriceValue } from "./utils";
+import { IAPContextValue, PlanType } from "./types";
+import { getPriceForBasePlan, getPriceValue } from "./utils";
 
 export function useIAP(): IAPContextValue {
   const context = useContext(IAPContext);
@@ -22,12 +28,33 @@ export function useProducts() {
   return { products, loading, error };
 }
 
-export function useSubscription(sku: string | null) {
+export function useSubscription(sku: string | null, planType?: PlanType) {
   const { subscriptions } = useIAP();
 
   if (!sku) return null;
 
-  // Search by id (new) or productId (legacy/platform specific)
+  // Android com novo modelo: 1 subscription com base plans
+  if (Platform.OS === "android" && planType) {
+    const subscription = subscriptions.find(
+      (s) =>
+        s.id === ANDROID_SUBSCRIPTION_PRODUCT_ID ||
+        (s as any).productId === ANDROID_SUBSCRIPTION_PRODUCT_ID
+    );
+
+    if (subscription) {
+      const basePlanId = ANDROID_BASE_PLAN_MAP[planType];
+      const priceInfo = getPriceForBasePlan(subscription, basePlanId);
+
+      return {
+        ...subscription,
+        formattedPrice: priceInfo?.formattedPrice || "",
+        priceValue: priceInfo ? priceInfo.priceAmountMicros / 1_000_000 : null,
+        basePlanId,
+      };
+    }
+  }
+
+  // iOS ou fallback (SKUs separados)
   const subscription = subscriptions.find(
     (s) => s.id === sku || (s as any).productId === sku
   );
@@ -39,14 +66,16 @@ export function useSubscription(sku: string | null) {
           subscription.displayPrice ||
           subscription.localizedPrice ||
           (subscription as any).price ||
-          '',
+          "",
         priceValue: getPriceValue(subscription),
       }
     : null;
 }
 
 export function useUserSubscription() {
-  const subscription = useAppSelector((state) => state.profile.data?.subscription);
+  const subscription = useAppSelector(
+    (state) => state.profile.data?.subscription
+  );
 
   return useMemo(() => {
     return {

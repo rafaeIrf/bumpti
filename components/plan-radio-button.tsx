@@ -10,7 +10,8 @@ export function PlanRadioButton({
   isSelected,
   isHighlighted,
   accentColor,
-}: PlanRadioButtonProps) {
+  isLocked = false,
+}: PlanRadioButtonProps & { isLocked?: boolean }) {
   const getBorderColor = () => {
     if (isSelected) {
       return isHighlighted ? "#FFFFFF" : accentColor;

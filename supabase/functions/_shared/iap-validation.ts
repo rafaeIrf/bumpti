@@ -12,16 +12,16 @@ export const SUBSCRIPTION_PLANS: Record<string, string> = {
 };
 
 export const CONSUMABLE_CREDITS: Record<string, number> = {
-  bumpti_checkin_1: 1,
-  bumpti_checkin_5: 5,
-  bumpti_checkin_10: 10,
+  bumpti_checkin_pack_1: 1,
+  bumpti_checkin_pack_5: 5,
+  bumpti_checkin_pack_10: 10,
 };
 
 export const SUBSCRIPTION_CREDITS_AWARD: Record<string, number> = {
   bumpti_premium_weekly: 0,
   bumpti_premium_monthly: 1,
   bumpti_premium_quarterly: 3,
-  bumpti_premium_yearly: 5,
+  bumpti_premium_yearly: 12,
 };
 
 export async function validateAppleReceipt(
@@ -183,9 +183,24 @@ export async function fetchGoogleSubscriptionV2(
     return res.data;
 }
 
+/**
+ * Fetches one-time product status using the purchase token.
+ */
+export async function fetchGoogleProduct(
+    client: any, 
+    packageName: string, 
+    productId: string,
+    token: string
+): Promise<any> {
+    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/products/${productId}/tokens/${token}`;
+    const res = await client.request({ url });
+    return res.data;
+}
+
 export async function validateGooglePurchase(
   purchase: any,
-  expectedUserId: string
+  expectedUserId: string,
+  isConsumable: boolean = false
 ): Promise<any> {
     const client = getGoogleAuthClient();
 
@@ -194,50 +209,91 @@ export async function validateGooglePurchase(
     const packageName = Deno.env.get("EXPECTED_PACKAGE_NAME") || "com.bumpti";
 
     const token = purchase.purchaseToken; // Ensure this is passed from client
+    
+    // Check if consumable / one-time product
+    if (isConsumable) {
+        // We MUST have productId for one-time products
+        const productId = purchase.productId;
+        if (!productId) throw new Error("Missing productId for consumable validation");
+        
+        const productData = await fetchGoogleProduct(client, packageName, productId, token);
+        
+        /*
+        productData structure:
+        {
+          "kind": "androidpublisher#productPurchase",
+          "purchaseTimeMillis": "1234567890000",
+          "purchaseState": 0, // 0=purchased, 1=canceled, 2=pending
+          "consumptionState": 0, // 0=yet to be consumed, 1=consumed
+          "obfuscatedExternalAccountId": "...",
+          "orderId": "..."
+        }
+        */
+        
+        if (productData.purchaseState !== 0) {
+             throw new Error(`Invalid purchase state: ${productData.purchaseState}`);
+        }
+        
+        const obfAccountId = productData.obfuscatedExternalAccountId;
+        if (obfAccountId && obfAccountId !== expectedUserId) {
+            throw new Error("Ownership mismatch (obfuscatedExternalAccountId)");
+        }
+        
+        return {
+            sku: productId,
+            storeTransactionId: productData.orderId,
+            originalTransactionId: token,
+            purchaseDate: new Date(parseInt(productData.purchaseTimeMillis)),
+            expiresDate: undefined, // Consumables don't expire in the sub sense
+            autoRenew: false,
+            appUserToken: obfAccountId || purchase.obfuscatedAccountIdAndroid || null,
+        };
+        
+    } else {
+        // Fetch subscription details using V2 API
+        const subData = await fetchGoogleSubscriptionV2(client, packageName, token);
 
-    // Fetch subscription details using V2 API (Consistency with webhook)
-    const subData = await fetchGoogleSubscriptionV2(client, packageName, token);
+        /*
+        subData structure (V2):
+        {
+          "startTime": "2024-01-01T...",
+          "lineItems": [
+             {
+                "productId": "...",
+                "expiryTime": "2024-02-01T...",
+                "autoRenewingPlan": { "autoRenewEnabled": true }
+             }
+          ],
+          "externalAccountIdentifiers": {
+             "obfuscatedExternalAccountId": "..."
+          },
+          "latestOrderId": "..."
+        }
+        */
 
-    /*
-    subData structure (V2):
-    {
-      "startTime": "2024-01-01T...",
-      "lineItems": [
-         {
-            "productId": "...",
-            "expiryTime": "2024-02-01T...",
-            "autoRenewingPlan": { "autoRenewEnabled": true }
-         }
-      ],
-      "externalAccountIdentifiers": {
-         "obfuscatedExternalAccountId": "..."
-      },
-      "latestOrderId": "..."
+        // V2: Extract details from the first line item (usually only one for simple subs)
+        if (!subData.lineItems || subData.lineItems.length === 0) {
+            throw new Error("Invalid Google V2 Response: No lineItems found");
+        }
+        const item = subData.lineItems[0];
+
+        // Validate ownership
+        // V2 puts this in externalAccountIdentifiers
+        const obfAccountId = subData.externalAccountIdentifiers?.obfuscatedExternalAccountId;
+        if (obfAccountId && obfAccountId !== expectedUserId) {
+             throw new Error("Ownership mismatch (obfuscatedExternalAccountId)");
+        }
+
+        return {
+            sku: item.productId, // Trust API's product ID over client's
+            storeTransactionId: subData.latestOrderId,
+            originalTransactionId: token, // Google purchaseToken is the persistent ID
+            purchaseDate: new Date(subData.startTime), // V2 uses ISO strings
+            expiresDate: item.expiryTime ? new Date(item.expiryTime) : undefined,
+            autoRenew: item.autoRenewingPlan?.autoRenewEnabled ?? false,
+            appUserToken: obfAccountId || purchase.obfuscatedAccountIdAndroid || null,
+        };
     }
-    */
-
-    // V2: Extract details from the first line item (usually only one for simple subs)
-    if (!subData.lineItems || subData.lineItems.length === 0) {
-        throw new Error("Invalid Google V2 Response: No lineItems found");
-    }
-    const item = subData.lineItems[0];
-
-    // Validate ownership
-    // V2 puts this in externalAccountIdentifiers
-    const obfAccountId = subData.externalAccountIdentifiers?.obfuscatedExternalAccountId;
-    if (obfAccountId && obfAccountId !== expectedUserId) {
-         throw new Error("Ownership mismatch (obfuscatedExternalAccountId)");
-    }
-
-    return {
-        sku: item.productId, // Trust API's product ID over client's
-        storeTransactionId: subData.latestOrderId,
-        originalTransactionId: token, // Google purchaseToken is the persistent ID
-        purchaseDate: new Date(subData.startTime), // V2 uses ISO strings
-        expiresDate: item.expiryTime ? new Date(item.expiryTime) : undefined,
-        autoRenew: item.autoRenewingPlan?.autoRenewEnabled ?? false,
-        appUserToken: obfAccountId || purchase.obfuscatedAccountIdAndroid || null,
-    };
 }
 
 export async function grantCheckinCredits(supabase: any, userId: string, amount: number, source: string) {

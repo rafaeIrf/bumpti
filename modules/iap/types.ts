@@ -7,6 +7,8 @@ export interface Subscription extends ExpoSubscription {
   id?: string;
 }
 
+export type PlanType = "week" | "month" | "threeMonths" | "year";
+
 export interface IAPState {
   connected: boolean;
   loading: boolean;
@@ -18,7 +20,7 @@ export interface IAPState {
 
 export interface IAPContextValue extends IAPState {
   requestPurchase: (sku: string) => Promise<void>;
-  requestSubscription: (sku: string) => Promise<void>;
+  requestSubscription: (sku: string, planType?: PlanType) => Promise<void>;
   restorePurchases: () => Promise<void>;
   refreshProducts: () => Promise<void>;
 }
