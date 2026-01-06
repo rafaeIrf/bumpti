@@ -69,7 +69,8 @@ export default function PremiumPaywallScreen() {
 
   // Get base monthly price for calculations
   const monthlySku = SKU_MAP["1-mes"];
-  const monthlySub = useSubscription(monthlySku);
+  const monthlyPlanType = PLAN_TYPE_MAP["1-mes"];
+  const monthlySub = useSubscription(monthlySku, monthlyPlanType);
   const baseMonthlyPrice = monthlySub?.priceValue ?? null;
 
   const handleClose = () => {

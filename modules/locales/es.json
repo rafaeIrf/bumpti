@@ -525,7 +525,8 @@
         "mostPopular": "Más popular",
         "popular": "Popular",
         "bestValue": "Mejor valor",
-        "savePercent": "Ahorra {{percent}}%"
+        "savePercent": "Ahorra {{percent}}%",
+        "checkinBonus": "+ {{count}} Check-ins"
       },
       "benefits": {
         "unlimitedLikes": {

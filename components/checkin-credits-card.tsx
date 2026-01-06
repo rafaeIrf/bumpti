@@ -1,11 +1,12 @@
-import { MapPinIcon } from "@/assets/icons";
+import { MapPinIcon, PlusIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { BrandIcon } from "@/components/ui/brand-icon";
+import { Chip } from "@/components/ui/chip";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 
 interface CheckinCreditsCardProps {
   readonly credits: number;
@@ -33,16 +34,12 @@ export function CheckinCreditsCard({
 
       {/* Credits Badge or Plus Icon */}
       {credits > 0 ? (
-        <View
-          style={[
-            styles.creditsBadge,
-            { backgroundColor: `${colors.accent}15` },
-          ]}
-        >
-          <ThemedText style={[typography.caption, { color: colors.accent }]}>
-            {credits}
-          </ThemedText>
-        </View>
+        <Chip
+          label={String(credits)}
+          color={colors.accent}
+          variant="filled"
+          size="md"
+        />
       ) : (
         <PlusIcon width={20} height={20} color={colors.accent} />
       )}

@@ -79,3 +79,11 @@ export const PLAN_TYPE_MAP: Record<string, PlanType> = {
   "3-meses": "threeMonths",
   "12-meses": "year",
 };
+
+// Check-in credits awarded per plan (for UI visibility logic)
+export const PLAN_CREDITS: Record<string, number> = {
+  "1-semana": 0,
+  "1-mes": 1,
+  "3-meses": 3,
+  "12-meses": 12,
+};

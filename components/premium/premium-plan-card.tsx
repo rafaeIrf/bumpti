@@ -1,7 +1,8 @@
 import { PlanRadioButton } from "@/components/plan-radio-button";
 import { ThemedText } from "@/components/themed-text";
+import { Chip } from "@/components/ui/chip";
 import { spacing, typography } from "@/constants/theme";
-import { PLAN_TYPE_MAP, SKU_MAP } from "@/modules/iap/config";
+import { PLAN_CREDITS, PLAN_TYPE_MAP, SKU_MAP } from "@/modules/iap/config";
 import { useSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { LinearGradient } from "expo-linear-gradient";
@@ -124,6 +125,18 @@ export function PremiumPlanCard({
             >
               {savingsLabel}
             </ThemedText>
+          )}
+
+          {/* Check-in Bonus */}
+          {!isCurrentPlan && (PLAN_CREDITS[plan.id] || 0) > 0 && (
+            <Chip
+              label={t("screens.premiumPaywall.plans.checkinBonus", {
+                count: PLAN_CREDITS[plan.id],
+              })}
+              color={plan.isHighlighted ? "#FFFFFF" : colors.accent}
+              size="sm"
+              style={{ marginTop: 6 }}
+            />
           )}
         </View>
 

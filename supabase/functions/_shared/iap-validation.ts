@@ -20,8 +20,8 @@ export const CONSUMABLE_CREDITS: Record<string, number> = {
 export const SUBSCRIPTION_CREDITS_AWARD: Record<string, number> = {
   bumpti_premium_weekly: 0,
   bumpti_premium_monthly: 1,
-  bumpti_premium_quarterly: 5,
-  bumpti_premium_yearly: 10,
+  bumpti_premium_quarterly: 3,
+  bumpti_premium_yearly: 12,
 };
 
 export async function validateAppleReceipt(
