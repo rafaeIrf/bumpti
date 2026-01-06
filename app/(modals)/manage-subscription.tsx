@@ -65,6 +65,7 @@ export default function ManageSubscriptionScreen() {
   const { requestSubscription, purchasing } = useIAP();
 
   const userSubscription = useUserSubscription();
+  console.log("userSubscription", userSubscription);
 
   // Normalize backend plan string to our UI internal IDs ("1-mes", etc.)
   const currentPlanId = useMemo(() => {
@@ -208,7 +209,7 @@ export default function ManageSubscriptionScreen() {
           </ThemedText>
           <PremiumBenefits
             planId={selectedPlanId}
-            showSubscriptionBonus={true}
+            showSubscriptionBonus={userSubscription?.showSubscriptionBonus}
           />
         </Animated.View>
 

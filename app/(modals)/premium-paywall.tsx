@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { PLAN_TYPE_MAP, SKU_MAP } from "@/modules/iap/config";
-import { useIAP, useSubscription } from "@/modules/iap/hooks";
+import {
+  useIAP,
+  useSubscription,
+  useUserSubscription,
+} from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { openTermsOfUse } from "@/utils";
 import { LinearGradient } from "expo-linear-gradient";
@@ -61,6 +65,7 @@ export default function PremiumPaywallScreen() {
   const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
   const insets = useSafeAreaInsets();
   const { requestSubscription, purchasing } = useIAP();
+  const { showSubscriptionBonus } = useUserSubscription();
 
   // Get base monthly price for calculations
   const monthlySku = SKU_MAP["1-mes"];
@@ -195,7 +200,7 @@ export default function PremiumPaywallScreen() {
         >
           <PremiumBenefits
             planId={selectedPlanId}
-            showSubscriptionBonus={true}
+            showSubscriptionBonus={showSubscriptionBonus}
           />
         </Animated.View>
       </ScrollView>
