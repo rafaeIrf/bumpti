@@ -87,6 +87,7 @@ export function usePlaceClick() {
       content: () => (
         <PowerUpBottomSheet
           translationKey="screens.profile.powerUps.earlyCheckin"
+          powerUpType="earlyCheckin"
           icon={MapPinIcon}
           options={[
             { quantity: 1, id: "single" },
@@ -99,8 +100,8 @@ export function usePlaceClick() {
             { quantity: 10, id: "max" },
           ]}
           onClose={() => bottomSheet.close()}
-          onPurchase={(quantity) => {
-            logger.log("Purchase earlyCheckin", quantity);
+          onPurchaseComplete={() => {
+            logger.log("[PlaceClick] Check-in+ purchase completed");
             bottomSheet.close();
           }}
           onUpgradeToPremium={navigateToPremiumPaywall}

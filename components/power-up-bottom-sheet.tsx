@@ -3,10 +3,19 @@ import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { IAP_SKUS } from "@/modules/iap/config";
+import { useIAP } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
-import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { logger } from "@/utils/logger";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { SvgProps } from "react-native-svg";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PowerUpType = "earlyCheckin";
 
 export interface PowerUpOptionConfig {
   quantity: number;
@@ -17,55 +26,126 @@ export interface PowerUpOptionConfig {
 
 interface PowerUpBottomSheetProps {
   readonly translationKey: string;
+  readonly powerUpType: PowerUpType;
   readonly icon: React.ComponentType<SvgProps>;
   readonly options: PowerUpOptionConfig[];
   readonly onClose: () => void;
-  readonly onPurchase: (quantity: number) => void;
+  readonly onPurchaseComplete?: () => void;
   readonly onUpgradeToPremium: () => void;
   readonly iconColor?: string;
   readonly iconBackgroundColor?: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SKU Mapping
+// ─────────────────────────────────────────────────────────────────────────────
+
+const POWER_UP_SKU_MAP: Record<PowerUpType, Record<string, string>> = {
+  earlyCheckin: {
+    single: IAP_SKUS.consumables.checkin1,
+    bundle: IAP_SKUS.consumables.checkin5,
+    max: IAP_SKUS.consumables.checkin10,
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function PowerUpBottomSheet({
   translationKey,
+  powerUpType,
   icon: Icon,
   options,
   onClose,
-  onPurchase,
+  onPurchaseComplete,
   onUpgradeToPremium,
   iconColor,
   iconBackgroundColor,
 }: PowerUpBottomSheetProps) {
   const colors = useThemeColors();
+  const { products, requestPurchase, purchasing, error } = useIAP();
 
-  const defaultQuantity = useMemo(() => {
-    if (!options.length) {
-      return 0;
+  const [selectedOptionId, setSelectedOptionId] = useState<string>(() => {
+    return options.find((o) => o.isHighlighted)?.id ?? options[0]?.id ?? "";
+  });
+
+  // Track if we initiated a purchase from this sheet
+  const hasPurchaseStarted = useRef(false);
+
+  // Watch for purchase completion (purchasing goes from true -> false)
+  useEffect(() => {
+    if (hasPurchaseStarted.current && !purchasing) {
+      // Purchase flow finished (either success or error handled by listener)
+      hasPurchaseStarted.current = false;
+
+      if (!error) {
+        logger.log("[PowerUp] Purchase completed successfully, closing sheet");
+        onPurchaseComplete?.();
+      } else {
+        logger.warn("[PowerUp] Purchase had error:", error);
+      }
     }
-    return (
-      options.find((option) => option.isHighlighted)?.quantity ??
-      options[0].quantity
-    );
-  }, [options]);
+  }, [purchasing, error, onPurchaseComplete]);
 
-  const [selectedQuantity, setSelectedQuantity] =
-    useState<number>(defaultQuantity);
+  // Get the SKU map for this power-up type
+  const skuMap = POWER_UP_SKU_MAP[powerUpType] ?? {};
 
-  const resolvedSelectedQuantity =
-    selectedQuantity || options[0]?.quantity || 0;
+  // Map options to include real prices from the store
+  const resolvedOptions = useMemo(() => {
+    return options.map((option) => {
+      const sku = skuMap[option.id];
+      const product = products.find(
+        (p) => p.id === sku || (p as any).productId === sku
+      );
 
-  const resolvedOptions = options.map((option) => ({
-    ...option,
-    price: t(`${translationKey}.options.${option.id}.price`),
-    subtitle: t(`${translationKey}.options.${option.id}.subtitle`),
-    badge: option.badgeId
-      ? t(`${translationKey}.badges.${option.badgeId}`)
-      : undefined,
-  }));
+      // Get price from product or fallback to translation
+      const price =
+        product?.displayPrice ??
+        product?.localizedPrice ??
+        (product as any)?.price ??
+        t(`${translationKey}.options.${option.id}.price`);
 
-  const handlePurchase = () => {
-    onPurchase(resolvedSelectedQuantity);
+      return {
+        ...option,
+        sku,
+        price,
+        subtitle: t(`${translationKey}.options.${option.id}.subtitle`),
+        badge: option.badgeId
+          ? t(`${translationKey}.badges.${option.badgeId}`)
+          : undefined,
+      };
+    });
+  }, [options, products, skuMap, translationKey]);
+
+  const selectedOption = resolvedOptions.find((o) => o.id === selectedOptionId);
+
+  const handlePurchase = async () => {
+    if (!selectedOption?.sku) {
+      logger.warn(
+        "[PowerUp] No SKU found for selected option:",
+        selectedOptionId
+      );
+      return;
+    }
+
+    logger.log("[PowerUp] Initiating purchase for SKU:", selectedOption.sku);
+
+    // Mark that we started a purchase from this component
+    hasPurchaseStarted.current = true;
+
+    try {
+      await requestPurchase(selectedOption.sku);
+      // Don't close here - wait for purchaseUpdatedListener to finish validation
+      // The useEffect above will handle closing after purchasing becomes false
+    } catch (error) {
+      hasPurchaseStarted.current = false;
+      logger.error("[PowerUp] Purchase initiation failed:", error);
+    }
   };
+
+  const isLoading = purchasing;
+  const productsLoaded = products.length > 0;
 
   return (
     <View style={styles.container}>
@@ -75,6 +155,7 @@ export function PowerUpBottomSheet({
         accessibilityRole="button"
         accessibilityLabel={t(`${translationKey}.close`)}
         style={styles.closeButton}
+        disabled={isLoading}
       >
         <XIcon width={24} height={24} color={colors.textSecondary} />
       </Pressable>
@@ -111,11 +192,12 @@ export function PowerUpBottomSheet({
 
       <View style={styles.optionsList}>
         {resolvedOptions.map((option) => {
-          const isSelected = option.quantity === resolvedSelectedQuantity;
+          const isSelected = option.id === selectedOptionId;
           return (
             <Pressable
               key={`${option.id}-${option.quantity}`}
-              onPress={() => setSelectedQuantity(option.quantity)}
+              onPress={() => setSelectedOptionId(option.id)}
+              disabled={isLoading}
               style={({ pressed }) => [
                 styles.optionCard,
                 {
@@ -133,6 +215,7 @@ export function PowerUpBottomSheet({
                     elevation: 5,
                   },
                 pressed && styles.optionPressed,
+                isLoading && styles.optionDisabled,
               ]}
             >
               {option.badge && (
@@ -180,11 +263,18 @@ export function PowerUpBottomSheet({
                 </View>
 
                 <View style={styles.priceColumn}>
-                  <ThemedText
-                    style={[typography.body1, { color: colors.text }]}
-                  >
-                    {option.price}
-                  </ThemedText>
+                  {productsLoaded ? (
+                    <ThemedText
+                      style={[typography.body1, { color: colors.text }]}
+                    >
+                      {option.price}
+                    </ThemedText>
+                  ) : (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.textSecondary}
+                    />
+                  )}
                   <View
                     style={[
                       styles.radioOuter,
@@ -227,8 +317,10 @@ export function PowerUpBottomSheet({
           fullWidth
           size="lg"
           label={t(`${translationKey}.purchaseCta`, {
-            quantity: resolvedSelectedQuantity,
+            quantity: selectedOption?.quantity ?? 0,
           })}
+          loading={isLoading}
+          disabled={isLoading || !productsLoaded}
         />
         <Button
           onPress={onUpgradeToPremium}
@@ -236,6 +328,7 @@ export function PowerUpBottomSheet({
           size="lg"
           variant="secondary"
           label={t(`${translationKey}.upgradeCta`)}
+          disabled={isLoading}
           style={[
             styles.secondaryButton,
             { borderColor: colors.accent, backgroundColor: colors.surface },
@@ -246,6 +339,10 @@ export function PowerUpBottomSheet({
     </View>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -290,6 +387,9 @@ const styles = StyleSheet.create({
   },
   optionPressed: {
     opacity: 0.95,
+  },
+  optionDisabled: {
+    opacity: 0.6,
   },
   badge: {
     alignSelf: "flex-start",

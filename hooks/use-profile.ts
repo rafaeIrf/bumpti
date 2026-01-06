@@ -13,7 +13,6 @@ export function useProfile(options: UseProfileOptions = {}) {
 
   const [error, setError] = useState<string | undefined>();
   const [hasFetched, setHasFetched] = useState(false);
-console.log("useProfile", profileState.data);
   const fetchProfile = useCallback(async () => {
     try {
       setError(undefined);

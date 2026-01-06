@@ -21,16 +21,16 @@ export const IAP_SKUS = {
   },
   consumables: {
     checkin1: Platform.select({
-      ios: "bumpti_checkin_1",
-      android: "bumpti_checkin_1",
+      ios: "bumpti_checkin_pack_1",
+      android: "bumpti_checkin_pack_1",
     })!,
     checkin5: Platform.select({
-      ios: "bumpti_checkin_5",
-      android: "bumpti_checkin_5",
+      ios: "bumpti_checkin_pack_5",
+      android: "bumpti_checkin_pack_5",
     })!,
     checkin10: Platform.select({
-      ios: "bumpti_checkin_10",
-      android: "bumpti_checkin_10",
+      ios: "bumpti_checkin_pack_10",
+      android: "bumpti_checkin_pack_10",
     })!,
   },
 };

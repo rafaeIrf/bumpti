@@ -12,9 +12,9 @@ export const SUBSCRIPTION_PLANS: Record<string, string> = {
 };
 
 export const CONSUMABLE_CREDITS: Record<string, number> = {
-  bumpti_checkin_1: 1,
-  bumpti_checkin_5: 5,
-  bumpti_checkin_10: 10,
+  bumpti_checkin_pack_1: 1,
+  bumpti_checkin_pack_5: 5,
+  bumpti_checkin_pack_10: 10,
 };
 
 export const SUBSCRIPTION_CREDITS_AWARD: Record<string, number> = {

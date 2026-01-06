@@ -74,6 +74,7 @@ export function IAPProvider({ children }: PropsWithChildren) {
         fetchProducts({ skus: SUBSCRIPTION_SKUS, type: "subs" }),
       ]);
       logger.log("[IAP] Subscriptions fetched:", subscriptions);
+      logger.log("[IAP] Products fetched:", products);
 
       // Note: fetchProducts returns Product[], we cast subscriptions if necessary
       // or expo-iap unified types. Subscription type usually extends Product.

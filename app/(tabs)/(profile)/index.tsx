@@ -13,6 +13,7 @@ import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import {
   PowerUpBottomSheet,
   PowerUpOptionConfig,
+  PowerUpType,
 } from "@/components/power-up-bottom-sheet";
 import { ProfileActionCard } from "@/components/profile-action-card";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -24,6 +25,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
+import { logger } from "@/utils/logger";
 import { calculateProfileCompletion } from "@/utils/profile-completion";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -39,18 +41,22 @@ interface BenefitRow {
   premium: boolean;
 }
 
-type PowerUpType = "earlyCheckin" | "pings" | "turbo";
+// Note: Only earlyCheckin is currently supported for purchase
+// pings and turbo are placeholders for future implementation
+type LocalPowerUpType = "earlyCheckin" | "pings" | "turbo";
 
 interface PowerUpConfig {
   icon: React.ComponentType<SvgProps>;
   translationKey: string;
   options: PowerUpOptionConfig[];
+  powerUpType?: PowerUpType; // Only set for supported types
 }
 
-const POWER_UP_CONFIGS: Record<PowerUpType, PowerUpConfig> = {
+const POWER_UP_CONFIGS: Record<LocalPowerUpType, PowerUpConfig> = {
   earlyCheckin: {
     icon: MapPinIcon,
     translationKey: "screens.profile.powerUps.earlyCheckin",
+    powerUpType: "earlyCheckin",
     options: [
       { quantity: 1, id: "single" },
       { quantity: 5, id: "bundle", badgeId: "popular", isHighlighted: true },
@@ -60,6 +66,7 @@ const POWER_UP_CONFIGS: Record<PowerUpType, PowerUpConfig> = {
   pings: {
     icon: NavigationIcon,
     translationKey: "screens.profile.powerUps.pings",
+    // powerUpType not set - not yet purchasable
     options: [
       { quantity: 1, id: "single" },
       { quantity: 5, id: "bundle", badgeId: "popular", isHighlighted: true },
@@ -69,6 +76,7 @@ const POWER_UP_CONFIGS: Record<PowerUpType, PowerUpConfig> = {
   turbo: {
     icon: FlameIcon,
     translationKey: "screens.profile.powerUps.turbo",
+    // powerUpType not set - not yet purchasable
     options: [
       { quantity: 1, id: "single" },
       { quantity: 3, id: "bundle", badgeId: "popular", isHighlighted: true },
@@ -145,23 +153,27 @@ export default function ProfileScreen() {
     router.push("/(profile)/edit");
   };
 
-  const handlePowerUpPurchase = (type: PowerUpType, quantity: number) => {
-    console.log("Power-up purchase", type, quantity);
-  };
-
-  const openPowerUpSheet = (type: PowerUpType) => {
+  const openPowerUpSheet = (type: LocalPowerUpType) => {
     if (!bottomSheet) return;
     const config = POWER_UP_CONFIGS[type];
+
+    // Only earlyCheckin is purchasable right now
+    if (!config.powerUpType) {
+      logger.warn("[Profile] Power-up type not yet purchasable:", type);
+      // TODO: Show coming soon message
+      return;
+    }
 
     bottomSheet.expand({
       content: () => (
         <PowerUpBottomSheet
           translationKey={config.translationKey}
+          powerUpType={config.powerUpType!}
           icon={config.icon}
           options={config.options}
           onClose={() => bottomSheet.close()}
-          onPurchase={(quantity) => {
-            handlePowerUpPurchase(type, quantity);
+          onPurchaseComplete={() => {
+            logger.log("[Profile] Power-up purchase completed:", type);
             bottomSheet.close();
           }}
           onUpgradeToPremium={() => {
