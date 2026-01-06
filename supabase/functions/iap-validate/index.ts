@@ -27,7 +27,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 2. Parse Request
-    const { platform, purchase } = await req.json();
+    const { platform, purchase, isConsumable: isConsumableRequest } = await req.json();
     if (!purchase) throw new Error("Missing purchase data");
 
     let validatedData: any = null;
@@ -36,7 +36,7 @@ serve(async (req) => {
     if (platform === "ios") {
       validatedData = await validateAppleReceipt(purchase, userId);
     } else if (platform === "android") {
-      validatedData = await validateGooglePurchase(purchase, userId);
+      validatedData = await validateGooglePurchase(purchase, userId, isConsumableRequest);
     } else {
       throw new Error("Invalid platform");
     }

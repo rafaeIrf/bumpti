@@ -107,6 +107,7 @@
     "selected": "Selecionados",
     "done": "Pronto",
     "save": "Salvar",
+    "buy": "Comprar",
     "skip": "Pular",
     "select": "Selecione",
     "loading": "Carregando...",
@@ -278,7 +279,8 @@
       },
       "earlyCheckin": {
         "title": "Check-in+",
-        "subtitle": "Conecte antes de chegar"
+        "subtitle": "Conecte antes de chegar",
+        "description": "Entre em locais mesmo de longe"
       },
       "profileEdit": {
         "title": "Editar perfil",
@@ -326,7 +328,12 @@
       "premium": {
         "title": "Seja Premium",
         "description": "Acesse recursos exclusivos e desbloqueie todo o potencial do app.",
-        "cta": "Conhecer planos"
+        "cta": "Conhecer planos",
+        "active": {
+          "title": "Bumpti Premium",
+          "description": "Você já desbloqueou recursos exclusivos",
+          "cta": "Ver meus benefícios"
+        }
       },
       "benefits": {
         "title": "Compare planos",
@@ -552,7 +559,10 @@
         },
         "earlyCheckin": {
           "title": "Check-in+ (5 por semana)",
-          "subtitle": "Apareça no local antes de chegar e aumente suas chances de ser descoberto."
+          "subtitle": "Apareça no local antes de chegar e aumente suas chances de ser descoberto.",
+          "month": "1 Check-in",
+          "quarter": "5 Check-ins",
+          "year": "12 Check-ins"
         },
         "pings": {
           "title": "Pings liberados (5 por semana)",
@@ -563,6 +573,13 @@
       "termsLink": "Termos de Uso",
       "subscribe": "Assinar Bumpti Premium",
       "close": "Fechar"
+    },
+    "manageSubscription": {
+      "title": "Você tem o Bumpti Premium 🎉",
+      "subtitle": "Veja seus benefícios e altere seu plano quando quiser.",
+      "currentPlan": "Seu plano atual",
+      "manage": "Gerenciar assinatura",
+      "updatePlan": "Atualizar plano"
     },
     "onboarding": {
       "title": "Conheça pessoas reais,\nem lugares reais",

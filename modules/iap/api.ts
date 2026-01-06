@@ -32,6 +32,7 @@ export async function validateReceiptWithBackend(
       body: {
         platform: Platform.OS,
         purchase: transaction,
+        isConsumable,
       },
     });
 

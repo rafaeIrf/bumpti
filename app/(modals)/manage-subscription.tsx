@@ -1,3 +1,4 @@
+import { XIcon } from "@/assets/icons";
 import { PremiumBenefits } from "@/components/premium/premium-benefits";
 import { PremiumPlanCard } from "@/components/premium/premium-plan-card";
 import { ThemedText } from "@/components/themed-text";
@@ -5,14 +6,18 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { PLAN_TYPE_MAP, SKU_MAP } from "@/modules/iap/config";
-import { useIAP, useSubscription } from "@/modules/iap/hooks";
+import {
+  useIAP,
+  useSubscription,
+  useUserSubscription,
+} from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
-import { openTermsOfUse } from "@/utils";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -21,8 +26,6 @@ import {
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { XIcon } from "@/assets/icons";
 
 const PLAN_DEFAULTS = [
   {
@@ -55,14 +58,45 @@ const PLAN_DEFAULTS = [
   },
 ];
 
-export default function PremiumPaywallScreen() {
+export default function ManageSubscriptionScreen() {
   const colors = useThemeColors();
   const router = useRouter();
-  const [selectedPlanId, setSelectedPlanId] = useState("1-mes");
   const insets = useSafeAreaInsets();
   const { requestSubscription, purchasing } = useIAP();
 
-  // Get base monthly price for calculations
+  const userSubscription = useUserSubscription();
+
+  // Normalize backend plan string to our UI internal IDs ("1-mes", etc.)
+  const currentPlanId = useMemo(() => {
+    const plan = userSubscription?.plan;
+    if (!plan) return null;
+
+    // If it's already a valid ID
+    if (plan in PLAN_TYPE_MAP) return plan;
+
+    // If it's a plan type (e.g. "month"), find the key
+    const foundEntry = Object.entries(PLAN_TYPE_MAP).find(
+      ([key, value]) => value === plan
+    );
+    return foundEntry ? foundEntry[0] : null;
+  }, [userSubscription?.plan]);
+
+  // Initialize selection with current plan if available, otherwise default
+  const [selectedPlanId, setSelectedPlanId] = useState(
+    currentPlanId || "1-mes"
+  );
+
+  // Update selection if currentPlanId changes (e.g. initial load)
+  useEffect(() => {
+    if (currentPlanId) {
+      setSelectedPlanId(currentPlanId);
+    }
+  }, [currentPlanId]);
+
+  // Check if the user selected a DIFFERENT plan than their current one
+  const isPlanChanged = currentPlanId && selectedPlanId !== currentPlanId;
+
+  // Get base monthly price for calculations (from paywall logic)
   const monthlySku = SKU_MAP["1-mes"];
   const monthlySub = useSubscription(monthlySku);
   const baseMonthlyPrice = monthlySub?.priceValue ?? null;
@@ -71,29 +105,28 @@ export default function PremiumPaywallScreen() {
     router.back();
   };
 
-  const handleSubscribe = async () => {
-    if (purchasing) return;
+  const handleAction = async () => {
+    if (isPlanChanged) {
+      // Update Plan Logic (Purchase new SKU)
+      if (purchasing) return;
+      const sku = SKU_MAP[selectedPlanId];
+      const planType = PLAN_TYPE_MAP[selectedPlanId];
 
-    const sku = SKU_MAP[selectedPlanId];
-    const planType = PLAN_TYPE_MAP[selectedPlanId];
-
-    if (sku) {
-      console.log("Subscribing to:", { sku, planType });
-      await requestSubscription(sku, planType);
+      if (sku) {
+        await requestSubscription(sku, planType);
+      }
     } else {
-      console.warn("No SKU found for plan", selectedPlanId);
+      // Manage Subscription Logic (Open Store)
+      if (Platform.OS === "ios") {
+        Linking.openURL("https://apps.apple.com/account/subscriptions");
+      } else {
+        Linking.openURL("https://play.google.com/store/account/subscriptions");
+      }
     }
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-        },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Close Button */}
       <Animated.View
         entering={FadeInUp.duration(400)}
@@ -148,132 +181,99 @@ export default function PremiumPaywallScreen() {
             entering={FadeInDown.duration(400)}
             style={styles.heroContent}
           >
-            {/* Badge */}
-            <View style={styles.badge}>
-              <ThemedText
-                style={[
-                  typography.caption,
-                  { color: "#000000", fontWeight: "600" },
-                ]}
-              >
-                {t("screens.premiumPaywall.badge")}
-              </ThemedText>
-            </View>
-
             {/* Title */}
             <ThemedText style={[typography.heading, styles.heroTitle]}>
-              {t("screens.premiumPaywall.title")}
+              {t("screens.manageSubscription.title")}
             </ThemedText>
 
             {/* Subtitle */}
             <ThemedText style={[typography.body, styles.heroSubtitle]}>
-              {t("screens.premiumPaywall.subtitle")}
+              {t("screens.manageSubscription.subtitle")}
             </ThemedText>
           </Animated.View>
         </View>
 
-        <Animated.View
-          entering={FadeInDown.duration(400).delay(300)}
-          style={[styles.plansSection, { paddingHorizontal: spacing.md }]}
-        >
-          {PLAN_DEFAULTS.map((plan) => (
-            <PremiumPlanCard
-              key={plan.id}
-              plan={plan}
-              selectedPlanId={selectedPlanId}
-              onSelect={setSelectedPlanId}
-              colors={colors}
-              baseMonthlyPrice={baseMonthlyPrice}
-            />
-          ))}
-        </Animated.View>
-
         {/* Benefits Section */}
         <Animated.View
-          entering={FadeInDown.duration(400).delay(400)}
-          style={{ paddingHorizontal: spacing.md }}
+          entering={FadeInDown.duration(400).delay(200)}
+          style={[styles.section, { paddingHorizontal: spacing.md }]}
         >
+          <ThemedText
+            style={[
+              typography.heading2,
+              { color: colors.text, marginBottom: spacing.md },
+            ]}
+          >
+            {t("screens.profile.premium.active.cta")}
+          </ThemedText>
           <PremiumBenefits
             planId={selectedPlanId}
             showSubscriptionBonus={true}
           />
         </Animated.View>
+
+        {/* Plans Section */}
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(300)}
+          style={[styles.section, { paddingHorizontal: spacing.md }]}
+        >
+          <ThemedText
+            style={[
+              typography.heading2,
+              { color: colors.text, marginBottom: spacing.md },
+            ]}
+          >
+            {t("screens.manageSubscription.updatePlan")}
+          </ThemedText>
+
+          {PLAN_DEFAULTS.map((plan) => {
+            const isCurrent = currentPlanId === plan.id;
+            return (
+              <PremiumPlanCard
+                key={plan.id}
+                plan={plan}
+                selectedPlanId={selectedPlanId}
+                onSelect={setSelectedPlanId}
+                colors={colors}
+                baseMonthlyPrice={baseMonthlyPrice}
+                isCurrentPlan={isCurrent}
+                disabled={false}
+                currentPlanLabel={t("screens.manageSubscription.currentPlan")}
+              />
+            );
+          })}
+        </Animated.View>
       </ScrollView>
 
       {/* Fixed CTA at bottom */}
-      <BottomCTA
-        selectedPlanId={selectedPlanId}
-        handleSubscribe={handleSubscribe}
-        purchasing={purchasing}
-        colors={colors}
-        insets={insets}
-      />
-    </View>
-  );
-}
-
-function BottomCTA({
-  selectedPlanId,
-  handleSubscribe,
-  purchasing,
-  colors,
-  insets,
-}: any) {
-  const sku = SKU_MAP[selectedPlanId];
-  const planType = PLAN_TYPE_MAP[selectedPlanId];
-  const subscription = useSubscription(sku, planType);
-  // Find default price for fallback
-  const price = subscription?.formattedPrice || "";
-
-  return (
-    <Animated.View
-      entering={FadeInUp.duration(400).delay(600)}
-      style={[styles.ctaContainer, { borderTopColor: colors.border }]}
-    >
-      <View
-        style={[
-          styles.ctaGradient,
-          {
-            backgroundColor: colors.background,
-            paddingBottom: spacing.md + (insets?.bottom ?? 0),
-          },
-        ]}
+      <Animated.View
+        entering={FadeInUp.duration(400).delay(400)}
+        style={[styles.ctaContainer, { borderTopColor: colors.border }]}
       >
-        {/* Terms */}
-        <ThemedText
+        <View
           style={[
-            typography.caption,
+            styles.ctaGradient,
             {
-              color: colors.textSecondary,
-              textAlign: "center",
-              marginBottom: spacing.xs,
-              paddingHorizontal: spacing.sm,
+              backgroundColor: colors.background,
+              paddingBottom: spacing.md + (insets?.bottom ?? 0),
             },
           ]}
         >
-          {t("screens.premiumPaywall.terms", {
-            store: Platform.OS === "ios" ? "App Store" : "Play Store",
-          })}{" "}
-          <ThemedText
-            variant="caption"
-            onPress={openTermsOfUse}
-            style={{ color: colors.accent, fontWeight: "600" }}
-          >
-            {t("screens.premiumPaywall.termsLink")}
-          </ThemedText>
-          .
-        </ThemedText>
-
-        {/* CTA Button */}
-        <Button
-          onPress={handleSubscribe}
-          label={`${t("common.subscribe")} - ${price}`}
-          loading={purchasing}
-          fullWidth
-          size="lg"
-        />
-      </View>
-    </Animated.View>
+          <Button
+            onPress={handleAction}
+            label={
+              isPlanChanged
+                ? t("screens.manageSubscription.updatePlan")
+                : t("screens.manageSubscription.manage")
+            }
+            loading={purchasing}
+            fullWidth
+            size="lg"
+            variant={isPlanChanged ? "primary" : "secondary"}
+          />
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -301,8 +301,9 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
   heroSection: {
-    height: Platform.select({ ios: 220, android: 260, default: 256 }),
+    height: Platform.select({ ios: 200, android: 240, default: 220 }),
     position: "relative",
+    marginBottom: spacing.lg,
   },
   heroImage: {
     width: "100%",
@@ -323,27 +324,16 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xl,
   },
-  badge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: spacing.sm,
-  },
   heroTitle: {
     color: "#FFFFFF",
     marginBottom: spacing.xs,
-    fontSize: 28,
+    fontSize: 24,
   },
   heroSubtitle: {
     color: "rgba(255, 255, 255, 0.9)",
   },
-  plansSection: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-    marginTop: spacing.sm,
+  section: {
+    marginBottom: spacing.xl,
   },
   ctaContainer: {
     position: "absolute",
@@ -356,6 +346,5 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
-    gap: spacing.xs,
   },
 });
