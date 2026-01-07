@@ -13,6 +13,7 @@ import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { ReduxProvider } from "@/components/redux-provider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
 import {
@@ -37,6 +38,9 @@ export default function RootLayout() {
     "Poppins-SemiBold": Poppins_600SemiBold,
     "Poppins-Bold": Poppins_700Bold,
   });
+
+  // Initialize FCM registration
+  useFCMRegistration();
 
   useEffect(() => {
     SplashScreen.preventAutoHideAsync();

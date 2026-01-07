@@ -182,3 +182,14 @@ export async function cancelAllNotifications() {
 export async function openNotificationSettings() {
   await Linking.openSettings();
 }
+
+// FCM-specific exports
+export {
+  deactivateDeviceToken,
+  getFCMToken,
+  hasFCMPermission,
+  registerDeviceToken,
+  requestFCMPermission,
+  setupTokenRefreshListener
+} from "./fcm-service";
+
