@@ -166,6 +166,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     // Consume check-in credit if used
+    let remainingCredits: number | undefined;
     if (usedCheckinPlus) {
       const { error: decrementError } = await serviceClient.rpc(
         "decrement_checkin_credit",
@@ -178,10 +179,22 @@ Deno.serve(async (req) => {
         // The credit will be manually adjusted if needed
       } else {
         console.log(`Check-in credit consumed for user ${user.id}`);
+        
+        // Fetch updated credits to return in response
+        const { data: updatedCredits } = await serviceClient
+          .from("user_checkin_credits")
+          .select("credits")
+          .eq("user_id", user.id)
+          .single();
+        
+        remainingCredits = updatedCredits?.credits ?? 0;
       }
     }
 
-    return new Response(JSON.stringify({ presence: data }), {
+    return new Response(JSON.stringify({ 
+      presence: data,
+      remaining_credits: remainingCredits, // Only included when check-in+ was used
+    }), {
       status: 201,
       headers: corsHeaders,
     });

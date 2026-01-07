@@ -345,7 +345,7 @@
         "visibilityControl": "Control de visibilidad",
         "seeWhoViewedYou": "Ve quién te vio en el lugar",
         "turboWeekly": "Connect+ (5/semana)",
-        "earlyCheckinWeekly": "Check-in+ (5/semana)",
+        "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/semana)"
       },
       "powerUps": {
@@ -519,7 +519,7 @@
       "plans": {
         "week": "1 semana",
         "month": "1 mes",
-        "threeMonths": "3 meses",
+        "quarterly": "3 meses",
         "year": "12 meses",
         "perMonth": "mes",
         "mostPopular": "Más popular",
@@ -575,7 +575,7 @@
       "close": "Cerrar"
     },
     "manageSubscription": {
-      "title": "Tienes Bumpti Premium 🎉",
+      "title": "Tienes Bumpti Premium",
       "subtitle": "Mira tus beneficios y cambia tu plan cuando quieras.",
       "currentPlan": "Tu plan actual",
       "manage": "Administrar suscripción",

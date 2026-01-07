@@ -45,7 +45,7 @@ const PLAN_DEFAULTS = [
   },
   {
     id: "3-meses",
-    nameKey: "screens.premiumPaywall.plans.threeMonths",
+    nameKey: "screens.premiumPaywall.plans.quarterly",
     period: "screens.premiumPaywall.plans.perMonth",
     badgeKey: null,
     isHighlighted: false,
@@ -85,7 +85,7 @@ export default function PremiumPaywallScreen() {
 
     if (sku) {
       console.log("Subscribing to:", { sku, planType });
-      await requestSubscription(sku, planType);
+      await requestSubscription(sku, planType, () => router.back());
     } else {
       console.warn("No SKU found for plan", selectedPlanId);
     }
@@ -190,6 +190,7 @@ export default function PremiumPaywallScreen() {
               onSelect={setSelectedPlanId}
               colors={colors}
               baseMonthlyPrice={baseMonthlyPrice}
+              showSubscriptionBonus={showSubscriptionBonus}
             />
           ))}
         </Animated.View>

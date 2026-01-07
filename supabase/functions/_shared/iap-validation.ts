@@ -1,15 +1,51 @@
 import { JWT } from "npm:google-auth-library";
-
-// ... existing constants ...
-
 import { importPKCS8, SignJWT } from "npm:jose";
 
-export const SUBSCRIPTION_PLANS: Record<string, string> = {
+// =============================================================================
+// SUBSCRIPTION CONFIGURATION
+// =============================================================================
+
+/**
+ * Plan types used internally across the app.
+ * These are the canonical plan identifiers stored in the database.
+ */
+export type PlanType = "week" | "month" | "quarterly" | "year";
+
+/**
+ * iOS uses separate SKUs for each plan duration.
+ */
+const IOS_SKU_TO_PLAN: Record<string, PlanType> = {
   bumpti_premium_weekly: "week",
   bumpti_premium_monthly: "month",
   bumpti_premium_quarterly: "quarterly",
   bumpti_premium_yearly: "year",
 };
+
+/**
+ * Android uses a single subscription product with multiple base plans.
+ * The basePlanId identifies which duration was purchased.
+ */
+const ANDROID_BASE_PLAN_TO_PLAN: Record<string, PlanType> = {
+  "premium-weekly": "week",
+  "premium-monthly": "month",
+  "premium-quarterly": "quarterly",
+  "premium-yearly": "year",
+};
+
+/**
+ * Check-in credits awarded as a welcome gift for new subscribers.
+ * Mapped by canonical plan type.
+ */
+const PLAN_CREDITS: Record<PlanType, number> = {
+  week: 0,
+  month: 1,
+  quarterly: 3,
+  year: 12,
+};
+
+// =============================================================================
+// CONSUMABLE PRODUCTS
+// =============================================================================
 
 export const CONSUMABLE_CREDITS: Record<string, number> = {
   bumpti_checkin_pack_1: 1,
@@ -17,12 +53,32 @@ export const CONSUMABLE_CREDITS: Record<string, number> = {
   bumpti_checkin_pack_10: 10,
 };
 
-export const SUBSCRIPTION_CREDITS_AWARD: Record<string, number> = {
-  bumpti_premium_weekly: 0,
-  bumpti_premium_monthly: 1,
-  bumpti_premium_quarterly: 3,
-  bumpti_premium_yearly: 12,
-};
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Resolves a plan identifier (iOS SKU or Android basePlanId) to a canonical plan type.
+ * Returns null if the identifier is not recognized as a subscription.
+ */
+export function resolvePlanType(identifier: string): PlanType | null {
+  return IOS_SKU_TO_PLAN[identifier] || ANDROID_BASE_PLAN_TO_PLAN[identifier] || null;
+}
+
+/**
+ * Checks if an identifier represents a subscription product.
+ */
+export function isSubscriptionProduct(identifier: string): boolean {
+  return resolvePlanType(identifier) !== null;
+}
+
+/**
+ * Gets the welcome credits for a given plan identifier.
+ */
+export function getWelcomeCredits(identifier: string): number {
+  const planType = resolvePlanType(identifier);
+  return planType ? PLAN_CREDITS[planType] : 0;
+}
 
 export async function validateAppleReceipt(
   purchase: any,
@@ -277,6 +333,8 @@ export async function validateGooglePurchase(
         }
         const item = subData.lineItems[0];
 
+        console.log("[Google V2] subData.lineItems[0]:", JSON.stringify(item, null, 2));
+
         // Validate ownership
         // V2 puts this in externalAccountIdentifiers
         const obfAccountId = subData.externalAccountIdentifiers?.obfuscatedExternalAccountId;
@@ -285,7 +343,8 @@ export async function validateGooglePurchase(
         }
 
         return {
-            sku: item.productId, // Trust API's product ID over client's
+            sku: item.productId, // Store the product ID (bumpti_premium)
+            basePlanId: item.offerDetails?.basePlanId, // For plan identification (premium-monthly, etc.)
             storeTransactionId: subData.latestOrderId,
             originalTransactionId: token, // Google purchaseToken is the persistent ID
             purchaseDate: new Date(subData.startTime), // V2 uses ISO strings

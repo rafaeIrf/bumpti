@@ -15,6 +15,7 @@ import React, {
   createContext,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Platform } from "react-native";
@@ -49,7 +50,7 @@ export const IAPContext = createContext<IAPContextValue | null>(null);
 
 export function IAPProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<IAPState>(initialState);
-
+  const onSuccessCallbackRef = useRef<(() => void) | null>(null);
   // Initialize connection and fetch products
   const initializeIAP = useCallback(async () => {
     try {
@@ -121,6 +122,12 @@ export function IAPProvider({ children }: PropsWithChildren) {
               await finishTransaction({ purchase, isConsumable });
               handlePurchaseSuccess(entitlements);
 
+              // Call onSuccess callback if set (e.g., to close modal)
+              if (onSuccessCallbackRef.current) {
+                onSuccessCallbackRef.current();
+                onSuccessCallbackRef.current = null;
+              }
+
               logger.log(
                 "[IAP] Purchase finished successfully:",
                 purchase.productId
@@ -184,9 +191,18 @@ export function IAPProvider({ children }: PropsWithChildren) {
     }
   };
 
-  const requestSubscription = async (sku: string, planType?: PlanType) => {
+  const requestSubscription = async (
+    sku: string,
+    planType?: PlanType,
+    onSuccess?: () => void
+  ) => {
     try {
       setState((prev) => ({ ...prev, purchasing: true, error: null }));
+
+      // Store onSuccess callback to be called after purchase validation
+      if (onSuccess) {
+        onSuccessCallbackRef.current = onSuccess;
+      }
 
       const userId = getCurrentUserId();
 

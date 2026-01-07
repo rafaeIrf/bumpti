@@ -44,7 +44,7 @@ const PLAN_DEFAULTS = [
   },
   {
     id: "3-meses",
-    nameKey: "screens.premiumPaywall.plans.threeMonths",
+    nameKey: "screens.premiumPaywall.plans.quarterly",
     period: "screens.premiumPaywall.plans.perMonth",
     badgeKey: null,
     isHighlighted: false,
@@ -240,6 +240,7 @@ export default function ManageSubscriptionScreen() {
                 isCurrentPlan={isCurrent}
                 disabled={false}
                 currentPlanLabel={t("screens.manageSubscription.currentPlan")}
+                showSubscriptionBonus={userSubscription?.showSubscriptionBonus}
               />
             );
           })}

@@ -1,11 +1,11 @@
 import {
-  CheckIcon,
   CircleCheckDashedIcon,
   MapPinIcon,
   PencilIcon,
   SettingsIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { BenefitsTable } from "@/components/benefits-table";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { CheckinCreditsCard } from "@/components/checkin-credits-card";
 import {
@@ -26,19 +26,12 @@ import { t } from "@/modules/locales";
 import { useAppSelector } from "@/modules/store/hooks";
 import { logger } from "@/utils/logger";
 import { calculateProfileCompletion } from "@/utils/profile-completion";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgProps } from "react-native-svg";
-
-interface BenefitRow {
-  labelKey: string;
-  free: boolean;
-  premium: boolean;
-}
 
 // Only earlyCheckin is currently supported for purchase
 interface PowerUpConfig {
@@ -58,54 +51,6 @@ const EARLY_CHECKIN_CONFIG: PowerUpConfig = {
     { quantity: 10, id: "max" },
   ],
 };
-
-const BENEFITS: BenefitRow[] = [
-  {
-    labelKey: "screens.profile.benefits.unlimitedLikes",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.seeWhoLiked",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.priorityLikes",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.unlimitedRewind",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.visibilityControl",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.seeWhoViewedYou",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.turboWeekly",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.earlyCheckinWeekly",
-    free: false,
-    premium: true,
-  },
-  {
-    labelKey: "screens.profile.benefits.pingsWeekly",
-    free: false,
-    premium: true,
-  },
-];
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
@@ -287,105 +232,7 @@ export default function ProfileScreen() {
 
           {/* Benefits Table */}
           <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-            <LinearGradient
-              colors={[
-                (colors as any).cardGradientStart ?? colors.surface,
-                (colors as any).cardGradientEnd ?? colors.surface,
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.benefitsCard}
-            >
-              <ThemedText style={[typography.body, { color: colors.text }]}>
-                {t("screens.profile.benefits.title")}
-              </ThemedText>
-
-              {/* Table Header */}
-              <View
-                style={[
-                  styles.tableHeader,
-                  { borderBottomColor: colors.border },
-                ]}
-              >
-                <View style={styles.tableHeaderCell} />
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    {
-                      color: colors.textSecondary,
-                      flex: 1,
-                      textAlign: "center",
-                    },
-                  ]}
-                >
-                  {t("screens.profile.benefits.free")}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    { color: colors.accent, flex: 1, textAlign: "center" },
-                  ]}
-                >
-                  {t("screens.profile.benefits.premium")}
-                </ThemedText>
-              </View>
-
-              {/* Table Rows */}
-              <View style={styles.tableBody}>
-                {BENEFITS.map((benefit) => (
-                  <View key={benefit.labelKey} style={styles.tableRow}>
-                    <ThemedText
-                      style={[
-                        typography.caption,
-                        { color: colors.text, flex: 2 },
-                      ]}
-                    >
-                      {t(benefit.labelKey)}
-                    </ThemedText>
-                    <View style={styles.tableCell}>
-                      {benefit.free ? (
-                        <CheckIcon
-                          width={16}
-                          height={16}
-                          color={colors.accent}
-                        />
-                      ) : (
-                        <View style={styles.iconPlaceholder}>
-                          <ThemedText
-                            style={[
-                              typography.body,
-                              { color: colors.textSecondary },
-                            ]}
-                          >
-                            —
-                          </ThemedText>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.tableCell}>
-                      {benefit.premium ? (
-                        <CheckIcon
-                          width={16}
-                          height={16}
-                          color={colors.accent}
-                        />
-                      ) : (
-                        <View style={styles.iconPlaceholder}>
-                          <ThemedText
-                            style={[
-                              typography.body,
-                              { color: colors.textSecondary },
-                            ]}
-                          >
-                            —
-                          </ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </LinearGradient>
+            <BenefitsTable />
           </Animated.View>
         </View>
       </View>

@@ -1,12 +1,12 @@
 import { store } from "@/modules/store";
 import { calculateAge } from "@/utils/calculate-age";
 import {
-  ProfileData,
-  resetProfile as resetProfileAction,
-  setProfile as setProfileAction,
-  setProfileLoading as setProfileLoadingAction,
-  setSubscription as setSubscriptionAction,
-  SubscriptionData,
+    ProfileData,
+    resetProfile as resetProfileAction,
+    setProfile as setProfileAction,
+    setProfileLoading as setProfileLoadingAction,
+    setSubscription as setSubscriptionAction,
+    SubscriptionData,
 } from "./profileSlice";
 
 import { t } from "@/modules/locales";
@@ -112,5 +112,6 @@ export const updateProfilePhotosAction = async (newPhotos: string[]) => {
 };
 
 export const handlePurchaseSuccess = (entitlements: SubscriptionData) => {
+  logger.log("[ProfileActions] handlePurchaseSuccess called with entitlements:", entitlements);
   store.dispatch(setSubscriptionAction(entitlements));
 };
