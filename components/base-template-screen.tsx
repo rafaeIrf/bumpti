@@ -202,7 +202,6 @@ export function BaseTemplateScreen({
             style={{
               flex: 1,
               paddingHorizontal: spacing.md,
-              paddingTop: spacing.md,
             }}
           >
             {children}

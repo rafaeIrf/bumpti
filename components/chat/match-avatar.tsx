@@ -18,11 +18,7 @@ export function MatchAvatar({ match, onPress }: Props) {
 
   return (
     <Pressable
-      style={{
-        alignItems: "center",
-        paddingTop: spacing.sm,
-        overflow: "visible",
-      }}
+      style={styles.container}
       accessibilityLabel={match.other_user?.name ?? "Match"}
       onPress={onPress}
     >
@@ -50,6 +46,7 @@ export function MatchAvatar({ match, onPress }: Props) {
               styles.newDot,
               {
                 backgroundColor: colors.accent,
+                borderColor: colors.background, // Cutout effect
               },
             ]}
           />
@@ -60,6 +57,7 @@ export function MatchAvatar({ match, onPress }: Props) {
         style={[
           typography.caption,
           {
+            alignSelf: "center",
             color: colors.text,
             marginTop: spacing.xs,
           },
@@ -72,24 +70,29 @@ export function MatchAvatar({ match, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    marginRight: spacing.sm,
+  },
   matchAvatar: {
-    width: 80,
-    height: 100,
-    borderRadius: 10,
+    width: 64,
+    height: 64,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "visible",
   },
   matchAvatarImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 10,
+    borderRadius: 36,
   },
   newDot: {
     position: "absolute",
-    bottom: -spacing.xs,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    top: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#000", // Will be overridden by theme surface color in component if needed, but black works for dark mode
   },
 });

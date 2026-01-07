@@ -137,6 +137,10 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await phoneAuthService.signOut();
+              // Dismiss all modals/screens first, then replace to clear history
+              while (router.canGoBack()) {
+                router.back();
+              }
               router.replace("/(onboarding)/welcome");
             } catch (error) {
               logger.error("Error signing out:", error);
@@ -163,6 +167,10 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await phoneAuthService.deleteAccount();
+              // Dismiss all modals/screens first, then replace to clear history
+              while (router.canGoBack()) {
+                router.back();
+              }
               router.replace("/(onboarding)/welcome");
             } catch (error) {
               logger.error("Error deleting account:", error);

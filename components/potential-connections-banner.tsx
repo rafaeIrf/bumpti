@@ -1,18 +1,20 @@
-import { ArrowRightIcon } from "@/assets/icons";
+import { SparklesIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { spacing } from "@/constants/theme";
+import { Chip } from "@/components/ui/chip";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import {
-  Animated,
+  Image,
   Pressable,
   StyleProp,
   StyleSheet,
   View,
   ViewStyle,
 } from "react-native";
+
+import { typography } from "@/constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface PotentialConnectionsBannerProps {
   count: number;
@@ -28,55 +30,45 @@ export function PotentialConnectionsBanner({
   style,
 }: PotentialConnectionsBannerProps) {
   const colors = useThemeColors();
-  const animatedValues = useRef(
-    profilePhotos.slice(0, 3).map(() => new Animated.Value(0))
-  ).current;
-
-  useEffect(() => {
-    const animations = animatedValues.map((animValue, index) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(animValue, {
-            toValue: -8,
-            duration: 1500,
-            delay: index * 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(animValue, {
-            toValue: 0,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
-
-    animations.forEach((anim) => anim.start());
-
-    return () => {
-      animations.forEach((anim) => anim.stop());
-    };
-  }, [animatedValues]);
 
   return (
     <Pressable onPress={onPress} style={style}>
-      <ThemedView style={[styles.banner, { backgroundColor: colors.surface }]}>
+      <LinearGradient
+        colors={[
+          (colors as any).cardGradientStart ?? colors.surface,
+          (colors as any).cardGradientEnd ?? colors.surface,
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.banner}
+      >
         {/* Left: Floating photo stack */}
         <View style={styles.photoStack}>
-          {profilePhotos.slice(0, 3).map((photo, index) => (
-            <Animated.Image
+          {profilePhotos.slice(0, 2).map((photo, index) => (
+            <View
               key={index}
-              source={{ uri: photo }}
               style={[
-                styles.photo,
+                styles.photoContainer,
                 {
-                  top: index * 8,
-                  zIndex: 3 - index,
-                  transform: [{ translateY: animatedValues[index] }],
+                  zIndex: 2 - index,
+                  transform: [
+                    { rotate: index === 0 ? "-6deg" : "6deg" },
+                    { translateX: index === 0 ? -2 : 4 },
+                  ],
                 },
               ]}
-              blurRadius={4}
-            />
+            >
+              <Image
+                source={{ uri: photo }}
+                style={styles.photoImage}
+                blurRadius={15}
+              />
+              {index === 0 && (
+                <View style={styles.heartOverlay}>
+                  <SparklesIcon width={20} height={20} color="#FFFFFF" />
+                </View>
+              )}
+            </View>
           ))}
         </View>
 
@@ -86,20 +78,13 @@ export function PotentialConnectionsBanner({
             <ThemedText style={styles.title}>
               {t("screens.chat.potentialConnections.title")}
             </ThemedText>
-            <View style={styles.badge}>
-              <ThemedText style={styles.badgeText}>+{count}</ThemedText>
-            </View>
+            <Chip label={`+${count}`} size="sm" />
           </View>
           <ThemedText style={styles.subtitle}>
             {t("screens.chat.potentialConnections.cta")}
           </ThemedText>
         </View>
-
-        {/* Right: Arrow icon */}
-        <View style={styles.arrowContainer}>
-          <ArrowRightIcon width={24} height={24} color={colors.white} />
-        </View>
-      </ThemedView>
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -108,62 +93,59 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.md + 4,
-    paddingHorizontal: spacing.md,
-    borderRadius: 16,
-    gap: spacing.md,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    gap: 16,
   },
   photoStack: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 54,
     position: "relative",
     flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  photo: {
+  photoContainer: {
     position: "absolute",
-    left: 0,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 54,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    overflow: "hidden",
+    backgroundColor: "#ccc",
+  },
+  photoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  heartOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,
     minWidth: 0,
+    justifyContent: "center",
   },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    marginBottom: 4,
+    gap: 8,
+    marginBottom: 2,
   },
   title: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins",
-    fontWeight: "500",
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  badge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    flexShrink: 0,
-  },
-  badgeText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins",
-    fontWeight: "500",
-    fontSize: 12,
+    ...typography.body1,
   },
   subtitle: {
-    color: "#E6E6E6",
-    fontFamily: "Poppins",
-    fontWeight: "400",
-    fontSize: 13,
+    ...typography.caption,
+    textDecorationLine: "underline",
   },
   arrowContainer: {
     flexShrink: 0,
-    alignSelf: "flex-start",
+    alignSelf: "center", // Center instead of top
+    opacity: 0.7,
   },
 });
