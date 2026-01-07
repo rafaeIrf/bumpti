@@ -76,6 +76,11 @@ const profileSlice = createSlice({
         state.data.subscription = action.payload;
       }
     },
+    setCheckinCredits: (state, action: PayloadAction<number>) => {
+      if (state.data?.subscription) {
+        state.data.subscription.checkin_credits = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
@@ -85,6 +90,7 @@ export const {
   setProfileLoading,
   setFavoritePlaces,
   setSubscription,
+  setCheckinCredits,
   resetProfile,
 } = profileSlice.actions;
 

@@ -14,7 +14,7 @@ export const IAP_SKUS = {
       ios: "bumpti_premium_monthly",
       android: "bumpti_premium",
     })!,
-    threeMonths: Platform.select({
+    quarterly: Platform.select({
       ios: "bumpti_premium_quarterly",
       android: "bumpti_premium",
     })!,
@@ -43,7 +43,7 @@ export const IAP_SKUS = {
 export const ANDROID_BASE_PLAN_MAP: Record<string, string> = {
   week: "premium-weekly",
   month: "premium-monthly",
-  threeMonths: "premium-quarterly",
+  quarterly: "premium-quarterly",
   year: "premium-yearly",
 };
 
@@ -68,7 +68,7 @@ export const ALL_SKUS = [...SUBSCRIPTION_SKUS, ...CONSUMABLE_SKUS];
 export const SKU_MAP: Record<string, string> = {
   "1-semana": IAP_SKUS.subscriptions.week,
   "1-mes": IAP_SKUS.subscriptions.month,
-  "3-meses": IAP_SKUS.subscriptions.threeMonths,
+  "3-meses": IAP_SKUS.subscriptions.quarterly,
   "12-meses": IAP_SKUS.subscriptions.year,
 };
 
@@ -76,7 +76,7 @@ export const SKU_MAP: Record<string, string> = {
 export const PLAN_TYPE_MAP: Record<string, PlanType> = {
   "1-semana": "week",
   "1-mes": "month",
-  "3-meses": "threeMonths",
+  "3-meses": "quarterly",
   "12-meses": "year",
 };
 

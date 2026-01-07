@@ -4,10 +4,11 @@ import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
   CONSUMABLE_CREDITS,
-  SUBSCRIPTION_CREDITS_AWARD,
-  SUBSCRIPTION_PLANS,
   getEntitlements,
+  getWelcomeCredits,
   grantCheckinCredits,
+  isSubscriptionProduct,
+  resolvePlanType,
   validateAppleReceipt,
   validateGooglePurchase,
 } from "../_shared/iap-validation.ts";
@@ -45,6 +46,7 @@ serve(async (req) => {
 
     const {
       sku,
+      basePlanId, // Android only: e.g. "premium-monthly"
       storeTransactionId,
       originalTransactionId,
       purchaseDate,
@@ -52,6 +54,17 @@ serve(async (req) => {
       autoRenew,
       appUserToken,
     } = validatedData;
+
+    // For Android, use basePlanId for plan identification; for iOS, use sku
+    const planIdentifier = basePlanId || sku;
+
+    console.log("[IAP Validate] Received:", {
+      platform,
+      sku,
+      basePlanId,
+      planIdentifier,
+      storeTransactionId,
+    });
 
     // 4. Idempotency Check - by exact transaction ID
     // Each billing event (renewal, initial purchase) has a unique transactionId
@@ -73,32 +86,57 @@ serve(async (req) => {
     }
 
     // 5. Record Purchase
+    // Android uses upsert to handle plan upgrades/downgrades with same transaction ID
+    // iOS uses insert for strict idempotency
     const storeName = platform === "ios" ? "apple" : "google";
 
-    const { error: insertError } = await supabase.from("store_purchases").insert({
+    const purchaseData = {
       user_id: userId,
       store: storeName,
       sku: sku,
       store_transaction_id: storeTransactionId,
       app_user_token: appUserToken,
       raw_receipt: purchase,
-    });
+    };
+
+    const { error: insertError } = platform === "android"
+      ? await supabase.from("store_purchases").upsert(purchaseData, { onConflict: "store,store_transaction_id" })
+      : await supabase.from("store_purchases").insert(purchaseData);
 
     if (insertError) throw new Error(`Failed to record: ${insertError.message}`);
 
     // 6. Apply Logic
-    const isSubscription = !!SUBSCRIPTION_PLANS[sku];
+    const isSubscription = isSubscriptionProduct(planIdentifier);
     const isConsumable = !!CONSUMABLE_CREDITS[sku];
 
+    console.log("[IAP Validate] Product type check:", {
+      planIdentifier,
+      isSubscription,
+      isConsumable,
+    });
+
     if (isSubscription) {
-      const { data: existingSub } = await supabase
+      const { data: existingSub, error: subQueryError } = await supabase
         .from("user_subscriptions")
-        .select("id")
+        .select("user_id")
         .eq("user_id", userId)
         .maybeSingle();
 
-      const planName = SUBSCRIPTION_PLANS[sku];
+      console.log("[IAP Validate] existingSub query result:", {
+        userId,
+        data: existingSub,
+        error: subQueryError?.message,
+      });
+
+      const planName = resolvePlanType(planIdentifier);
       const isNewUser = !existingSub;
+
+      console.log("[IAP Validate] Subscription check:", {
+        userId,
+        existingSub: !!existingSub,
+        isNewUser,
+        planName,
+      });
 
       const { error: subError } = await supabase.from("user_subscriptions").upsert({
         user_id: userId,
@@ -115,7 +153,7 @@ serve(async (req) => {
       if (subError) throw new Error(`Sub update failed: ${subError.message}`);
 
       // Only grant credits if this is the user's first subscription ever (welcome gift)
-      const creditsToGrant = SUBSCRIPTION_CREDITS_AWARD[sku] || 0;
+      const creditsToGrant = getWelcomeCredits(planIdentifier);
       if (isNewUser && creditsToGrant > 0) {
         await grantCheckinCredits(
           supabase,

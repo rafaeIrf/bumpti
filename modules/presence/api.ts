@@ -1,3 +1,5 @@
+import { store } from "@/modules/store";
+import { setCheckinCredits } from "@/modules/store/slices/profileSlice";
 import { supabase } from "@/modules/supabase/client";
 
 export type PresenceRecord = {
@@ -57,6 +59,7 @@ export async function enterPlace(params: {
 
     const { data, error } = await supabase.functions.invoke<{
       presence: PresenceRecord;
+      remaining_credits?: number;
     }>("enter-place", {
       body: {
         place_id: placeId,
@@ -71,6 +74,11 @@ export async function enterPlace(params: {
     if (error) {
       console.error("enterPlace (edge) error:", error);
       return null;
+    }
+
+    // Update Redux state with remaining credits if returned (indicates check-in+ was used)
+    if (typeof data?.remaining_credits === "number") {
+      store.dispatch(setCheckinCredits(data.remaining_credits));
     }
 
     return data?.presence ?? null;

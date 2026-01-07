@@ -32,6 +32,7 @@ interface PremiumPlanCardProps {
   isCurrentPlan?: boolean;
   disabled?: boolean;
   currentPlanLabel?: string;
+  showSubscriptionBonus?: boolean;
 }
 
 export function PremiumPlanCard({
@@ -43,6 +44,7 @@ export function PremiumPlanCard({
   isCurrentPlan = false,
   disabled = false,
   currentPlanLabel,
+  showSubscriptionBonus = true,
 }: PremiumPlanCardProps) {
   const isSelected = selectedPlanId === plan.id;
 
@@ -128,16 +130,18 @@ export function PremiumPlanCard({
           )}
 
           {/* Check-in Bonus */}
-          {!isCurrentPlan && (PLAN_CREDITS[plan.id] || 0) > 0 && (
-            <Chip
-              label={t("screens.premiumPaywall.plans.checkinBonus", {
-                count: PLAN_CREDITS[plan.id],
-              })}
-              color={plan.isHighlighted ? "#FFFFFF" : colors.accent}
-              size="sm"
-              style={{ marginTop: 6 }}
-            />
-          )}
+          {showSubscriptionBonus &&
+            !isCurrentPlan &&
+            (PLAN_CREDITS[plan.id] || 0) > 0 && (
+              <Chip
+                label={t("screens.premiumPaywall.plans.checkinBonus", {
+                  count: PLAN_CREDITS[plan.id],
+                })}
+                color={plan.isHighlighted ? "#FFFFFF" : colors.accent}
+                size="sm"
+                style={{ marginTop: 6, alignSelf: "flex-start" }}
+              />
+            )}
         </View>
 
         {/* Price */}
