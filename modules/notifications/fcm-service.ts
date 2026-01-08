@@ -10,15 +10,9 @@ type DevicePlatform = "ios" | "android";
  */
 export async function getFCMToken(): Promise<string | null> {
   try {
-    // Check if messaging is supported (physical device required)
-    const isSupported = await messaging().isDeviceRegisteredForRemoteMessages;
-    
-    if (!isSupported) {
-      // Register for remote messages on iOS
-      if (Platform.OS === "ios") {
-        await messaging().registerDeviceForRemoteMessages();
-      }
-    }
+    // Registering for remote messages is handled automatically by the SDK on iOS
+    // when using the default configuration side-by-side with Expo.
+    // We can directly request the token.
 
     const token = await messaging().getToken();
     logger.log("FCM token obtained:", token?.substring(0, 20) + "...");
