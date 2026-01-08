@@ -1,3 +1,4 @@
+import { deactivateDeviceToken } from "@/modules/notifications";
 import { supabase } from "@/modules/supabase/client";
 import { AuthError, User } from "@supabase/supabase-js";
 import { resetGlobalStore } from "../store";
@@ -82,6 +83,8 @@ class PhoneAuthService {
    */
   async signOut(): Promise<void> {
     try {
+      // Deactivate FCM token before signing out
+      await deactivateDeviceToken();
       await supabase.auth.signOut();
       await resetGlobalStore();
       this.verificationPhone = null;

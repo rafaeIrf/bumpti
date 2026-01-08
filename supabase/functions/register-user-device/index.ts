@@ -1,0 +1,132 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { requireAuth } from "../_shared/auth.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    // Authenticate user from JWT
+    const user = await requireAuth(req);
+    const userId = user.id;
+
+    // Parse request body
+    const { fcm_token, platform } = await req.json();
+
+    // Validate input
+    if (!fcm_token || typeof fcm_token !== "string") {
+      return new Response(
+        JSON.stringify({ error: "fcm_token is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!platform || !["ios", "android"].includes(platform)) {
+      return new Response(
+        JSON.stringify({ error: "platform must be 'ios' or 'android'" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create Supabase client with service role for database operations
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const now = new Date().toISOString();
+
+    // Step 1: Deactivate this token for any OTHER user
+    const { error: deactivateError } = await supabase
+      .from("user_devices")
+      .update({ active: false, last_active_at: now })
+      .eq("fcm_token", fcm_token)
+      .neq("user_id", userId);
+
+    if (deactivateError) {
+      console.error("Error deactivating old tokens:", deactivateError);
+    }
+
+    // Step 2: Check if token exists for this user
+    const { data: existingDevice, error: selectError } = await supabase
+      .from("user_devices")
+      .select("id")
+      .eq("fcm_token", fcm_token)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selectError) {
+      console.error("Error checking existing device:", selectError);
+      return new Response(
+        JSON.stringify({ error: "Database error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (existingDevice) {
+      // Step 3a: Token exists for this user - update it
+      const { error: updateError } = await supabase
+        .from("user_devices")
+        .update({
+          active: true,
+          last_active_at: now,
+          platform, // Update platform in case it changed
+        })
+        .eq("id", existingDevice.id);
+
+      if (updateError) {
+        console.error("Error updating device:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to update device" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`Device updated for user ${userId}`);
+    } else {
+      // Step 3b: New token - insert it
+      const { error: insertError } = await supabase
+        .from("user_devices")
+        .insert({
+          user_id: userId,
+          fcm_token,
+          platform,
+          active: true,
+          last_active_at: now,
+        });
+
+      if (insertError) {
+        console.error("Error inserting device:", insertError);
+        return new Response(
+          JSON.stringify({ error: "Failed to register device" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`New device registered for user ${userId}`);
+    }
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error in register-user-device:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const status = errorMessage.includes("Authorization") || errorMessage.includes("token") ? 401 : 500;
+
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

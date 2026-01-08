@@ -15,6 +15,7 @@ import {
   useGetChatsQuery,
   useGetMatchesQuery,
 } from "@/modules/chats/messagesApi";
+import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
 import { router } from "expo-router";
@@ -106,18 +107,25 @@ export default function ChatScreen() {
     [pendingUsers]
   );
 
+  const { isPremium } = useUserSubscription();
+
   const handleOpenPendingLikes = useCallback(() => {
     if (pendingUsers.length === 0) return;
+
+    if (!isPremium) {
+      router.push("/(modals)/premium-paywall");
+      return;
+    }
 
     router.push({
       pathname: "/(modals)/place-people",
       params: {
-        placeId: "pending-likes", // Virtual ID
+        placeId: "pending-likes",
         placeName: t("screens.chat.potentialConnections.title"),
         initialUsers: JSON.stringify(pendingUsers),
       },
     });
-  }, [pendingUsers]);
+  }, [pendingUsers, isPremium]);
 
   return (
     <BaseTemplateScreen TopHeader={header} scrollEnabled={false}>
@@ -152,6 +160,12 @@ export default function ChatScreen() {
                   style={styles.matchesList}
                 />
               ) : null}
+
+              {chats.length > 0 && (
+                <ThemedText style={styles.sectionTitle}>
+                  {t("screens.chat.conversationsSection")}
+                </ThemedText>
+              )}
             </>
           }
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
@@ -200,9 +214,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   banner: {
-    marginBottom: spacing.md,
+    marginBottom: 0, // Remove margin bottom from banner, control via matchesList marginTop if needed, or keep small
   },
   matchesList: {
-    marginTop: spacing.md,
+    marginTop: spacing.md, // Reduced from lg to md to bring closer to banner
+    marginBottom: spacing.sm, // Add space between matches and chat list
+  },
+  sectionTitle: {
+    ...typography.body,
+    marginBottom: spacing.sm,
   },
 });
