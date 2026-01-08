@@ -1,6 +1,7 @@
 import { processProfileImage } from "@/modules/media/image-processor";
 import { supabase } from "@/modules/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
+import { NotificationSettings } from "./types";
 
 export type ProfilePayload = {
   id: string;
@@ -27,6 +28,7 @@ export type ProfilePayload = {
   smoking_key?: string | null;
   height_cm?: number | null;
   subscription?: any;
+  notification_settings?: NotificationSettings;
 };
 
 export type UpdateProfilePayload = {
@@ -103,4 +105,23 @@ export async function updateProfilePhotos(photos: string[]) {
   }
 
   return data?.profile;
+}
+
+export async function updateNotificationSettings(
+  settings: Partial<NotificationSettings>
+) {
+  const { data, error } = await supabase.functions.invoke(
+    "update-notification-settings",
+    {
+      body: settings,
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      error.message || "Não foi possível atualizar as configurações."
+    );
+  }
+
+  return data as NotificationSettings;
 }

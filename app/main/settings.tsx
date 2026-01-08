@@ -1,16 +1,7 @@
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  ExclamationCircleIcon,
-  ListIcon,
-  LockIcon,
-  MessageCircleIcon,
-  ShieldAlertIcon,
-  ShieldCheckIcon,
-  UserRoundIcon,
-} from "@/assets/icons";
+import { ArrowLeftIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
+import { SettingItem } from "@/components/setting-item";
 import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import Button from "@/components/ui/button";
@@ -22,8 +13,7 @@ import { openEmail, openPrivacyPolicy, openTermsOfUse } from "@/utils/linking";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
-import { SvgProps } from "react-native-svg";
+import { Alert, StyleSheet, View } from "react-native";
 
 interface SectionHeaderProps {
   title: string;
@@ -45,78 +35,11 @@ function SectionHeader({ title }: SectionHeaderProps) {
   );
 }
 
-interface SettingItemProps {
-  icon: React.FC<SvgProps>;
-  title: string;
-  description?: string;
-  rightContent?: React.ReactNode;
-  onClick?: () => void;
-  showChevron?: boolean;
-}
-
-function SettingItem({
-  icon: Icon,
-  title,
-  description,
-  rightContent,
-  onClick,
-  showChevron = true,
-}: SettingItemProps) {
-  const colors = useThemeColors();
-
-  return (
-    <Pressable
-      onPress={onClick}
-      style={({ pressed }) => [
-        styles.settingItem,
-        {
-          backgroundColor: (colors as any).surfaceHover
-            ? "rgba(255, 255, 255, 0.04)"
-            : colors.surface,
-          opacity: pressed ? 0.9 : 1,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-        },
-      ]}
-    >
-      <View style={styles.settingItemContent}>
-        <View style={styles.iconContainer}>
-          <Icon width={20} height={20} color={colors.text} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <ThemedText style={[typography.body, { color: colors.text }]}>
-            {title}
-          </ThemedText>
-          {description && (
-            <ThemedText
-              style={[
-                typography.caption,
-                { color: "rgba(255, 255, 255, 0.5)", marginTop: 2 },
-              ]}
-            >
-              {description}
-            </ThemedText>
-          )}
-        </View>
-        {rightContent ? (
-          <View>{rightContent}</View>
-        ) : showChevron ? (
-          <ArrowRightIcon
-            width={20}
-            height={20}
-            color="rgba(255, 255, 255, 0.3)"
-          />
-        ) : null}
-      </View>
-    </Pressable>
-  );
-}
-
 export default function SettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
 
   const [invisibleMode, setInvisibleMode] = useState(false);
-  const [pushNotifications, setPushNotifications] = useState(true);
 
   const handleClose = () => {
     router.back();
@@ -198,7 +121,6 @@ export default function SettingsScreen() {
         />
         <View style={styles.sectionGap}>
           <SettingItem
-            icon={UserRoundIcon}
             title={t("screens.profile.settingsPage.presence.invisible")}
             description={t(
               "screens.profile.settingsPage.presence.invisibleDescription"
@@ -220,16 +142,8 @@ export default function SettingsScreen() {
         />
         <View style={styles.sectionGap}>
           <SettingItem
-            icon={MessageCircleIcon}
             title={t("screens.profile.settingsPage.notifications.push")}
-            rightContent={
-              <ToggleSwitch
-                value={pushNotifications}
-                onValueChange={setPushNotifications}
-                colors={colors}
-              />
-            }
-            showChevron={false}
+            onClick={() => router.push("/main/notification-settings")}
           />
         </View>
 
@@ -239,7 +153,6 @@ export default function SettingsScreen() {
         />
         <View style={styles.sectionGap}>
           <SettingItem
-            icon={LockIcon}
             title={t("screens.profile.settingsPage.account.blockList")}
             description={t(
               "screens.profile.settingsPage.account.blockListDescription"
@@ -247,7 +160,6 @@ export default function SettingsScreen() {
             onClick={() => router.push("/main/blocked-list")}
           />
           <SettingItem
-            icon={ShieldCheckIcon}
             title={t("screens.profile.settingsPage.account.verifyProfile")}
             onClick={() => logger.log("Verify profile clicked")}
           />
@@ -259,12 +171,10 @@ export default function SettingsScreen() {
         />
         <View style={styles.sectionGap}>
           <SettingItem
-            icon={ListIcon}
             title={t("screens.profile.settingsPage.security.privacyPolicy")}
             onClick={openPrivacyPolicy}
           />
           <SettingItem
-            icon={ListIcon}
             title={t("screens.profile.settingsPage.security.terms")}
             onClick={openTermsOfUse}
           />
@@ -276,12 +186,10 @@ export default function SettingsScreen() {
         />
         <View style={styles.sectionGap}>
           <SettingItem
-            icon={ExclamationCircleIcon}
             title={t("screens.profile.settingsPage.support.help")}
             onClick={() => openEmail(undefined, "Help & Support")}
           />
           <SettingItem
-            icon={ShieldAlertIcon}
             title={t("screens.profile.settingsPage.support.report")}
             onClick={() => openEmail(undefined, "Report a problem")}
           />
@@ -306,14 +214,6 @@ export default function SettingsScreen() {
               ]}
             >
               1.0.0
-            </ThemedText>
-            <ThemedText
-              style={[
-                typography.caption,
-                { color: "rgba(255, 255, 255, 0.6)" },
-              ]}
-            >
-              {t("screens.profile.settingsPage.about.madeWith")}
             </ThemedText>
           </View>
         </View>

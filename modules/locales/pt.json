@@ -165,8 +165,12 @@
           "invisibleDescription": "Torna sua presença invisível para outros usuários."
         },
         "notifications": {
-          "title": "NOTIFICAÇÕES",
-          "push": "Notificações Push"
+          "title": "Notificações",
+          "push": "Notificações Push",
+          "matches": "Matches",
+          "messages": "Mensagens",
+          "nearbyActivity": "Atividade próxima",
+          "favoritePlaces": "Lugares favoritos"
         },
         "account": {
           "title": "CONTA",
@@ -187,8 +191,7 @@
         },
         "about": {
           "title": "SOBRE O APP",
-          "version": "Versão",
-          "madeWith": "Criado com 💛 pelo Bumpti"
+          "version": "Versão"
         },
         "session": {
           "title": "SESSÃO",

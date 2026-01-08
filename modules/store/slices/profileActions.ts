@@ -1,12 +1,12 @@
 import { store } from "@/modules/store";
 import { calculateAge } from "@/utils/calculate-age";
 import {
-    ProfileData,
-    resetProfile as resetProfileAction,
-    setProfile as setProfileAction,
-    setProfileLoading as setProfileLoadingAction,
-    setSubscription as setSubscriptionAction,
-    SubscriptionData,
+  ProfileData,
+  resetProfile as resetProfileAction,
+  setProfile as setProfileAction,
+  setProfileLoading as setProfileLoadingAction,
+  setSubscription as setSubscriptionAction,
+  SubscriptionData,
 } from "./profileSlice";
 
 import { t } from "@/modules/locales";
@@ -37,6 +37,13 @@ export const setProfileLoading = (isLoading: boolean) => {
 
 export const resetProfile = () => {
   store.dispatch(resetProfileAction());
+};
+
+export const setNotificationSettings = (settings: any) => {
+    // any used temporarily to avoid circular deps if types are not exported/imported cleanly
+    // ideally import NotificationSettings from profileSlice
+    const { setNotificationSettings } = require("./profileSlice"); 
+    store.dispatch(setNotificationSettings(settings));
 };
 
 let latestPhotoRequestId = 0;
