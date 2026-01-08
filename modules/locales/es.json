@@ -166,6 +166,8 @@
         "notifications": {
           "title": "Notificaciones",
           "push": "Notificaciones Push",
+          "devicePermission": "Permitir notificaciones",
+          "devicePermissionDescription": "Autoriza notificaciones en tu dispositivo",
           "matches": "Matches",
           "messages": "Mensajes",
           "nearbyActivity": "Actividad cercana",

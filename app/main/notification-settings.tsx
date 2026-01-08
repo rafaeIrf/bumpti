@@ -1,14 +1,20 @@
+import { SmartphoneIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { PermissionBottomSheet } from "@/components/permission-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { SettingItem } from "@/components/setting-item";
 import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { spacing, typography } from "@/constants/theme";
+import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useNotificationSettings } from "@/modules/profile/hooks/use-notification-settings";
 import { useRouter } from "expo-router";
+import React, { useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 
 // Arrow Left SVG for back button
@@ -36,6 +42,51 @@ export default function NotificationSettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { settings, toggleSetting } = useNotificationSettings();
+  const notificationPermission = useNotificationPermission();
+  const bottomSheet = useCustomBottomSheet();
+
+  const showPermissionBottomSheet = useCallback(() => {
+    bottomSheet?.expand({
+      content: () => (
+        <PermissionBottomSheet
+          renderIcon={() => <BrandIcon icon={SmartphoneIcon} size="lg" />}
+          title={t("screens.onboarding.notificationsTitle")}
+          subtitle={t("screens.onboarding.notificationsSubtitle")}
+          enableButtonText={t("permissions.location.buttonSettings")}
+          requestingText={t("screens.onboarding.notificationsRequesting")}
+          skipButtonText={t("screens.onboarding.notificationsSkip")}
+          isRequesting={false}
+          canAskAgain={false}
+          onEnable={() => {
+            bottomSheet?.close();
+            notificationPermission.openSettings();
+          }}
+          onSkip={() => bottomSheet?.close()}
+          onOpenSettings={() => {
+            bottomSheet?.close();
+            notificationPermission.openSettings();
+          }}
+        />
+      ),
+      draggable: true,
+    });
+  }, [bottomSheet, notificationPermission]);
+
+  const handlePermissionToggle = useCallback(async () => {
+    if (notificationPermission.hasPermission) {
+      // Already granted - open settings to revoke
+      notificationPermission.openSettings();
+    } else if (!notificationPermission.canAskAgain) {
+      // Permission denied and can't ask again - show bottom sheet
+      showPermissionBottomSheet();
+    } else {
+      // Can ask again - request permission
+      const result = await notificationPermission.request();
+      if (result.status !== "granted" && !result.canAskAgain) {
+        showPermissionBottomSheet();
+      }
+    }
+  }, [notificationPermission, showPermissionBottomSheet]);
 
   return (
     <BaseTemplateScreen
@@ -51,6 +102,32 @@ export default function NotificationSettingsScreen() {
       }
     >
       <View style={styles.container}>
+        {/* Device Permission Section */}
+        <SectionHeader
+          title={t(
+            "screens.profile.settingsPage.notifications.devicePermission"
+          )}
+        />
+        <View style={styles.sectionGap}>
+          <SettingItem
+            title={t(
+              "screens.profile.settingsPage.notifications.devicePermission"
+            )}
+            description={t(
+              "screens.profile.settingsPage.notifications.devicePermissionDescription"
+            )}
+            showChevron={false}
+            rightContent={
+              <ToggleSwitch
+                value={notificationPermission.hasPermission}
+                onValueChange={handlePermissionToggle}
+                colors={colors}
+              />
+            }
+          />
+        </View>
+
+        {/* Push Notification Types Section */}
         <SectionHeader
           title={t("screens.profile.settingsPage.notifications.push")}
         />
