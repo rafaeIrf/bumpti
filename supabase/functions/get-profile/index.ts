@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       intentionResult,
       photosResult,
       favoritePlacesResult,
+      notificationSettingsResult,
       subscription,
     ] = await Promise.all([
       supabase
@@ -92,6 +93,11 @@ Deno.serve(async (req) => {
         .from("profile_favorite_places")
         .select("place_id, places:places(id, name, category)")
         .eq("user_id", userId),
+      supabase
+        .from("notification_settings")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle(),
       getEntitlements(supabase, userId),
     ]);
 
@@ -101,12 +107,17 @@ Deno.serve(async (req) => {
     const { data: photoRows, error: photoError } = photosResult;
     const { data: favoritePlacesRows, error: favoritePlacesError } =
       favoritePlacesResult;
+    const { data: notificationSettings, error: notificationError } =
+      notificationSettingsResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
     if (favoritePlacesError) throw favoritePlacesError;
+    // notificationError is optional, if missing we can execute default logic or just ignore
+    // But maybeSingle shouldn't error on no rows, just return null data.
+    if (notificationError) console.error("Error fetching notification settings", notificationError);
 
     // Resolve gender key if gender_id exists
     let genderKey: string | null = null;
@@ -209,6 +220,12 @@ Deno.serve(async (req) => {
           profile_languages
             ?.map((pl: any) => pl.language?.key)
             .filter(Boolean) ?? [],
+        notification_settings: notificationSettings ?? {
+          favorite_places: true,
+          nearby_activity: true,
+          messages: true,
+          matches: true,
+        },
       };
     }
 

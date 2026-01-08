@@ -41,6 +41,7 @@ export async function fetchAndSetUserProfile() {
       zodiac_key: data.zodiac_key ?? null,
       relationship_key: data.relationship_key ?? null,
       subscription: data.subscription ?? null,
+      notificationSettings: data.notification_settings ?? null,
     };
 
     setProfile(profileData);

@@ -26,6 +26,7 @@ export type ProfileData = {
   relationship_key?: string | null;
   favoritePlaces?: any[] | null;
   subscription?: SubscriptionData | null;
+  notificationSettings?: NotificationSettings | null;
 };
 
 export interface SubscriptionData {
@@ -34,6 +35,13 @@ export interface SubscriptionData {
   premium_expires_at?: string;
   checkin_credits: number;
   show_subscription_bonus?: boolean;
+}
+
+export interface NotificationSettings {
+  favorite_places: boolean;
+  nearby_activity: boolean;
+  messages: boolean;
+  matches: boolean;
 }
 
 export interface ProfileState {
@@ -76,6 +84,11 @@ const profileSlice = createSlice({
         state.data.subscription = action.payload;
       }
     },
+    setNotificationSettings: (state, action: PayloadAction<NotificationSettings>) => {
+      if (state.data) {
+        state.data.notificationSettings = action.payload;
+      }
+    },
     setCheckinCredits: (state, action: PayloadAction<number>) => {
       if (state.data?.subscription) {
         state.data.subscription.checkin_credits = action.payload;
@@ -90,6 +103,7 @@ export const {
   setProfileLoading,
   setFavoritePlaces,
   setSubscription,
+  setNotificationSettings,
   setCheckinCredits,
   resetProfile,
 } = profileSlice.actions;

@@ -1,9 +1,6 @@
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { Pressable, StyleSheet } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
+import { StyleSheet, Switch } from "react-native";
+import { useAnimatedStyle, withSpring } from "react-native-reanimated";
 
 interface ToggleSwitchProps {
   value: boolean;
@@ -21,15 +18,12 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   }));
 
   return (
-    <Pressable
-      onPress={() => onValueChange(!value)}
-      style={[
-        styles.toggle,
-        { backgroundColor: value ? colors.accent : colors.border },
-      ]}
-    >
-      <Animated.View style={[styles.toggleThumb, animatedStyle]} />
-    </Pressable>
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ false: colors.border, true: colors.accent }}
+      thumbColor={colors.text}
+    />
   );
 };
 

@@ -24,5 +24,5 @@ export async function requireAuth(req: Request) {
     throw new Error("Invalid or expired token");
   }
 
-  return user;
+  return { supabase, user };
 }

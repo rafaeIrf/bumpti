@@ -26,7 +26,40 @@ export async function sendPushNotification({
   placeId 
 }: SendPushOptions) {
   
-  // 1. Anti-Spam (TTL Check)
+  // 1. Check Notification Settings (User Preferences)
+  const { data: settings } = await supabase
+    .from("notification_settings")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  // Mapping logic: type -> setting column
+  // Default to TRUE (allow) if no record found
+  const isAllowed = (() => {
+    if (!settings) return true; // Default allowed if no settings
+    
+    switch (type) {
+      case "message_received":
+        return settings.messages ?? true;
+      case "match_created":
+        return settings.matches ?? true;
+      // Activity / Places
+      case "favorite_activity_started":
+      case "favorite_activity_heating":
+        return settings.favorite_places ?? true;
+      case "nearby_activity_heating":
+        return settings.nearby_activity ?? true;
+      default:
+        return true;
+    }
+  })();
+
+  if (!isAllowed) {
+    console.log(`[Push] Suppressed by user settings for ${userId} (type: ${type})`);
+    return { skipped: true, reason: "user_settings" };
+  }
+
+  // 2. Anti-Spam (TTL Check)
   // Only for activity types, messages/matches are immediate
   if (type.includes("activity")) {
     const ttlHours = type === "nearby_activity_heating" ? 12 : 6;
@@ -38,7 +71,7 @@ export async function sendPushNotification({
       .eq("place_id", placeId) // Must match place if provided
       .gt("created_at", new Date(Date.now() - ttlHours * 3600 * 1000).toISOString())
       .limit(1);
-
+ 
     if (recentLogs && recentLogs.length > 0) {
       console.log(`[Push] Check skipped for ${userId} (TTL active for ${type})`);
       return { skipped: true, reason: "ttl" };
