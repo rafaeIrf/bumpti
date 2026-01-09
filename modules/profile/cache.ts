@@ -1,6 +1,7 @@
 import { getDatabase } from "@/modules/database";
 import Profile from "@/modules/database/models/Profile";
 import { supabase } from "@/modules/supabase/client";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { Q } from "@nozbe/watermelondb";
 
@@ -100,6 +101,14 @@ async function upsertProfileCache(userId: string, profileData: CachedProfileData
     .fetch();
 
   const existingProfile = existingProfiles[0];
+
+  // Prefetch images immediately after upserting
+  if (profileData.photos && profileData.photos.length > 0) {
+    logger.log(`[upsertProfileCache] Prefetching ${profileData.photos.length} photos for user ${userId}`);
+    prefetchImages(profileData.photos).catch((err) => {
+      logger.warn(`[upsertProfileCache] Failed to prefetch images for user ${userId}:`, err);
+    });
+  }
 
   if (existingProfile) {
     // Atualizar perfil existente

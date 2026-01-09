@@ -11,6 +11,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -137,6 +138,16 @@ export default function ProfilePreviewModal() {
       await refresh();
     }
   };
+
+  // Prefetch profile photos as backup (in case they weren't prefetched during cache)
+  useEffect(() => {
+    if (profileCardData?.photos && profileCardData.photos.length > 0) {
+      const photoUrls = profileCardData.photos.filter((url) => !!url);
+      if (photoUrls.length > 0) {
+        prefetchImages(photoUrls);
+      }
+    }
+  }, [profileCardData?.photos]);
 
   return (
     <BaseTemplateScreen

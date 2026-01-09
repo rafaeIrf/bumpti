@@ -18,7 +18,6 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useUserActions } from "@/hooks/use-user-actions";
 import { t } from "@/modules/locales";
-import { supabase } from "@/modules/supabase/client";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
@@ -42,6 +41,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // WatermelonDB
 import { useDatabase } from "@/components/DatabaseProvider";
+import { useProfile } from "@/hooks/use-profile";
 import { useMarkMessagesRead } from "@/hooks/useMarkMessagesRead";
 import { useMessagePagination } from "@/hooks/useMessagePagination";
 import { useSendMessage } from "@/hooks/useSendMessage";
@@ -95,13 +95,16 @@ function ChatMessageList({
   });
 
   const [newMessage, setNewMessage] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [failedMessage, setFailedMessage] = useState<Message | null>(null);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
 
   const listRef = useRef<FlatList<Message>>(null);
   const inputRef = useRef<TextInput>(null);
+
+  // Get current user ID from profile hook (faster than async call)
+  const { profile } = useProfile();
+  const userId = profile?.id || null;
 
   // Hooks
   const { sendMessage, isSending } = useSendMessage(chatId, userId || "");
@@ -122,13 +125,6 @@ function ChatMessageList({
     userName: params.name,
     matchId: params.matchId,
   });
-
-  // Load current User ID
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) setUserId(data.user.id);
-    });
-  }, []);
 
   const { markMessagesAsRead } = useMarkMessagesRead();
 

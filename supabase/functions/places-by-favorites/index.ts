@@ -43,7 +43,7 @@ serve(async (req) => {
     // Get User ID from Token (if available) to filter active counts
     let requestingUserId: string;
     try {
-        const user = await requireAuth(req);
+        const { user } = await requireAuth(req);
         requestingUserId = user.id;
     } catch (e: any) {
         return new Response(JSON.stringify({ error: e.message }), {

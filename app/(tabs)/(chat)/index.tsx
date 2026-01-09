@@ -15,10 +15,11 @@ import type Match from "@/modules/database/models/Match";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
+import { prefetchImages } from "@/utils/image-prefetch";
 import { Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
 import { router } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
 /**
@@ -34,6 +35,30 @@ function ChatListScreen({
   const colors = useThemeColors();
   const { profile } = useProfile();
   const { markMatchAsOpened } = useMarkMatchOpened();
+
+  // Prefetch all chat and match images when screen loads
+  useEffect(() => {
+    const allImageUrls: string[] = [];
+    
+    // Collect all chat images
+    chats.forEach((chat) => {
+      if (chat.otherUserPhotoUrl) {
+        allImageUrls.push(chat.otherUserPhotoUrl);
+      }
+    });
+    
+    // Collect all match images
+    matches.forEach((match) => {
+      if (match.otherUserPhotoUrl) {
+        allImageUrls.push(match.otherUserPhotoUrl);
+      }
+    });
+    
+    // Prefetch all images in parallel
+    if (allImageUrls.length > 0) {
+      prefetchImages(allImageUrls);
+    }
+  }, [chats, matches]);
 
   const renderMatchItem = useCallback(
     ({ item }: { item: Match }) => {
