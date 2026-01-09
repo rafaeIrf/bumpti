@@ -12,14 +12,16 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useMarkMatchOpened } from "@/hooks/useMarkMatchOpened";
 import type Chat from "@/modules/database/models/Chat";
 import type Match from "@/modules/database/models/Match";
+import { syncDatabase } from "@/modules/database/sync";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
 import { prefetchImages } from "@/utils/image-prefetch";
+import { logger } from "@/utils/logger";
 import { Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
 import { router } from "expo-router";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
 /**
@@ -35,6 +37,8 @@ function ChatListScreen({
   const colors = useThemeColors();
   const { profile } = useProfile();
   const { markMatchAsOpened } = useMarkMatchOpened();
+  const database = useDatabase();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Prefetch all chat and match images when screen loads
   useEffect(() => {
@@ -59,6 +63,18 @@ function ChatListScreen({
       prefetchImages(allImageUrls);
     }
   }, [chats, matches]);
+
+  // Force full sync to recover any missing data
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await syncDatabase(database, true); // forceFullSync = true
+    } catch (error) {
+      logger.error('Failed to refresh:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [database]);
 
   const renderMatchItem = useCallback(
     ({ item }: { item: Match }) => {
@@ -164,10 +180,10 @@ function ChatListScreen({
   const handleOpenPendingLikes = useCallback(() => {
     if (pendingUsers.length === 0) return;
 
-    if (!isPremium) {
-      router.push("/(modals)/premium-paywall");
-      return;
-    }
+    // if (!isPremium) {
+    //   router.push("/(modals)/premium-paywall");
+    //   return;
+    // }
 
     router.push({
       pathname: "/(modals)/place-people",
@@ -209,6 +225,8 @@ function ChatListScreen({
           renderItem={renderChatItem}
           keyExtractor={(item) => item._raw.id}
           contentContainerStyle={styles.listContent}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
           ListHeaderComponent={
             <>
               {pendingCount > 0 && (

@@ -6,6 +6,27 @@ import { logger } from '@/utils/logger';
 import { Database, Q } from '@nozbe/watermelondb';
 
 /**
+ * Debounce para agrupar múltiplos syncs em um único
+ * Útil quando vários matches/chats são criados rapidamente
+ */
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const SYNC_DEBOUNCE_MS = 500; // 500ms de debounce
+
+function debouncedSync(database: Database): void {
+  if (syncDebounceTimer) {
+    clearTimeout(syncDebounceTimer);
+  }
+  
+  syncDebounceTimer = setTimeout(() => {
+    logger.log('🔄 Executing debounced sync...');
+    syncDatabase(database).catch((err) => {
+      logger.error('Debounced sync failed:', err);
+    });
+    syncDebounceTimer = null;
+  }, SYNC_DEBOUNCE_MS);
+}
+
+/**
  * Processa broadcast de nova mensagem
  * Insere diretamente no WatermelonDB
  */
@@ -161,14 +182,13 @@ export async function handleMatchUpdate(
   try {
     logger.log('📬 Processing match update:', payload, 'isInsert:', isInsert);
 
-    // Se é um novo match (INSERT), disparar sync completo
+    // Se é um novo match (INSERT), disparar sync completo (debounced)
     // porque precisamos dos campos denormalizados (other_user_name, photo, etc)
     // que não vêm no postgres_changes
+    // Debounce agrupa múltiplos matches criados rapidamente em um único sync
     if (isInsert) {
-      logger.log('🔄 New match detected, triggering sync to fetch full data');
-      syncDatabase(database).catch((err) => {
-        logger.error('Failed to sync after new match:', err);
-      });
+      logger.log('🔄 New match detected, scheduling debounced sync');
+      debouncedSync(database);
       return;
     }
 
@@ -237,12 +257,11 @@ export async function handleNewChat(
   try {
     logger.log('💬 New chat detected:', payload.id);
     
-    // Disparar sync completo ao invés de criar localmente
+    // Disparar sync completo (debounced) ao invés de criar localmente
     // Isso evita race conditions e garante dados denormalizados corretos
-    logger.log('🔄 Triggering sync to fetch full chat data');
-    syncDatabase(database).catch((err) => {
-      logger.error('Failed to sync after new chat:', err);
-    });
+    // Debounce agrupa múltiplos chats criados rapidamente em um único sync
+    logger.log('🔄 Scheduling debounced sync for new chat');
+    debouncedSync(database);
   } catch (error) {
     logger.error('Failed to handle new chat:', error);
   }

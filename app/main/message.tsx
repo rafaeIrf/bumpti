@@ -532,15 +532,15 @@ function ChatMessageList({
 
 const EnhancedMessageList = withObservables(
   ["chatId", "limit"],
-  ({ database, chatId, limit }) => ({
+  ({ database, chatId, limit }: any) => ({
     messages: database.collections
-      .get<Message>("messages")
+      .get("messages")
       .query(
         Q.where("chat_id", chatId),
         Q.sortBy("created_at", Q.desc),
         Q.take(limit)
       )
-      .observe(),
+      .observeWithColumns(['status']),
   })
 )(ChatMessageList);
 

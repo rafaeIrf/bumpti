@@ -10,7 +10,7 @@ import { useCallback, useState } from "react";
 /**
  * Status da mensagem durante o envio
  */
-export type MessageStatus = "pending" | "sent" | "delivered" | "error";
+export type MessageStatus = "pending" | "sent" | "delivered" | "failed";
 
 /**
  * Hook para enviar mensagens com optimistic updates
@@ -34,11 +34,11 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           const matchesCollection = database.collections.get<Match>("matches");
           const chat = await chatsCollection.find(chatId);
 
-          // Check if this is the first message
-          const isFirstMessage = !chat.firstMessageAt;
+          // Check if this is the first message (by checking lastMessageAt on chat)
+          const isFirstMessage = !chat.lastMessageAt;
 
           // Use batch for atomic operations
-          const batch = [
+          const batch: any[] = [
             messagesCollection.prepareCreate((message: any) => {
               message.tempId = tempId;
               message.chatId = chatId;
@@ -50,10 +50,6 @@ export function useSendMessage(chatId: string, currentUserId: string) {
             chat.prepareUpdate((c: any) => {
               c.lastMessageContent = content.trim();
               c.lastMessageAt = new Date();
-              // Set first_message_at if this is the first message
-              if (isFirstMessage) {
-                c.firstMessageAt = new Date();
-              }
             }),
           ];
 
@@ -93,6 +89,7 @@ export function useSendMessage(chatId: string, currentUserId: string) {
         });
 
         if (error) throw error;
+        if (!data) throw new Error("No data returned from backend");
 
         // 3. Update with real ID and status
         const realId = data?.messages?.created?.[0]?.id;
@@ -124,9 +121,9 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           });
         }
       } catch (error) {
-        logger.error("Failed to send message:", error);
+        logger.error("❌ Failed to send message:", error);
 
-        // Mark as error
+        // Mark as failed
         await database.write(async () => {
           const messagesCollection = database.collections.get<Message>("messages");
           const messages = await messagesCollection
@@ -135,7 +132,7 @@ export function useSendMessage(chatId: string, currentUserId: string) {
 
           if (messages.length > 0) {
             await messages[0].update((m: any) => {
-              m.status = "error";
+              m.status = "failed";
             });
           }
         });

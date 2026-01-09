@@ -14,7 +14,7 @@ export default class Message extends Model {
   @field('content') content!: string;
   @date('created_at') createdAt!: Date;
   @date('read_at') readAt?: Date;
-  @field('status') status!: 'pending' | 'sent' | 'delivered' | 'read';
+  @field('status') status!: 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
   @field('temp_id') tempId?: string;
   @readonly @date('synced_at') syncedAt!: Date;
 
@@ -35,10 +35,17 @@ export default class Message extends Model {
   /**
    * Atualiza status da mensagem
    */
-  async updateStatus(newStatus: 'pending' | 'sent' | 'delivered' | 'read'): Promise<void> {
+  async updateStatus(newStatus: 'pending' | 'sent' | 'delivered' | 'read' | 'failed'): Promise<void> {
     await this.update(message => {
       message.status = newStatus;
     });
+  }
+  
+  /**
+   * Verifica se mensagem falhou ao enviar
+   */
+  isFailed(): boolean {
+    return this.status === 'failed';
   }
 
   /**
