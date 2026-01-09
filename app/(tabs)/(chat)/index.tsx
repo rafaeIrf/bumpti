@@ -215,7 +215,7 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
       Q.where('last_message_content', Q.notEq(null)),
       Q.sortBy("last_message_at", Q.desc)
     )
-    .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content']),
+    .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content', 'synced_at']),
   // Observe ONLY matches (all matches in DB, matches with messages are in chats above)
   // This ensures badge disappears when match is marked as opened
   matches: database.collections
