@@ -1,4 +1,3 @@
-import { messagesApi } from "@/modules/chats/messagesApi";
 import { interactionsApi } from "@/modules/interactions/interactionsApi";
 import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi"; // Added pendingLikesApi import
 import { placesApi } from "@/modules/places/placesApi";
@@ -6,14 +5,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import {
-  FLUSH,
-  PAUSE,
-  PERSIST,
-  persistReducer,
-  persistStore,
-  PURGE,
-  REGISTER,
-  REHYDRATE,
+    FLUSH,
+    PAUSE,
+    PERSIST,
+    persistReducer,
+    persistStore,
+    PURGE,
+    REGISTER,
+    REHYDRATE
 } from "redux-persist";
 import onboardingReducer from "./slices/onboardingSlice";
 import profileReducer from "./slices/profileSlice";
@@ -31,7 +30,6 @@ const RESET_STORE = "RESET_STORE";
 // Combine reducers
 const appReducer = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
-  [messagesApi.reducerPath]: messagesApi.reducer,
   [interactionsApi.reducerPath]: interactionsApi.reducer,
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
   onboarding: onboardingReducer,
@@ -59,7 +57,6 @@ export const store = configureStore({
       },
     }).concat(
       placesApi.middleware,
-      messagesApi.middleware,
       interactionsApi.middleware,
       pendingLikesApi.middleware
     ),

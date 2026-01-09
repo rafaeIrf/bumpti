@@ -2,13 +2,26 @@ import { ThemedText } from "@/components/themed-text";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { MatchSummary } from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
+export type MatchAvatarProps = {
+  match_id: string;
+  chat_id: string | null;
+  matched_at: string | null;
+  place_id?: string | null; // Optional
+  place_name?: string | null; // Optional
+  is_new_match: boolean; // boolean, not function
+  other_user: {
+    id?: string;
+    name?: string | null;
+    photo_url?: string | null;
+  };
+};
+
 type Props = {
-  readonly match: MatchSummary;
+  readonly match: MatchAvatarProps;
   readonly onPress: () => void;
 };
 

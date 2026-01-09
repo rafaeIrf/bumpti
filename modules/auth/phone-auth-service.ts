@@ -1,6 +1,7 @@
 import { deactivateDeviceToken } from "@/modules/notifications";
 import { supabase } from "@/modules/supabase/client";
 import { AuthError, User } from "@supabase/supabase-js";
+import { resetDatabase } from "../database";
 import { resetGlobalStore } from "../store";
 
 /**
@@ -86,7 +87,13 @@ class PhoneAuthService {
       // Deactivate FCM token before signing out
       await deactivateDeviceToken();
       await supabase.auth.signOut();
+      
+      // Clear local database
+      await resetDatabase();
+      
+      // Clear Redux store
       await resetGlobalStore();
+      
       this.verificationPhone = null;
     } catch (error) {
       console.error("Error signing out:", error);

@@ -162,11 +162,13 @@ Deno.serve(async (req) => {
         .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
     // Generate signed URLs for each photo path (private bucket support)
+    // URLs válidas por 7 dias (alinhado com o cache do WatermelonDB)
+    const SIGNED_URL_EXPIRES = 60 * 60 * 24 * 7; // 604800 segundos = 7 dias
     const signedPhotos: { url: string; position: number }[] = [];
     for (const photo of photos) {
       const { data: signedData, error: signedError } = await supabase.storage
         .from(userPhotosBucket)
-        .createSignedUrl(photo.path, 60 * 60 * 24 * 7); // 7 days
+        .createSignedUrl(photo.path, SIGNED_URL_EXPIRES);
 
       if (signedError) {
         console.error("createSignedUrl error", signedError);

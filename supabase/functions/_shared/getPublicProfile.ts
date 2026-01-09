@@ -1,6 +1,8 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 
-const SIGNED_URL_EXPIRES = 3600;
+// Signed URLs válidas por 24 horas
+// Garantem que fotos funcionem offline por um dia inteiro após o fetch
+const SIGNED_URL_EXPIRES = 60 * 60 * 24; // 86400 segundos = 24 horas
 
 export async function getPublicProfile(
   supabaseClient: any,

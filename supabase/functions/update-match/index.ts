@@ -135,9 +135,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    // If nothing to update (e.g., match already opened), return current state
     if (Object.keys(updates).length === 0) {
-      return new Response(JSON.stringify({ error: "nothing_to_update" }), {
-        status: 400,
+      return new Response(JSON.stringify({ match: matchRow }), {
+        status: 200,
         headers: corsHeaders,
       });
     }

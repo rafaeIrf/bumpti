@@ -1,198 +1,202 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ChatListItem } from "@/components/chat/chat-list-item";
 import { MatchAvatar } from "@/components/chat/match-avatar";
-import { LoadingView } from "@/components/loading-view";
+import { useDatabase } from "@/components/DatabaseProvider";
 import { PotentialConnectionsBanner } from "@/components/potential-connections-banner";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { updateMatch } from "@/modules/chats/api";
-import {
-  ChatSummary,
-  MatchSummary,
-  useGetChatsQuery,
-  useGetMatchesQuery,
-} from "@/modules/chats/messagesApi";
+import { useMarkMatchOpened } from "@/hooks/useMarkMatchOpened";
+import type Chat from "@/modules/database/models/Chat";
+import type Match from "@/modules/database/models/Match";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
+import { Q } from "@nozbe/watermelondb";
+import { withObservables } from "@nozbe/watermelondb/react";
 import { router } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
-export default function ChatScreen() {
+/**
+ * Chat List Component (inner component that receives reactive data)
+ */
+function ChatListScreen({
+  chats,
+  matches,
+}: {
+  chats: Chat[];
+  matches: Match[];
+}) {
   const colors = useThemeColors();
-  const { data: chats = [], isLoading: loadingChats } = useGetChatsQuery();
-  const { data: matchesData = [] } = useGetMatchesQuery();
-  const matches = matchesData;
+  const { profile } = useProfile();
+  const { markMatchAsOpened } = useMarkMatchOpened();
 
   const renderMatchItem = useCallback(
-    ({ item }: { item: MatchSummary }) => (
-      <MatchAvatar
-        match={item}
-        onPress={() => {
-          if (item.is_new_match) {
-            updateMatch({
-              matchId: item.match_id,
-              markOpened: true,
+    ({ item }: { item: Match }) => {
+
+      // Create summary object for MatchAvatar (mapping from Model to UI props)
+      // using properties from the Match model
+      const matchSummary = {
+        match_id: item.id, // Model uses id
+        chat_id: item.chatId,
+        matched_at: item.matchedAt?.toISOString() ?? null,
+        place_id: item.placeId,
+        place_name: item.placeName,
+        is_new_match: profile?.id ? item.isNewMatch(profile.id) : false,
+        other_user: {
+          id: item.otherUserId,
+          name: item.otherUserName,
+          photo_url: item.otherUserPhotoUrl,
+        },
+      };
+
+      return (
+        <MatchAvatar
+          match={matchSummary}
+          onPress={async () => {
+            // Mark match as opened before navigating
+            await markMatchAsOpened(item);
+            
+            router.push({
+              pathname: "/main/message",
+              params: {
+                matchId: item.id,
+                chatId: item.chatId,
+                otherUserId: item.otherUserId,
+                name: item.otherUserName ?? undefined,
+                photoUrl: item.otherUserPhotoUrl ?? undefined,
+                matchPlace: item.placeName ?? undefined,
+                matchedAt: item.matchedAt?.toISOString() ?? undefined,
+              },
             });
-          }
-          const chatId =
-            item.chat_id ??
-            chats.find((c) => c.match_id === item.match_id)?.chat_id ??
-            null;
-          if (!chatId) return;
-          router.push({
-            pathname: "/main/message",
-            params: {
-              matchId: item.match_id,
-              chatId,
-              otherUserId: item.other_user.id,
-              name: item.other_user.name ?? undefined,
-              photoUrl: item.other_user.photo_url ?? undefined,
-              matchPlace: item.place_name ?? undefined,
-              matchedAt: item.matched_at ?? undefined,
-            },
-          });
-        }}
-      />
-    ),
-    [chats]
+          }}
+        />
+      );
+    },
+    [chats, profile?.id, markMatchAsOpened]
   );
 
-  const renderChatItem = useCallback(
-    ({ item }: { item: ChatSummary }) => (
+  // Sort chats by lastMessageAt in the component (not in query)
+  // This ensures observer fires on ANY field change
+  const sortedChats = useMemo(() => {
+    return [...chats].sort((a, b) => {
+      const timeA = a.lastMessageAt?.getTime() ?? a.createdAt?.getTime() ?? 0;
+      const timeB = b.lastMessageAt?.getTime() ?? b.createdAt?.getTime() ?? 0;
+      return timeB - timeA; // desc
+    });
+  }, [chats]);
+
+  const renderChatItem = useCallback(({ item }: { item: Chat }) => {
+    return (
       <ChatListItem
         chat={item}
         onPress={() =>
           router.push({
             pathname: "/main/message",
             params: {
-              chatId: item.chat_id,
-              matchId: item.match_id,
-              name: item.other_user.name,
-              photoUrl: item.other_user.photo_url,
-              matchPlace: item.place_name ?? undefined,
-              otherUserId: item.other_user.id,
-              unreadCount: item.unread_count ?? undefined,
-              lastMessagePreview: item.last_message,
-              matchedAt: item.chat_created_at ?? undefined,
-              firstMessageAt: item.first_message_at ?? undefined,
-              unreadMessages: item.unread_count ?? undefined,
+              chatId: item._raw.id,
+              matchId: item.matchId,
+              name: item.otherUserName || "",
+              photoUrl: item.otherUserPhotoUrl || "",
+              matchPlace: item.placeName ?? undefined,
+              otherUserId: item.otherUserId,
+              unreadCount: item.unreadCount ?? undefined,
+              lastMessagePreview: item.lastMessageContent ?? undefined,
+              matchedAt: item.createdAt?.toISOString() ?? undefined,
             },
           })
         }
       />
-    ),
-    []
-  );
+    );
+  }, []);
 
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
-  const { data: pendingData, isLoading: loadingPending } =
+  const { data: pendingData, loading: loadingPending } =
     useGetPendingLikesQuery(undefined, {
       refetchOnFocus: true,
       refetchOnReconnect: true,
     });
+  // Use data?.count directly, assuming API returns { count, users }
+  // Adjusted based on typical RTK Query usage; verify if pendingData has count property
   const pendingCount = pendingData?.count ?? 0;
   const pendingUsers = useMemo(() => pendingData?.users ?? [], [pendingData]);
-  const pendingPhotos = useMemo(
-    () =>
-      pendingUsers
-        .map((u) => u.photos?.[0])
-        .filter((p): p is string => !!p)
-        .slice(0, 3),
-    [pendingUsers]
-  );
 
-  const { isPremium } = useUserSubscription();
+  const { isPremium, showPaywallForEvent } = useUserSubscription();
 
-  const handleOpenPendingLikes = useCallback(() => {
-    if (pendingUsers.length === 0) return;
-
+  const handlePotentialConnectionsPress = () => {
     if (!isPremium) {
-      router.push("/(modals)/premium-paywall");
-      return;
+      showPaywallForEvent("view_pending_likes");
+    } else {
+      router.push("/main/pending-likes");
     }
+  };
 
-    router.push({
-      pathname: "/(modals)/place-people",
-      params: {
-        placeId: "pending-likes",
-        placeName: t("screens.chat.potentialConnections.title"),
-        initialUsers: JSON.stringify(pendingUsers),
-      },
-    });
-  }, [pendingUsers, isPremium]);
+  // Empty state
+  if (chats.length === 0 && matches.length === 0) {
+    return (
+      <BaseTemplateScreen
+        TopHeader={header}
+      >
+        <ThemedView style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyTitle}>
+            {t("screens.chat.emptyTitle")}
+          </ThemedText>
+          <ThemedText style={styles.emptySubtitle}>
+            {t("screens.chat.emptySubtitle")}
+          </ThemedText>
+        </ThemedView>
+      </BaseTemplateScreen>
+    );
+  }
 
   return (
-    <BaseTemplateScreen TopHeader={header} scrollEnabled={false}>
-      <ThemedView style={styles.flex}>
+    <BaseTemplateScreen
+      TopHeader={header}
+      // Disable BaseTemplateScreen scroll to avoid VirtualizedList error
+      scrollEnabled={false}
+    >
+      <ThemedView style={styles.container}>
         <FlatList
           data={chats}
-          keyExtractor={(item) => item.chat_id}
           renderItem={renderChatItem}
+          keyExtractor={(item) => item._raw.id}
+          contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <>
-              {!loadingPending &&
-              pendingCount > 0 &&
-              pendingPhotos.length > 0 ? (
+              {pendingCount > 0 && (
                 <PotentialConnectionsBanner
                   count={pendingCount}
-                  profilePhotos={pendingPhotos}
-                  onPress={handleOpenPendingLikes}
+                  users={pendingUsers}
+                  onPress={handlePotentialConnectionsPress}
                   style={styles.banner}
                 />
-              ) : null}
-
-              {matches.length > 0 ? (
-                <FlatList
-                  data={matches}
-                  keyExtractor={(item) => item.match_id}
-                  renderItem={renderMatchItem}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  ItemSeparatorComponent={() => (
-                    <View style={{ width: spacing.sm }} />
-                  )}
-                  style={styles.matchesList}
-                />
-              ) : null}
-
+              )}
+              {matches.length > 0 && (
+                <View style={styles.matchesSection}>
+                  <ThemedText style={styles.sectionTitle}>
+                    {t("screens.chat.matches")}
+                  </ThemedText>
+                  <FlatList
+                    horizontal
+                    data={matches}
+                    renderItem={renderMatchItem}
+                    keyExtractor={(item) => item.id}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.matchesContent}
+                  />
+                </View>
+              )}
               {chats.length > 0 && (
                 <ThemedText style={styles.sectionTitle}>
-                  {t("screens.chat.conversationsSection")}
+                  {t("screens.chat.messages")}
                 </ThemedText>
               )}
             </>
-          }
-          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-          ListEmptyComponent={
-            loadingChats ? (
-              <LoadingView />
-            ) : (
-              <View style={[styles.emptyState, { padding: spacing.lg }]}>
-                <ThemedText
-                  style={[typography.subheading, { color: colors.text }]}
-                >
-                  {t("screens.chat.emptyTitle")}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    typography.body,
-                    {
-                      color: colors.textSecondary,
-                      textAlign: "center",
-                      marginTop: spacing.sm,
-                    },
-                  ]}
-                >
-                  {t("screens.chat.emptySubtitle")}
-                </ThemedText>
-              </View>
-            )
           }
         />
       </ThemedView>
@@ -200,28 +204,71 @@ export default function ChatScreen() {
   );
 }
 
+// Enhanced component with WatermelonDB reactive queries
+// CRITICAL: Use observeWithColumns for sorted lists to detect field changes
+const ChatListEnhanced = withObservables([], ({ database }) => ({
+  // Observe ONLY chats WITH messages (last_message_content is NOT NULL)
+  // This ensures re-render when these fields change, not just when records are added/removed
+  chats: database.collections
+    .get<Chat>("chats")
+    .query(
+      Q.where('last_message_content', Q.notEq(null)),
+      Q.sortBy("last_message_at", Q.desc)
+    )
+    .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content']),
+  // Observe ONLY matches (all matches in DB, matches with messages are in chats above)
+  // This ensures badge disappears when match is marked as opened
+  matches: database.collections
+    .get<Match>("matches")
+    .query(Q.sortBy("matched_at", Q.desc))
+    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at']),
+}))(ChatListScreen);
+
+/**
+ * Wrapper that provides database from context
+ */
+export default function ChatScreenWithDatabase() {
+  const database = useDatabase();
+  return <ChatListEnhanced database={database} />;
+}
+
 const styles = StyleSheet.create({
-  flex: {
+  container: {
     flex: 1,
   },
-  loader: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
+  listContent: {
+    paddingBottom: spacing.xl,
   },
   banner: {
-    marginBottom: 0, // Remove margin bottom from banner, control via matchesList marginTop if needed, or keep small
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
-  matchesList: {
-    marginTop: spacing.md, // Reduced from lg to md to bring closer to banner
-    marginBottom: spacing.sm, // Add space between matches and chat list
+  matchesSection: {
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.body,
+    ...typography.subheading,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
+  },
+  matchesContent: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.xl,
+  },
+  emptyTitle: {
+    ...typography.heading,
+    textAlign: "center",
+    marginBottom: spacing.sm,
+  },
+  emptySubtitle: {
+    ...typography.body,
+    textAlign: "center",
   },
 });

@@ -44,7 +44,7 @@ export function PotentialConnectionsBanner({
       >
         {/* Left: Floating photo stack */}
         <View style={styles.photoStack}>
-          {profilePhotos.slice(0, 2).map((photo, index) => (
+          {profilePhotos?.slice(0, 2).map((photo, index) => (
             <View
               key={index}
               style={[

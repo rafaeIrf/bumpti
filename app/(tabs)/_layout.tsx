@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -8,15 +8,17 @@ import {
   MessageCircleIcon,
   UserRoundIcon,
 } from "@/assets/icons";
+import { useDatabase } from "@/components/DatabaseProvider";
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
-import { useChatPrefetch } from "@/hooks/use-chat-prefetch";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProfile } from "@/hooks/use-profile";
 import { useProfilePrefetch } from "@/hooks/use-profile-prefetch";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
-import { useGetChatsQuery } from "@/modules/chats/messagesApi";
+import type Chat from "@/modules/database/models/Chat";
 import { View } from "react-native";
+
+// ... existing imports
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -24,12 +26,25 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   useProfile(); // Preload profile data into Redux
   useProfilePrefetch(); // Background prefetch images
-  useChatPrefetch(); // Background prefetch chat images & data
 
-  const { data: chats = [] } = useGetChatsQuery();
-  const unreadCount = useMemo(() => {
-    return chats.reduce((acc, chat) => acc + (chat.unread_count || 0), 0);
-  }, [chats]);
+  const database = useDatabase();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const subscription = database.collections
+      .get<Chat>("chats")
+      .query()
+      .observe()
+      .subscribe((chats) => {
+        const count = chats.reduce(
+          (acc, chat) => acc + (chat.unreadCount || 0),
+          0
+        );
+        setUnreadCount(count);
+      });
+
+    return () => subscription.unsubscribe();
+  }, [database]);
 
   return (
     <Tabs

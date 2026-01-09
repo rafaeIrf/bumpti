@@ -1,6 +1,10 @@
 import { Message } from "@/modules/chats/api";
 import { supabase } from "@/modules/supabase/client";
-import type { RealtimePostgresInsertPayload, RealtimePostgresUpdatePayload } from "@supabase/supabase-js";
+import type {
+  RealtimeChannel,
+  RealtimePostgresInsertPayload,
+  RealtimePostgresUpdatePayload,
+} from "@supabase/supabase-js";
 
 export type MatchOverviewChange = { type: "refetch" };
 export type ChatListMessageEvent = { type: "message"; message: Message };
@@ -84,36 +88,34 @@ export function subscribeToChatList(onUpdate: (event: ChatListMessageEvent) => v
 }
 
 /**
- * Listen to inserts on messages for a specific chat.
- * Returns unsubscribe function.
+ * Listen to chat messages via broadcast channel (send-and-broadcast).
+ * The backend (push-changes) broadcasts plaintext payload after persisting.
  */
-export function subscribeToChatMessages(
-  chatId: string,
-  onMessage: (message: Message) => void
+export function subscribeToUserMessages(
+  userId: string,
+  onMessage: (message: Message) => void,
+  currentUserId?: string
 ): () => Promise<"ok" | "error" | "timed_out"> {
-  if (!chatId) {
-    throw new Error("chatId is required to subscribe to messages.");
+  if (!userId) {
+    throw new Error("userId is required to subscribe to messages.");
   }
 
-  const channel = supabase
-    .channel(`messages-chat-${chatId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `chat_id=eq.${chatId}`,
-      },
-      (payload: RealtimePostgresInsertPayload<Message>) => {
-        onMessage(payload.new);
+  const channel: RealtimeChannel = supabase
+    .channel(`user:${userId}`)
+    .on("broadcast", { event: "new_message" }, (payload) => {
+      const message = payload?.payload as Message | undefined;
+      if (message) {
+        // Ignore own messages to avoid duplication (already have via optimistic + sync)
+        if (currentUserId && message.sender_id === currentUserId) {
+          return;
+        }
+        onMessage(message);
       }
-    )
+    })
     .subscribe();
 
   return async () => {
     const result = await supabase.removeChannel(channel);
-    // Map "timed out" to "timed_out" for type compatibility
     if (result === "timed out") return "timed_out";
     return result as "ok" | "error" | "timed_out";
   };

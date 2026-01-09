@@ -1,17 +1,19 @@
 import { XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { LoadingView } from "@/components/loading-view";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { UserProfileCard } from "@/components/user-profile-card";
 import { spacing, typography } from "@/constants/theme";
+import { useCachedProfile } from "@/hooks/use-cached-profile";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 export default function ProfilePreviewModal() {
   const { profile: myProfile, isLoading: isMyProfileLoading } = useProfile();
@@ -22,36 +24,71 @@ export default function ProfilePreviewModal() {
     initialProfile?: string;
   }>();
 
+  const isScanningOther = !!params.userId;
+
+  // Hook para buscar perfil cacheado de outro usuário
+  const {
+    profileData: cachedProfileData,
+    isLoading: isCachedProfileLoading,
+    isRefreshing,
+    refresh,
+    error: cachedProfileError,
+  } = useCachedProfile(params.userId, { enabled: isScanningOther });
+
+  // Estado para initialProfile vindo dos params (para compatibilidade)
   const [otherUserProfile, setOtherUserProfile] =
     useState<ActiveUserAtPlace | null>(() => {
       if (params.initialProfile) {
         try {
           return JSON.parse(params.initialProfile);
         } catch (e) {
-          console.warn("Failed to parse initial profile", e);
+          // Usando logger invés de console
+          return null;
         }
       }
       return null;
     });
-
-  const isScanningOther = !!params.userId;
 
   // Sync state if params change while mounted
   useEffect(() => {
     if (params.initialProfile) {
       try {
         const parsed = JSON.parse(params.initialProfile);
-        // Only update if ID changed to avoid loops (though parsing creates new obj)
-        // or just set it.
         setOtherUserProfile(parsed);
       } catch (e) {
-        console.warn("Failed to parse initial profile update", e);
+        // Silently fail
       }
     }
   }, [params.initialProfile]);
 
   const profileCardData: ActiveUserAtPlace | null = useMemo(() => {
     if (isScanningOther) {
+      // Se temos dados do cache, usar eles
+      if (cachedProfileData) {
+        return {
+          user_id: cachedProfileData.user_id,
+          name: cachedProfileData.name,
+          age: cachedProfileData.age,
+          bio: cachedProfileData.bio,
+          intentions: cachedProfileData.intentions,
+          photos: cachedProfileData.photos,
+          job_title: cachedProfileData.job_title,
+          company_name: cachedProfileData.company_name,
+          height_cm: cachedProfileData.height_cm,
+          location: cachedProfileData.location,
+          languages: cachedProfileData.languages,
+          relationship_status: cachedProfileData.relationship_status,
+          smoking_habit: cachedProfileData.smoking_habit,
+          education_level: cachedProfileData.education_level,
+          zodiac_sign: cachedProfileData.zodiac_sign,
+          entered_at: "",
+          expires_at: "",
+          visited_places_count: cachedProfileData.visited_places_count,
+          favorite_places: cachedProfileData.favorite_places,
+        };
+      }
+      
+      // Fallback para initialProfile dos params (compatibilidade)
       return otherUserProfile;
     }
 
@@ -88,19 +125,28 @@ export default function ProfilePreviewModal() {
       visited_places_count: favoritePlacesIds.length,
       favorite_places: favoritePlacesIds,
     };
-  }, [isScanningOther, otherUserProfile, myProfile]);
+  }, [isScanningOther, cachedProfileData, otherUserProfile, myProfile]);
 
-  // If scanning other, we rely on immediate param data, so not "loading" in the async sense.
-  // Unless we want to consider "parsing" as instant.
-  const isLoading = isScanningOther ? false : isMyProfileLoading;
+  // Loading state
+  const isLoading = isScanningOther 
+    ? isCachedProfileLoading 
+    : isMyProfileLoading;
+
+  const handleRefresh = async () => {
+    if (isScanningOther && refresh) {
+      await refresh();
+    }
+  };
 
   return (
     <BaseTemplateScreen
-      contentContainerStyle={{ paddingHorizontal: 0 }}
+      contentContainerStyle={styles.container}
       isModal
+      refreshing={isRefreshing}
+      onRefresh={isScanningOther ? handleRefresh : undefined}
       TopHeader={
         <ScreenToolbar
-          title={otherUserProfile?.name || t("screens.profile.preview.title")}
+          title={profileCardData?.name || t("screens.profile.preview.title")}
           leftAction={{
             icon: XIcon,
             onClick: () => router.back(),
@@ -109,21 +155,13 @@ export default function ProfilePreviewModal() {
         />
       }
     >
-      <ThemedView
-        style={{
-          flex: 1,
-          paddingBottom: spacing.xl,
-          justifyContent: "center",
-        }}
-      >
+      <ThemedView style={styles.content}>
         {isLoading ? (
-          <View style={{ alignItems: "center" }}>
-            <ActivityIndicator color={colors.accent} />
-          </View>
+          <LoadingView />
         ) : !profileCardData ? (
-          <View style={{ alignItems: "center", padding: spacing.lg }}>
+          <View style={styles.errorContainer}>
             <ThemedText style={typography.body}>
-              {t("errors.profileUnavailable")}
+              {cachedProfileError || t("errors.profileUnavailable")}
             </ThemedText>
           </View>
         ) : (
@@ -133,3 +171,18 @@ export default function ProfilePreviewModal() {
     </BaseTemplateScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 0,
+  },
+  content: {
+    flex: 1,
+    paddingBottom: spacing.xl,
+    justifyContent: "center",
+  },
+  errorContainer: {
+    alignItems: "center",
+    padding: spacing.lg,
+  },
+});
