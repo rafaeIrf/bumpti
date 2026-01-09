@@ -134,11 +134,15 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
-    console.log("profile", profile);
+    // Optimistic update: remove profile from local list immediately
+    setAvailableProfiles((prev) =>
+      prev.filter((p) => p.user_id !== profile.user_id)
+    );
+
     interactUser({
       toUserId: profile.user_id,
       action: "like",
-      placeId: profile.place_id || place.id, // Use profile's specific place_id if available (e.g. from pending likes)
+      placeId: profile.place_id || place.id,
     })
       .unwrap()
       .then((response) => {
@@ -146,10 +150,17 @@ export default function PlacePeopleScreen() {
       })
       .catch((error) => {
         console.error("Failed to like profile:", profile.name, error);
+        // Rollback on error: add profile back to list
+        setAvailableProfiles((prev) => [...prev, profile]);
       });
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
+    // Optimistic update: remove profile from local list immediately
+    setAvailableProfiles((prev) =>
+      prev.filter((p) => p.user_id !== profile.user_id)
+    );
+
     interactUser({
       toUserId: profile.user_id,
       action: "dislike",
@@ -161,6 +172,8 @@ export default function PlacePeopleScreen() {
       })
       .catch((error) => {
         console.error("Failed to dislike profile:", profile.name, error);
+        // Rollback on error: add profile back to list
+        setAvailableProfiles((prev) => [...prev, profile]);
       });
   };
 

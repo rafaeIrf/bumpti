@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       chats: await fetchChatsChanges(supabase, supabaseAdmin, user.id, sinceDate, encryptionKey, force_updates, usersWithPhotoUpdates),
       messages: await fetchMessagesChanges(supabase, user.id, sinceDate, encryptionKey, force_updates),
     };
-
+    
     console.log("[Sync] Complete:", {
       matches: counts(changes.matches),
       chats: counts(changes.chats),
@@ -263,7 +263,7 @@ async function transformAndClassifyMatches(
 
     // Extract chat data (can be array or object depending on query)
     const chatData = Array.isArray(match.chats) ? match.chats[0] : match.chats;
-    
+
     const transformed = {
       id: match.id,
       // ALWAYS return chat_id (needed to send messages)
@@ -288,7 +288,7 @@ async function transformAndClassifyMatches(
     // Classificar
     // Nota: matches com status='unmatched' não chegam aqui (filtrados no query)
     if (forceUpdates || hasPhotoUpdate) {
-      updated.push(transformed);
+       updated.push(transformed);
     } else if (!sinceDate || new Date(match.matched_at).getTime() > new Date(sinceDate).getTime()) {
       created.push(transformed);
     } else {
@@ -388,19 +388,19 @@ async function processChat(
 ) {
   // Decrypt last message
   let decryptedMessage = chat.last_message;
-  if (chat.last_message && chat.last_message_iv && chat.last_message_tag) {
-    try {
+      if (chat.last_message && chat.last_message_iv && chat.last_message_tag) {
+        try {
       decryptedMessage = await decryptMessage(
-        chat.last_message,
-        chat.last_message_iv,
-        chat.last_message_tag,
-        encryptionKey
-      );
-    } catch (e) {
+            chat.last_message,
+            chat.last_message_iv,
+            chat.last_message_tag,
+            encryptionKey
+          );
+        } catch (e) {
       console.error(`[Chat ${chat.chat_id}] Decrypt failed:`, e);
       decryptedMessage = "Mensagem criptografada";
-    }
-  }
+        }
+      }
 
   // Sign photo URL
   const photoPath = photosMap.get(chat.other_user_id) || chat.other_user_photo_url;
@@ -408,20 +408,20 @@ async function processChat(
     ? await signPhotoUrl(supabaseAdmin, photoPath)
     : photoPath;
 
-  return {
-    id: chat.chat_id,
-    match_id: chat.match_id,
-    created_at: new Date(chat.chat_created_at).getTime(),
+      return {
+        id: chat.chat_id,
+        match_id: chat.match_id,
+        created_at: new Date(chat.chat_created_at).getTime(),
     last_message_content: decryptedMessage,
-    last_message_at: chat.last_message_at ? new Date(chat.last_message_at).getTime() : null,
-    other_user_id: chat.other_user_id,
-    other_user_name: chat.other_user_name,
-    other_user_photo_url: signedPhotoUrl,
-    place_id: chat.place_id,
-    place_name: chat.place_name,
-    unread_count: Number(chat.unread_count),
-    synced_at: Date.now(),
-  };
+        last_message_at: chat.last_message_at ? new Date(chat.last_message_at).getTime() : null,
+        other_user_id: chat.other_user_id,
+        other_user_name: chat.other_user_name,
+        other_user_photo_url: signedPhotoUrl,
+        place_id: chat.place_id,
+        place_name: chat.place_name,
+        unread_count: Number(chat.unread_count),
+        synced_at: Date.now(),
+      };
 }
 
 function classifyChats(
@@ -444,8 +444,8 @@ function classifyChats(
       created.push(chat);
     } else {
       updated.push(chat);
+        }
     }
-  }
 
   return { created, updated, deleted: [] };
 }

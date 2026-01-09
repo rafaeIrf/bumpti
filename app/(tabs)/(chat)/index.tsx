@@ -20,7 +20,7 @@ import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
@@ -157,11 +157,19 @@ function ChatListScreen({
 
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
-  const { data: pendingData, loading: loadingPending } =
+  const { data: pendingData, isLoading: loadingPending, refetch: refetchPendingLikes } =
     useGetPendingLikesQuery(undefined, {
       refetchOnFocus: true,
       refetchOnReconnect: true,
     });
+  
+  // Refetch when screen comes into focus (e.g., returning from pending likes screen)
+  useFocusEffect(
+    useCallback(() => {
+      refetchPendingLikes();
+    }, [refetchPendingLikes])
+  );
+  
   // Use data?.count directly, assuming API returns { count, users }
   // Adjusted based on typical RTK Query usage; verify if pendingData has count property
   const pendingCount = pendingData?.count ?? 0;
@@ -228,12 +236,11 @@ function ChatListScreen({
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
           ListHeaderComponent={
-            <>
+            <View style={styles.headerContainer}>
               {pendingCount > 0 && (
                 <PotentialConnectionsBanner
                   count={pendingCount}
                   profilePhotos={pendingPhotos}
-                  users={pendingUsers}
                   onPress={handleOpenPendingLikes}
                   style={styles.banner}
                 />
@@ -255,7 +262,7 @@ function ChatListScreen({
                   {t("screens.chat.messages")}
                 </ThemedText>
               )}
-            </>
+            </View>
           }
         />
       </ThemedView>
@@ -304,8 +311,10 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: spacing.xl,
   },
+  headerContainer: {
+    // No padding - BaseTemplateScreen already provides it when scrollEnabled={false}
+  },
   banner: {
-    marginHorizontal: spacing.md,
     marginTop: spacing.md,
     marginBottom: spacing.lg,
   },
@@ -314,11 +323,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.subheading,
-    marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
   matchesContent: {
-    paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
   emptyContainer: {

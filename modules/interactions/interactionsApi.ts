@@ -1,9 +1,10 @@
+import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
 import { placesApi } from "@/modules/places/placesApi";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-    InteractionAction,
-    InteractionResponse,
-    interactUser as interactUserApi,
+  InteractionAction,
+  InteractionResponse,
+  interactUser as interactUserApi,
 } from "./api";
 
 export const interactionsApi = createApi({
@@ -27,11 +28,37 @@ export const interactionsApi = createApi({
         }
       },
       async onQueryStarted(
-        { placeId },
+        { toUserId, action, placeId },
         { dispatch, queryFulfilled, getState }
       ) {
         // Array to store all patches for rollback
         const patches: Array<{ undo: () => void }> = [];
+
+        // Optimistic update for pending likes (when user likes/dislikes a pending like)
+        // Only update if action is 'like' or 'dislike' (not other actions)
+        if (action === 'like' || action === 'dislike') {
+          try {
+            const patch = dispatch(
+              pendingLikesApi.util.updateQueryData(
+                'getPendingLikes',
+                undefined,
+                (draft) => {
+                  if (draft?.users) {
+                    // Remove the user from the list
+                    draft.users = draft.users.filter((u: any) => u.user_id !== toUserId);
+                    // Decrement count
+                    if (draft.count > 0) {
+                      draft.count = Math.max(0, draft.count - 1);
+                    }
+                  }
+                }
+              )
+            );
+            patches.push(patch);
+          } catch (e) {
+            // Cache entry doesn't exist or error, ignore
+          }
+        }
 
         // 1. Update ALL nearby places cache entries - decrement active_users
         // Get all cache entries from the state
@@ -170,6 +197,14 @@ export const interactionsApi = createApi({
 
         try {
           await queryFulfilled;
+          
+          // Invalidate pending likes cache to trigger silent refetch
+          // This ensures backend data is fresh after the interaction
+          dispatch(
+            pendingLikesApi.util.invalidateTags([
+              { type: 'PendingLikes', id: 'LIST' },
+            ])
+          );
         } catch {
           // Rollback all optimistic updates on error
           patches.forEach((patch) => patch.undo());
