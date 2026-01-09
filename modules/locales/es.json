@@ -756,6 +756,7 @@
     },
     "chat": {
       "title": "Chat",
+      "messages": "Mensajes",
       "messagePlaceholder": "Escribe un mensaje...",
       "emptyTitle": "Aún no hay conversaciones",
       "emptySubtitle": "Empieza a conectar con personas cercanas para comenzar a chatear.",

@@ -756,6 +756,7 @@
     },
     "chat": {
       "title": "Chat",
+      "messages": "Messages",
       "messagePlaceholder": "Type a message...",
       "emptyTitle": "No conversations yet",
       "emptySubtitle": "Start connecting with people nearby to begin chatting.",

@@ -1,5 +1,5 @@
--- Fix get_user_chats_for_sync to only return chats WITH messages
--- Matches without messages should be returned by fetchMatchesChanges, not fetchChatsChanges
+-- Allow sync to return chats without messages (first_message_at can be null)
+-- The frontend will filter for display
 
 CREATE OR REPLACE FUNCTION get_user_chats_for_sync(
   p_user_id UUID,
@@ -30,7 +30,7 @@ BEGIN
       c.id as c_id,
       c.match_id as c_match_id,
       c.created_at as c_created_at,
-      c.first_message_at as c_first_message_at, -- ← IMPORTANTE: Incluir para filtrar
+      c.first_message_at as c_first_message_at,
       
       -- Last message details (subquery)
       (
@@ -91,8 +91,8 @@ BEGIN
     WHERE 
       (um.user_a = p_user_id OR um.user_b = p_user_id)
       AND um.status = 'active'
-      -- Retorna TODOS os chats (com e sem mensagens)
-      -- O filtro de exibição será feito no frontend
+      -- Removed filter: c.first_message_at IS NOT NULL
+      -- Now returns ALL chats (with and without messages)
   )
   SELECT 
     cd.c_id,
@@ -136,9 +136,6 @@ BEGIN
     cd.last_msg_at DESC NULLS LAST;
 END;
 $$;
-
--- Grant execute permission
-GRANT EXECUTE ON FUNCTION get_user_chats_for_sync(UUID, TIMESTAMPTZ) TO authenticated;
 
 COMMENT ON FUNCTION get_user_chats_for_sync IS 
 'Returns ALL chats (with and without messages). 

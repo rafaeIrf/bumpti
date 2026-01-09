@@ -203,9 +203,6 @@ function ChatListScreen({
               )}
               {matches.length > 0 && (
                 <View style={styles.matchesSection}>
-                  <ThemedText style={styles.sectionTitle}>
-                    {t("screens.chat.matches")}
-                  </ThemedText>
                   <FlatList
                     horizontal
                     data={matches}
@@ -241,12 +238,14 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
       Q.sortBy("last_message_at", Q.desc)
     )
     .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content', 'synced_at']),
-  // Observe ONLY matches (all matches in DB, matches with messages are in chats above)
-  // This ensures badge disappears when match is marked as opened
+  // Observe ALL matches returned by backend
+  // Backend already filters to only return matches without messages (first_message_at = null)
   matches: database.collections
     .get<Match>("matches")
-    .query(Q.sortBy("matched_at", Q.desc))
-    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at']),
+    .query(
+      Q.sortBy("matched_at", Q.desc)
+    )
+    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at', 'chat_id']),
 }))(ChatListScreen);
 
 /**
