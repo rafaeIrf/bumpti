@@ -158,43 +158,17 @@ async function fetchMatchesChanges(
     usersWithPhotoUpdates
   );
 
-  // Filtrar: apenas matches SEM chat com mensagens
-  const matchesWithoutMessages = matches.filter((m) => {
-    const chatsData = m.chats;
-    
-    // Debug: log estrutura do campo chats
-    console.log(`[Match ${m.id}] Raw chats data:`, JSON.stringify(chatsData));
-    
-    // Se não tem chats ou é array vazio → match sem chat → OK
-    if (!chatsData || (Array.isArray(chatsData) && chatsData.length === 0)) {
-      console.log(`[Match ${m.id}] NO CHAT - Include in matches ✓`);
-      return true;
-    }
-    
-    // Se tem chats, verificar se tem mensagens
-    if (Array.isArray(chatsData) && chatsData.length > 0) {
-      const firstChat = chatsData[0];
-      const hasMessages = firstChat && firstChat.first_message_at !== null;
-      console.log(`[Match ${m.id}] HAS CHAT with messages=${hasMessages} - ${hasMessages ? 'EXCLUDE ✗' : 'Include ✓'}`);
-      return !hasMessages; // Retorna true apenas se NÃO tem mensagens
-    }
-    
-    // Fallback: incluir por segurança
-    console.log(`[Match ${m.id}] Unexpected format - Include by default`);
-    return true;
-  });
-
-  console.log("[Matches] Total:", matches.length, "without messages:", matchesWithoutMessages.length);
+  console.log("[fetchMatchesChanges] Total matches fetched:", matches.length);
 
   // Buscar fotos em batch (não um por um!)
-  const userIds = matchesWithoutMessages.map((m) => 
+  const userIds = matches.map((m) => 
     m.user_a === userId ? m.user_b : m.user_a
   );
   const photosMap = await fetchPhotosInBatch(supabaseAdmin, userIds);
 
   // Transformar e classificar
   return await transformAndClassifyMatches(
-    matchesWithoutMessages,
+    matches,
     userId,
     sinceDate,
     forceUpdates,
@@ -218,13 +192,13 @@ async function fetchMatchesFromDB(
       place_id, place_name, user_a_opened_at, user_b_opened_at,
       profile_a:profiles!user_a(id, name),
       profile_b:profiles!user_b(id, name),
-      chats!inner(
+      chats(
         id,
         first_message_at
       )
     `)
     .or(`user_a.eq.${userId},user_b.eq.${userId}`)
-    .is("chats.first_message_at", null);
+    .eq('status', 'active'); // Apenas matches ativos (não desmanchados)
 
 
   // Filtro de data: mudanças recentes OU photo updates
@@ -287,9 +261,15 @@ async function transformAndClassifyMatches(
       .filter(Boolean)
       .map((t) => new Date(t).getTime());
 
+    // Extract chat data (can be array or object depending on query)
+    const chatData = Array.isArray(match.chats) ? match.chats[0] : match.chats;
+    
     const transformed = {
       id: match.id,
-      chat_id: match.chats?.id || null,
+      // ALWAYS return chat_id (needed to send messages)
+      chat_id: chatData?.id || null,
+      // Denormalize first_message_at from chat (to filter matches in frontend)
+      first_message_at: chatData?.first_message_at ? new Date(chatData.first_message_at).getTime() : null,
       user_a: match.user_a,
       user_b: match.user_b,
       status: match.status,
@@ -306,9 +286,8 @@ async function transformAndClassifyMatches(
     };
 
     // Classificar
-    if (match.status === "unmatched" && sinceDate && !forceUpdates) {
-      deleted.push(match.id);
-    } else if (forceUpdates || hasPhotoUpdate) {
+    // Nota: matches com status='unmatched' não chegam aqui (filtrados no query)
+    if (forceUpdates || hasPhotoUpdate) {
       updated.push(transformed);
     } else if (!sinceDate || new Date(match.matched_at).getTime() > new Date(sinceDate).getTime()) {
       created.push(transformed);

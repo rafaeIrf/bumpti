@@ -58,5 +58,17 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 5,
+      steps: [
+        // Add first_message_at to matches table (denormalized from chat)
+        addColumns({
+          table: 'matches',
+          columns: [
+            { name: 'first_message_at', type: 'number', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

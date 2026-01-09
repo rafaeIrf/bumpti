@@ -19,6 +19,7 @@ export default class Match extends Model {
   @field('other_user_name') otherUserName?: string;
   @field('other_user_photo_url') otherUserPhotoUrl?: string;
   @field('place_name') placeName?: string;
+  @date('first_message_at') firstMessageAt?: Date;
 
   /**
    * Marca o match como aberto pelo usuário atual

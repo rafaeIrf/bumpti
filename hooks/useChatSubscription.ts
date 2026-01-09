@@ -31,7 +31,6 @@ export function useGlobalSubscriptions(currentUserId: string | null) {
         const database = await getDatabase();
         const newChannels: RealtimeChannel[] = [];
 
-        // 1. Matches via postgres_changes (dados em claro)
         const matchChannel = supabase
           .channel(`matches-${currentUserId}`)
           .on(
@@ -39,7 +38,7 @@ export function useGlobalSubscriptions(currentUserId: string | null) {
             { event: 'INSERT', schema: 'public', table: 'user_matches' },
             async (event) => {
               logger.log('📬 Match INSERT:', event);
-              await handleMatchUpdate(event.new, database);
+              await handleMatchUpdate(event.new, database, true); // isInsert = true
             },
           )
           .on(
@@ -47,7 +46,7 @@ export function useGlobalSubscriptions(currentUserId: string | null) {
             { event: 'UPDATE', schema: 'public', table: 'user_matches' },
             async (event) => {
               logger.log('📬 Match UPDATE:', event);
-              await handleMatchUpdate(event.new, database);
+              await handleMatchUpdate(event.new, database, false); // isInsert = false
             },
           )
           .subscribe();

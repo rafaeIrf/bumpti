@@ -51,6 +51,8 @@ export async function handleNewMessageBroadcast(
         // 2. Prepare chat update
         try {
           const chat = await chatsCollection.find(chat_id);
+          const isFirstMessage = !chat.lastMessageAt;
+          
           const updatedChat = chat.prepareUpdate((c: any) => {
             c.lastMessageContent = content;
             c.lastMessageAt = new Date(created_at);
@@ -59,12 +61,27 @@ export async function handleNewMessageBroadcast(
             }
           });
           batch.push(updatedChat);
+          
+          // 3. If first message, also update the match
+          if (isFirstMessage && chat.matchId) {
+            try {
+              const matchesCollection = database.collections.get<Match>('matches');
+              const match = await matchesCollection.find(chat.matchId);
+              const updatedMatch = match.prepareUpdate((m: any) => {
+                m.firstMessageAt = new Date(created_at);
+              });
+              batch.push(updatedMatch);
+              logger.log(`✅ Will update match ${chat.matchId} with first_message_at (realtime)`);
+            } catch (matchError) {
+              logger.warn(`Could not find match ${chat.matchId} to update:`, matchError);
+            }
+          }
         } catch (error) {
           logger.error('Chat not found for message:', chat_id, error);
           shouldSyncAfter = true;
         }
 
-        // 3. Execute all operations atomically
+        // 4. Execute all operations atomically
         if (batch.length > 0) {
           await database.batch(...batch);
         }
@@ -78,13 +95,34 @@ export async function handleNewMessageBroadcast(
         try {
           await database.write(async () => {
             const chat = await chatsCollection.find(chat_id);
-            await chat.update((c: any) => {
+            const isFirstMessage = !chat.lastMessageAt;
+            const batchForConstraint: any[] = [];
+            
+            const updatedChat = chat.prepareUpdate((c: any) => {
               c.lastMessageContent = content;
               c.lastMessageAt = new Date(created_at);
               if (sender_id !== currentUserId) {
                 c.unreadCount = (c.unreadCount || 0) + 1;
               }
             });
+            batchForConstraint.push(updatedChat);
+            
+            // If first message, also update the match
+            if (isFirstMessage && chat.matchId) {
+              try {
+                const matchesCollection = database.collections.get<Match>('matches');
+                const match = await matchesCollection.find(chat.matchId);
+                const updatedMatch = match.prepareUpdate((m: any) => {
+                  m.firstMessageAt = new Date(created_at);
+                });
+                batchForConstraint.push(updatedMatch);
+                logger.log(`✅ Will update match ${chat.matchId} with first_message_at (constraint error path)`);
+              } catch (matchError) {
+                logger.warn(`Could not find match ${chat.matchId} to update:`, matchError);
+              }
+            }
+            
+            await database.batch(...batchForConstraint);
           });
         } catch (chatError) {
           logger.error('Failed to update chat after constraint error:', chatError);
@@ -109,28 +147,74 @@ export async function handleNewMessageBroadcast(
 
 /**
  * Processa atualização de match
+ * 
+ * Para INSERT (novo match): dispara sync completo pois precisamos dos dados denormalizados
+ * Para UPDATE (match existente): atualiza campos específicos localmente
+ * 
+ * Nota: RLS garante que postgres_changes só dispara para matches do usuário atual
  */
 export async function handleMatchUpdate(
   payload: any,
-  database: Database
+  database: Database,
+  isInsert: boolean = false
 ): Promise<void> {
   try {
-    logger.log('📬 Processing match update:', payload);
+    logger.log('📬 Processing match update:', payload, 'isInsert:', isInsert);
 
+    // Se é um novo match (INSERT), disparar sync completo
+    // porque precisamos dos campos denormalizados (other_user_name, photo, etc)
+    // que não vêm no postgres_changes
+    if (isInsert) {
+      logger.log('🔄 New match detected, triggering sync to fetch full data');
+      syncDatabase(database).catch((err) => {
+        logger.error('Failed to sync after new match:', err);
+      });
+      return;
+    }
+
+    // Para UPDATE, verificar se foi unmatch e deletar localmente
     await database.write(async () => {
       const matchesCollection = database.collections.get<Match>('matches');
+      const chatsCollection = database.collections.get<Chat>('chats');
       
-      const { id, ...updateData } = payload;
+      const { id, status, ...updateData } = payload;
       
       try {
         const match = await matchesCollection.find(id);
+        
+        // Se foi unmatch, deletar localmente o match E o chat associado
+        if (status === 'unmatched') {
+          // Buscar e deletar o chat associado (se existir)
+          const associatedChats = await chatsCollection
+            .query(Q.where('match_id', id))
+            .fetch();
+          
+          const deleteOperations: any[] = [match.prepareMarkAsDeleted()];
+          
+          if (associatedChats.length > 0) {
+            logger.log(`🗑️ Found ${associatedChats.length} chat(s) to delete for unmatched match:`, id);
+            associatedChats.forEach((chat) => {
+              deleteOperations.push(chat.prepareMarkAsDeleted());
+            });
+          }
+          
+          await database.batch(...deleteOperations);
+          logger.log('🗑️ Match and associated chat(s) deleted due to unmatch:', id);
+          return;
+        }
+        
+        // Caso contrário, atualizar campos
         await match.update((m: any) => {
+          m.status = status;
           Object.assign(m, updateData);
         });
         logger.log('✅ Match updated:', id);
       } catch (error) {
-        // Match não existe localmente, será pego no próximo sync
-        logger.warn('Match not found locally, will sync:', id);
+        // Match não existe localmente, disparar sync
+        logger.warn('Match not found locally, triggering sync:', id);
+        syncDatabase(database).catch((err) => {
+          logger.error('Failed to sync after match not found:', err);
+        });
       }
     });
   } catch (error) {
@@ -140,32 +224,24 @@ export async function handleMatchUpdate(
 
 /**
  * Processa novo chat (novo match com primeira mensagem)
+ * 
+ * Dispara sync completo pois precisamos dos dados denormalizados
+ * Isso evita race conditions entre realtime e sync
+ * 
+ * Nota: RLS garante que postgres_changes só dispara para chats do usuário atual
  */
 export async function handleNewChat(
   payload: any,
   database: Database
 ): Promise<void> {
   try {
-    logger.log('💬 Processing new chat:', payload);
-
-    await database.write(async () => {
-      const chatsCollection = database.collections.get<Chat>('chats');
-      
-      const { id, ...chatData } = payload;
-      
-      // Verificar se já existe
-      const existing = await chatsCollection.query(Q.where('id', id)).fetch();
-      if (existing.length > 0) {
-        logger.log('Chat already exists:', id);
-        return;
-      }
-
-      await chatsCollection.create((chat: any) => {
-        chat._raw.id = id;
-        Object.assign(chat, chatData);
-      });
-
-      logger.log('✅ New chat created:', id);
+    logger.log('💬 New chat detected:', payload.id);
+    
+    // Disparar sync completo ao invés de criar localmente
+    // Isso evita race conditions e garante dados denormalizados corretos
+    logger.log('🔄 Triggering sync to fetch full chat data');
+    syncDatabase(database).catch((err) => {
+      logger.error('Failed to sync after new chat:', err);
     });
   } catch (error) {
     logger.error('Failed to handle new chat:', error);

@@ -1,5 +1,6 @@
 import { useDatabase } from '@/components/DatabaseProvider';
 import type Chat from "@/modules/database/models/Chat";
+import type Match from "@/modules/database/models/Match";
 import type Message from "@/modules/database/models/Message";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
@@ -30,7 +31,11 @@ export function useSendMessage(chatId: string, currentUserId: string) {
         await database.write(async () => {
           const messagesCollection = database.collections.get<Message>("messages");
           const chatsCollection = database.collections.get<Chat>("chats");
+          const matchesCollection = database.collections.get<Match>("matches");
           const chat = await chatsCollection.find(chatId);
+
+          // Check if this is the first message
+          const isFirstMessage = !chat.firstMessageAt;
 
           // Use batch for atomic operations
           const batch = [
@@ -45,8 +50,27 @@ export function useSendMessage(chatId: string, currentUserId: string) {
             chat.prepareUpdate((c: any) => {
               c.lastMessageContent = content.trim();
               c.lastMessageAt = new Date();
+              // Set first_message_at if this is the first message
+              if (isFirstMessage) {
+                c.firstMessageAt = new Date();
+              }
             }),
           ];
+
+          // If this is the first message, also update the match
+          if (isFirstMessage && chat.matchId) {
+            try {
+              const match = await matchesCollection.find(chat.matchId);
+              batch.push(
+                match.prepareUpdate((m: any) => {
+                  m.firstMessageAt = new Date();
+                })
+              );
+              logger.log(`✅ Will update match ${chat.matchId} with first_message_at`);
+            } catch (error) {
+              logger.warn(`Could not find match ${chat.matchId} to update:`, error);
+            }
+          }
 
           await database.batch(...batch);
         });

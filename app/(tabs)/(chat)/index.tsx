@@ -150,19 +150,37 @@ function ChatListScreen({
   // Adjusted based on typical RTK Query usage; verify if pendingData has count property
   const pendingCount = pendingData?.count ?? 0;
   const pendingUsers = useMemo(() => pendingData?.users ?? [], [pendingData]);
+  const pendingPhotos = useMemo(
+    () =>
+      pendingUsers
+        .map((u) => u.photos?.[0])
+        .filter((p): p is string => !!p)
+        .slice(0, 3),
+    [pendingUsers]
+  );
 
-  const { isPremium, showPaywallForEvent } = useUserSubscription();
+  const { isPremium } = useUserSubscription();
 
-  const handlePotentialConnectionsPress = () => {
+  const handleOpenPendingLikes = useCallback(() => {
+    if (pendingUsers.length === 0) return;
+
     if (!isPremium) {
-      showPaywallForEvent("view_pending_likes");
-    } else {
-      router.push("/main/pending-likes");
+      router.push("/(modals)/premium-paywall");
+      return;
     }
-  };
+
+    router.push({
+      pathname: "/(modals)/place-people",
+      params: {
+        placeId: "pending-likes",
+        placeName: t("screens.chat.potentialConnections.title"),
+        initialUsers: JSON.stringify(pendingUsers),
+      },
+    });
+  }, [pendingUsers, isPremium]);
 
   // Empty state
-  if (chats.length === 0 && matches.length === 0) {
+  if (chats.length === 0 && matches.length === 0 && pendingCount === 0) {
     return (
       <BaseTemplateScreen
         TopHeader={header}
@@ -196,8 +214,9 @@ function ChatListScreen({
               {pendingCount > 0 && (
                 <PotentialConnectionsBanner
                   count={pendingCount}
+                  profilePhotos={pendingPhotos}
                   users={pendingUsers}
-                  onPress={handlePotentialConnectionsPress}
+                  onPress={handleOpenPendingLikes}
                   style={styles.banner}
                 />
               )}
@@ -240,12 +259,16 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
     .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content', 'synced_at']),
   // Observe ALL matches returned by backend
   // Backend already filters to only return matches without messages (first_message_at = null)
+  // Observe ONLY matches WITHOUT messages (first_message_at = null)
+  // Backend always returns chat_id (needed to send messages) and first_message_at
+  // When first message is sent, sync updates match.first_message_at and it disappears from this list
   matches: database.collections
     .get<Match>("matches")
     .query(
+      Q.where('first_message_at', null),
       Q.sortBy("matched_at", Q.desc)
     )
-    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at', 'chat_id']),
+    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at', 'chat_id', 'first_message_at', 'synced_at']),
 }))(ChatListScreen);
 
 /**
