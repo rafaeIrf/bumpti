@@ -12,6 +12,7 @@ import { useDatabase } from "@/components/DatabaseProvider";
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePendingLikesPrefetch } from "@/hooks/use-pending-likes-prefetch";
 import { useProfile } from "@/hooks/use-profile";
 import { useProfilePrefetch } from "@/hooks/use-profile-prefetch";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
@@ -26,6 +27,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   useProfile(); // Preload profile data into Redux
   useProfilePrefetch(); // Background prefetch images
+  usePendingLikesPrefetch();
 
   const database = useDatabase();
   const [unreadCount, setUnreadCount] = useState(0);

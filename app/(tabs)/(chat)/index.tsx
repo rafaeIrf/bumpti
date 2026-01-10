@@ -20,7 +20,7 @@ import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
@@ -43,21 +43,21 @@ function ChatListScreen({
   // Prefetch all chat and match images when screen loads
   useEffect(() => {
     const allImageUrls: string[] = [];
-    
+
     // Collect all chat images
     chats.forEach((chat) => {
       if (chat.otherUserPhotoUrl) {
         allImageUrls.push(chat.otherUserPhotoUrl);
       }
     });
-    
+
     // Collect all match images
     matches.forEach((match) => {
       if (match.otherUserPhotoUrl) {
         allImageUrls.push(match.otherUserPhotoUrl);
       }
     });
-    
+
     // Prefetch all images in parallel
     if (allImageUrls.length > 0) {
       prefetchImages(allImageUrls);
@@ -70,7 +70,7 @@ function ChatListScreen({
     try {
       await syncDatabase(database, true); // forceFullSync = true
     } catch (error) {
-      logger.error('Failed to refresh:', error);
+      logger.error("Failed to refresh:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -78,7 +78,6 @@ function ChatListScreen({
 
   const renderMatchItem = useCallback(
     ({ item }: { item: Match }) => {
-
       // Create summary object for MatchAvatar (mapping from Model to UI props)
       // using properties from the Match model
       const matchSummary = {
@@ -101,7 +100,7 @@ function ChatListScreen({
           onPress={async () => {
             // Mark match as opened before navigating
             await markMatchAsOpened(item);
-            
+
             router.push({
               pathname: "/main/message",
               params: {
@@ -157,19 +156,11 @@ function ChatListScreen({
 
   const header = <ScreenToolbar title={t("screens.chat.title")} />;
 
-  const { data: pendingData, isLoading: loadingPending, refetch: refetchPendingLikes } =
-    useGetPendingLikesQuery(undefined, {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-    });
-  
-  // Refetch when screen comes into focus (e.g., returning from pending likes screen)
-  useFocusEffect(
-    useCallback(() => {
-      refetchPendingLikes();
-    }, [refetchPendingLikes])
-  );
-  
+  const { data: pendingData } = useGetPendingLikesQuery(undefined, {
+    refetchOnFocus: false,
+    refetchOnReconnect: true,
+  });
+
   // Use data?.count directly, assuming API returns { count, users }
   // Adjusted based on typical RTK Query usage; verify if pendingData has count property
   const pendingCount = pendingData?.count ?? 0;
@@ -188,10 +179,10 @@ function ChatListScreen({
   const handleOpenPendingLikes = useCallback(() => {
     if (pendingUsers.length === 0) return;
 
-    // if (!isPremium) {
-    //   router.push("/(modals)/premium-paywall");
-    //   return;
-    // }
+    if (!isPremium) {
+      router.push("/(modals)/premium-paywall");
+      return;
+    }
 
     router.push({
       pathname: "/(modals)/place-people",
@@ -206,9 +197,7 @@ function ChatListScreen({
   // Empty state
   if (chats.length === 0 && matches.length === 0 && pendingCount === 0) {
     return (
-      <BaseTemplateScreen
-        TopHeader={header}
-      >
+      <BaseTemplateScreen TopHeader={header}>
         <ThemedView style={styles.emptyContainer}>
           <ThemedText style={styles.emptyTitle}>
             {t("screens.chat.emptyTitle")}
@@ -278,10 +267,15 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
   chats: database.collections
     .get<Chat>("chats")
     .query(
-      Q.where('last_message_content', Q.notEq(null)),
+      Q.where("last_message_content", Q.notEq(null)),
       Q.sortBy("last_message_at", Q.desc)
     )
-    .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content', 'synced_at']),
+    .observeWithColumns([
+      "last_message_at",
+      "unread_count",
+      "last_message_content",
+      "synced_at",
+    ]),
   // Observe ALL matches returned by backend
   // Backend already filters to only return matches without messages (first_message_at = null)
   // Observe ONLY matches WITHOUT messages (first_message_at = null)
@@ -289,11 +283,14 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
   // When first message is sent, sync updates match.first_message_at and it disappears from this list
   matches: database.collections
     .get<Match>("matches")
-    .query(
-      Q.where('first_message_at', null),
-      Q.sortBy("matched_at", Q.desc)
-    )
-    .observeWithColumns(['user_a_opened_at', 'user_b_opened_at', 'chat_id', 'first_message_at', 'synced_at']),
+    .query(Q.where("first_message_at", null), Q.sortBy("matched_at", Q.desc))
+    .observeWithColumns([
+      "user_a_opened_at",
+      "user_b_opened_at",
+      "chat_id",
+      "first_message_at",
+      "synced_at",
+    ]),
 }))(ChatListScreen);
 
 /**

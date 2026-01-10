@@ -14,7 +14,6 @@ import {
 } from "react-native";
 
 import { typography } from "@/constants/theme";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface PotentialConnectionsBannerProps {
   count: number;
@@ -33,15 +32,7 @@ export function PotentialConnectionsBanner({
 
   return (
     <Pressable onPress={onPress} style={style}>
-      <LinearGradient
-        colors={[
-          (colors as any).cardGradientStart ?? colors.surface,
-          (colors as any).cardGradientEnd ?? colors.surface,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.banner}
-      >
+      <View style={styles.banner}>
         {/* Left: Floating photo stack */}
         <View style={styles.photoStack}>
           {profilePhotos?.slice(0, 2).map((photo, index) => (
@@ -84,7 +75,7 @@ export function PotentialConnectionsBanner({
             {t("screens.chat.potentialConnections.cta")}
           </ThemedText>
         </View>
-      </LinearGradient>
+      </View>
     </Pressable>
   );
 }
@@ -93,9 +84,6 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 24,
     gap: 16,
   },
   photoStack: {
