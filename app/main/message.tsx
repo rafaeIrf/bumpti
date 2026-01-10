@@ -137,7 +137,9 @@ function ChatMessageList({
   // Pre-carregar perfil do outro usuário em background quando chat abre
   useEffect(() => {
     if (otherUserId) {
-      logger.log(`[ChatMessageList] Preloading profile for other user: ${otherUserId}`);
+      logger.log(
+        `[ChatMessageList] Preloading profile for other user: ${otherUserId}`
+      );
       preloadProfile(otherUserId);
     }
   }, [otherUserId]);
@@ -513,15 +515,11 @@ function ChatMessageList({
               },
             ]}
           >
-            {isSending ? (
-              <ActivityIndicator color={colors.textPrimary} size="small" />
-            ) : (
-              <SendHorizontalIcon
-                width={20}
-                height={20}
-                color={colors.textPrimary}
-              />
-            )}
+            <SendHorizontalIcon
+              width={20}
+              height={20}
+              color={colors.textPrimary}
+            />
           </Pressable>
         </View>
         <Animated.View style={fakeView} />
@@ -540,7 +538,7 @@ const EnhancedMessageList = withObservables(
         Q.sortBy("created_at", Q.desc),
         Q.take(limit)
       )
-      .observeWithColumns(['status']),
+      .observeWithColumns(["status"]),
   })
 )(ChatMessageList);
 

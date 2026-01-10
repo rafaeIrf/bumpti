@@ -13,7 +13,7 @@ import {
   ViewStyle,
 } from "react-native";
 
-import { typography } from "@/constants/theme";
+import { spacing, typography } from "@/constants/theme";
 
 interface PotentialConnectionsBannerProps {
   count: number;
@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
+    marginBottom: spacing.sm,
   },
   photoStack: {
     width: 52,
