@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
 
 const corsHeaders = {
@@ -31,27 +32,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    return new Response(
-      JSON.stringify({ error: "unauthorized", message: "Missing access token" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  // Use requireAuth helper for consistent auth handling
+  const authResult = await requireAuth(req);
+  if (!authResult.success) {
+    return authResult.response;
   }
 
+  const { user } = authResult;
+  const userId = user.id;
+
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
-    if (userError || !user?.id) {
-      throw new Error(userError?.message ?? "User not found");
-    }
-
-    const userId = user.id;
 
     const [
       profileResult,

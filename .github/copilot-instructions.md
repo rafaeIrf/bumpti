@@ -109,7 +109,7 @@ logger.error("Failed to fetch data:", error);
 
 - Navigate to modal: `router.push('/modal')`
 - Go to a specific tab: `router.replace('/(tabs)')`
-- Open a screen in a group: `router.push('/(onboarding)/welcome')`
+- Open a screen in a group: `router.push('/(auth)/welcome')`
 
 ## State and persistence
 

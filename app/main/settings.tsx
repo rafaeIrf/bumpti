@@ -60,7 +60,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await phoneAuthService.signOut();
-              router.replace("/(onboarding)/welcome");
+              router.replace("/(auth)/welcome");
             } catch (error) {
               logger.error("Error signing out:", error);
               Alert.alert(t("errors.generic"));
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
               while (router.canGoBack()) {
                 router.back();
               }
-              router.replace("/(onboarding)/welcome");
+              router.replace("/(auth)/welcome");
             } catch (error) {
               logger.error("Error deleting account:", error);
               Alert.alert(t("errors.generic"));

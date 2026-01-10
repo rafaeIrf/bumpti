@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
   }));
 
   const handlePhoneAuth = () => {
-    router.push("/(onboarding)/phone-auth");
+    router.push("/(auth)/phone-auth");
   };
 
   const handleAppleAuth = () => {
@@ -64,7 +64,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <BaseTemplateScreen scrollEnabled={false}>
+    <BaseTemplateScreen>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Illustration/Icon */}
         <Animated.View

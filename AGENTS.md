@@ -74,6 +74,9 @@ import { t } from "@/modules/locales";
 - Avoid unnecessary dependencies; prefer Expo/React Native APIs already present.
 - Handle errors safely and quietly when appropriate (concise logs, don't break UI).
 - **NEVER write directly to database or make API calls in UI components** - always encapsulate logic in hooks or services.
+- **NEVER use dynamic imports** - always import modules at the top of the file using static `import` statements.
+  - ❌ WRONG: `const { phoneAuthService } = await import("@/modules/auth/phone-auth-service");`
+  - ✅ CORRECT: `import { phoneAuthService } from "@/modules/auth/phone-auth-service";` (at top of file)
 
 ## Logging
 
@@ -111,7 +114,7 @@ logger.error("Failed to fetch data:", error);
 
 - Navigate to modal: `router.push('/modal')`
 - Go to a specific tab: `router.replace('/(tabs)')`
-- Open a screen in a group: `router.push('/(onboarding)/welcome')`
+- Open a screen in a group: `router.push('/(auth)/welcome')`
 
 ## State and persistence
 
@@ -455,14 +458,18 @@ When observing a query with fields that can change and affect UI (like sorting, 
 chats: database.collections
   .get<Chat>("chats")
   .query(Q.sortBy("last_message_at", Q.desc))
-  .observe()  // Won't re-render when last_message_at changes!
+  .observe(); // Won't re-render when last_message_at changes!
 
 // ✅ CORRECT - Detects field changes in specified columns
 chats: database.collections
   .get<Chat>("chats")
   .query(Q.sortBy("last_message_at", Q.desc))
-  .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content'])
-  // Will re-render when these fields change!
+  .observeWithColumns([
+    "last_message_at",
+    "unread_count",
+    "last_message_content",
+  ]);
+// Will re-render when these fields change!
 ```
 
 **Why:** `.observe()` only triggers on record creation/deletion. `.observeWithColumns([...])` also triggers when specified fields change. [Docs](https://watermelondb.dev/docs/Components#advanced-observing-sorted-lists)
@@ -492,6 +499,7 @@ export default enhance(ChatListScreen);
 ```
 
 **First argument rules:**
+
 - Pass `[]` if observables don't depend on props
 - Pass `['propName']` if observables should restart when props change
 - Think of it like `useEffect` deps
@@ -500,13 +508,13 @@ export default enhance(ChatListScreen);
 
 ```tsx
 // Observe a relation (e.g., comment.author)
-const enhance = withObservables(['comment'], ({ comment }) => ({
+const enhance = withObservables(["comment"], ({ comment }) => ({
   comment,
   author: comment.author, // Shortcut for comment.author.observe()
 }));
 
 // Observe count (more efficient than observing full list)
-const enhance = withObservables(['post'], ({ post }) => ({
+const enhance = withObservables(["post"], ({ post }) => ({
   post,
   commentCount: post.comments.observeCount(), // Just the count
 }));
@@ -515,13 +523,14 @@ const enhance = withObservables(['post'], ({ post }) => ({
 ### 5. **Sync operations**
 
 When implementing sync:
+
 - Use `synchronize()` from `@nozbe/watermelondb/sync`
 - Implement `pullChanges` and `pushChanges` conforming to Watermelon Sync Protocol
 - Batch operations must be atomic
 - Handle race conditions (e.g., broadcast + sync arriving simultaneously)
 
 ```tsx
-import { synchronize } from '@nozbe/watermelondb/sync';
+import { synchronize } from "@nozbe/watermelondb/sync";
 
 await synchronize({
   database,
@@ -531,8 +540,8 @@ await synchronize({
     return { changes, timestamp };
   },
   pushChanges: async ({ changes }) => {
-    await fetch('/sync', {
-      method: 'POST',
+    await fetch("/sync", {
+      method: "POST",
       body: JSON.stringify(changes),
     });
   },
@@ -550,6 +559,7 @@ await synchronize({
 ### 7. **Documentation references**
 
 When in doubt, consult official docs:
+
 - [Sync Frontend](https://watermelondb.dev/docs/Sync/Frontend) - Implementing sync
 - [Components](https://watermelondb.dev/docs/Components) - Connecting to React
 - [Queries](https://watermelondb.dev/docs/Query) - Building queries

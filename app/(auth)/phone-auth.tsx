@@ -79,7 +79,7 @@ export default function PhoneAuthScreen() {
 
       // Navigate to code verification screen
       router.push({
-        pathname: "/(onboarding)/verify-code",
+        pathname: "/(auth)/verify-code",
         params: { phone: fullPhoneNumber },
       });
     } catch (error: any) {

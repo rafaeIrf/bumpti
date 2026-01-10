@@ -7,8 +7,6 @@ import { useRouter } from "expo-router";
 
 // Define the step order and routes
 const STEP_ORDER: OnboardingStep[] = [
-  "phone-auth",
-  "verify-code",
   "user-name",
   "user-age",
   "user-gender",
@@ -23,8 +21,6 @@ const STEP_ORDER: OnboardingStep[] = [
 
 // Map step names to routes
 const STEP_ROUTES: Record<OnboardingStep, string> = {
-  "phone-auth": "/(onboarding)/phone-auth",
-  "verify-code": "/(onboarding)/verify-code",
   "user-name": "/(onboarding)/user-name",
   "user-age": "/(onboarding)/user-age",
   "user-gender": "/(onboarding)/user-gender",

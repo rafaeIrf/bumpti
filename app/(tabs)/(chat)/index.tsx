@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: spacing.xl,
+    gap: spacing.md,
   },
   headerContainer: {
     // No padding - BaseTemplateScreen already provides it when scrollEnabled={false}

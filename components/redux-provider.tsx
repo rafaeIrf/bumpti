@@ -1,72 +1,110 @@
-import { persistor, store } from "@/modules/store";
-import { supabase } from "@/modules/supabase/client";
 import React, { useEffect } from "react";
 import { AppState } from "react-native";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
+import { phoneAuthService } from "@/modules/auth/phone-auth-service";
+import { fetchAndSetUserProfile } from "@/modules/profile";
+import { persistor, store } from "@/modules/store";
+import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
+
 interface ReduxProviderProps {
   children: React.ReactNode;
 }
 
+/**
+ * Forces a server-side validation of the session.
+ * This detects if the refresh_token was revoked (e.g. user logged in on another device).
+ */
+async function validateSessionOrLogout(): Promise<boolean> {
+  logger.log("[Auth] Validating session with server...");
+
+  const { data, error } = await supabase.auth.refreshSession();
+
+  if (error || !data.session) {
+    logger.warn("[Auth] Session revoked or invalid on server", { error });
+    await phoneAuthService.signOut();
+    return false;
+  }
+
+  logger.log("[Auth] Session is valid", {
+    expiresAt: new Date(data.session.expires_at! * 1000).toISOString(),
+  });
+
+  return true;
+}
+
 export function ReduxProvider({ children }: ReduxProviderProps) {
   useEffect(() => {
-    let isMounted = true;
-    let isSignedIn = false;
+    let mounted = true;
 
-    const startRefreshIfSignedIn = () => {
-      if (isSignedIn) {
-        supabase.auth.startAutoRefresh();
-      }
-    };
+    logger.log("[ReduxProvider] Bootstrapping auth");
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) return;
-      isSignedIn = !!data.session;
-      startRefreshIfSignedIn();
-    });
+    // ---------- AUTH STATE ----------
+    const { data: auth } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
 
-    const { data: authSubscription } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!isMounted) return;
-        isSignedIn = !!session;
+        logger.log("[Auth] Event:", event, { hasSession: !!session });
 
-        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          startRefreshIfSignedIn();
+        if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+          if (!session) return;
+
+          supabase.auth.startAutoRefresh();
+
+          const ok = await validateSessionOrLogout();
+          if (!ok) return;
+
+          try {
+            await fetchAndSetUserProfile();
+          } catch (err) {
+            logger.error("[Auth] Failed to load profile:", err);
+          }
+        }
+
+        if (event === "TOKEN_REFRESHED") {
+          logger.log("[Auth] Token refreshed");
         }
 
         if (event === "SIGNED_OUT") {
+          logger.warn("[Auth] User signed out");
           supabase.auth.stopAutoRefresh();
         }
       }
     );
 
-    const appStateSubscription = AppState.addEventListener(
-      "change",
-      (state) => {
-        if (state === "active") {
-          startRefreshIfSignedIn();
-          if (isSignedIn) {
-            // Trigger a session check when returning to the foreground to refresh tokens if needed
-            supabase.auth.getSession();
-          }
-        } else {
-          supabase.auth.stopAutoRefresh();
+    // ---------- APP FOREGROUND / BACKGROUND ----------
+    const appState = AppState.addEventListener("change", async (state) => {
+      if (!mounted) return;
+
+      if (state === "active") {
+        logger.log("[AppState] App became active, validating session");
+
+        const ok = await validateSessionOrLogout();
+        if (!ok) return;
+
+        try {
+          await fetchAndSetUserProfile();
+        } catch (err) {
+          logger.error("[AppState] Failed to refresh profile:", err);
         }
+      } else {
+        supabase.auth.stopAutoRefresh();
       }
-    );
+    });
 
     return () => {
-      isMounted = false;
-      authSubscription?.subscription.unsubscribe();
-      appStateSubscription.remove();
+      mounted = false;
+      auth?.subscription.unsubscribe();
+      appState.remove();
       supabase.auth.stopAutoRefresh();
     };
   }, []);
 
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate persistor={persistor} loading={null}>
         {children}
       </PersistGate>
     </Provider>
