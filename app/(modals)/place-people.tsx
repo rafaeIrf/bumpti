@@ -17,6 +17,7 @@ import {
   getActiveUsersAtPlace,
 } from "@/modules/presence/api";
 import { prefetchImages } from "@/utils/image-prefetch";
+import { logger } from "@/utils/logger";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -85,7 +86,7 @@ export default function PlacePeopleScreen() {
             }
             return; // Skip fetching from API
           } catch (e) {
-            console.error("Failed to parse initialUsers", e);
+            logger.error("Failed to parse initialUsers", e);
           }
         }
 
@@ -105,7 +106,7 @@ export default function PlacePeopleScreen() {
         }
       } catch (error) {
         if (isMounted) {
-          console.error("Failed to load active users at place", error);
+          logger.error("Failed to load active users at place", error);
           setAvailableProfiles([]);
           setLoading(false);
         }
@@ -134,11 +135,6 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
-    // Optimistic update: remove profile from local list immediately
-    setAvailableProfiles((prev) =>
-      prev.filter((p) => p.user_id !== profile.user_id)
-    );
-
     interactUser({
       toUserId: profile.user_id,
       action: "like",
@@ -146,21 +142,14 @@ export default function PlacePeopleScreen() {
     })
       .unwrap()
       .then((response) => {
-        console.log("Liked profile:", profile.name, response);
+        logger.info("Liked profile", { profileName: profile.name, response });
       })
       .catch((error) => {
-        console.error("Failed to like profile:", profile.name, error);
-        // Rollback on error: add profile back to list
-        setAvailableProfiles((prev) => [...prev, profile]);
+        logger.error("Failed to like profile", { profileName: profile.name, error });
       });
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
-    // Optimistic update: remove profile from local list immediately
-    setAvailableProfiles((prev) =>
-      prev.filter((p) => p.user_id !== profile.user_id)
-    );
-
     interactUser({
       toUserId: profile.user_id,
       action: "dislike",
@@ -168,22 +157,23 @@ export default function PlacePeopleScreen() {
     })
       .unwrap()
       .then((response) => {
-        console.log("Disliked profile:", profile.name, response);
+        logger.info("Disliked profile", { profileName: profile.name, response });
       })
       .catch((error) => {
-        console.error("Failed to dislike profile:", profile.name, error);
-        // Rollback on error: add profile back to list
-        setAvailableProfiles((prev) => [...prev, profile]);
+        logger.error("Failed to dislike profile", {
+          profileName: profile.name,
+          error,
+        });
       });
   };
 
   const handleComplete = () => {
-    console.log("No more profiles");
+    logger.info("No more profiles");
     setHasProfiles(false);
   };
 
   const handleUpgradeToPremium = () => {
-    console.log("Navigate to premium subscription");
+    logger.info("Navigate to premium subscription");
     // TODO: Navigate to premium screen
   };
 
