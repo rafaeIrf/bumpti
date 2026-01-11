@@ -66,7 +66,7 @@ export async function listLikerIds(params: {
 }): Promise<string[]> {
   const { database } = params;
   const collection = database.collections.get<LikerId>("liker_ids");
-  const records = await collection.query(Q.all()).fetch();
+  const records = await collection.query().fetch();
   return records.map((record) => record.id);
 }
 
@@ -75,7 +75,7 @@ export async function clearLikerIds(params: {
 }): Promise<void> {
   const { database } = params;
   const collection = database.collections.get<LikerId>("liker_ids");
-  const records = await collection.query(Q.all()).fetch();
+  const records = await collection.query().fetch();
   if (records.length === 0) return;
 
   await database.write(async () => {

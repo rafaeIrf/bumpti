@@ -47,6 +47,7 @@ describe("Profile Cache Service", () => {
       lastFetchedAt: new Date(),
       createdAt: new Date(),
       isStale: false,
+      shouldFetch: false,
       data: mockProfileData,
       updateData: jest.fn().mockResolvedValue(undefined),
       markAsDeleted: jest.fn().mockResolvedValue(undefined),
@@ -75,6 +76,7 @@ describe("Profile Cache Service", () => {
     it("should return cached profile when available and fresh", async () => {
       // Arrange
       mockProfile.isStale = false;
+      mockProfile.shouldFetch = false;
       mockCollection.fetch.mockResolvedValue([mockProfile]);
 
       // Act
@@ -89,6 +91,7 @@ describe("Profile Cache Service", () => {
     it("should return cached profile and trigger background refresh when stale", async () => {
       // Arrange
       mockProfile.isStale = true;
+      mockProfile.shouldFetch = true;
       mockCollection.fetch.mockResolvedValue([mockProfile]);
       
       const mockApiResponse = {
@@ -225,4 +228,3 @@ describe("Profile Cache Service", () => {
     });
   });
 });
-
