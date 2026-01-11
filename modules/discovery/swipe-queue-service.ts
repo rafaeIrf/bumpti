@@ -1,9 +1,11 @@
+import type DiscoveryProfile from "@/modules/database/models/DiscoveryProfile";
 import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
 import type { Database } from "@nozbe/watermelondb";
 import { Q } from "@nozbe/watermelondb";
 import { logger } from "@/utils/logger";
 import { interactUsersBatch } from "@/modules/interactions/api";
+import { removeDiscoveryProfiles } from "@/modules/discovery/discovery-service";
 
 export type SwipeQueueItem = {
   id: string;
@@ -27,30 +29,49 @@ export async function enqueueSwipe(params: {
   targetUserId: string;
   action: SwipeAction;
   placeId: string;
+  removeProfileId?: string;
 }): Promise<void> {
-  const { database, targetUserId, action, placeId } = params;
+  const { database, targetUserId, action, placeId, removeProfileId } = params;
   const collection = database.collections.get<SwipeQueue>("swipes_queue");
-  const now = new Date();
-
+  const discoveryCollection = database.collections.get<DiscoveryProfile>(
+    "discovery_profiles"
+  );
   await database.write(async () => {
+    const batch: any[] = [];
     const existing = await collection
       .query(Q.where("target_user_id", targetUserId))
       .fetch();
 
     if (existing.length > 0) {
       const record = existing[0];
-      await record.update((swipe) => {
-        swipe.action = action;
-        swipe.placeId = placeId;
-      });
-      return;
+      batch.push(
+        record.prepareUpdate((swipe) => {
+          swipe.action = action;
+          swipe.placeId = placeId;
+        })
+      );
+    } else {
+      batch.push(
+        collection.prepareCreate((record) => {
+          record.targetUserId = targetUserId;
+          record.action = action;
+          record.placeId = placeId;
+        })
+      );
     }
 
-    await collection.create((record) => {
-      record.targetUserId = targetUserId;
-      record.action = action;
-      record.placeId = placeId;
-    });
+    if (removeProfileId) {
+      try {
+        const profile = await discoveryCollection.find(removeProfileId);
+        batch.push(profile.prepareDestroyPermanently());
+      } catch {
+        // no-op if not found
+      }
+    }
+
+    if (batch.length > 0) {
+      await database.batch(...batch);
+    }
   });
 }
 
@@ -119,6 +140,12 @@ export async function flushQueuedSwipes(params: {
       .map((item) => item.targetUserId);
 
     await removeQueuedSwipes({ database, targetUserIds: idsToRemove });
+    await removeDiscoveryProfiles({ database, userIds: idsToRemove });
+    if (idsToRemove.length > 0) {
+      logger.info("Removed swiped profiles after flush", {
+        count: idsToRemove.length,
+      });
+    }
     return results;
   } catch (error) {
     logger.error("Failed to flush swipe queue", { error });

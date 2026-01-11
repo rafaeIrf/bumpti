@@ -4,6 +4,7 @@ import type { Database } from "@nozbe/watermelondb";
 import { Q } from "@nozbe/watermelondb";
 import type { ActiveUserAtPlace } from "@/modules/presence/api";
 import { getActiveUsersAtPlace } from "@/modules/presence/api";
+import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import {
   clearLikerIds,
   upsertLikerIds,
@@ -72,14 +73,29 @@ export async function fetchDiscoveryFeed(params: {
 
     const response = await getActiveUsersAtPlace(placeId);
     const users = response?.users ?? [];
+    const pendingSwipeIds = await getQueuedSwipeIds({
+      database,
+      placeId,
+    });
+    const filteredUsers =
+      pendingSwipeIds.size === 0
+        ? users
+        : users.filter((user) => !pendingSwipeIds.has(user.user_id));
+    if (pendingSwipeIds.size > 0 && filteredUsers.length !== users.length) {
+      logger.info("Filtered discovery profiles already swiped locally", {
+        placeId,
+        total: users.length,
+        filtered: filteredUsers.length,
+      });
+    }
     const likerIds = response?.liker_ids ?? [];
-    await upsertDiscoveryProfiles({ database, placeId, users });
+    await upsertDiscoveryProfiles({ database, placeId, users: filteredUsers });
     await upsertLikerIds({ database, ids: likerIds });
     await AsyncStorage.setItem(
       LIKER_IDS_LAST_FETCH_KEY,
       String(Date.now())
     );
-    return users;
+    return filteredUsers;
   } catch (error) {
     logger.error("Failed to fetch discovery feed", { placeId, error });
     return [];
@@ -91,17 +107,40 @@ export async function removeDiscoveryProfile(params: {
   userId: string;
 }): Promise<void> {
   const { database, userId } = params;
+  await removeDiscoveryProfiles({ database, userIds: [userId] });
+}
+
+export async function removeDiscoveryProfiles(params: {
+  database: Database;
+  userIds: string[];
+}): Promise<void> {
+  const { database, userIds } = params;
+  if (userIds.length === 0) return;
+
   const collection = database.collections.get<DiscoveryProfile>(
     "discovery_profiles"
   );
-  try {
-    const record = await collection.find(userId);
-    await database.write(async () => {
-      await record.destroyPermanently();
-    });
-  } catch {
-    // no-op if not found
-  }
+  const records = await collection
+    .query(Q.where("id", Q.oneOf(userIds)))
+    .fetch();
+  if (records.length === 0) return;
+
+  await database.write(async () => {
+    const batch = records.map((record) => record.prepareDestroyPermanently());
+    await database.batch(...batch);
+  });
+}
+
+async function getQueuedSwipeIds(params: {
+  database: Database;
+  placeId: string;
+}): Promise<Set<string>> {
+  const { database, placeId } = params;
+  const collection = database.collections.get<SwipeQueue>("swipes_queue");
+  const records = await collection
+    .query(Q.where("place_id", placeId))
+    .fetch();
+  return new Set(records.map((record) => record.targetUserId));
 }
 
 async function cleanupStaleDiscoveryProfiles(params: {

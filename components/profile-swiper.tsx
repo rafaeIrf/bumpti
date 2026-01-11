@@ -9,7 +9,6 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useRef,
   useState,
 } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -27,6 +26,7 @@ import { UserProfileCard } from "./user-profile-card";
 
 interface ProfileSwiperProps {
   readonly profiles: ActiveUserAtPlace[];
+  readonly currentIndex: number;
   readonly currentPlaceId?: string;
   readonly places?: Record<string, { name: string; emoji: string }>;
   readonly onLike?: (profile: ActiveUserAtPlace) => void;
@@ -57,6 +57,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
   (
     {
       profiles,
+      currentIndex,
       currentPlaceId,
       places,
       onLike,
@@ -70,31 +71,16 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     ref
   ) => {
     const colors = useThemeColors();
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
     const [showConnectAnimation, setShowConnectAnimation] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [connectedName, setConnectedName] = useState("");
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const currentProfileIdRef = useRef<string | null>(null);
 
     const translateX = useSharedValue(0);
     const swipeDirection = useSharedValue<"none" | "like" | "skip">("none");
 
     const currentProfile = profiles[currentIndex];
-
-    useEffect(() => {
-      currentProfileIdRef.current = currentProfile?.user_id ?? null;
-    }, [currentProfile?.user_id]);
-
-    useEffect(() => {
-      const currentId = currentProfileIdRef.current;
-      if (!currentId) return;
-      const newIndex = profiles.findIndex((profile) => profile.user_id === currentId);
-      if (newIndex >= 0 && newIndex !== currentIndex) {
-        setCurrentIndex(newIndex);
-      }
-    }, [currentIndex, profiles]);
 
     const handleLike = useCallback(() => {
       if (!currentProfile) return;
@@ -117,8 +103,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -142,8 +128,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -160,8 +146,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -188,10 +174,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     useEffect(() => {
       translateX.value = 0;
     }, [currentIndex, translateX]);
-
-    useEffect(() => {
-      onIndexChange?.(currentIndex);
-    }, [currentIndex, onIndexChange]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({

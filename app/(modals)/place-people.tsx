@@ -160,6 +160,16 @@ export default function PlacePeopleScreen() {
   }, [availableProfiles]);
 
   useEffect(() => {
+    if (deck.length === 0) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+    if (currentIndex > deck.length) {
+      setCurrentIndex(deck.length);
+    }
+  }, [currentIndex, deck.length]);
+
+  useEffect(() => {
     const profileMap: Record<string, ActiveUserAtPlace> = {};
     deck.forEach((profile) => {
       profileMap[profile.user_id] = profile;
@@ -449,6 +459,7 @@ export default function PlacePeopleScreen() {
           <ProfileSwiper
             ref={swiperRef}
             profiles={deck}
+            currentIndex={currentIndex}
             currentPlaceId={place.id}
             places={mockPlaces}
             onLike={handleLike}

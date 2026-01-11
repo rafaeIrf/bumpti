@@ -4,7 +4,6 @@ import {
   flushQueuedSwipes,
   type SwipeBatchResult,
 } from "@/modules/discovery/swipe-queue-service";
-import { removeDiscoveryProfile } from "@/modules/discovery/discovery-service";
 import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
 import { hasLikerId, removeLikerId } from "@/modules/discovery/liker-ids-service";
 import { logger } from "@/utils/logger";
@@ -107,8 +106,8 @@ export function useDiscoverySwipes(
         targetUserId,
         action,
         placeId,
+        removeProfileId: targetUserId,
       });
-      await removeDiscoveryProfile({ database, userId: targetUserId });
 
       if (isInstantMatch) {
         void flushNow();
@@ -118,7 +117,7 @@ export function useDiscoverySwipes(
       scheduleFlush();
       return { results: [], instantMatch: false };
     },
-    [database, flushNow, onMatch, placeId, scheduleFlush]
+    [database, flushNow, placeId, scheduleFlush]
   );
 
   useEffect(() => {

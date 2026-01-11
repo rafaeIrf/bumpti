@@ -30,13 +30,33 @@ export function useDiscoveryFeed(
     const collection = database.collections.get<DiscoveryProfile>(
       "discovery_profiles"
     );
+    const swipedIds = swipeRecords
+      .filter((record) => record.placeId === placeId)
+      .map((record) => record.targetUserId);
+    const matchedIds = matchRecords
+      .map((match) => {
+        if (match.otherUserId) return match.otherUserId;
+        if (!profile?.id) return null;
+        return match.userA === profile.id ? match.userB : match.userA;
+      })
+      .filter((id): id is string => Boolean(id));
+    const chattedIds = chatRecords
+      .map((chat) => chat.otherUserId)
+      .filter((id): id is string => Boolean(id));
+    const excludedIds = Array.from(
+      new Set([...swipedIds, ...matchedIds, ...chattedIds])
+    );
+    const queryFilters = [Q.where("place_id", placeId)];
+    if (excludedIds.length > 0) {
+      queryFilters.push(Q.where("id", Q.notIn(excludedIds)));
+    }
     const subscription = collection
-      .query(Q.where("place_id", placeId))
+      .query(...queryFilters)
       .observeWithColumns(["raw_data", "place_id", "last_fetched_at"])
       .subscribe(setDiscoveryRecords);
 
     return () => subscription.unsubscribe();
-  }, [database, placeId]);
+  }, [chatRecords, database, matchRecords, placeId, profile?.id, swipeRecords]);
 
   useEffect(() => {
     const collection = database.collections.get<SwipeQueue>("swipes_queue");
@@ -83,7 +103,9 @@ export function useDiscoveryFeed(
   }, [refresh]);
 
   const profiles = useMemo(() => {
-    const swipedIds = swipeRecords.map((swipe) => swipe.targetUserId);
+    const swipedIds = swipeRecords
+      .filter((record) => record.placeId === placeId)
+      .map((swipe) => swipe.targetUserId);
     const matchedIds = matchRecords
       .map((match) => {
         if (match.otherUserId) return match.otherUserId;

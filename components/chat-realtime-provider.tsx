@@ -8,7 +8,6 @@ import {
 } from "@/modules/discovery/realtime";
 import { attachPendingLikesRealtime } from "@/modules/pendingLikes/realtime";
 import { useAppDispatch } from "@/modules/store/hooks";
-import { logger } from "@/utils/logger";
 import { useEffect } from "react";
 
 /**
@@ -38,7 +37,6 @@ export function ChatRealtimeProvider({
     const matchChannel = attachMatchRealtime({
       userId: profile.id,
       onNewMatch: async (payload) => {
-        logger.log("📬 NEW_MATCH broadcast:", payload);
         await handleNewMatchBroadcast(payload, database);
       },
     });
