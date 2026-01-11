@@ -182,13 +182,8 @@ export async function handleMatchUpdate(
   try {
     logger.log('📬 Processing match update:', payload, 'isInsert:', isInsert);
 
-    // Se é um novo match (INSERT), disparar sync completo (debounced)
-    // porque precisamos dos campos denormalizados (other_user_name, photo, etc)
-    // que não vêm no postgres_changes
-    // Debounce agrupa múltiplos matches criados rapidamente em um único sync
     if (isInsert) {
-      logger.log('🔄 New match detected, scheduling debounced sync');
-      debouncedSync(database);
+      logger.log('🔄 Match INSERT ignored (handled via NEW_MATCH broadcast)');
       return;
     }
 
@@ -242,6 +237,104 @@ export async function handleMatchUpdate(
   }
 }
 
+function toDateOrNull(value: number | string | null | undefined): Date | null {
+  if (value == null) return null;
+  return new Date(value);
+}
+
+export async function handleNewMatchBroadcast(
+  payload: any,
+  database: Database
+): Promise<void> {
+  try {
+    const matchesCollection = database.collections.get<Match>('matches');
+    const chatsCollection = database.collections.get<Chat>('chats');
+    const matchId = payload?.id;
+
+    if (!matchId) {
+      logger.warn('NEW_MATCH payload missing id:', payload);
+      return;
+    }
+
+    await database.write(async () => {
+      const existing = await matchesCollection.query(Q.where('id', matchId)).fetch();
+      if (existing.length === 0) {
+        await matchesCollection.create((record: any) => {
+          record._raw.id = matchId;
+          record.chatId = payload.chat_id ?? null;
+          record.userA = payload.user_a;
+          record.userB = payload.user_b;
+          record.status = payload.status;
+          record.matchedAt = toDateOrNull(payload.matched_at) ?? new Date();
+          record.unmatchedAt = toDateOrNull(payload.unmatched_at);
+          record.placeId = payload.place_id ?? null;
+          record.placeName = payload.place_name ?? null;
+          record.userAOpenedAt = toDateOrNull(payload.user_a_opened_at);
+          record.userBOpenedAt = toDateOrNull(payload.user_b_opened_at);
+          record.otherUserId = payload.other_user_id ?? null;
+          record.otherUserName = payload.other_user_name ?? null;
+          record.otherUserPhotoUrl = payload.other_user_photo_url ?? null;
+          record.firstMessageAt = toDateOrNull(payload.first_message_at);
+        });
+        logger.log('✅ Match created from broadcast:', matchId);
+        return;
+      }
+
+      await existing[0].update((record: any) => {
+        record.chatId = payload.chat_id ?? null;
+        record.userA = payload.user_a;
+        record.userB = payload.user_b;
+        record.status = payload.status;
+        record.matchedAt = toDateOrNull(payload.matched_at) ?? record.matchedAt;
+        record.unmatchedAt = toDateOrNull(payload.unmatched_at);
+        record.placeId = payload.place_id ?? null;
+        record.placeName = payload.place_name ?? null;
+        record.userAOpenedAt = toDateOrNull(payload.user_a_opened_at);
+        record.userBOpenedAt = toDateOrNull(payload.user_b_opened_at);
+        record.otherUserId = payload.other_user_id ?? null;
+        record.otherUserName = payload.other_user_name ?? null;
+        record.otherUserPhotoUrl = payload.other_user_photo_url ?? null;
+        record.firstMessageAt = toDateOrNull(payload.first_message_at);
+      });
+
+      logger.log('✅ Match updated from broadcast:', matchId);
+    });
+
+    const chatId = payload?.chat_id;
+    if (!chatId) return;
+    const otherUserId = payload?.other_user_id;
+    if (!otherUserId) {
+      logger.warn('NEW_MATCH payload missing other_user_id for chat:', payload);
+      return;
+    }
+
+    await database.write(async () => {
+      const existingChat = await chatsCollection.query(Q.where('id', chatId)).fetch();
+      if (existingChat.length > 0) return;
+
+      const createdAt = toDateOrNull(payload.chat_created_at) ?? new Date();
+      const chat = chatsCollection.prepareCreate((record: any) => {
+        record._raw.id = chatId;
+        record.matchId = matchId;
+        record.createdAt = createdAt;
+        record.lastMessageContent = null;
+        record.lastMessageAt = toDateOrNull(payload.first_message_at);
+        record.otherUserId = otherUserId;
+        record.otherUserName = payload.other_user_name ?? null;
+        record.otherUserPhotoUrl = payload.other_user_photo_url ?? null;
+        record.placeId = payload.place_id ?? null;
+        record.placeName = payload.place_name ?? null;
+        record.unreadCount = 0;
+      });
+
+      await database.batch(chat);
+      logger.log('✅ Chat created from NEW_MATCH broadcast:', chatId);
+    });
+  } catch (error) {
+    logger.error('Failed to handle NEW_MATCH broadcast:', error);
+  }
+}
+
 /**
  * Processa novo chat (novo match com primeira mensagem)
  * 
@@ -250,19 +343,3 @@ export async function handleMatchUpdate(
  * 
  * Nota: RLS garante que postgres_changes só dispara para chats do usuário atual
  */
-export async function handleNewChat(
-  payload: any,
-  database: Database
-): Promise<void> {
-  try {
-    logger.log('💬 New chat detected:', payload.id);
-    
-    // Disparar sync completo (debounced) ao invés de criar localmente
-    // Isso evita race conditions e garante dados denormalizados corretos
-    // Debounce agrupa múltiplos chats criados rapidamente em um único sync
-    logger.log('🔄 Scheduling debounced sync for new chat');
-    debouncedSync(database);
-  } catch (error) {
-    logger.error('Failed to handle new chat:', error);
-  }
-}

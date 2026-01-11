@@ -967,6 +967,10 @@
       "blockTitle": "Block {{name}}?",
       "blockDescription": "{{name}} will no longer see your profile, send messages, or interact with you on Bumpti.",
       "blockConfirm": "Block {{name}}"
+    },
+    "match": {
+      "title": "It's a match!",
+      "subtitle": "You and {{name}} liked each other."
     }
   },
   "components": {

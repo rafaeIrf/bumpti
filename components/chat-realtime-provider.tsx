@@ -1,8 +1,14 @@
+import { useDatabase } from "@/components/DatabaseProvider";
 import { useProfile } from "@/hooks/use-profile";
-import { usePendingLikesPrefetch } from "@/hooks/use-pending-likes-prefetch";
 import { useGlobalSubscriptions } from "@/hooks/useChatSubscription";
+import { handleNewMatchBroadcast } from "@/modules/database/realtime/handlers";
+import {
+  attachLikerIdsRealtime,
+  attachMatchRealtime,
+} from "@/modules/discovery/realtime";
 import { attachPendingLikesRealtime } from "@/modules/pendingLikes/realtime";
 import { useAppDispatch } from "@/modules/store/hooks";
+import { logger } from "@/utils/logger";
 import { useEffect } from "react";
 
 /**
@@ -16,20 +22,33 @@ export function ChatRealtimeProvider({
 }) {
   const { profile } = useProfile();
   const dispatch = useAppDispatch();
+  const database = useDatabase();
 
   // Setup global subscriptions (matches, chat list)
   useGlobalSubscriptions(profile?.id ?? null);
-  usePendingLikesPrefetch();
 
   useEffect(() => {
     if (!profile?.id) return;
 
     const channel = attachPendingLikesRealtime(dispatch, profile.id);
+    const likerChannel = attachLikerIdsRealtime({
+      database,
+      userId: profile.id,
+    });
+    const matchChannel = attachMatchRealtime({
+      userId: profile.id,
+      onNewMatch: async (payload) => {
+        logger.log("📬 NEW_MATCH broadcast:", payload);
+        await handleNewMatchBroadcast(payload, database);
+      },
+    });
 
     return () => {
       channel.unsubscribe();
+      likerChannel.unsubscribe();
+      matchChannel.unsubscribe();
     };
-  }, [dispatch, profile?.id]);
+  }, [database, dispatch, profile?.id]);
 
   return <>{children}</>;
 }

@@ -3,6 +3,7 @@ import { supabase } from "@/modules/supabase/client";
 import { AuthError, User } from "@supabase/supabase-js";
 import { resetDatabase } from "../database";
 import { resetGlobalStore } from "../store";
+import { clearPrefetchCache } from "@/utils/image-prefetch";
 
 /**
  * Phone authentication service using Supabase Auth
@@ -93,6 +94,8 @@ class PhoneAuthService {
       
       // Clear Redux store
       await resetGlobalStore();
+
+      clearPrefetchCache();
       
       this.verificationPhone = null;
     } catch (error) {

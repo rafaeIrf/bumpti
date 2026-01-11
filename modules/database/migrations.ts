@@ -70,5 +70,40 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 6,
+      steps: [
+        // Create discovery_profiles table for local-first feed cache
+        createTable({
+          name: 'discovery_profiles',
+          columns: [
+            { name: 'raw_data', type: 'string' },
+            { name: 'place_id', type: 'string', isIndexed: true },
+            { name: 'last_fetched_at', type: 'number', isIndexed: true },
+            { name: 'created_at', type: 'number' },
+          ],
+        }),
+        // Create swipes_queue table for local pending interactions
+        createTable({
+          name: 'swipes_queue',
+          columns: [
+            { name: 'target_user_id', type: 'string', isIndexed: true },
+            { name: 'action', type: 'string' },
+            { name: 'place_id', type: 'string' },
+            { name: 'created_at', type: 'number' },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 7,
+      steps: [
+        // Create liker_ids table (only id)
+        createTable({
+          name: 'liker_ids',
+          columns: [],
+        }),
+      ],
+    },
   ],
 });

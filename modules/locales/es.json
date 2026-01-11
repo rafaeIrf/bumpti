@@ -966,6 +966,10 @@
       "blockTitle": "¿Bloquear a {{name}}?",
       "blockDescription": "{{name}} ya no podrá ver tu perfil, enviar mensajes ni interactuar contigo en Bumpti.",
       "blockConfirm": "Bloquear a {{name}}"
+    },
+    "match": {
+      "title": "¡Es match!",
+      "subtitle": "Tú y {{name}} se dieron like."
     }
   },
   "components": {

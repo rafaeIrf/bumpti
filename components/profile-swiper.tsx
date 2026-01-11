@@ -9,6 +9,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -31,6 +32,7 @@ interface ProfileSwiperProps {
   readonly onLike?: (profile: ActiveUserAtPlace) => void;
   readonly onPass?: (profile: ActiveUserAtPlace) => void;
   readonly onComplete?: () => void;
+  readonly onIndexChange?: (index: number) => void;
   readonly emptyStateTitle?: string;
   readonly emptyStateDescription?: string;
   readonly emptyStateAction?: {
@@ -60,6 +62,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       onLike,
       onPass,
       onComplete,
+      onIndexChange,
       emptyStateTitle,
       emptyStateDescription,
       emptyStateAction,
@@ -73,11 +76,25 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     const [showToast, setShowToast] = useState(false);
     const [connectedName, setConnectedName] = useState("");
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const currentProfileIdRef = useRef<string | null>(null);
 
     const translateX = useSharedValue(0);
     const swipeDirection = useSharedValue<"none" | "like" | "skip">("none");
 
     const currentProfile = profiles[currentIndex];
+
+    useEffect(() => {
+      currentProfileIdRef.current = currentProfile?.user_id ?? null;
+    }, [currentProfile?.user_id]);
+
+    useEffect(() => {
+      const currentId = currentProfileIdRef.current;
+      if (!currentId) return;
+      const newIndex = profiles.findIndex((profile) => profile.user_id === currentId);
+      if (newIndex >= 0 && newIndex !== currentIndex) {
+        setCurrentIndex(newIndex);
+      }
+    }, [currentIndex, profiles]);
 
     const handleLike = useCallback(() => {
       if (!currentProfile) return;
@@ -172,6 +189,10 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       translateX.value = 0;
     }, [currentIndex, translateX]);
 
+    useEffect(() => {
+      onIndexChange?.(currentIndex);
+    }, [currentIndex, onIndexChange]);
+
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       handleLike,
@@ -233,10 +254,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     });
 
     // Empty state - no more profiles OR transitioning out of last profile
-    if (
-      currentIndex >= profiles.length ||
-      (isTransitioning && !currentProfile)
-    ) {
+    if (currentIndex >= profiles.length) {
       return (
         <View
           style={[

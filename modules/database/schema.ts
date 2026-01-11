@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 5,
+  version: 7,
   tables: [
     // Tabela de matches
     tableSchema({
@@ -69,6 +69,34 @@ export const schema = appSchema({
         { name: 'last_fetched_at', type: 'number', isIndexed: true }, // Para invalidação de cache
         { name: 'created_at', type: 'number' },
       ],
+    }),
+
+    // Cache efêmero do feed de discovery
+    tableSchema({
+      name: 'discovery_profiles',
+      columns: [
+        { name: 'raw_data', type: 'string' },
+        { name: 'place_id', type: 'string', isIndexed: true },
+        { name: 'last_fetched_at', type: 'number', isIndexed: true },
+        { name: 'created_at', type: 'number' },
+      ],
+    }),
+
+    // Fila local de swipes pendentes
+    tableSchema({
+      name: 'swipes_queue',
+      columns: [
+        { name: 'target_user_id', type: 'string', isIndexed: true },
+        { name: 'action', type: 'string' },
+        { name: 'place_id', type: 'string' },
+        { name: 'created_at', type: 'number' },
+      ],
+    }),
+
+    // Lista local de IDs que deram like (instant match)
+    tableSchema({
+      name: 'liker_ids',
+      columns: [],
     }),
   ],
 });

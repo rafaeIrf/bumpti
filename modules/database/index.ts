@@ -11,6 +11,9 @@ import Chat from "./models/Chat";
 import Match from "./models/Match";
 import Message from "./models/Message";
 import Profile from "./models/Profile";
+import DiscoveryProfile from "./models/DiscoveryProfile";
+import SwipeQueue from "./models/SwipeQueue";
+import LikerId from "./models/LikerId";
 
 let database: Database | null = null;
 
@@ -45,6 +48,9 @@ export async function initDatabase(): Promise<Database> {
         Chat,
         Message,
         Profile,
+        DiscoveryProfile,
+        SwipeQueue,
+        LikerId,
       ],
     });
 
