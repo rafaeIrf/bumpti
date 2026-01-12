@@ -1,5 +1,6 @@
 import { CheckIcon, RewindIcon, XIcon } from "@/assets/icons";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import * as Haptics from "expo-haptics";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
 import Animated, {
@@ -7,8 +8,23 @@ import Animated, {
   interpolate,
   SharedValue,
   useAnimatedStyle,
+  useSharedValue,
+  withSequence,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
+
+type ActionType = "like" | "dislike" | "rewind";
+
+interface AnimatedCircleButtonProps {
+  type: ActionType;
+  onPress: () => void;
+  disabled?: boolean;
+  sizeVariant: "small" | "large";
+  backgroundColor: string;
+  borderColor?: string;
+  icon: React.ReactNode;
+}
 
 interface SwipeActionButtonsProps {
   onLike: () => void;
@@ -18,6 +34,101 @@ interface SwipeActionButtonsProps {
   swipeX?: SharedValue<number> | null; // Shared value from parent swiper
 }
 
+const AnimatedCircleButton: React.FC<AnimatedCircleButtonProps> = ({
+  type,
+  onPress,
+  disabled = false,
+  sizeVariant,
+  backgroundColor,
+  borderColor,
+  icon,
+}) => {
+  const scale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const rotation = useSharedValue(0);
+  const timingFast = { duration: 140 };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
+
+  const triggerAnimation = () => {
+    switch (type) {
+      case "like":
+        scale.value = withSequence(
+          withTiming(1.3, timingFast),
+          withTiming(1, timingFast)
+        );
+        translateY.value = withSequence(
+          withTiming(-6, timingFast),
+          withTiming(0, timingFast)
+        );
+        break;
+      case "dislike":
+        scale.value = withSequence(
+          withTiming(1.3, timingFast),
+          withTiming(1, timingFast)
+        );
+        translateX.value = withTiming(0, timingFast);
+        break;
+      case "rewind": {
+        scale.value = withSequence(
+          withTiming(1.3, timingFast),
+          withTiming(1, timingFast)
+        );
+        rotation.value = withTiming(-360, { duration: 360 }, () => {
+          rotation.value = 0;
+        });
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  const handlePress = () => {
+    if (disabled) return;
+
+    if (type === "like") {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if (type === "dislike") {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    triggerAnimation();
+    onPress();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.circleButton,
+        sizeVariant === "small"
+          ? styles.circleButtonSmall
+          : styles.circleButtonLarge,
+        { backgroundColor, borderColor },
+        animatedStyle,
+      ]}
+    >
+      <Pressable
+        onPress={handlePress}
+        disabled={disabled}
+        style={[styles.pressableContent, disabled && styles.pressableDisabled]}
+      >
+        {icon}
+      </Pressable>
+    </Animated.View>
+  );
+};
+
 export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
   onLike,
   onSkip,
@@ -26,10 +137,10 @@ export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
   swipeX,
 }) => {
   const colors = useThemeColors();
-  const rewindBackground = isRewindDisabled
-    ? colors.disabledBG
-    : colors.surface;
-  const rewindIconColor = isRewindDisabled ? colors.border : colors.pastelGold;
+  const rewindBackground = isRewindDisabled ? colors.surface : colors.surface;
+  const rewindIconColor = isRewindDisabled
+    ? colors.textSecondary
+    : colors.pastelGold;
 
   // Animations based on swipe direction
   const dislikeButtonStyle = useAnimatedStyle(() => {
@@ -162,48 +273,38 @@ export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
     <>
       {onRewind && (
         <Animated.View style={styles.buttonContainer}>
-          <Pressable
+          <AnimatedCircleButton
+            type="rewind"
             onPress={onRewind}
             disabled={isRewindDisabled}
-            style={[
-              styles.rewindButton,
-              {
-                backgroundColor: rewindBackground,
-              },
-            ]}
-          >
-            <RewindIcon width={20} height={20} color={rewindIconColor} />
-          </Pressable>
+            sizeVariant="small"
+            backgroundColor={rewindBackground}
+            borderColor={colors.border}
+            icon={<RewindIcon width={20} height={20} color={rewindIconColor} />}
+          />
         </Animated.View>
       )}
 
       <Animated.View style={[styles.buttonContainer, dislikeButtonStyle]}>
-        <Pressable
+        <AnimatedCircleButton
+          type="dislike"
           onPress={onSkip}
-          style={[
-            styles.skipButton,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <XIcon width={32} height={32} color={colors.textSecondary} />
-        </Pressable>
+          sizeVariant="large"
+          backgroundColor={colors.surface}
+          borderColor={colors.border}
+          icon={<XIcon width={32} height={32} color={colors.textSecondary} />}
+        />
       </Animated.View>
 
       <Animated.View style={[styles.buttonContainer, likeButtonStyle]}>
-        <Pressable
+        <AnimatedCircleButton
+          type="like"
           onPress={onLike}
-          style={[
-            styles.likeButton,
-            {
-              backgroundColor: colors.accent,
-            },
-          ]}
-        >
-          <CheckIcon width={32} height={32} color="#FFFFFF" />
-        </Pressable>
+          sizeVariant="large"
+          backgroundColor={colors.accent}
+          borderColor="transparent"
+          icon={<CheckIcon width={32} height={32} color="#FFFFFF" />}
+        />
       </Animated.View>
     </>
   );
@@ -213,26 +314,28 @@ const styles = StyleSheet.create({
   buttonContainer: {
     // elevation removed - animated in useAnimatedStyle
   },
-  rewindButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  skipButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  circleButton: {
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
   },
-  likeButton: {
+  circleButtonSmall: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  circleButtonLarge: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    justifyContent: "center",
+  },
+  pressableContent: {
+    flex: 1,
+    width: "100%",
     alignItems: "center",
+    justifyContent: "center",
+  },
+  pressableDisabled: {
+    opacity: 0.5,
   },
 });

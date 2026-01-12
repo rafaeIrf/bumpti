@@ -73,7 +73,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     const colors = useThemeColors();
     const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
     const [showConnectAnimation, setShowConnectAnimation] = useState(false);
-    const [showToast, setShowToast] = useState(false);
     const [connectedName, setConnectedName] = useState("");
     const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -92,10 +91,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Show connect animation
       setShowConnectAnimation(true);
       setTimeout(() => setShowConnectAnimation(false), 800);
-
-      // Show toast
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
 
       // Callback
       onLike?.(currentProfile);
@@ -291,20 +286,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
           </Animated.View>
         )}
 
-        {/* Toast notification */}
-        {showToast && (
-          <Animated.View
-            entering={FadeIn.duration(300)}
-            exiting={FadeOut.duration(300)}
-            style={[styles.toast, { backgroundColor: colors.accent }]}
-          >
-            {/* Ícone removido */}
-            <Text style={styles.toastText}>
-              {t("profileSwiper.connectedWith", { name: connectedName })}
-            </Text>
-          </Animated.View>
-        )}
-
         {/* Profile cards - Stack effect */}
         <View style={styles.cardContainer}>
           {/* Next profile (behind) */}
@@ -409,25 +390,6 @@ const styles = StyleSheet.create({
   },
   connectEmoji: {
     fontSize: 120,
-  },
-  toast: {
-    position: "absolute",
-    top: 100,
-    left: spacing.lg,
-    right: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    zIndex: 50,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   toastEmoji: {
     fontSize: 20,

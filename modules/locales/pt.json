@@ -919,8 +919,7 @@
   },
   "profileSwiper": {
     "emptyStateTitle": "Você viu todos os perfis",
-    "emptyStateDescription": "Volte mais tarde para ver novas pessoas!",
-    "connectedWith": "Você se conectou com {{name}}!"
+    "emptyStateDescription": "Volte mais tarde para ver novas pessoas!"
   },
   "placePeople": {
     "premiumRequired": "Premium necessário",
