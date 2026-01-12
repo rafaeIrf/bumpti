@@ -258,11 +258,12 @@ export default function PlacePeopleScreen() {
     });
   };
 
-  const canRewind =
-    Boolean(lastSwipedProfile) && !lastSwipeWasMatch && !rewindUsedForCurrent;
+  const canAttemptRewind =
+    Boolean(lastSwipedProfile) && !rewindUsedForCurrent;
 
   const handleRewind = () => {
     if (!lastSwipedProfile) return;
+    if (rewindUsedForCurrent) return;
     if (lastSwipeWasMatch) {
       Alert.alert(
         t("placePeople.rewindBlockedTitle"),
@@ -270,7 +271,10 @@ export default function PlacePeopleScreen() {
       );
       return;
     }
-    if (rewindUsedForCurrent) return;
+    if (!isPremium) {
+      router.push("/(modals)/premium-paywall");
+      return;
+    }
 
     swipedIdsRef.current.delete(lastSwipedProfile.user_id);
     void removeQueuedSwipes({
@@ -543,7 +547,7 @@ export default function PlacePeopleScreen() {
         <View style={styles.actionsContainer}>
           <SwipeActionButtons
             onRewind={handleRewind}
-            isRewindDisabled={!canRewind}
+            isRewindDisabled={!canAttemptRewind}
             onLike={() => swiperRef.current?.handleLike()}
             onSkip={() => swiperRef.current?.handleDislike()}
             swipeX={swipeX}
