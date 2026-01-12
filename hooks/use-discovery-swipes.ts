@@ -88,9 +88,14 @@ export function useDiscoverySwipes(
   }, [clearFlushTimer, flushNow]);
 
   const queueSwipe = useCallback(
-    async (params: { targetUserId: string; action: SwipeAction }) => {
-      if (!placeId) return { results: [], instantMatch: false };
-      const { targetUserId, action } = params;
+    async (params: {
+      targetUserId: string;
+      action: SwipeAction;
+      placeIdOverride?: string;
+    }) => {
+      const { targetUserId, action, placeIdOverride } = params;
+      const resolvedPlaceId = placeIdOverride ?? placeId;
+      if (!resolvedPlaceId) return { results: [], instantMatch: false };
 
       const isInstantMatch =
         action === "like" &&
@@ -105,7 +110,7 @@ export function useDiscoverySwipes(
         database,
         targetUserId,
         action,
-        placeId,
+        placeId: resolvedPlaceId,
         removeProfileId: targetUserId,
       });
 

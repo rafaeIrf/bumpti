@@ -200,9 +200,18 @@ export default function PlacePeopleScreen() {
     swipedIdsRef.current.add(profile.user_id);
 
     void (async () => {
+      const resolvedPlaceId = profile.place_id ?? placeId;
+      if (!resolvedPlaceId || resolvedPlaceId === "pending-likes") {
+        logger.warn("Missing place_id for swipe payload", {
+          targetUserId: profile.user_id,
+          placeId: resolvedPlaceId,
+        });
+        return;
+      }
       const { instantMatch } = await queueSwipe({
         targetUserId: profile.user_id,
         action: "like",
+        placeIdOverride: resolvedPlaceId,
       });
       if (instantMatch) {
         setMatchProfile(profile);
@@ -213,7 +222,19 @@ export default function PlacePeopleScreen() {
   const handlePass = (profile: ActiveUserAtPlace) => {
     swipedIdsRef.current.add(profile.user_id);
 
-    void queueSwipe({ targetUserId: profile.user_id, action: "dislike" });
+    const resolvedPlaceId = profile.place_id ?? placeId;
+    if (!resolvedPlaceId || resolvedPlaceId === "pending-likes") {
+      logger.warn("Missing place_id for swipe payload", {
+        targetUserId: profile.user_id,
+        placeId: resolvedPlaceId,
+      });
+      return;
+    }
+    void queueSwipe({
+      targetUserId: profile.user_id,
+      action: "dislike",
+      placeIdOverride: resolvedPlaceId,
+    });
   };
 
   const handleComplete = () => {
