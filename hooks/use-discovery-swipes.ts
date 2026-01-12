@@ -133,6 +133,7 @@ export function useDiscoverySwipes(
     });
 
     return () => {
+      void flushNowRef.current();
       subscription.remove();
       clearFlushTimer();
       clearRetryTimer();

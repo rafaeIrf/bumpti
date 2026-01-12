@@ -355,6 +355,7 @@ export default function PlacePeopleScreen() {
     if (remaining > 3) return;
     if (isRefilling) return;
     if (hasInitialUsers) return;
+    if (currentIndex === 0) return;
     if (lastRefillIndexRef.current === currentIndex) return;
 
     setIsRefilling(true);
