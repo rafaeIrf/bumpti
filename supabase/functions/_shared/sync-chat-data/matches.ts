@@ -1,9 +1,9 @@
-import type { SyncChanges } from "./types.ts";
 import {
   fetchPhotosInBatch,
   signPhotoUrl,
   signPhotoUrlsInBatch,
 } from "./media.ts";
+import type { SyncChanges } from "./types.ts";
 
 export async function fetchMatchesChanges(
   supabaseAdmin: any,
@@ -71,6 +71,44 @@ export async function fetchMatchesForMediaRefresh(
   return transformMatchesForMediaRefresh(matches, userId, signedByUserId);
 }
 
+export async function fetchUnmatchedChatIdsForDeletion(
+  supabaseAdmin: any,
+  userId: string,
+  sinceDate: string | null,
+  forceUpdates: boolean
+): Promise<string[]> {
+  let query = supabaseAdmin
+    .from("user_matches")
+    .select(
+      `
+      unmatched_at,
+      chats(
+        id
+      )
+    `
+    )
+    .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+    .eq("status", "unmatched");
+
+  if (sinceDate && !forceUpdates) {
+    query = query.gt("unmatched_at", sinceDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("[Matches] Unmatched chat fetch error:", error);
+    throw error;
+  }
+
+  return (data || [])
+    .map((row: any) => {
+      const chats = Array.isArray(row.chats) ? row.chats : [row.chats];
+      return chats?.[0]?.id ?? null;
+    })
+    .filter(Boolean);
+}
+
 async function fetchMatchesFromDB(
   supabaseAdmin: any,
   userId: string,
@@ -91,7 +129,7 @@ async function fetchMatchesFromDB(
       )
     `)
     .or(`user_a.eq.${userId},user_b.eq.${userId}`)
-    .eq("status", "active");
+    .in("status", ["active", "unmatched"]);
 
   if (sinceDate && !forceUpdates) {
     const dateFilter = `matched_at.gt.${sinceDate},unmatched_at.gt.${sinceDate},user_a_opened_at.gt.${sinceDate},user_b_opened_at.gt.${sinceDate}`;
@@ -130,6 +168,19 @@ async function transformAndClassifyMatches(
   const deleted: any[] = [];
 
   for (const match of matches) {
+    if (match.status === "unmatched") {
+      if (
+        forceUpdates ||
+        !sinceDate ||
+        (match.unmatched_at &&
+          new Date(match.unmatched_at).getTime() >
+            new Date(sinceDate).getTime())
+      ) {
+        deleted.push(match.id);
+      }
+      continue;
+    }
+
     const isUserA = match.user_a === userId;
     const otherUserId = isUserA ? match.user_b : match.user_a;
     const otherProfile = isUserA ? match.profile_b : match.profile_a;

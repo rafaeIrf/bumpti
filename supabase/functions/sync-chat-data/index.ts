@@ -10,6 +10,7 @@ import { detectPhotoUpdates } from "../_shared/sync-chat-data/photo-updates.ts";
 import {
   fetchMatchesChanges,
   fetchMatchesForMediaRefresh,
+  fetchUnmatchedChatIdsForDeletion,
 } from "../_shared/sync-chat-data/matches.ts";
 import {
   fetchChatsChanges,
@@ -103,6 +104,19 @@ Deno.serve(async (req) => {
         force_updates
       ),
     };
+
+    const unmatchedChatIds = await fetchUnmatchedChatIdsForDeletion(
+      supabaseAdmin,
+      user.id,
+      sinceDate,
+      force_updates
+    );
+
+    if (unmatchedChatIds.length > 0) {
+      changes.chats.deleted = Array.from(
+        new Set([...(changes.chats.deleted || []), ...unmatchedChatIds])
+      );
+    }
 
     if (shouldRefreshMedia) {
       const refreshedMatches = await fetchMatchesForMediaRefresh(

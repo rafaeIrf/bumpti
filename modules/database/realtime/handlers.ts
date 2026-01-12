@@ -177,15 +177,9 @@ export async function handleNewMessageBroadcast(
 export async function handleMatchUpdate(
   payload: any,
   database: Database,
-  isInsert: boolean = false
 ): Promise<void> {
   try {
-    logger.log('📬 Processing match update:', payload, 'isInsert:', isInsert);
-
-    if (isInsert) {
-      logger.log('🔄 Match INSERT ignored (handled via NEW_MATCH broadcast)');
-      return;
-    }
+    logger.log('📬 Processing match update:', payload);
 
     // Para UPDATE, verificar se foi unmatch e deletar localmente
     await database.write(async () => {
@@ -204,12 +198,12 @@ export async function handleMatchUpdate(
             .query(Q.where('match_id', id))
             .fetch();
           
-          const deleteOperations: any[] = [match.prepareMarkAsDeleted()];
+          const deleteOperations: any[] = [match.prepareDestroyPermanently()];
           
           if (associatedChats.length > 0) {
             logger.log(`🗑️ Found ${associatedChats.length} chat(s) to delete for unmatched match:`, id);
             associatedChats.forEach((chat) => {
-              deleteOperations.push(chat.prepareMarkAsDeleted());
+              deleteOperations.push(chat.prepareDestroyPermanently());
             });
           }
           

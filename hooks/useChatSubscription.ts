@@ -36,7 +36,7 @@ export function useGlobalSubscriptions(currentUserId: string | null) {
             { event: 'UPDATE', schema: 'public', table: 'user_matches' },
             async (event) => {
               logger.log('📬 Match UPDATE:', event);
-              await handleMatchUpdate(event.new, database, false); // isInsert = false
+              await handleMatchUpdate(event.new, database);
             },
           )
           .subscribe();
