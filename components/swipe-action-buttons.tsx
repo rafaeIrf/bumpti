@@ -1,4 +1,4 @@
-import { CheckIcon, XIcon } from "@/assets/icons";
+import { CheckIcon, RewindIcon, XIcon } from "@/assets/icons";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
@@ -13,15 +13,23 @@ import Animated, {
 interface SwipeActionButtonsProps {
   onLike: () => void;
   onSkip: () => void;
+  onRewind?: () => void;
+  isRewindDisabled?: boolean;
   swipeX?: SharedValue<number> | null; // Shared value from parent swiper
 }
 
 export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
   onLike,
   onSkip,
+  onRewind,
+  isRewindDisabled = false,
   swipeX,
 }) => {
   const colors = useThemeColors();
+  const rewindBackground = isRewindDisabled
+    ? colors.disabledBG
+    : colors.surface;
+  const rewindIconColor = isRewindDisabled ? colors.border : colors.pastelGold;
 
   // Animations based on swipe direction
   const dislikeButtonStyle = useAnimatedStyle(() => {
@@ -152,6 +160,23 @@ export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
 
   return (
     <>
+      {onRewind && (
+        <Animated.View style={styles.buttonContainer}>
+          <Pressable
+            onPress={onRewind}
+            disabled={isRewindDisabled}
+            style={[
+              styles.rewindButton,
+              {
+                backgroundColor: rewindBackground,
+              },
+            ]}
+          >
+            <RewindIcon width={20} height={20} color={rewindIconColor} />
+          </Pressable>
+        </Animated.View>
+      )}
+
       <Animated.View style={[styles.buttonContainer, dislikeButtonStyle]}>
         <Pressable
           onPress={onSkip}
@@ -187,6 +212,13 @@ export const SwipeActionButtons: React.FC<SwipeActionButtonsProps> = ({
 const styles = StyleSheet.create({
   buttonContainer: {
     // elevation removed - animated in useAnimatedStyle
+  },
+  rewindButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
   skipButton: {
     width: 64,

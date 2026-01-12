@@ -930,6 +930,8 @@
     "subscribePremium": "Subscribe Premium",
     "backToPlaces": "Back to places",
     "howItWorks": "How it works",
+    "rewindBlockedTitle": "Rewind unavailable",
+    "rewindBlockedDescription": "You can’t rewind a match.",
     "emptyState": {
       "title": "No one here yet",
       "description": "You are the first! When other people appear here, we will notify you."

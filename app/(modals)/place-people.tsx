@@ -1,5 +1,6 @@
 import { CheckIcon, SparklesIcon, UsersIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useDatabase } from "@/components/DatabaseProvider";
 import { ItsMatchModal } from "@/components/its-match-modal";
 import { LoadingView } from "@/components/loading-view";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
@@ -13,16 +14,16 @@ import { useDiscoveryFeed } from "@/hooks/use-discovery-feed";
 import { useDiscoverySwipes } from "@/hooks/use-discovery-swipes";
 import { usePrefetchWindowSize } from "@/hooks/use-prefetch-window-size";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { upsertDiscoveryProfiles } from "@/modules/discovery/discovery-service";
+import { removeQueuedSwipes } from "@/modules/discovery/swipe-queue-service";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
-import { upsertDiscoveryProfiles } from "@/modules/discovery/discovery-service";
-import { useDatabase } from "@/components/DatabaseProvider";
 import { prefetchNextCards } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 interface Place {
   id: string;
@@ -54,8 +55,7 @@ export default function PlacePeopleScreen() {
     distanceKm?: string;
     initialUsers?: string;
   }>();
-  const [isHydratingInitialUsers, setIsHydratingInitialUsers] =
-    useState(false);
+  const [isHydratingInitialUsers, setIsHydratingInitialUsers] = useState(false);
   const [matchProfile, setMatchProfile] = useState<ActiveUserAtPlace | null>(
     null
   );
@@ -68,6 +68,11 @@ export default function PlacePeopleScreen() {
   const lastRefillHadNewRef = useRef(false);
   const pendingRefillRef = useRef(false);
   const lastRefillIndexRef = useRef<number | null>(null);
+  const lastSwipeIdRef = useRef<string | null>(null);
+  const [lastSwipedProfile, setLastSwipedProfile] =
+    useState<ActiveUserAtPlace | null>(null);
+  const [lastSwipeWasMatch, setLastSwipeWasMatch] = useState(false);
+  const [rewindUsedForCurrent, setRewindUsedForCurrent] = useState(false);
 
   const placeId = params.placeId || "1";
   const hasInitialUsers = Boolean(params.initialUsers);
@@ -87,6 +92,9 @@ export default function PlacePeopleScreen() {
       if (profile) {
         setMatchProfile(profile);
       }
+      if (lastSwipeIdRef.current === targetUserId) {
+        setLastSwipeWasMatch(true);
+      }
     },
   });
 
@@ -97,6 +105,10 @@ export default function PlacePeopleScreen() {
     swipedIdsRef.current.clear();
     deckIdsRef.current.clear();
     lastRefillIndexRef.current = null;
+    lastSwipeIdRef.current = null;
+    setLastSwipedProfile(null);
+    setLastSwipeWasMatch(false);
+    setRewindUsedForCurrent(false);
   }, [placeId]);
 
   useEffect(() => {
@@ -135,9 +147,7 @@ export default function PlacePeopleScreen() {
         const initial = availableProfiles.filter(
           (profile) => !swipedIdsRef.current.has(profile.user_id)
         );
-        deckIdsRef.current = new Set(
-          initial.map((profile) => profile.user_id)
-        );
+        deckIdsRef.current = new Set(initial.map((profile) => profile.user_id));
         setIsDeckExhausted(initial.length === 0);
         return initial;
       }
@@ -149,7 +159,9 @@ export default function PlacePeopleScreen() {
       );
       if (nextProfiles.length === 0) return prev;
 
-      nextProfiles.forEach((profile) => deckIdsRef.current.add(profile.user_id));
+      nextProfiles.forEach((profile) =>
+        deckIdsRef.current.add(profile.user_id)
+      );
       if (pendingRefillRef.current) {
         lastRefillHadNewRef.current = true;
         lastRefillIndexRef.current = null;
@@ -198,6 +210,10 @@ export default function PlacePeopleScreen() {
 
   const handleLike = (profile: ActiveUserAtPlace) => {
     swipedIdsRef.current.add(profile.user_id);
+    lastSwipeIdRef.current = profile.user_id;
+    setLastSwipedProfile(profile);
+    setLastSwipeWasMatch(false);
+    setRewindUsedForCurrent(false);
 
     void (async () => {
       const resolvedPlaceId = profile.place_id ?? placeId;
@@ -215,12 +231,17 @@ export default function PlacePeopleScreen() {
       });
       if (instantMatch) {
         setMatchProfile(profile);
+        setLastSwipeWasMatch(true);
       }
     })();
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
     swipedIdsRef.current.add(profile.user_id);
+    lastSwipeIdRef.current = profile.user_id;
+    setLastSwipedProfile(profile);
+    setLastSwipeWasMatch(false);
+    setRewindUsedForCurrent(false);
 
     const resolvedPlaceId = profile.place_id ?? placeId;
     if (!resolvedPlaceId || resolvedPlaceId === "pending-likes") {
@@ -235,6 +256,30 @@ export default function PlacePeopleScreen() {
       action: "dislike",
       placeIdOverride: resolvedPlaceId,
     });
+  };
+
+  const canRewind =
+    Boolean(lastSwipedProfile) && !lastSwipeWasMatch && !rewindUsedForCurrent;
+
+  const handleRewind = () => {
+    if (!lastSwipedProfile) return;
+    if (lastSwipeWasMatch) {
+      Alert.alert(
+        t("placePeople.rewindBlockedTitle"),
+        t("placePeople.rewindBlockedDescription")
+      );
+      return;
+    }
+    if (rewindUsedForCurrent) return;
+
+    swipedIdsRef.current.delete(lastSwipedProfile.user_id);
+    void removeQueuedSwipes({
+      database,
+      targetUserIds: [lastSwipedProfile.user_id],
+    });
+    setIsDeckExhausted(false);
+    setRewindUsedForCurrent(true);
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
   const handleComplete = () => {
@@ -299,8 +344,7 @@ export default function PlacePeopleScreen() {
     (deck.length === 0 || isDeckExhausted) &&
     !hasAvailableToAppend &&
     !isRefilling;
-  const showSwiper =
-    !loading && !showPremium && !showEmpty && remaining > 0;
+  const showSwiper = !loading && !showPremium && !showEmpty && remaining > 0;
 
   useEffect(() => {
     if (!showSwiper) return;
@@ -498,6 +542,8 @@ export default function PlacePeopleScreen() {
       {showSwiper && remaining > 0 && (
         <View style={styles.actionsContainer}>
           <SwipeActionButtons
+            onRewind={handleRewind}
+            isRewindDisabled={!canRewind}
             onLike={() => swiperRef.current?.handleLike()}
             onSkip={() => swiperRef.current?.handleDislike()}
             swipeX={swipeX}
@@ -622,7 +668,7 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     position: "absolute",
-    bottom: 56,
+    bottom: spacing.xxl * 2,
     left: 0,
     right: 0,
     flexDirection: "row",

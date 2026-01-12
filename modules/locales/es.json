@@ -933,7 +933,9 @@
     "emptyState": {
       "title": "Nadie por aquí todavía",
       "description": "¡Eres el primero! Cuando aparezcan otras personas aquí, te avisaremos."
-    }
+    },
+    "rewindBlockedTitle": "Rewind no disponible",
+    "rewindBlockedDescription": "No puedes deshacer un match."
   },
   "filters": {
     "title": "Filtros",

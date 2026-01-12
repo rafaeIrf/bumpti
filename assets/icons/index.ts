@@ -37,6 +37,7 @@ export { default as NavigationIcon } from "./navigation.svg";
 export { default as Open } from "./open.svg";
 export { default as PencilIcon } from "./pencil.svg";
 export { default as PlusIcon } from "./plus.svg";
+export { default as RewindIcon } from "./rewind.svg";
 export { default as SearchIcon } from "./search.svg";
 export { default as SendHorizontalIcon } from "./send-horizontal.svg";
 export { default as SendIcon } from "./send.svg";
