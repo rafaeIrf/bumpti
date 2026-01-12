@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     // elevation removed - animated in useAnimatedStyle
   },
   circleButton: {
-    borderWidth: 2,
+    borderWidth: 0,
     justifyContent: "center",
     alignItems: "center",
   },
