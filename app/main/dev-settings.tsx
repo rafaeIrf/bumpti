@@ -9,9 +9,12 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useDatabase } from "@/components/DatabaseProvider";
 import type Chat from "@/modules/database/models/Chat";
+import type DiscoveryProfile from "@/modules/database/models/DiscoveryProfile";
 import type LikerId from "@/modules/database/models/LikerId";
 import type Match from "@/modules/database/models/Match";
 import type Message from "@/modules/database/models/Message";
+import type Profile from "@/modules/database/models/Profile";
+import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import { t } from "@/modules/locales";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
@@ -23,6 +26,9 @@ type DevDbState = {
   matches: Match[];
   chats: Chat[];
   messages: Message[];
+  discoveryProfiles: DiscoveryProfile[];
+  swipeQueue: SwipeQueue[];
+  profiles: Profile[];
 };
 
 interface SectionHeaderProps {
@@ -48,9 +54,19 @@ export default function DevSettingsScreen() {
     matches: [],
     chats: [],
     messages: [],
+    discoveryProfiles: [],
+    swipeQueue: [],
+    profiles: [],
   });
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
+  const [expandedDiscoveryId, setExpandedDiscoveryId] = useState<string | null>(
+    null
+  );
+  const [expandedSwipeId, setExpandedSwipeId] = useState<string | null>(null);
+  const [expandedProfileId, setExpandedProfileId] = useState<string | null>(
+    null
+  );
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -59,12 +75,21 @@ export default function DevSettingsScreen() {
       const matchCollection = database.collections.get<Match>("matches");
       const chatCollection = database.collections.get<Chat>("chats");
       const messageCollection = database.collections.get<Message>("messages");
+      const discoveryCollection =
+        database.collections.get<DiscoveryProfile>("discovery_profiles");
+      const swipeCollection =
+        database.collections.get<SwipeQueue>("swipes_queue");
+      const profileCollection = database.collections.get<Profile>("profiles");
 
-      const [likers, matches, chats, messages] = await Promise.all([
+      const [likers, matches, chats, messages, discoveryProfiles, swipes, profiles] =
+        await Promise.all([
         likerCollection.query().fetch(),
         matchCollection.query().fetch(),
         chatCollection.query().fetch(),
         messageCollection.query().fetch(),
+        discoveryCollection.query().fetch(),
+        swipeCollection.query().fetch(),
+        profileCollection.query().fetch(),
       ]);
 
       setData({
@@ -72,6 +97,9 @@ export default function DevSettingsScreen() {
         matches,
         chats,
         messages,
+        discoveryProfiles,
+        swipeQueue: swipes,
+        profiles,
       });
     } catch (error) {
       logger.error("Failed to load dev settings data", { error });
@@ -401,6 +429,274 @@ export default function DevSettingsScreen() {
                   })}
                 </ThemedText>
               ))
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <ThemedText style={[typography.body, { color: colors.text }]}>
+              {t("screens.profile.devSettings.database.discoveryTitle")}
+            </ThemedText>
+            {data.discoveryProfiles.length === 0 ? (
+              <ThemedText style={[typography.body, { color: colors.text }]}>
+                {t("screens.profile.devSettings.database.discoveryEmpty")}
+              </ThemedText>
+            ) : (
+              data.discoveryProfiles.slice(0, 50).map((profile) => {
+                const isExpanded = expandedDiscoveryId === profile.id;
+                const profileData = profile.data as
+                  | { name?: string; user_id?: string }
+                  | null;
+                return (
+                  <View key={profile.id} style={styles.listItem}>
+                    <TouchableOpacity
+                      style={styles.listRow}
+                      onPress={() =>
+                        setExpandedDiscoveryId(isExpanded ? null : profile.id)
+                      }
+                    >
+                      <ThemedText
+                        style={[typography.body, { color: colors.text }]}
+                      >
+                        {profile.id}
+                      </ThemedText>
+                    </TouchableOpacity>
+                    {isExpanded && (
+                      <View style={styles.details}>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.id", {
+                            value: profile.id,
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.userId", {
+                            value: profileData?.user_id ?? "-",
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.name", {
+                            value: profileData?.name ?? "-",
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.placeId", {
+                            value: profile.placeId ?? "-",
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t(
+                            "screens.profile.devSettings.fields.lastFetchedAt",
+                            {
+                              value: formatDate(profile.lastFetchedAt),
+                            }
+                          )}
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <ThemedText style={[typography.body, { color: colors.text }]}>
+              {t("screens.profile.devSettings.database.swipesTitle")}
+            </ThemedText>
+            {data.swipeQueue.length === 0 ? (
+              <ThemedText style={[typography.body, { color: colors.text }]}>
+                {t("screens.profile.devSettings.database.swipesEmpty")}
+              </ThemedText>
+            ) : (
+              data.swipeQueue.slice(0, 50).map((swipe) => {
+                const isExpanded = expandedSwipeId === swipe.id;
+                return (
+                  <View key={swipe.id} style={styles.listItem}>
+                    <TouchableOpacity
+                      style={styles.listRow}
+                      onPress={() =>
+                        setExpandedSwipeId(isExpanded ? null : swipe.id)
+                      }
+                    >
+                      <ThemedText
+                        style={[typography.body, { color: colors.text }]}
+                      >
+                        {swipe.targetUserId}
+                      </ThemedText>
+                    </TouchableOpacity>
+                    {isExpanded && (
+                      <View style={styles.details}>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.targetUserId", {
+                            value: swipe.targetUserId,
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.action", {
+                            value: swipe.action,
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.placeId", {
+                            value: swipe.placeId ?? "-",
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.createdAt", {
+                            value: formatDate(swipe.createdAt),
+                          })}
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <ThemedText style={[typography.body, { color: colors.text }]}>
+              {t("screens.profile.devSettings.database.profilesTitle")}
+            </ThemedText>
+            {data.profiles.length === 0 ? (
+              <ThemedText style={[typography.body, { color: colors.text }]}>
+                {t("screens.profile.devSettings.database.profilesEmpty")}
+              </ThemedText>
+            ) : (
+              data.profiles.slice(0, 50).map((profile) => {
+                const isExpanded = expandedProfileId === profile.id;
+                const profileData = profile.data as
+                  | { name?: string; user_id?: string }
+                  | null;
+                return (
+                  <View key={profile.id} style={styles.listItem}>
+                    <TouchableOpacity
+                      style={styles.listRow}
+                      onPress={() =>
+                        setExpandedProfileId(isExpanded ? null : profile.id)
+                      }
+                    >
+                      <ThemedText
+                        style={[typography.body, { color: colors.text }]}
+                      >
+                        {profile.userId}
+                      </ThemedText>
+                    </TouchableOpacity>
+                    {isExpanded && (
+                      <View style={styles.details}>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.userId", {
+                            value: profile.userId,
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.name", {
+                            value: profileData?.name ?? "-",
+                          })}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t(
+                            "screens.profile.devSettings.fields.lastFetchedAt",
+                            {
+                              value: formatDate(profile.lastFetchedAt),
+                            }
+                          )}
+                        </ThemedText>
+                        <ThemedText
+                          style={[
+                            typography.caption,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {t("screens.profile.devSettings.fields.createdAt", {
+                            value: formatDate(profile.createdAt),
+                          })}
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
             )}
           </View>
         </View>

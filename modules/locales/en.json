@@ -217,12 +217,19 @@
           "status": "Status: {{value}}",
           "otherUser": "Other user: {{value}}",
           "place": "Place: {{value}}",
+          "placeId": "Place ID: {{value}}",
+          "userId": "User ID: {{value}}",
+          "name": "Name: {{value}}",
           "matchedAt": "Matched at: {{value}}",
           "unmatchedAt": "Unmatched at: {{value}}",
           "chatId": "Chat ID: {{value}}",
           "firstMessageAt": "First message at: {{value}}",
           "lastMessageAt": "Last message at: {{value}}",
-          "unreadCount": "Unread count: {{value}}"
+          "unreadCount": "Unread count: {{value}}",
+          "lastFetchedAt": "Last fetched at: {{value}}",
+          "createdAt": "Created at: {{value}}",
+          "targetUserId": "Target user ID: {{value}}",
+          "action": "Action: {{value}}"
         },
         "database": {
           "title": "Local database",
@@ -234,7 +241,13 @@
           "chatsItem": "Chat: {{id}} • Match: {{matchId}} • User: {{otherUserId}}",
           "messagesTitle": "Messages",
           "messagesEmpty": "No messages found.",
-          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}"
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
+          "discoveryTitle": "Discovery profiles",
+          "discoveryEmpty": "No discovery profiles found.",
+          "swipesTitle": "Swipe queue",
+          "swipesEmpty": "No swipes queued.",
+          "profilesTitle": "Profiles cache",
+          "profilesEmpty": "No cached profiles found."
         },
         "likerIds": {
           "title": "Liker IDs",

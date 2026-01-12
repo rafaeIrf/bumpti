@@ -218,12 +218,19 @@
           "status": "Status: {{value}}",
           "otherUser": "Outro usuário: {{value}}",
           "place": "Local: {{value}}",
+          "placeId": "ID do local: {{value}}",
+          "userId": "ID do usuário: {{value}}",
+          "name": "Nome: {{value}}",
           "matchedAt": "Match em: {{value}}",
           "unmatchedAt": "Unmatch em: {{value}}",
           "chatId": "Chat ID: {{value}}",
           "firstMessageAt": "Primeira mensagem: {{value}}",
           "lastMessageAt": "Última mensagem: {{value}}",
-          "unreadCount": "Não lidas: {{value}}"
+          "unreadCount": "Não lidas: {{value}}",
+          "lastFetchedAt": "Última atualização: {{value}}",
+          "createdAt": "Criado em: {{value}}",
+          "targetUserId": "ID alvo: {{value}}",
+          "action": "Ação: {{value}}"
         },
         "database": {
           "title": "Banco local",
@@ -235,7 +242,13 @@
           "chatsItem": "Chat: {{id}} • Match: {{matchId}} • Usuário: {{otherUserId}}",
           "messagesTitle": "Mensagens",
           "messagesEmpty": "Nenhuma mensagem encontrada.",
-          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}"
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
+          "discoveryTitle": "Perfis de discovery",
+          "discoveryEmpty": "Nenhum perfil de discovery encontrado.",
+          "swipesTitle": "Fila de swipes",
+          "swipesEmpty": "Nenhum swipe pendente.",
+          "profilesTitle": "Cache de perfis",
+          "profilesEmpty": "Nenhum perfil em cache."
         },
         "likerIds": {
           "title": "Liker IDs",
