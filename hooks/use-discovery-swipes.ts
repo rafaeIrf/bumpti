@@ -1,11 +1,11 @@
 import { useDatabase } from "@/components/DatabaseProvider";
 import {
   enqueueSwipe,
-  flushQueuedSwipes,
   type SwipeBatchResult,
 } from "@/modules/discovery/swipe-queue-service";
 import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
 import { hasLikerId, removeLikerId } from "@/modules/discovery/liker-ids-service";
+import { flushSwipeQueueNow } from "@/modules/discovery/swipe-queue-orchestrator";
 import { logger } from "@/utils/logger";
 import { AppState } from "react-native";
 import { useCallback, useEffect, useRef } from "react";
@@ -48,7 +48,7 @@ export function useDiscoverySwipes(
     isFlushingRef.current = true;
 
     try {
-      const results = await flushQueuedSwipes({ database });
+      const results = await flushSwipeQueueNow({ database, reason: "local" });
       if (onMatch) {
         results.forEach((result) => {
           if (!result.is_match || result.status !== "ok") return;
