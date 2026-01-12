@@ -218,6 +218,19 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {__DEV__ && (
+          <>
+            <SectionHeader title={t("screens.profile.settingsPage.dev.title")} />
+            <View style={styles.sectionGap}>
+              <SettingItem
+                title={t("screens.profile.settingsPage.dev.itemTitle")}
+                description={t("screens.profile.settingsPage.dev.itemDescription")}
+                onClick={() => router.push("/main/dev-settings")}
+              />
+            </View>
+          </>
+        )}
+
         {/* Sessão */}
         <SectionHeader
           title={t("screens.profile.settingsPage.session.title")}

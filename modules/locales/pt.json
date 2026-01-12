@@ -107,6 +107,7 @@
     "selected": "Selecionados",
     "done": "Pronto",
     "save": "Salvar",
+    "refresh": "Atualizar",
     "buy": "Comprar",
     "skip": "Pular",
     "select": "Selecione",
@@ -195,12 +196,51 @@
           "title": "SOBRE O APP",
           "version": "Versão"
         },
+        "dev": {
+          "title": "DESENVOLVEDOR",
+          "itemTitle": "Configurações dev",
+          "itemDescription": "Ferramentas e diagnósticos do banco local."
+        },
         "session": {
           "title": "SESSÃO",
           "logout": "Sair",
           "logoutConfirm": "Tem certeza que deseja sair?",
           "deleteAccount": "Deletar conta",
           "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+        }
+      },
+      "devSettings": {
+        "title": "Configurações dev",
+        "fields": {
+          "id": "ID: {{value}}",
+          "matchId": "Match ID: {{value}}",
+          "otherUserId": "ID do usuário: {{value}}",
+          "status": "Status: {{value}}",
+          "otherUser": "Outro usuário: {{value}}",
+          "place": "Local: {{value}}",
+          "matchedAt": "Match em: {{value}}",
+          "unmatchedAt": "Unmatch em: {{value}}",
+          "chatId": "Chat ID: {{value}}",
+          "firstMessageAt": "Primeira mensagem: {{value}}",
+          "lastMessageAt": "Última mensagem: {{value}}",
+          "unreadCount": "Não lidas: {{value}}"
+        },
+        "database": {
+          "title": "Banco local",
+          "matchesTitle": "Matches",
+          "matchesEmpty": "Nenhum match encontrado.",
+          "matchesItem": "Match: {{id}} • Status: {{status}} • Usuário: {{otherUserId}}",
+          "chatsTitle": "Chats",
+          "chatsEmpty": "Nenhum chat encontrado.",
+          "chatsItem": "Chat: {{id}} • Match: {{matchId}} • Usuário: {{otherUserId}}",
+          "messagesTitle": "Mensagens",
+          "messagesEmpty": "Nenhuma mensagem encontrada.",
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}"
+        },
+        "likerIds": {
+          "title": "Liker IDs",
+          "count": "Total: {{count}}",
+          "empty": "Nenhum liker ID encontrado."
         }
       },
 

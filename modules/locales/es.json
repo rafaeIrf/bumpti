@@ -107,6 +107,7 @@
     "selected": "Seleccionados",
     "done": "Listo",
     "save": "Guardar",
+    "refresh": "Actualizar",
     "buy": "Comprar",
     "skip": "Saltar",
     "select": "Seleccione",
@@ -194,12 +195,51 @@
           "title": "SOBRE LA APP",
           "version": "Versión"
         },
+        "dev": {
+          "title": "DESARROLLADOR",
+          "itemTitle": "Configuración dev",
+          "itemDescription": "Herramientas y diagnósticos de la base local."
+        },
         "session": {
           "title": "SESIÓN",
           "logout": "Cerrar sesión",
           "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
           "deleteAccount": "Eliminar cuenta",
           "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
+        }
+      },
+      "devSettings": {
+        "title": "Configuración dev",
+        "fields": {
+          "id": "ID: {{value}}",
+          "matchId": "Match ID: {{value}}",
+          "otherUserId": "ID de usuario: {{value}}",
+          "status": "Estado: {{value}}",
+          "otherUser": "Otro usuario: {{value}}",
+          "place": "Lugar: {{value}}",
+          "matchedAt": "Match: {{value}}",
+          "unmatchedAt": "Unmatch: {{value}}",
+          "chatId": "Chat ID: {{value}}",
+          "firstMessageAt": "Primer mensaje: {{value}}",
+          "lastMessageAt": "Último mensaje: {{value}}",
+          "unreadCount": "No leídos: {{value}}"
+        },
+        "database": {
+          "title": "Base local",
+          "matchesTitle": "Matches",
+          "matchesEmpty": "No se encontraron matches.",
+          "matchesItem": "Match: {{id}} • Estado: {{status}} • Usuario: {{otherUserId}}",
+          "chatsTitle": "Chats",
+          "chatsEmpty": "No se encontraron chats.",
+          "chatsItem": "Chat: {{id}} • Match: {{matchId}} • Usuario: {{otherUserId}}",
+          "messagesTitle": "Mensajes",
+          "messagesEmpty": "No se encontraron mensajes.",
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}"
+        },
+        "likerIds": {
+          "title": "Liker IDs",
+          "count": "Total: {{count}}",
+          "empty": "No se encontraron liker IDs."
         }
       },
 
