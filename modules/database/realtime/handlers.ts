@@ -185,6 +185,7 @@ export async function handleMatchUpdate(
     await database.write(async () => {
       const matchesCollection = database.collections.get<Match>('matches');
       const chatsCollection = database.collections.get<Chat>('chats');
+      const messagesCollection = database.collections.get<Message>('messages');
       
       const { id, status, ...updateData } = payload;
       
@@ -202,9 +203,17 @@ export async function handleMatchUpdate(
           
           if (associatedChats.length > 0) {
             logger.log(`🗑️ Found ${associatedChats.length} chat(s) to delete for unmatched match:`, id);
-            associatedChats.forEach((chat) => {
+            for (const chat of associatedChats) {
               deleteOperations.push(chat.prepareDestroyPermanently());
-            });
+              const messages = await messagesCollection
+                .query(Q.where('chat_id', chat.id))
+                .fetch();
+              if (messages.length > 0) {
+                messages.forEach((message) => {
+                  deleteOperations.push(message.prepareDestroyPermanently());
+                });
+              }
+            }
           }
           
           await database.batch(...deleteOperations);

@@ -140,6 +140,8 @@ export async function syncDatabase(database: Database, forceFullSync: boolean = 
 
   syncingPromise = (async () => {
     try {
+      let deletedChatIds: string[] = [];
+
       if (forceFullSync) {
         logger.log('🔄 Starting FULL database synchronization (ignoring lastPulledAt)...');
       } else {
@@ -164,9 +166,14 @@ export async function syncDatabase(database: Database, forceFullSync: boolean = 
           // Evitar erro de criação duplicada (já recebida via broadcast ou existente)
           // Move registros duplicados de "created" para "updated"
           const dedupedChanges = await dedupeExistingRecords(database, processedChanges);
-          
+
+          deletedChatIds = [
+            ...(dedupedChanges.chats?.deleted || []),
+            ...deletedChatIds,
+          ];
+
           await updateSyncTimestamps({ lastPulledAt: newTimestamp });
-          
+
           return { changes: dedupedChanges, timestamp: newTimestamp };
         },
         pushChanges: async ({ changes, lastPulledAt: serverLastPulledAt }) => {
@@ -177,6 +184,24 @@ export async function syncDatabase(database: Database, forceFullSync: boolean = 
         },
         migrationsEnabledAtVersion: 1,
       });
+
+      if (deletedChatIds.length > 0) {
+        const uniqueDeletedChatIds = Array.from(new Set(deletedChatIds));
+        await database.write(async () => {
+          const messagesCollection = database.collections.get('messages');
+          const messages = await messagesCollection
+            .query(Q.where('chat_id', Q.oneOf(uniqueDeletedChatIds)))
+            .fetch();
+          if (messages.length === 0) return;
+          const batch = messages.map((message: any) =>
+            message.prepareDestroyPermanently()
+          );
+          await database.batch(...batch);
+        });
+        logger.log('🗑️ Removed orphan messages after chat deletions', {
+          count: uniqueDeletedChatIds.length,
+        });
+      }
 
       logger.log('✅ Database synchronization completed');
     } catch (error) {
