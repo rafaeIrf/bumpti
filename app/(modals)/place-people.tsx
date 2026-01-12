@@ -16,6 +16,7 @@ import { usePrefetchWindowSize } from "@/hooks/use-prefetch-window-size";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { upsertDiscoveryProfiles } from "@/modules/discovery/discovery-service";
 import { removeQueuedSwipes } from "@/modules/discovery/swipe-queue-service";
+import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { prefetchNextCards } from "@/utils/image-prefetch";
@@ -28,11 +29,7 @@ import { Alert, StyleSheet, View } from "react-native";
 interface Place {
   id: string;
   name: string;
-  type: "bar" | "pub" | "club" | "university";
-  distance: string;
-  activeUsers: number;
-  address: string;
-  image: string;
+  distance?: string;
 }
 
 const mockPlaces = {
@@ -73,9 +70,18 @@ export default function PlacePeopleScreen() {
     useState<ActiveUserAtPlace | null>(null);
   const [lastSwipeWasMatch, setLastSwipeWasMatch] = useState(false);
   const [rewindUsedForCurrent, setRewindUsedForCurrent] = useState(false);
+  const { isPremium } = useUserSubscription();
 
-  const placeId = params.placeId || "1";
+  const placeId = params.placeId;
   const hasInitialUsers = Boolean(params.initialUsers);
+
+  const isUserHere = true;
+
+  const place: Place = {
+    id: placeId,
+    name: params.placeName,
+    distance: params.distanceKm,
+  };
 
   const {
     profiles: availableProfiles,
@@ -193,21 +199,6 @@ export default function PlacePeopleScreen() {
     prefetchNextCards(deck, currentIndex, prefetchWindowSize);
   }, [currentIndex, deck, prefetchWindowSize]);
 
-  // TODO: Get from API/state
-  const isUserHere = true;
-  const isPremium = false;
-
-  // TODO: Replace with real place data
-  const place: Place = {
-    id: placeId,
-    name: params.placeName || "Bar do João",
-    type: "bar",
-    distance: params.distance || "0.5 km",
-    activeUsers: 12,
-    address: "Rua Example, 123",
-    image: "",
-  };
-
   const handleLike = (profile: ActiveUserAtPlace) => {
     swipedIdsRef.current.add(profile.user_id);
     lastSwipeIdRef.current = profile.user_id;
@@ -258,8 +249,7 @@ export default function PlacePeopleScreen() {
     });
   };
 
-  const canAttemptRewind =
-    Boolean(lastSwipedProfile) && !rewindUsedForCurrent;
+  const canAttemptRewind = Boolean(lastSwipedProfile) && !rewindUsedForCurrent;
 
   const handleRewind = () => {
     if (!lastSwipedProfile) return;
@@ -310,8 +300,8 @@ export default function PlacePeopleScreen() {
   // Parse distance from string to number
   const distanceInKm = params.distanceKm
     ? Number.parseFloat(params.distanceKm)
-    : Number.parseFloat(place.distance.replace(" km", ""));
-  const isFarAway = distanceInKm > 3;
+    : undefined;
+  const isFarAway = distanceInKm && distanceInKm > 3;
 
   // No more profiles or Premium logic handled within unified return
 
