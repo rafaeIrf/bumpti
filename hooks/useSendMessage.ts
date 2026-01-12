@@ -17,13 +17,14 @@ export type MessageStatus = "pending" | "sent" | "delivered" | "failed";
  */
 export function useSendMessage(chatId: string, currentUserId: string) {
   const database = useDatabase();
-  const [isSending, setIsSending] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const isSending = pendingCount > 0;
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || isSending) return;
+      if (!content.trim()) return;
 
-      setIsSending(true);
+      setPendingCount((count) => count + 1);
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       try {
@@ -103,20 +104,14 @@ export function useSendMessage(chatId: string, currentUserId: string) {
               .fetch();
 
             if (tempMessages.length > 0) {
-              const batch = [
-                tempMessages[0].prepareMarkAsDeleted(),
-                messagesCollection.prepareCreate((message: any) => {
-                  message._raw.id = realId;
-                  message.chatId = chatId;
-                  message.senderId = currentUserId;
-                  message.content = content.trim();
-                  message.status = "sent";
-                  message.createdAt = timestamp ? new Date(timestamp) : new Date();
-                }),
-              ];
-
-              await database.batch(...batch);
-              logger.log("✅ Message saved with server ID:", realId);
+              const tempMessage = tempMessages[0];
+              const serverDate = timestamp ? new Date(timestamp) : null;
+              const finalDate =
+                serverDate && serverDate > tempMessage.createdAt
+                  ? serverDate
+                  : tempMessage.createdAt;
+              await tempMessage.replaceTempId(realId, finalDate);
+              logger.log("✅ Message updated with server ID:", realId);
             }
           });
         }
@@ -137,10 +132,10 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           }
         });
       } finally {
-        setIsSending(false);
+        setPendingCount((count) => Math.max(0, count - 1));
       }
     },
-    [database, chatId, currentUserId, isSending]
+    [database, chatId, currentUserId]
   );
 
   return { sendMessage, isSending };

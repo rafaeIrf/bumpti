@@ -505,7 +505,7 @@ function ChatMessageList({
           />
           <Pressable
             onPress={handleSend}
-            disabled={!newMessage.trim() || isSending}
+            disabled={!newMessage.trim()}
             style={[
               styles.sendButton,
               {
