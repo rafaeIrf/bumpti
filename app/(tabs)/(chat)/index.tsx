@@ -194,21 +194,7 @@ function ChatListScreen({
     });
   }, [pendingUsers, isPremium]);
 
-  // Empty state
-  if (chats.length === 0 && matches.length === 0 && pendingCount === 0) {
-    return (
-      <BaseTemplateScreen TopHeader={header}>
-        <ThemedView style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyTitle}>
-            {t("screens.chat.emptyTitle")}
-          </ThemedText>
-          <ThemedText style={styles.emptySubtitle}>
-            {t("screens.chat.emptySubtitle")}
-          </ThemedText>
-        </ThemedView>
-      </BaseTemplateScreen>
-    );
-  }
+  const showEmptyState = chats.length === 0 && matches.length === 0;
 
   return (
     <BaseTemplateScreen
@@ -252,6 +238,18 @@ function ChatListScreen({
                 </ThemedText>
               )}
             </View>
+          }
+          ListEmptyComponent={
+            showEmptyState ? (
+              <ThemedView style={styles.emptyContainer}>
+                <ThemedText style={styles.emptyTitle}>
+                  {t("screens.chat.emptyTitle")}
+                </ThemedText>
+                <ThemedText style={styles.emptySubtitle}>
+                  {t("screens.chat.emptySubtitle")}
+                </ThemedText>
+              </ThemedView>
+            ) : null
           }
         />
       </ThemedView>
