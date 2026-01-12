@@ -89,12 +89,52 @@ Deno.serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
+    const { data: likerRows } = await client
+      .from("user_interactions")
+      .select("from_user_id")
+      .eq("to_user_id", user.id)
+      .eq("action", "like")
+      .gt("action_expires_at", new Date().toISOString());
+
+    const likerIds = (likerRows ?? [])
+      .map((row) => row.from_user_id)
+      .filter(Boolean) as string[];
+
+    let filteredLikerIds = likerIds;
+    if (likerIds.length > 0) {
+      const [{ data: matchRowsA }, { data: matchRowsB }] = await Promise.all([
+        client
+          .from("user_matches")
+          .select("user_a,user_b,status")
+          .eq("user_a", user.id)
+          .in("user_b", likerIds)
+          .neq("status", "unmatched"),
+        client
+          .from("user_matches")
+          .select("user_a,user_b,status")
+          .eq("user_b", user.id)
+          .in("user_a", likerIds)
+          .neq("status", "unmatched"),
+      ]);
+
+      const matchedIds = new Set<string>();
+      (matchRowsA ?? []).forEach((row) => {
+        if (row.user_b) matchedIds.add(row.user_b);
+      });
+      (matchRowsB ?? []).forEach((row) => {
+        if (row.user_a) matchedIds.add(row.user_a);
+      });
+
+      filteredLikerIds = likerIds.filter((id) => !matchedIds.has(id));
+    }
+
     if (!rows || rows.length === 0) {
       return new Response(
         JSON.stringify({
           place_id: placeId,
           count: 0,
           users: [],
+          liker_ids: filteredLikerIds,
         }),
         { status: 200, headers: corsHeaders }
       );
@@ -181,6 +221,7 @@ Deno.serve(async (req) => {
         place_id: placeId,
         count: users.length,
         users,
+        liker_ids: filteredLikerIds,
       }),
       { status: 200, headers: corsHeaders }
     );

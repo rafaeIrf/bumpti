@@ -167,6 +167,8 @@
         "notifications": {
           "title": "Notificações",
           "push": "Notificações Push",
+          "devicePermission": "Permitir notificações",
+          "devicePermissionDescription": "Autorize notificações no dispositivo",
           "matches": "Matches",
           "messages": "Mensagens",
           "nearbyActivity": "Atividade próxima",
@@ -755,6 +757,7 @@
     },
     "chat": {
       "title": "Conexões",
+      "messages": "Mensagens",
       "messagePlaceholder": "Digite uma mensagem...",
       "emptyTitle": "Nenhuma conversa ainda",
       "emptySubtitle": "Comece se conectando com pessoas próximas para iniciar um papo.",
@@ -965,6 +968,10 @@
       "blockTitle": "Bloquear {{name}}?",
       "blockDescription": "{{name}} não poderá mais ver seu perfil, enviar mensagens ou interagir com você no Bumpti.",
       "blockConfirm": "Bloquear {{name}}"
+    },
+    "match": {
+      "title": "É match!",
+      "subtitle": "Você e {{name}} curtiram um ao outro."
     }
   },
   "components": {

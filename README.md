@@ -45,6 +45,7 @@ To learn more about developing your project with Expo, look at the following res
 ## Project docs
 
 - [Places nearby sorting](docs/places-nearby-sorting.md)
+- [Discovery swipe flow](docs/discovery-swipe-flow.md)
 
 ## Join the community
 

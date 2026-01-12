@@ -2,14 +2,14 @@ import { ThemedText } from "@/components/themed-text";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { ChatSummary } from "@/modules/chats/messagesApi";
+import type Chat from "@/modules/database/models/Chat";
 import { t } from "@/modules/locales";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 type Props = {
-  readonly chat: ChatSummary;
-  readonly onPress: (chat: ChatSummary) => void;
+  readonly chat: Chat;
+  readonly onPress: (chat: Chat) => void;
 };
 
 export function ChatListItem({ chat, onPress }: Props) {
@@ -19,15 +19,15 @@ export function ChatListItem({ chat, onPress }: Props) {
     <Pressable onPress={() => onPress(chat)}>
       <View style={styles.chatRow}>
         <UserAvatar
-          name={chat.other_user?.name}
-          photoUrl={chat.other_user?.photo_url ?? undefined}
-          hasUnread={chat.unread_count ? chat.unread_count > 0 : false}
+          name={chat.otherUserName}
+          photoUrl={chat.otherUserPhotoUrl ?? undefined}
+          hasUnread={chat.unreadCount > 0}
         />
         <View style={styles.chatInfo}>
           <ThemedText style={[typography.body1, { color: colors.text }]}>
-            {chat.other_user?.name ?? t("screens.chat.title")}
+            {chat.otherUserName ?? t("screens.chat.title")}
           </ThemedText>
-          {chat.last_message ? (
+          {chat.lastMessageContent ? (
             <ThemedText
               numberOfLines={1}
               style={[
@@ -35,14 +35,16 @@ export function ChatListItem({ chat, onPress }: Props) {
                 { color: colors.textSecondary, marginTop: spacing.xs },
               ]}
             >
-              {chat.last_message}
+              {chat.lastMessageContent}
             </ThemedText>
           ) : null}
         </View>
         <ThemedText
           style={[typography.caption, { color: colors.textSecondary }]}
         >
-          {formatTime(chat.last_message_at || chat.chat_created_at)}
+          {formatTime(
+            chat.lastMessageAt?.toISOString() || chat.createdAt.toISOString()
+          )}
         </ThemedText>
       </View>
     </Pressable>

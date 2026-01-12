@@ -26,11 +26,13 @@ import { UserProfileCard } from "./user-profile-card";
 
 interface ProfileSwiperProps {
   readonly profiles: ActiveUserAtPlace[];
+  readonly currentIndex: number;
   readonly currentPlaceId?: string;
   readonly places?: Record<string, { name: string; emoji: string }>;
   readonly onLike?: (profile: ActiveUserAtPlace) => void;
   readonly onPass?: (profile: ActiveUserAtPlace) => void;
   readonly onComplete?: () => void;
+  readonly onIndexChange?: (index: number) => void;
   readonly emptyStateTitle?: string;
   readonly emptyStateDescription?: string;
   readonly emptyStateAction?: {
@@ -55,11 +57,13 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
   (
     {
       profiles,
+      currentIndex,
       currentPlaceId,
       places,
       onLike,
       onPass,
       onComplete,
+      onIndexChange,
       emptyStateTitle,
       emptyStateDescription,
       emptyStateAction,
@@ -67,7 +71,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     ref
   ) => {
     const colors = useThemeColors();
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
     const [showConnectAnimation, setShowConnectAnimation] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -100,8 +103,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -125,8 +128,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -143,8 +146,8 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       // Next profile with smooth delay
       const nextIndex = currentIndex + 1;
       setTimeout(() => {
-        setCurrentIndex(nextIndex);
         setIsTransitioning(false);
+        onIndexChange?.(nextIndex);
 
         if (nextIndex >= profiles.length) {
           onComplete?.();
@@ -233,10 +236,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
     });
 
     // Empty state - no more profiles OR transitioning out of last profile
-    if (
-      currentIndex >= profiles.length ||
-      (isTransitioning && !currentProfile)
-    ) {
+    if (currentIndex >= profiles.length) {
       return (
         <View
           style={[

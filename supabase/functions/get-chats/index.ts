@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 const USER_PHOTOS_BUCKET = Deno.env.get("USER_PHOTOS_BUCKET") || "user_photos";
-const SIGNED_URL_EXPIRES = 3600;
+const SIGNED_URL_EXPIRES = 60 * 60 * 24;
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

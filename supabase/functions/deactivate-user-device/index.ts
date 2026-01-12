@@ -16,7 +16,7 @@ serve(async (req: Request) => {
 
   try {
     // Authenticate user from JWT
-    const user = await requireAuth(req);
+    const { user } = await requireAuth(req);
     const userId = user.id;
 
     // Parse request body

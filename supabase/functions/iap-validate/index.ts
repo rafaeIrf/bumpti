@@ -20,7 +20,7 @@ serve(async (req) => {
 
   try {
     // 1. Auth & Supabase Setup
-    const user = await requireAuth(req);
+    const { user } = await requireAuth(req);
     const userId = user.id;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";

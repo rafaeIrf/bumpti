@@ -5,7 +5,9 @@ import {
   shouldShowNotificationScreen,
   type NotificationPermissionResult
 } from "@/modules/notifications";
-import { useCallback, useEffect, useState } from "react";
+import { logger } from "@/utils/logger";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 
 /**
  * Hook to manage notification permissions
@@ -31,6 +33,7 @@ export function useNotificationPermission() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [shouldShowScreen, setShouldShowScreen] = useState<boolean>(false);
   const [canAskAgain, setCanAskAgain] = useState<boolean>(true);
+  const appState = useRef(AppState.currentState);
 
   const checkPermission = useCallback(async () => {
     setIsLoading(true);
@@ -43,7 +46,7 @@ export function useNotificationPermission() {
       setCanAskAgain(result.canAskAgain);
       setShouldShowScreen(shouldShow);
     } catch (error) {
-      console.error("Error checking notification permission:", error);
+      logger.error("Error checking notification permission:", error);
       setHasPermission(false);
       setShouldShowScreen(true);
     } finally {
@@ -56,6 +59,22 @@ export function useNotificationPermission() {
     checkPermission();
   }, [checkPermission]);
 
+  // Re-check permission when app comes back to foreground (e.g., after changing settings)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        checkPermission();
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => subscription.remove();
+  }, [checkPermission]);
+
   const request =
     useCallback(async (): Promise<NotificationPermissionResult> => {
       setIsLoading(true);
@@ -66,7 +85,7 @@ export function useNotificationPermission() {
         setShouldShowScreen(result.status !== "granted");
         return result;
       } catch (error) {
-        console.error("Error requesting notification permission:", error);
+        logger.error("Error requesting notification permission:", error);
         return {
           status: "denied",
           canAskAgain: false,
@@ -91,3 +110,4 @@ export function useNotificationPermission() {
     openSettings: openNotificationSettings,
   };
 }
+

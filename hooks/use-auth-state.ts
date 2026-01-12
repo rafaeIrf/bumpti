@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { AppState } from "react-native";
 import { supabase } from "@/modules/supabase/client";
+import { useEffect, useState } from "react";
 
 export function useAuthState() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -9,21 +8,24 @@ export function useAuthState() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (!isMounted) return;
-
-      if (error) {
-        console.warn("Failed to fetch auth session", error);
-        setIsAuthenticated(false);
-      } else {
-        setIsAuthenticated(!!data.session);
+    // Initial session check
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (isMounted) {
+          setIsAuthenticated(!!data.session);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.warn("[useAuthState] Failed to check session:", error);
+        if (isMounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
 
-    loadSession();
+    checkSession();
 
     // Listen to auth state changes
     const { data: authSubscription } = supabase.auth.onAuthStateChange(
@@ -34,16 +36,9 @@ export function useAuthState() {
       }
     );
 
-    const appStateSubscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        loadSession();
-      }
-    });
-
     return () => {
       isMounted = false;
       authSubscription?.subscription.unsubscribe();
-      appStateSubscription.remove();
     };
   }, []);
 

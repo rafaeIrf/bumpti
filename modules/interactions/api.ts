@@ -1,5 +1,6 @@
 import { supabase } from "@/modules/supabase/client";
 import { extractEdgeErrorMessage } from "@/modules/supabase/edge-error";
+import { logger } from "@/utils/logger";
 
 export type InteractionAction = "like" | "dislike";
 
@@ -8,6 +9,21 @@ export type InteractionResponse =
   | { status: "disliked" };
 
 export type UnmatchResponse = { status: "unmatched"; match_id: string };
+
+export type InteractionBatchItem = {
+  to_user_id: string;
+  action: InteractionAction;
+  place_id: string;
+};
+
+export type InteractionBatchResult = {
+  target_user_id: string;
+  action: InteractionAction;
+  status: "ok" | "error";
+  is_match?: boolean;
+  match_id?: string | null;
+  error?: string;
+};
 
 export async function interactUser(params: {
   toUserId: string;
@@ -25,7 +41,7 @@ export async function interactUser(params: {
     );
 
     if (error) {
-      console.error("interactUser (edge) error:", error);
+      logger.error("interactUser (edge) error", { error });
 
       const message = await extractEdgeErrorMessage(
         error,
@@ -40,10 +56,44 @@ export async function interactUser(params: {
 
     return data;
   } catch (err) {
-    console.error("interactUser (api) error:", err);
+    logger.error("interactUser (api) error", { err });
     throw err instanceof Error
       ? err
       : new Error("Unexpected error interacting with user.");
+  }
+}
+
+export async function interactUsersBatch(params: {
+  batch: InteractionBatchItem[];
+}): Promise<InteractionBatchResult[]> {
+  const { batch } = params;
+
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      results: InteractionBatchResult[];
+    }>("interact-user", {
+      body: { batch },
+    });
+
+    if (error) {
+      logger.error("interactUsersBatch (edge) error", { error });
+      const message = await extractEdgeErrorMessage(
+        error,
+        "Failed to interact with users."
+      );
+      throw new Error(message);
+    }
+
+    if (!data?.results) {
+      throw new Error("No response from interact-user batch.");
+    }
+
+    return data.results;
+  } catch (err) {
+    logger.error("interactUsersBatch (api) error", { err });
+    throw err instanceof Error
+      ? err
+      : new Error("Unexpected error interacting with users.");
   }
 }
 
@@ -57,7 +107,7 @@ export async function unmatchUser(userId: string): Promise<UnmatchResponse> {
     );
 
     if (error) {
-      console.error("unmatchUser (edge) error:", error);
+      logger.error("unmatchUser (edge) error", { error });
       const message = await extractEdgeErrorMessage(
         error,
         "Failed to unmatch user."
@@ -71,7 +121,7 @@ export async function unmatchUser(userId: string): Promise<UnmatchResponse> {
 
     return data;
   } catch (err) {
-    console.error("unmatchUser (api) error:", err);
+    logger.error("unmatchUser (api) error", { err });
     throw err instanceof Error ? err : new Error("Unexpected error unmatching.");
   }
 }

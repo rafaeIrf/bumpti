@@ -5,11 +5,11 @@ import { Stack, usePathname } from "expo-router";
 import React, { useMemo } from "react";
 
 export const unstable_settings = {
-  initialRouteName: "welcome",
+  initialRouteName: "user-name",
 };
 
 // Routes that should NOT show the progress bar
-const ROUTES_WITHOUT_PROGRESS = new Set(["/welcome", "/complete"]);
+const ROUTES_WITHOUT_PROGRESS = new Set(["/complete"]);
 
 const OnboardingHeader = React.memo(() => {
   const pathname = usePathname();
@@ -69,9 +69,6 @@ export default function OnboardingLayout() {
           gestureEnabled: false,
         }}
       >
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="phone-auth" />
-        <Stack.Screen name="verify-code" />
         <Stack.Screen name="user-name" />
         <Stack.Screen name="user-age" />
         <Stack.Screen name="user-gender" />

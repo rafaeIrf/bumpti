@@ -1,57 +1,52 @@
+import { useDatabase } from "@/components/DatabaseProvider";
+import { useProfile } from "@/hooks/use-profile";
+import { useGlobalSubscriptions } from "@/hooks/useChatSubscription";
+import { handleNewMatchBroadcast } from "@/modules/database/realtime/handlers";
 import {
-  attachChatListRealtime,
-  attachMatchOverviewRealtime,
-  messagesApi,
-} from "@/modules/chats/messagesApi";
-import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
+  attachLikerIdsRealtime,
+  attachMatchRealtime,
+} from "@/modules/discovery/realtime";
 import { attachPendingLikesRealtime } from "@/modules/pendingLikes/realtime";
 import { useAppDispatch } from "@/modules/store/hooks";
-import { supabase } from "@/modules/supabase/client";
 import { useEffect } from "react";
 
+/**
+ * Provider para gerenciar subscriptions globais do Realtime
+ * Agora integrado com WatermelonDB ao invés de RTK Query
+ */
 export function ChatRealtimeProvider({
   children,
 }: {
   children?: React.ReactNode;
 }) {
+  const { profile } = useProfile();
   const dispatch = useAppDispatch();
+  const database = useDatabase();
+
+  // Setup global subscriptions (matches, chat list)
+  useGlobalSubscriptions(profile?.id ?? null);
 
   useEffect(() => {
-    // Prime chats from backend on app start, then rely on realtime updates.
-    dispatch(messagesApi.util.invalidateTags([{ type: "Chat", id: "LIST" }]));
-    dispatch(messagesApi.util.invalidateTags([{ type: "Match", id: "LIST" }]));
-    dispatch(
-      messagesApi.util.invalidateTags([{ type: "Message", id: "LIST" }])
-    );
-    dispatch(
-      pendingLikesApi.util.invalidateTags([
-        { type: "PendingLikes", id: "LIST" },
-      ])
-    );
+    if (!profile?.id) return;
 
-    const setupRealtime = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const matchChannel = attachMatchOverviewRealtime(dispatch);
-      const chatChannel = attachChatListRealtime(dispatch, user.id);
-      const pendingLikesChannel = attachPendingLikesRealtime(dispatch, user.id);
-
-      return () => {
-        matchChannel?.unsubscribe?.();
-        chatChannel?.unsubscribe?.();
-        pendingLikesChannel?.unsubscribe?.();
-      };
-    };
-
-    const cleanup = setupRealtime();
+    const channel = attachPendingLikesRealtime(dispatch, profile.id);
+    const likerChannel = attachLikerIdsRealtime({
+      database,
+      userId: profile.id,
+    });
+    const matchChannel = attachMatchRealtime({
+      userId: profile.id,
+      onNewMatch: async (payload) => {
+        await handleNewMatchBroadcast(payload, database);
+      },
+    });
 
     return () => {
-      cleanup.then((fn) => fn?.());
+      channel.unsubscribe();
+      likerChannel.unsubscribe();
+      matchChannel.unsubscribe();
     };
-  }, [dispatch]);
+  }, [database, dispatch, profile?.id]);
 
-  return children ?? null;
+  return <>{children}</>;
 }

@@ -73,6 +73,10 @@ import { t } from "@/modules/locales";
 - Follow existing ESLint/Prettier configs (don't reformat unrelated code).
 - Avoid unnecessary dependencies; prefer Expo/React Native APIs already present.
 - Handle errors safely and quietly when appropriate (concise logs, don't break UI).
+- **NEVER write directly to database or make API calls in UI components** - always encapsulate logic in hooks or services.
+- **NEVER use dynamic imports** - always import modules at the top of the file using static `import` statements.
+  - ❌ WRONG: `const { phoneAuthService } = await import("@/modules/auth/phone-auth-service");`
+  - ✅ CORRECT: `import { phoneAuthService } from "@/modules/auth/phone-auth-service";` (at top of file)
 
 ## Logging
 
@@ -95,6 +99,13 @@ logger.log("User logged in:", user);
 logger.error("Failed to fetch data:", error);
 ```
 
+## Edge functions (Supabase)
+
+- Keep edge `index.ts` focused on request handling and orchestration only.
+- Move reusable logic to `supabase/functions/_shared/` and organize by feature with folders (e.g., `_shared/sync-chat-data/...`).
+- When modifying or creating an edge function, always look for opportunities to simplify, reduce duplication, and keep the main `index.ts` lean.
+- Feature-specific helpers that are only used by one edge function should still live under `_shared/<feature>/` for clarity and future reuse.
+
 ## Navigation (Expo Router)
 
 - Prefer Expo Router over direct React Navigation use.
@@ -110,7 +121,7 @@ logger.error("Failed to fetch data:", error);
 
 - Navigate to modal: `router.push('/modal')`
 - Go to a specific tab: `router.replace('/(tabs)')`
-- Open a screen in a group: `router.push('/(onboarding)/welcome')`
+- Open a screen in a group: `router.push('/(auth)/welcome')`
 
 ## State and persistence
 
@@ -372,9 +383,195 @@ When creating or modifying ANY screen or component, you MUST:
            });
            ```
 
+7.  **Separation of Concerns - ALWAYS REQUIRED:**
+
+    - ❌ NEVER write to database directly in UI components
+    - ❌ NEVER make API calls directly in UI components
+    - ✅ ALWAYS encapsulate database operations in custom hooks
+    - ✅ ALWAYS encapsulate API calls in custom hooks or service modules
+    - Example:
+
+           ```tsx
+           // ❌ WRONG - Database write in UI component
+           function ChatScreen({ chat }) {
+             const handlePress = async () => {
+               await database.write(async () => {
+                 await chat.update((c) => { c.isRead = true; });
+               });
+             };
+           }
+
+           // ✅ CORRECT - Hook encapsulates logic
+           function useMarkChatAsRead() {
+             const database = useDatabase();
+             return useCallback(async (chat) => {
+               await database.write(async () => {
+                 await chat.update((c) => { c.isRead = true; });
+               });
+             }, [database]);
+           }
+
+           function ChatScreen({ chat }) {
+             const markChatAsRead = useMarkChatAsRead();
+             const handlePress = () => markChatAsRead(chat);
+           }
+           ```
+
       **IF YOU VIOLATE THESE RULES, THE CODE WILL BE REJECTED. NO EXCEPTIONS.**
 
 **REMINDER: NEVER use console.log/error/warn - ALWAYS use logger from @/utils/logger**
+
+## WatermelonDB Best Practices
+
+This app uses WatermelonDB as an offline-first database. Follow these critical patterns:
+
+### 1. **ALWAYS use `batch()` for atomic operations**
+
+When you need to create/update multiple records together (e.g., insert message + update chat), use `prepareCreate()`/`prepareUpdate()` + `batch()`:
+
+```tsx
+// ❌ WRONG - Multiple separate writes (breaks atomicity, observers may not fire)
+await database.write(async () => {
+  await messagesCollection.create(...);
+});
+await database.write(async () => {
+  await chat.update(...);
+});
+
+// ✅ CORRECT - Single atomic batch operation
+await database.write(async () => {
+  const batch = [
+    messagesCollection.prepareCreate((message: any) => {
+      message.content = content;
+      // ...
+    }),
+    chat.prepareUpdate((c: any) => {
+      c.lastMessageContent = content;
+      c.lastMessageAt = new Date();
+    }),
+  ];
+  await database.batch(...batch);
+});
+```
+
+**Why:** Atomic operations guarantee data consistency and ensure observers fire correctly. [Docs](https://watermelondb.dev/docs/Sync/Frontend)
+
+### 2. **Use `observeWithColumns()` for sorted/reactive lists**
+
+When observing a query with fields that can change and affect UI (like sorting, counters, status):
+
+```tsx
+// ❌ WRONG - Only detects add/remove, NOT field changes
+chats: database.collections
+  .get<Chat>("chats")
+  .query(Q.sortBy("last_message_at", Q.desc))
+  .observe(); // Won't re-render when last_message_at changes!
+
+// ✅ CORRECT - Detects field changes in specified columns
+chats: database.collections
+  .get<Chat>("chats")
+  .query(Q.sortBy("last_message_at", Q.desc))
+  .observeWithColumns([
+    "last_message_at",
+    "unread_count",
+    "last_message_content",
+  ]);
+// Will re-render when these fields change!
+```
+
+**Why:** `.observe()` only triggers on record creation/deletion. `.observeWithColumns([...])` also triggers when specified fields change. [Docs](https://watermelondb.dev/docs/Components#advanced-observing-sorted-lists)
+
+### 3. **Use `withObservables` HOC for reactive components**
+
+```tsx
+import { withObservables } from '@nozbe/watermelondb/react';
+
+const ChatListScreen = ({ chats, matches }) => (
+  // Render chats...
+);
+
+// Enhance with reactive data
+const enhance = withObservables([], ({ database }) => ({
+  chats: database.collections
+    .get<Chat>("chats")
+    .query(Q.sortBy("last_message_at", Q.desc))
+    .observeWithColumns(['last_message_at', 'unread_count', 'last_message_content']),
+  matches: database.collections
+    .get<Match>("matches")
+    .query()
+    .observe(),
+}));
+
+export default enhance(ChatListScreen);
+```
+
+**First argument rules:**
+
+- Pass `[]` if observables don't depend on props
+- Pass `['propName']` if observables should restart when props change
+- Think of it like `useEffect` deps
+
+### 4. **Observing relations and counts**
+
+```tsx
+// Observe a relation (e.g., comment.author)
+const enhance = withObservables(["comment"], ({ comment }) => ({
+  comment,
+  author: comment.author, // Shortcut for comment.author.observe()
+}));
+
+// Observe count (more efficient than observing full list)
+const enhance = withObservables(["post"], ({ post }) => ({
+  post,
+  commentCount: post.comments.observeCount(), // Just the count
+}));
+```
+
+### 5. **Sync operations**
+
+When implementing sync:
+
+- Use `synchronize()` from `@nozbe/watermelondb/sync`
+- Implement `pullChanges` and `pushChanges` conforming to Watermelon Sync Protocol
+- Batch operations must be atomic
+- Handle race conditions (e.g., broadcast + sync arriving simultaneously)
+
+```tsx
+import { synchronize } from "@nozbe/watermelondb/sync";
+
+await synchronize({
+  database,
+  pullChanges: async ({ lastPulledAt }) => {
+    const response = await fetch(`/sync?last_pulled_at=${lastPulledAt}`);
+    const { changes, timestamp } = await response.json();
+    return { changes, timestamp };
+  },
+  pushChanges: async ({ changes }) => {
+    await fetch("/sync", {
+      method: "POST",
+      body: JSON.stringify(changes),
+    });
+  },
+});
+```
+
+### 6. **Common pitfalls to avoid**
+
+- ❌ Don't use multiple `database.write()` for related operations → Use single write with `batch()`
+- ❌ Don't use `.observe()` on lists with changing fields → Use `.observeWithColumns()`
+- ❌ Don't try to access `Model._raw.id` before record is created → Use `prepareCreate()` in batch
+- ❌ Don't modify `@readonly` fields (like `syncedAt`) → WatermelonDB manages these
+- ❌ Don't call `synchronize()` while another sync is in progress → It will safely abort
+
+### 7. **Documentation references**
+
+When in doubt, consult official docs:
+
+- [Sync Frontend](https://watermelondb.dev/docs/Sync/Frontend) - Implementing sync
+- [Components](https://watermelondb.dev/docs/Components) - Connecting to React
+- [Queries](https://watermelondb.dev/docs/Query) - Building queries
+
+**ALWAYS read the docs before implementing complex WatermelonDB patterns!**
 
 ## Quick Do/Don't
 

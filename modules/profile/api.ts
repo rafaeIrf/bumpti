@@ -1,5 +1,6 @@
 import { processProfileImage } from "@/modules/media/image-processor";
 import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
 import { PostgrestError } from "@supabase/supabase-js";
 import { NotificationSettings } from "./types";
 
@@ -51,10 +52,19 @@ export type UpdateProfilePayload = {
 };
 
 export async function getProfile(): Promise<ProfilePayload | null> {
+  logger.log("[getProfile] Invoking get-profile edge function");
   const { data, error } = await supabase.functions.invoke("get-profile");
+  
+  logger.log("[getProfile] Edge function response:", {
+    hasData: !!data,
+    hasError: !!error,
+    errorMessage: error?.message,
+  });
 
   if (error) {
-    throw new Error(error.message || "Não foi possível carregar seu perfil.");
+    logger.error("[getProfile] Edge function error:", error);
+    // Throw the original error to preserve HTTP status code
+    throw error;
   }
 
   return (data?.profile ?? null) as ProfilePayload | null;

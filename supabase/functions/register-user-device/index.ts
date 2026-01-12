@@ -16,8 +16,17 @@ serve(async (req: Request) => {
 
   try {
     // Authenticate user from JWT
-    const user = await requireAuth(req);
+    const { user } = await requireAuth(req);
     const userId = user.id;
+
+    // Validate user ID (should never happen if requireAuth succeeds, but good to check)
+    if (!userId) {
+      console.error("User ID is undefined after auth:", { user });
+      return new Response(
+        JSON.stringify({ error: "Invalid user authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Parse request body
     const { fcm_token, platform } = await req.json();
@@ -64,7 +73,11 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     if (selectError) {
-      console.error("Error checking existing device:", selectError);
+      console.error("Error checking existing device:", { 
+        error: selectError, 
+        userId, 
+        fcm_token: fcm_token.substring(0, 20) + "..." 
+      });
       return new Response(
         JSON.stringify({ error: "Database error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

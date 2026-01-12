@@ -1,6 +1,7 @@
 import { store } from "@/modules/store";
 import { setCheckinCredits } from "@/modules/store/slices/profileSlice";
 import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
 
 export type PresenceRecord = {
   id: string;
@@ -42,6 +43,7 @@ export type ActiveUsersResponse = {
   place_id: string;
   count: number;
   users: ActiveUserAtPlace[];
+  liker_ids?: string[];
 };
 
 export async function enterPlace(params: {
@@ -55,7 +57,7 @@ export async function enterPlace(params: {
   try {
     const { placeId, userLat, userLng, placeLat, placeLng, isCheckinPlus } = params;
 
-    console.log("enterPlace params:", params)
+    logger.debug("enterPlace params", { params });
 
     const { data, error } = await supabase.functions.invoke<{
       presence: PresenceRecord;
@@ -72,7 +74,7 @@ export async function enterPlace(params: {
     });
 
     if (error) {
-      console.error("enterPlace (edge) error:", error);
+      logger.error("enterPlace (edge) error", { error });
       return null;
     }
 
@@ -83,7 +85,7 @@ export async function enterPlace(params: {
 
     return data?.presence ?? null;
   } catch (err) {
-    console.error("enterPlace (api) error:", err);
+    logger.error("enterPlace (api) error", { err });
     return null;
   }
 }
@@ -97,13 +99,13 @@ export async function refreshPresence(placeId: string): Promise<PresenceRecord |
     });
 
     if (error) {
-      console.error("refreshPresence (edge) error:", error);
+      logger.error("refreshPresence (edge) error", { error });
       return null;
     }
 
     return data?.presence ?? null;
   } catch (err) {
-    console.error("refreshPresence (api) error:", err);
+    logger.error("refreshPresence (api) error", { err });
     return null;
   }
 }
@@ -118,10 +120,10 @@ export async function getActiveUsersAtPlace(
         body: { place_id: placeId },
       }
     );
-    console.log("getActiveUsersAtPlace data:", data);
+    logger.debug("getActiveUsersAtPlace data", { data });
 
     if (error) {
-      console.error("get-active-users-at-place (edge) error:", error);
+      logger.error("get-active-users-at-place (edge) error", { error });
       return null;
     }
 
@@ -131,7 +133,7 @@ export async function getActiveUsersAtPlace(
 
     return data;
   } catch (err) {
-    console.error("getActiveUsersAtPlace (api) error:", err);
+    logger.error("getActiveUsersAtPlace (api) error", { err });
     return null;
   }
 }

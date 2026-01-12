@@ -1,8 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type OnboardingStep =
-  | "phone-auth"
-  | "verify-code"
   | "user-name"
   | "user-age"
   | "user-gender"
@@ -34,7 +32,7 @@ export interface OnboardingState {
 }
 
 const initialState: OnboardingState = {
-  currentStep: "phone-auth",
+  currentStep: "user-name",
   completedSteps: [],
   userData: {},
   isOnboardingComplete: false,

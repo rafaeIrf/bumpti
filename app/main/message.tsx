@@ -1,6 +1,5 @@
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
   EllipsisVerticalIcon,
   ExclamationCircleIcon,
   MapPinIcon,
@@ -10,27 +9,15 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
 import { ConfirmationModal } from "@/components/confirmation-modal";
-import { LoadingView } from "@/components/loading-view";
 import { MatchPlaceCard } from "@/components/match-place-card";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Button from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useUserActions } from "@/hooks/use-user-actions";
-import {
-  ChatMessage,
-  attachChatRealtime,
-  messagesApi,
-  useGetMessagesQuery,
-  useMarkMessagesReadMutation,
-  useSendMessageMutation,
-} from "@/modules/chats/messagesApi";
 import { t } from "@/modules/locales";
-import { useAppDispatch } from "@/modules/store/hooks";
-import { supabase } from "@/modules/supabase/client";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
@@ -52,6 +39,17 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// WatermelonDB
+import { useDatabase } from "@/components/DatabaseProvider";
+import { useProfile } from "@/hooks/use-profile";
+import { useMarkMessagesRead } from "@/hooks/useMarkMessagesRead";
+import { useMessagePagination } from "@/hooks/useMessagePagination";
+import { useSendMessage } from "@/hooks/useSendMessage";
+import Message from "@/modules/database/models/Message";
+import { preloadProfile } from "@/modules/profile/cache";
+import { Database, Q } from "@nozbe/watermelondb";
+import { withObservables } from "@nozbe/watermelondb/react";
+
 type Params = {
   chatId?: string;
   matchId?: string;
@@ -64,13 +62,30 @@ type Params = {
   firstMessageAt?: string;
 };
 
-export default function ChatMessageScreen() {
-  const colors = useThemeColors();
-  const params = useLocalSearchParams<Params>();
-  const bottomSheet = useCustomBottomSheet();
-  const insets = useSafeAreaInsets();
+// --- Inner Component (Reactive) ---
 
-  // Use the library's dedicated hook for smoother native synchronized animation
+interface ChatMessageListProps {
+  messages: Message[];
+  chatId: string;
+  otherUserId?: string;
+  onLoadMore: () => void;
+  hasMore: boolean;
+  params: Params;
+  database: Database;
+}
+
+function ChatMessageList({
+  messages,
+  chatId,
+  otherUserId,
+  onLoadMore,
+  hasMore,
+  params,
+  database,
+}: ChatMessageListProps) {
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const bottomSheet = useCustomBottomSheet();
   const { height } = useReanimatedKeyboardAnimation();
 
   const fakeView = useAnimatedStyle(() => {
@@ -78,18 +93,21 @@ export default function ChatMessageScreen() {
       height: Math.abs(height.value),
     };
   });
-  const dispatch = useAppDispatch();
-  const chatId = params.chatId;
-  const matchId = params.matchId;
-  const unreadMessages = params.unreadMessages;
-  const otherUserId = params.otherUserId;
-  const [error, setError] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [failedMessage, setFailedMessage] = useState<ChatMessage | null>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  const [newMessage, setNewMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [failedMessage, setFailedMessage] = useState<Message | null>(null);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
 
+  const listRef = useRef<FlatList<Message>>(null);
+  const inputRef = useRef<TextInput>(null);
+
+  // Get current user ID from profile hook (faster than async call)
+  const { profile } = useProfile();
+  const userId = profile?.id || null;
+
+  // Hooks
+  const { sendMessage, isSending } = useSendMessage(chatId, userId || "");
   const {
     handleReport,
     handleBlock,
@@ -105,122 +123,77 @@ export default function ChatMessageScreen() {
   } = useUserActions({
     userId: otherUserId,
     userName: params.name,
-    matchId: matchId,
+    matchId: params.matchId,
   });
-  const listRef = useRef<FlatList<ChatMessage>>(null);
-  const inputRef = useRef<TextInput>(null);
-  const {
-    data,
-    isLoading: loading,
-    refetch,
-  } = useGetMessagesQuery(
-    { chatId: chatId ?? "", cursor: undefined },
-    {
-      skip: !chatId,
-      refetchOnMountOrArgChange: false,
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
+
+  const { markMessagesAsRead } = useMarkMessagesRead();
+
+  // Mark messages as read when entering chat
+  useEffect(() => {
+    if (!messages.length || !userId) return;
+    markMessagesAsRead({ chatId, messages, userId });
+  }, [messages, userId, chatId, markMessagesAsRead]);
+
+  // Pre-carregar perfil do outro usuário em background quando chat abre
+  useEffect(() => {
+    if (otherUserId) {
+      logger.log(
+        `[ChatMessageList] Preloading profile for other user: ${otherUserId}`
+      );
+      preloadProfile(otherUserId);
     }
-  );
-  const { messages, hasMore, nextCursor } = data || {
-    messages: [],
-    hasMore: false,
-    nextCursor: null,
-  };
-
-  const [sendMessage] = useSendMessageMutation();
-  const [markMessagesRead] = useMarkMessagesReadMutation();
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (params.photoUrl) {
-      prefetchImages([params.photoUrl]);
-    }
-  }, [params.photoUrl]);
-
-  useEffect(() => {
-    const photos = data?.other_user_profile?.photos;
-    if (photos && Array.isArray(photos)) {
-      prefetchImages(photos);
-    }
-  }, [data?.other_user_profile]);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) setUserId(data.user.id);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!chatId || !userId) return;
-    logger.log(
-      "[Realtime] Attaching realtime for chatId:",
-      chatId,
-      "userId:",
-      userId
-    );
-    const unsub = attachChatRealtime(chatId, dispatch, userId);
-    return () => {
-      logger.log("[Realtime] Detaching realtime for chatId:", chatId);
-      unsub?.().catch(() => {});
-    };
-  }, [chatId, dispatch, userId]);
-
-  const lastProcessedMessageId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!chatId || loading || messages.length === 0 || !userId) return;
-    const latestMessage = messages[messages.length - 1];
-
-    if (!latestMessage) return;
-
-    const isNewMessage = latestMessage.id !== lastProcessedMessageId.current;
-    const isFromOther = latestMessage.sender_id !== userId;
-    const hasUnreadInitial =
-      unreadMessages &&
-      Number(unreadMessages) > 0 &&
-      lastProcessedMessageId.current === null;
-
-    if ((isNewMessage && isFromOther) || hasUnreadInitial) {
-      lastProcessedMessageId.current = latestMessage.id;
-      requestAnimationFrame(() => {
-        markMessagesRead({ chatId }).catch(() => {});
-      });
-    }
-  }, [chatId, loading, messages, unreadMessages, userId, markMessagesRead]);
+  }, [otherUserId]);
 
   const handleSend = useCallback(async () => {
-    if (!chatId || !otherUserId) return;
     const trimmed = newMessage.trim();
     if (!trimmed) return;
+
     try {
-      const sendPromise = sendMessage({
-        chatId,
-        toUserId: otherUserId,
-        content: trimmed,
-        senderId: userId ?? undefined,
-      });
-      // Garantir que a nova mensagem fique visível mesmo se o usuário estiver no meio do scroll
+      const sendPromise = sendMessage(trimmed);
+
       requestAnimationFrame(() => {
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
       });
-      await sendPromise;
+
       setNewMessage("");
-      // Manter foco no input após enviar
+      // Keep focus
       requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
+
+      await sendPromise;
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     }
-  }, [chatId, newMessage, otherUserId, sendMessage, userId]);
+  }, [newMessage, sendMessage]);
 
-  const handleScrollToLatest = useCallback(() => {
-    setShowScrollToLatest(false);
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    });
-  }, []);
+  const handleRetry = useCallback(
+    async (message: Message) => {
+      try {
+        await sendMessage(message.content);
+        // Delete the failed one
+        await database.write(async () => {
+          await message.markAsDeleted();
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("errors.generic"));
+      }
+    },
+    [sendMessage, database]
+  );
+
+  const handleDeleteMessage = useCallback(
+    async (message: Message) => {
+      try {
+        await database.write(async () => {
+          await message.markAsDeleted();
+        });
+      } catch (error) {
+        logger.error("Failed to delete message", error);
+      }
+    },
+    [database]
+  );
 
   const openActionsBottomSheet = () => {
     if (!bottomSheet) return;
@@ -240,77 +213,6 @@ export default function ChatMessageScreen() {
     });
   };
 
-  const handleRetry = useCallback(
-    async (message: ChatMessage) => {
-      if (!chatId || !otherUserId) return;
-      try {
-        await sendMessage({
-          chatId,
-          toUserId: otherUserId,
-          content: message.content,
-          senderId: userId ?? undefined,
-          tempId: message.tempId,
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t("errors.generic"));
-      }
-    },
-    [chatId, otherUserId, sendMessage, userId]
-  );
-
-  const handleDeleteMessage = useCallback(
-    (message: ChatMessage) => {
-      if (!chatId) return;
-      // Remove mensagem falhada do cache
-      dispatch(
-        messagesApi.util.updateQueryData(
-          "getMessages",
-          { chatId, cursor: undefined },
-          (draft) => {
-            const idx = draft.messages.findIndex(
-              (m) => m.tempId === message.tempId || m.id === message.id
-            );
-            if (idx >= 0) {
-              draft.messages.splice(idx, 1);
-            }
-          }
-        )
-      );
-    },
-    [chatId, dispatch]
-  );
-
-  const handleFailedMessagePress = useCallback((message: ChatMessage) => {
-    setFailedMessage(message);
-  }, []);
-
-  const handleCloseFailedModal = useCallback(() => {
-    setFailedMessage(null);
-  }, []);
-
-  useEffect(() => {
-    logger.log("isLoadingMore changed:", isLoadingMore);
-  }, [isLoadingMore]);
-
-  const handleLoadMore = useCallback(async () => {
-    if (!chatId || !hasMore || !nextCursor || isLoadingMore || loading) {
-      return;
-    }
-    setIsLoadingMore(true);
-    try {
-      await dispatch(
-        messagesApi.endpoints.getMessages.initiate(
-          { chatId, cursor: nextCursor },
-          { forceRefetch: true }
-        )
-      ).unwrap();
-    } catch (err) {
-      logger.error("Failed to load more messages:", err);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [chatId, hasMore, nextCursor, isLoadingMore, loading, dispatch]);
-
   const header = (
     <ScreenToolbar
       leftAction={{
@@ -324,13 +226,10 @@ export default function ChatMessageScreen() {
           style={styles.toolbarTitle}
           onPress={() => {
             if (otherUserId) {
-              const profile = data?.other_user_profile;
               router.push({
                 pathname: "/(modals)/profile-preview",
                 params: {
                   userId: otherUserId,
-                  // Pass the profile we already have to avoid refetching
-                  initialProfile: profile ? JSON.stringify(profile) : undefined,
                 },
               });
             }
@@ -356,24 +255,23 @@ export default function ChatMessageScreen() {
             >
               {params.name ?? t("screens.chat.title")}
             </ThemedText>
-            {params.matchPlace &&
-              (params.firstMessageAt || messages.length > 0) && (
-                <View style={styles.toolbarPlaceRow}>
-                  <MapPinIcon width={12} height={12} color={colors.accent} />
-                  <ThemedText
-                    style={[
-                      typography.caption,
-                      {
-                        color: colors.textSecondary,
-                        marginLeft: spacing.xs / 2,
-                      },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {params.matchPlace}
-                  </ThemedText>
-                </View>
-              )}
+            {params.matchPlace && (
+              <View style={styles.toolbarPlaceRow}>
+                <MapPinIcon width={12} height={12} color={colors.accent} />
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      marginLeft: spacing.xs / 2,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {params.matchPlace}
+                </ThemedText>
+              </View>
+            )}
           </View>
         </Pressable>
       }
@@ -384,64 +282,6 @@ export default function ChatMessageScreen() {
         color: colors.text,
       }}
     />
-  );
-
-  const content = (
-    <View style={styles.flex}>
-      {loading && messages.length === 0 ? (
-        <View style={styles.loader}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={[...messages].reverse()}
-          keyExtractor={(item) => item.tempId || item.id}
-          renderItem={({ item }) => (
-            <MessageBubble
-              message={item}
-              isMe={Boolean(otherUserId && item.sender_id !== otherUserId)}
-              onFailedPress={handleFailedMessagePress}
-            />
-          )}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          inverted
-          keyboardDismissMode="interactive"
-          onScroll={(event) => {
-            const offsetY = event.nativeEvent.contentOffset.y;
-            setShowScrollToLatest(offsetY > spacing.xxl);
-          }}
-          scrollEventThrottle={16}
-          ListFooterComponent={
-            <View>
-              {messages.length === 0 && params.matchPlace && (
-                <Animated.View
-                  entering={FadeInUp.duration(400)}
-                  exiting={FadeOutDown.duration(500).easing(
-                    Easing.out(Easing.cubic)
-                  )}
-                >
-                  <MatchPlaceCard
-                    placeName={params.matchPlace}
-                    matchedAt={params.matchedAt}
-                    photoUrl={params.photoUrl}
-                  />
-                </Animated.View>
-              )}
-              {isLoadingMore && <LoadingView size="small" />}
-              {messages.length > 0 && <View style={{ height: spacing.md }} />}
-            </View>
-          }
-          contentContainerStyle={{
-            paddingVertical: spacing.md,
-            rowGap: spacing.sm,
-          }}
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-        />
-      )}
-    </View>
   );
 
   return (
@@ -494,14 +334,14 @@ export default function ChatMessageScreen() {
       />
       <ConfirmationModal
         isOpen={!!failedMessage}
-        onClose={handleCloseFailedModal}
+        onClose={() => setFailedMessage(null)}
         title={t("screens.chatMessages.messageNotSent")}
         actions={[
           {
             label: t("common.resend"),
             onPress: () => {
               if (failedMessage) handleRetry(failedMessage);
-              handleCloseFailedModal();
+              setFailedMessage(null);
             },
             variant: "default",
           },
@@ -509,17 +349,18 @@ export default function ChatMessageScreen() {
             label: t("common.delete"),
             onPress: () => {
               if (failedMessage) handleDeleteMessage(failedMessage);
-              handleCloseFailedModal();
+              setFailedMessage(null);
             },
             variant: "destructive",
           },
           {
             label: t("common.cancel"),
-            onPress: handleCloseFailedModal,
+            onPress: () => setFailedMessage(null),
             variant: "secondary",
           },
         ]}
       />
+
       <BaseTemplateScreen
         TopHeader={header}
         scrollEnabled={false}
@@ -539,15 +380,95 @@ export default function ChatMessageScreen() {
             </ThemedText>
           </View>
         ) : null}
+
         <View style={{ flex: 1 }}>
           <ThemedView style={styles.flex}>
-            {content}
-            <ScrollToLatestButton
-              visible={showScrollToLatest}
-              onPress={handleScrollToLatest}
+            <FlatList
+              ref={listRef}
+              data={messages} // Watermelon puts recent last by query, but we invert list
+              // Wait, query is sorted by created_at DESC (recent first)
+              // If we use inverted=true, recent is at bottom of visual list if data[0] is recent??
+              // Inverted FlatList: data[0] is at bottom.
+              // We query `Q.sortBy('created_at', Q.desc)`, so data[0] is MOST RECENT.
+              // So with `inverted`, data[0] (most recent) is at BOTTOM. Correct.
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <MessageBubble
+                  message={item}
+                  isMe={Boolean(userId && item.senderId === userId)}
+                  onFailedPress={setFailedMessage}
+                />
+              )}
+              onEndReached={onLoadMore}
+              onEndReachedThreshold={0.5}
+              inverted
+              keyboardDismissMode="interactive"
+              onScroll={(event) => {
+                const offsetY = event.nativeEvent.contentOffset.y;
+                setShowScrollToLatest(offsetY > spacing.xxl);
+              }}
+              scrollEventThrottle={16}
+              ListFooterComponent={
+                <View>
+                  {messages.length === 0 && params.matchPlace && (
+                    <Animated.View
+                      entering={FadeInUp.duration(400)}
+                      exiting={FadeOutDown.duration(500).easing(
+                        Easing.out(Easing.cubic)
+                      )}
+                    >
+                      <MatchPlaceCard
+                        placeName={params.matchPlace}
+                        matchedAt={params.matchedAt}
+                        photoUrl={params.photoUrl}
+                      />
+                    </Animated.View>
+                  )}
+                  <View style={{ height: spacing.md }} />
+                </View>
+              }
+              contentContainerStyle={{
+                paddingVertical: spacing.md,
+                rowGap: spacing.sm,
+              }}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
             />
+            {/* Scroll Button */}
+            {showScrollToLatest && (
+              <Pressable
+                style={[
+                  styles.scrollToLatestButton,
+                  {
+                    bottom: spacing.md,
+                    right: spacing.md,
+                    backgroundColor: colors.surface,
+                    padding: spacing.sm,
+                    borderRadius: 20,
+                    elevation: 5,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                  },
+                ]}
+                onPress={() => {
+                  listRef.current?.scrollToOffset({
+                    offset: 0,
+                    animated: true,
+                  });
+                }}
+              >
+                <ArrowLeftIcon
+                  width={20}
+                  height={20}
+                  color={colors.text}
+                  style={{ transform: [{ rotate: "-90deg" }] }}
+                />
+              </Pressable>
+            )}
           </ThemedView>
         </View>
+
         <View
           style={[
             styles.inputRow,
@@ -584,7 +505,7 @@ export default function ChatMessageScreen() {
           />
           <Pressable
             onPress={handleSend}
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || isSending}
             style={[
               styles.sendButton,
               {
@@ -607,18 +528,73 @@ export default function ChatMessageScreen() {
   );
 }
 
+const EnhancedMessageList = withObservables(
+  ["chatId", "limit"],
+  ({ database, chatId, limit }: any) => ({
+    messages: database.collections
+      .get("messages")
+      .query(
+        Q.where("chat_id", chatId),
+        Q.sortBy("created_at", Q.desc),
+        Q.take(limit)
+      )
+      .observeWithColumns(["status"]),
+  })
+)(ChatMessageList);
+
+// --- Wrapper Component ---
+
+export default function ChatMessageScreenWrapper() {
+  const params = useLocalSearchParams<Params>();
+  const database = useDatabase();
+  const chatId = params.chatId;
+
+  const { limit, loadMore, hasMore } = useMessagePagination();
+
+  // Note: Realtime updates are handled globally by ChatRealtimeProvider
+  // No need to subscribe to individual chats
+
+  // Prefetch images
+  useEffect(() => {
+    if (params.photoUrl) {
+      prefetchImages([params.photoUrl]);
+    }
+  }, [params.photoUrl]);
+
+  if (!chatId) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return (
+    <EnhancedMessageList
+      database={database}
+      chatId={chatId}
+      limit={limit}
+      onLoadMore={loadMore}
+      hasMore={hasMore}
+      params={params}
+      otherUserId={params.otherUserId}
+    />
+  );
+}
+
+// --- Sub-components ---
+
 function MessageBubble({
   message,
   isMe,
   onFailedPress,
 }: {
-  message: ChatMessage;
+  message: Message;
   isMe: boolean;
-  onFailedPress: (message: ChatMessage) => void;
+  onFailedPress: (message: Message) => void;
 }) {
   const colors = useThemeColors();
   const isFailed = message.status === "failed";
-  // const isSending = message.status === "sending";
   const bubbleColor = isMe ? colors.accent : colors.surface;
   const borderColor = isMe ? colors.accent : colors.border;
   const textColor = isMe ? colors.textPrimary : colors.text;
@@ -671,17 +647,6 @@ function MessageBubble({
           )}
         </View>
 
-        {/* {isMe && isSending && (
-          <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: colors.textSecondary },
-              ]}
-            />
-          </View>
-        )} */}
-
         {isMe && isFailed && (
           <View style={[styles.statusRowBelow, { alignItems: "flex-end" }]}>
             <ThemedText
@@ -720,12 +685,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.xs / 2,
   },
-  headerInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
   avatarWrapper: {
     width: 48,
     height: 48,
@@ -752,11 +711,6 @@ const styles = StyleSheet.create({
   statusRowBelow: {
     flexDirection: "row",
     paddingHorizontal: spacing.xs,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   inputRow: {
     flexDirection: "row",
@@ -785,55 +739,3 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
-
-function ScrollToLatestButton({
-  visible,
-  onPress,
-  bottomInset,
-}: {
-  visible: boolean;
-  onPress: () => void;
-  bottomInset: number;
-}) {
-  const colors = useThemeColors();
-
-  if (!visible) return null;
-
-  return (
-    <Animated.View
-      entering={FadeInUp.duration(220)
-        .easing(Easing.out(Easing.cubic))
-        .withInitialValues({
-          opacity: 0,
-          transform: [{ translateY: spacing.xxl }],
-        })}
-      exiting={FadeOutDown.duration(170)
-        .easing(Easing.in(Easing.cubic))
-        .withInitialValues({
-          opacity: 1,
-          transform: [{ translateY: 0 }],
-        })}
-      style={[
-        styles.scrollToLatestButton,
-        {
-          right: spacing.md,
-          bottom: spacing.md,
-        },
-      ]}
-    >
-      <Button
-        accessibilityLabel={t("screens.chatMessages.scrollToLatest")}
-        onPress={onPress}
-        variant="secondary"
-        size="icon"
-      >
-        <ArrowRightIcon
-          width={18}
-          height={18}
-          color={colors.textPrimary}
-          style={{ transform: [{ rotate: "90deg" }] }}
-        />
-      </Button>
-    </Animated.View>
-  );
-}

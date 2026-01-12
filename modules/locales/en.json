@@ -166,6 +166,8 @@
         "notifications": {
           "title": "Notifications",
           "push": "Push Notifications",
+          "devicePermission": "Allow notifications",
+          "devicePermissionDescription": "Authorize notifications on your device",
           "matches": "Matches",
           "messages": "Messages",
           "nearbyActivity": "Nearby activity",
@@ -754,6 +756,7 @@
     },
     "chat": {
       "title": "Chat",
+      "messages": "Messages",
       "messagePlaceholder": "Type a message...",
       "emptyTitle": "No conversations yet",
       "emptySubtitle": "Start connecting with people nearby to begin chatting.",
@@ -964,6 +967,10 @@
       "blockTitle": "Block {{name}}?",
       "blockDescription": "{{name}} will no longer see your profile, send messages, or interact with you on Bumpti.",
       "blockConfirm": "Block {{name}}"
+    },
+    "match": {
+      "title": "It's a match!",
+      "subtitle": "You and {{name}} liked each other."
     }
   },
   "components": {

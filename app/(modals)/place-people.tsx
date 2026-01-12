@@ -1,5 +1,6 @@
 import { CheckIcon, SparklesIcon, UsersIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ItsMatchModal } from "@/components/its-match-modal";
 import { LoadingView } from "@/components/loading-view";
 import { ProfileSwiper, ProfileSwiperRef } from "@/components/profile-swiper";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -8,18 +9,19 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useDiscoveryFeed } from "@/hooks/use-discovery-feed";
+import { useDiscoverySwipes } from "@/hooks/use-discovery-swipes";
+import { usePrefetchWindowSize } from "@/hooks/use-prefetch-window-size";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { useInteractUserMutation } from "@/modules/interactions/interactionsApi";
 import { t } from "@/modules/locales";
-import {
-  ActiveUserAtPlace,
-  ActiveUsersResponse,
-  getActiveUsersAtPlace,
-} from "@/modules/presence/api";
-import { prefetchImages } from "@/utils/image-prefetch";
+import { ActiveUserAtPlace } from "@/modules/presence/api";
+import { upsertDiscoveryProfiles } from "@/modules/discovery/discovery-service";
+import { useDatabase } from "@/components/DatabaseProvider";
+import { prefetchNextCards } from "@/utils/image-prefetch";
+import { logger } from "@/utils/logger";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 interface Place {
@@ -41,8 +43,9 @@ const mockPlaces = {
 
 export default function PlacePeopleScreen() {
   const colors = useThemeColors();
+  const database = useDatabase();
+  const prefetchWindowSize = usePrefetchWindowSize();
   const swiperRef = useRef<ProfileSwiperRef>(null);
-  const [hasProfiles, setHasProfiles] = useState(true);
   const [swipeX, setSwipeX] = useState<any>(null);
   const params = useLocalSearchParams<{
     placeId: string;
@@ -51,72 +54,132 @@ export default function PlacePeopleScreen() {
     distanceKm?: string;
     initialUsers?: string;
   }>();
-  const [loading, setLoading] = useState(true);
-  const [availableProfiles, setAvailableProfiles] = useState<
-    ActiveUserAtPlace[]
-  >([]);
+  const [isHydratingInitialUsers, setIsHydratingInitialUsers] =
+    useState(false);
+  const [matchProfile, setMatchProfile] = useState<ActiveUserAtPlace | null>(
+    null
+  );
+  const [deck, setDeck] = useState<ActiveUserAtPlace[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeckExhausted, setIsDeckExhausted] = useState(false);
+  const swipedIdsRef = useRef(new Set<string>());
+  const deckIdsRef = useRef(new Set<string>());
+  const [isRefilling, setIsRefilling] = useState(false);
+  const lastRefillHadNewRef = useRef(false);
+  const pendingRefillRef = useRef(false);
+  const lastRefillIndexRef = useRef<number | null>(null);
 
-  // Get interact mutation
-  const [interactUser] = useInteractUserMutation();
+  const placeId = params.placeId || "1";
+  const hasInitialUsers = Boolean(params.initialUsers);
+
+  const {
+    profiles: availableProfiles,
+    isLoading,
+    refresh,
+  } = useDiscoveryFeed(placeId, {
+    enabled: !hasInitialUsers,
+  });
+
+  const profileByIdRef = useRef<Record<string, ActiveUserAtPlace>>({});
+  const { queueSwipe } = useDiscoverySwipes(placeId, {
+    onMatch: (targetUserId) => {
+      const profile = profileByIdRef.current[targetUserId];
+      if (profile) {
+        setMatchProfile(profile);
+      }
+    },
+  });
 
   useEffect(() => {
+    setDeck([]);
+    setCurrentIndex(0);
+    setIsDeckExhausted(false);
+    swipedIdsRef.current.clear();
+    deckIdsRef.current.clear();
+    lastRefillIndexRef.current = null;
+  }, [placeId]);
+
+  useEffect(() => {
+    if (!params.initialUsers) return;
     let isMounted = true;
-    const load = async () => {
+
+    const hydrateInitialUsers = async () => {
+      setIsHydratingInitialUsers(true);
       try {
-        // If we have initialUsers passed via params, use those directly
-        if (params.initialUsers) {
-          try {
-            const parsedUsers = JSON.parse(
-              params.initialUsers
-            ) as ActiveUserAtPlace[];
-            if (isMounted) {
-              setAvailableProfiles(parsedUsers);
-              // Prefetch images for passed users
-              const urls = parsedUsers
-                .flatMap((u) => u.photos ?? [])
-                .filter(Boolean);
-              if (urls.length) {
-                prefetchImages(urls).finally(() => {
-                  if (isMounted) setLoading(false);
-                });
-              } else {
-                setLoading(false);
-              }
-            }
-            return; // Skip fetching from API
-          } catch (e) {
-            console.error("Failed to parse initialUsers", e);
-          }
-        }
-
-        const response: ActiveUsersResponse | null =
-          await getActiveUsersAtPlace(params.placeId);
-        if (!isMounted) return;
-        const users = response?.users ?? [];
-        setAvailableProfiles(users);
-
-        const urls = users.flatMap((u) => u.photos ?? []).filter(Boolean);
-        if (urls.length) {
-          prefetchImages(urls).finally(() => {
-            if (isMounted) setLoading(false);
-          });
-        } else {
-          setLoading(false);
-        }
+        const parsedUsers = JSON.parse(
+          params.initialUsers
+        ) as ActiveUserAtPlace[];
+        await upsertDiscoveryProfiles({
+          database,
+          placeId,
+          users: parsedUsers,
+        });
       } catch (error) {
-        if (isMounted) {
-          console.error("Failed to load active users at place", error);
-          setAvailableProfiles([]);
-          setLoading(false);
-        }
+        logger.error("Failed to hydrate initial users", { error });
+      } finally {
+        if (isMounted) setIsHydratingInitialUsers(false);
       }
     };
 
-    load();
+    void hydrateInitialUsers();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [database, params.initialUsers, placeId]);
+
+  useEffect(() => {
+    if (availableProfiles.length === 0) return;
+
+    setDeck((prev) => {
+      if (prev.length === 0) {
+        const initial = availableProfiles.filter(
+          (profile) => !swipedIdsRef.current.has(profile.user_id)
+        );
+        deckIdsRef.current = new Set(
+          initial.map((profile) => profile.user_id)
+        );
+        setIsDeckExhausted(initial.length === 0);
+        return initial;
+      }
+
+      const nextProfiles = availableProfiles.filter(
+        (profile) =>
+          !deckIdsRef.current.has(profile.user_id) &&
+          !swipedIdsRef.current.has(profile.user_id)
+      );
+      if (nextProfiles.length === 0) return prev;
+
+      nextProfiles.forEach((profile) => deckIdsRef.current.add(profile.user_id));
+      if (pendingRefillRef.current) {
+        lastRefillHadNewRef.current = true;
+        lastRefillIndexRef.current = null;
+      }
+      setIsDeckExhausted(false);
+      return [...prev, ...nextProfiles];
+    });
+  }, [availableProfiles]);
+
+  useEffect(() => {
+    if (deck.length === 0) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+    if (currentIndex > deck.length) {
+      setCurrentIndex(deck.length);
+    }
+  }, [currentIndex, deck.length]);
+
+  useEffect(() => {
+    const profileMap: Record<string, ActiveUserAtPlace> = {};
+    deck.forEach((profile) => {
+      profileMap[profile.user_id] = profile;
+    });
+    profileByIdRef.current = profileMap;
+  }, [deck]);
+
+  useEffect(() => {
+    prefetchNextCards(deck, currentIndex, prefetchWindowSize);
+  }, [currentIndex, deck, prefetchWindowSize]);
 
   // TODO: Get from API/state
   const isUserHere = true;
@@ -124,7 +187,7 @@ export default function PlacePeopleScreen() {
 
   // TODO: Replace with real place data
   const place: Place = {
-    id: params.placeId || "1",
+    id: placeId,
     name: params.placeName || "Bar do João",
     type: "bar",
     distance: params.distance || "0.5 km",
@@ -134,43 +197,31 @@ export default function PlacePeopleScreen() {
   };
 
   const handleLike = (profile: ActiveUserAtPlace) => {
-    console.log("profile", profile);
-    interactUser({
-      toUserId: profile.user_id,
-      action: "like",
-      placeId: profile.place_id || place.id, // Use profile's specific place_id if available (e.g. from pending likes)
-    })
-      .unwrap()
-      .then((response) => {
-        console.log("Liked profile:", profile.name, response);
-      })
-      .catch((error) => {
-        console.error("Failed to like profile:", profile.name, error);
+    swipedIdsRef.current.add(profile.user_id);
+
+    void (async () => {
+      const { instantMatch } = await queueSwipe({
+        targetUserId: profile.user_id,
+        action: "like",
       });
+      if (instantMatch) {
+        setMatchProfile(profile);
+      }
+    })();
   };
 
   const handlePass = (profile: ActiveUserAtPlace) => {
-    interactUser({
-      toUserId: profile.user_id,
-      action: "dislike",
-      placeId: profile.place_id || place.id,
-    })
-      .unwrap()
-      .then((response) => {
-        console.log("Disliked profile:", profile.name, response);
-      })
-      .catch((error) => {
-        console.error("Failed to dislike profile:", profile.name, error);
-      });
+    swipedIdsRef.current.add(profile.user_id);
+
+    void queueSwipe({ targetUserId: profile.user_id, action: "dislike" });
   };
 
   const handleComplete = () => {
-    console.log("No more profiles");
-    setHasProfiles(false);
+    logger.info("No more profiles");
   };
 
   const handleUpgradeToPremium = () => {
-    console.log("Navigate to premium subscription");
+    logger.info("Navigate to premium subscription");
     // TODO: Navigate to premium screen
   };
 
@@ -208,12 +259,66 @@ export default function PlacePeopleScreen() {
     />
   );
 
+  const loading = isLoading || isHydratingInitialUsers;
+  const remaining = deck.length - currentIndex;
+  const hasAvailableToAppend = useMemo(
+    () =>
+      availableProfiles.some(
+        (profile) =>
+          !deckIdsRef.current.has(profile.user_id) &&
+          !swipedIdsRef.current.has(profile.user_id)
+      ),
+    [availableProfiles]
+  );
+
   const showPremium = !isUserHere && isFarAway && !isPremium;
-  const showEmpty = !loading && !showPremium && availableProfiles.length === 0;
-  const showSwiper = !loading && !showPremium && !showEmpty;
+  const showEmpty =
+    !loading &&
+    !showPremium &&
+    (deck.length === 0 || isDeckExhausted) &&
+    !hasAvailableToAppend &&
+    !isRefilling;
+  const showSwiper =
+    !loading && !showPremium && !showEmpty && remaining > 0;
+
+  useEffect(() => {
+    if (!showSwiper) return;
+    if (remaining > 3) return;
+    if (isRefilling) return;
+    if (hasInitialUsers) return;
+    if (lastRefillIndexRef.current === currentIndex) return;
+
+    setIsRefilling(true);
+    pendingRefillRef.current = true;
+    lastRefillHadNewRef.current = false;
+    lastRefillIndexRef.current = currentIndex;
+    void refresh()
+      .catch((error) => {
+        logger.warn("Failed to refill discovery deck", { error });
+      })
+      .finally(() => {
+        setIsRefilling(false);
+        pendingRefillRef.current = false;
+      });
+  }, [hasInitialUsers, isRefilling, refresh, remaining, showSwiper]);
+
+  useEffect(() => {
+    if (isRefilling) return;
+    if (remaining > 0) return;
+    if (hasAvailableToAppend) return;
+    if (pendingRefillRef.current) return;
+    if (lastRefillHadNewRef.current) return;
+    setIsDeckExhausted(true);
+  }, [hasAvailableToAppend, isRefilling, remaining]);
 
   return (
     <View style={styles.screenContainer}>
+      <ItsMatchModal
+        isOpen={Boolean(matchProfile)}
+        onClose={() => setMatchProfile(null)}
+        name={matchProfile?.name ?? ""}
+        photoUrl={matchProfile?.photos?.[0]}
+      />
       <BaseTemplateScreen
         isModal
         contentContainerStyle={
@@ -353,12 +458,14 @@ export default function PlacePeopleScreen() {
         {showSwiper && (
           <ProfileSwiper
             ref={swiperRef}
-            profiles={availableProfiles}
+            profiles={deck}
+            currentIndex={currentIndex}
             currentPlaceId={place.id}
             places={mockPlaces}
             onLike={handleLike}
             onPass={handlePass}
             onComplete={handleComplete}
+            onIndexChange={setCurrentIndex}
             emptyStateAction={{
               label: t("common.back"),
               onClick: handleBack,
@@ -367,7 +474,7 @@ export default function PlacePeopleScreen() {
         )}
       </BaseTemplateScreen>
 
-      {showSwiper && hasProfiles && availableProfiles.length > 0 && (
+      {showSwiper && remaining > 0 && (
         <View style={styles.actionsContainer}>
           <SwipeActionButtons
             onLike={() => swiperRef.current?.handleLike()}

@@ -10,12 +10,15 @@ interface RemoteImageProps extends ImageProps {
  * - cachePolicy: "memory-disk"
  * - priority: "high"
  * - contentFit: "cover" (unless overridden)
- * - transition: 0 (default)
+ * - transition: 200ms (smooth fade-in)
+ * - placeholder: transparent (avoid black flash)
  */
 export function RemoteImage({
   priority = "high",
   cachePolicy = "memory-disk",
   contentFit = "cover",
+  transition = 200,
+  placeholderContentFit = "cover",
   ...props
 }: RemoteImageProps) {
   return (
@@ -23,6 +26,8 @@ export function RemoteImage({
       priority={priority}
       cachePolicy={cachePolicy}
       contentFit={contentFit}
+      transition={transition}
+      placeholderContentFit={placeholderContentFit}
       {...props}
     />
   );

@@ -1,6 +1,7 @@
 import { getProfile } from "@/modules/profile/api";
 import { setProfile, setProfileLoading } from "@/modules/store/slices/profileActions";
 import { calculateAge } from "@/utils/calculate-age";
+import { logger } from "@/utils/logger";
 
 /**
  * Fetches the user profile from the backend and updates the Redux store.
@@ -44,9 +45,12 @@ export async function fetchAndSetUserProfile() {
       notificationSettings: data.notification_settings ?? null,
     };
 
+    logger.log("[fetchAndSetUserProfile] Setting profile in Redux store");
     setProfile(profileData);
+    logger.log("[fetchAndSetUserProfile] Profile set successfully");
     return profileData;
   } catch (error) {
+    logger.error("[fetchAndSetUserProfile] Error fetching profile:", error);
     // Re-throw to allow caller to handle headers/error states if needed
     throw error;
   } finally {

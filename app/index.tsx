@@ -51,10 +51,11 @@ export default function RootIndex() {
       </View>
     );
   }
+  console.log("AAA profile", profile, isAuthenticated);
 
-  // If not authenticated, go to onboarding auth flow
+  // If not authenticated, go to welcome (auth flow)
   if (!isAuthenticated) {
-    return <Redirect href="/(onboarding)/welcome" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   // User authenticated: if profile exists, onboarding is done
@@ -62,18 +63,20 @@ export default function RootIndex() {
     return <Redirect href="/(tabs)/(home)" />;
   }
 
-  // No profile yet: continue onboarding from last saved step (persisted) or start
-  const targetStep =
-    onboardingState.isOnboardingComplete ||
-    onboardingState.currentStep === "complete" ||
-    !onboardingState.currentStep
-      ? "user-name"
-      : onboardingState.currentStep;
+  // No profile yet: check if user has onboarding progress
+  // If no progress (e.g., after logout), redirect to welcome
+  if (
+    !onboardingState.currentStep ||
+    onboardingState.currentStep === "complete"
+  ) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
 
-  const onboardingRoute =
-    targetStep && targetStep !== "phone-auth"
-      ? `/(onboarding)/${targetStep}`
-      : "/(onboarding)/user-name";
+  // User has onboarding progress: continue from last step
+  const targetStep = onboardingState.currentStep;
+  console.log("AAA targetStep", targetStep);
+
+  const onboardingRoute = `/(onboarding)/${targetStep}`;
 
   return <Redirect href={onboardingRoute as any} />;
 }

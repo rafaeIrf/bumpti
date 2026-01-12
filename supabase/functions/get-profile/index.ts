@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
 
 const corsHeaders = {
@@ -31,27 +32,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    return new Response(
-      JSON.stringify({ error: "unauthorized", message: "Missing access token" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  // Use requireAuth helper for consistent auth handling
+  const authResult = await requireAuth(req);
+  if (!authResult.success) {
+    return authResult.response;
   }
 
+  const { user } = authResult;
+  const userId = user.id;
+
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
-    if (userError || !user?.id) {
-      throw new Error(userError?.message ?? "User not found");
-    }
-
-    const userId = user.id;
 
     const [
       profileResult,
@@ -162,11 +152,13 @@ Deno.serve(async (req) => {
         .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
     // Generate signed URLs for each photo path (private bucket support)
+    // URLs válidas por 7 dias (alinhado com o cache do WatermelonDB)
+    const SIGNED_URL_EXPIRES = 60 * 60 * 24 * 7; // 604800 segundos = 7 dias
     const signedPhotos: { url: string; position: number }[] = [];
     for (const photo of photos) {
       const { data: signedData, error: signedError } = await supabase.storage
         .from(userPhotosBucket)
-        .createSignedUrl(photo.path, 60 * 60 * 24 * 7); // 7 days
+        .createSignedUrl(photo.path, SIGNED_URL_EXPIRES);
 
       if (signedError) {
         console.error("createSignedUrl error", signedError);

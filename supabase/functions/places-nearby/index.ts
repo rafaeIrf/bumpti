@@ -45,7 +45,7 @@ serve(async (req) => {
     // Authenticate User
     let requestingUserId: string;
     try {
-        const user = await requireAuth(req);
+        const { user } = await requireAuth(req);
         requestingUserId = user.id;
     } catch (e: any) {
         return new Response(JSON.stringify({ error: e.message }), {

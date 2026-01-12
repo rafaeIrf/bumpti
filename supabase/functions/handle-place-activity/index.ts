@@ -37,23 +37,23 @@ serve(async (req) => {
 
     // 2. Process Candidates
     for (const item of candidates) {
-      // item = { user_id, type, place_id, place_name }
+      // item = { target_user_id, notification_type, target_place_id, target_place_name }
       
       let title = "";
       let body = "";
 
-      switch (item.type) {
+      switch (item.notification_type) {
         case "favorite_activity_started":
           title = "Movimento começando!";
-          body = `Alguém iniciou a conexão em ${item.place_name}`;
+          body = `Alguém iniciou a conexão em ${item.target_place_name}`;
           break;
         case "favorite_activity_heating":
           title = "Tá esquentando!";
-          body = `O ${item.place_name} está começando a se movimentar.`;
+          body = `O ${item.target_place_name} está começando a se movimentar.`;
           break;
         case "nearby_activity_heating":
           title = "Movimentado agora";
-          body = `Tem movimento rolando no ${item.place_name}`;
+          body = `Tem movimento rolando no ${item.target_place_name}`;
           break;
         default:
           continue;
@@ -61,14 +61,14 @@ serve(async (req) => {
 
       const result = await sendPushNotification({
         supabase,
-        userId: item.user_id,
-        type: item.type,
+        userId: item.target_user_id,
+        type: item.notification_type,
         title,
         body,
-        placeId: item.place_id,
+        placeId: item.target_place_id,
         data: {
-          place_id: item.place_id,
-          place_name: item.place_name
+          place_id: item.target_place_id,
+          place_name: item.target_place_name
         }
       });
 

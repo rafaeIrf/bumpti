@@ -94,6 +94,13 @@ logger.log("User logged in:", user);
 logger.error("Failed to fetch data:", error);
 ```
 
+## Edge functions (Supabase)
+
+- Keep edge `index.ts` focused on request handling and orchestration only.
+- Move reusable logic to `supabase/functions/_shared/` and organize by feature with folders (e.g., `_shared/sync-chat-data/...`).
+- When modifying or creating an edge function, always look for opportunities to simplify, reduce duplication, and keep the main `index.ts` lean.
+- Feature-specific helpers that are only used by one edge function should still live under `_shared/<feature>/` for clarity and future reuse.
+
 ## Navigation (Expo Router)
 
 - Prefer Expo Router over direct React Navigation use.
@@ -109,7 +116,7 @@ logger.error("Failed to fetch data:", error);
 
 - Navigate to modal: `router.push('/modal')`
 - Go to a specific tab: `router.replace('/(tabs)')`
-- Open a screen in a group: `router.push('/(onboarding)/welcome')`
+- Open a screen in a group: `router.push('/(auth)/welcome')`
 
 ## State and persistence
 
