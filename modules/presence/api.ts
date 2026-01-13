@@ -37,6 +37,7 @@ export type ActiveUserAtPlace = {
   education_level?: string | null;
   place_id?: string | null;
   zodiac_sign: string | null;
+  verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
 };
 
 export type ActiveUsersResponse = {

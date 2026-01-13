@@ -2,6 +2,7 @@ import { NavigationIcon, StarIcon } from "@/assets/icons";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import Button from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
+import { VerificationBadge } from "@/components/verification-badge";
 import {
   EDUCATION_OPTIONS,
   INTENTION_OPTIONS,
@@ -226,10 +227,16 @@ export function UserProfileCard({
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.overlayContent}>
-            <Text style={[styles.nameAge, { color: colors.text }]}>
-              {profile.name}
-              {profile.age ? `, ${profile.age}` : ""}
-            </Text>
+            <View style={styles.nameAgeContainer}>
+              <Text style={[styles.nameAge, { color: colors.text }]}>
+                {profile.name}
+                {profile.age ? `, ${profile.age}` : ""}
+              </Text>
+              <VerificationBadge
+                verification_status={profile.verification_status}
+                size={20}
+              />
+            </View>
             <View style={styles.badgesContainer}>
               <View
                 style={[
@@ -563,6 +570,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   headerInfo: {
+    gap: spacing.xs,
+  },
+  nameAgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   nameAge: {
