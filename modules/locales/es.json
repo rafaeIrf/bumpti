@@ -178,7 +178,15 @@
           "title": "CUENTA",
           "blockList": "Lista de bloqueados",
           "blockListDescription": "Administra a quién has bloqueado.",
-          "verifyProfile": "Verificar perfil"
+          "verifyProfile": "Verificar perfil",
+          "verification": {
+            "pending": "Verificación en curso",
+            "pendingDescription": "Tu verificación está siendo revisada.",
+            "retryDescription": "Toca para continuar o iniciar una nueva verificación.",
+            "pendingTitle": "Verificación en curso",
+            "pendingMessage": "Tu verificación ya está en curso. Por favor, espera.",
+            "alreadyVerified": "¡Tu perfil ya está verificado!"
+          }
         },
 
         "security": {

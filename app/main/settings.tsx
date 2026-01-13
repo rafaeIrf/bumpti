@@ -14,6 +14,7 @@ import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
+import { useAppSelector } from "@/modules/store/hooks";
 
 interface SectionHeaderProps {
   title: string;
@@ -38,11 +39,18 @@ function SectionHeader({ title }: SectionHeaderProps) {
 export default function SettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const profile = useAppSelector((state) => state.profile.data);
 
   const [invisibleMode, setInvisibleMode] = useState(false);
 
   const handleClose = () => {
     router.back();
+  };
+
+  const handleVerifyProfile = () => {
+    // Navigate directly to verification modal
+    // The modal will handle loading and fetching the session
+    router.push("/(modals)/verification-webview");
   };
 
   const handleLogout = () => {
@@ -159,10 +167,18 @@ export default function SettingsScreen() {
             )}
             onClick={() => router.push("/main/blocked-list")}
           />
-          <SettingItem
-            title={t("screens.profile.settingsPage.account.verifyProfile")}
-            onClick={() => logger.log("Verify profile clicked")}
-          />
+          {/* Verification button - only show if not verified */}
+          {profile?.verification_status !== "verified" && (
+            <SettingItem
+              title={t("screens.profile.settingsPage.account.verifyProfile")}
+              description={
+                profile?.verification_status === "pending"
+                  ? t("screens.profile.settingsPage.account.verification.retryDescription")
+                  : undefined
+              }
+              onClick={handleVerifyProfile}
+            />
+          )}
         </View>
 
         {/* Segurança e Privacidade */}

@@ -3,6 +3,12 @@ import { setProfile, setProfileLoading } from "@/modules/store/slices/profileAct
 import { calculateAge } from "@/utils/calculate-age";
 import { logger } from "@/utils/logger";
 
+// Export helpers
+export { getUserId } from "./helpers";
+
+// Export API methods
+export { createVerificationSession } from "./api";
+
 /**
  * Fetches the user profile from the backend and updates the Redux store.
  * Use this to ensure the profile state is in sync with the server.
@@ -41,6 +47,7 @@ export async function fetchAndSetUserProfile() {
       languages: data.languages ?? [],
       zodiac_key: data.zodiac_key ?? null,
       relationship_key: data.relationship_key ?? null,
+      verification_status: data.verification_status ?? null,
       subscription: data.subscription ?? null,
       notificationSettings: data.notification_settings ?? null,
     };

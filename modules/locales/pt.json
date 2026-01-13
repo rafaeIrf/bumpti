@@ -179,7 +179,15 @@
           "title": "CONTA",
           "blockList": "Lista de bloqueio",
           "blockListDescription": "Gerencie quem você bloqueou.",
-          "verifyProfile": "Verificar perfil"
+          "verifyProfile": "Verificar perfil",
+          "verification": {
+            "pending": "Verificação em análise",
+            "pendingDescription": "Sua verificação está sendo analisada.",
+            "retryDescription": "Toque para continuar ou iniciar nova verificação.",
+            "pendingTitle": "Verificação em análise",
+            "pendingMessage": "Sua verificação já está em andamento. Por favor, aguarde.",
+            "alreadyVerified": "Seu perfil já está verificado!"
+          }
         },
 
         "security": {
