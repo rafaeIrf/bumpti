@@ -35,7 +35,7 @@ export interface CachedProfileData {
 }
 
 /**
- * Busca perfil de outro usuário via Edge Function get-matches ou get-profile
+ * Busca perfil de outro usuário via Edge Function get-public-profile
  * Esta é uma função helper que chama a Edge Function apropriada
  */
 async function fetchProfileFromAPI(userId: string): Promise<CachedProfileData | null> {
@@ -327,4 +327,3 @@ export async function clearProfileCache(userId: string): Promise<void> {
     logger.error("Error clearing profile cache:", error);
   }
 }
-

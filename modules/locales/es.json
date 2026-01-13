@@ -107,6 +107,7 @@
     "selected": "Seleccionados",
     "done": "Listo",
     "save": "Guardar",
+    "refresh": "Actualizar",
     "buy": "Comprar",
     "skip": "Saltar",
     "select": "Seleccione",
@@ -194,12 +195,64 @@
           "title": "SOBRE LA APP",
           "version": "Versión"
         },
+        "dev": {
+          "title": "DESARROLLADOR",
+          "itemTitle": "Configuración dev",
+          "itemDescription": "Herramientas y diagnósticos de la base local."
+        },
         "session": {
           "title": "SESIÓN",
           "logout": "Cerrar sesión",
           "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
           "deleteAccount": "Eliminar cuenta",
           "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
+        }
+      },
+      "devSettings": {
+        "title": "Configuración dev",
+        "fields": {
+          "id": "ID: {{value}}",
+          "matchId": "Match ID: {{value}}",
+          "otherUserId": "ID de usuario: {{value}}",
+          "status": "Estado: {{value}}",
+          "otherUser": "Otro usuario: {{value}}",
+          "place": "Lugar: {{value}}",
+          "placeId": "ID del lugar: {{value}}",
+          "userId": "ID de usuario: {{value}}",
+          "name": "Nombre: {{value}}",
+          "matchedAt": "Match: {{value}}",
+          "unmatchedAt": "Unmatch: {{value}}",
+          "chatId": "Chat ID: {{value}}",
+          "firstMessageAt": "Primer mensaje: {{value}}",
+          "lastMessageAt": "Último mensaje: {{value}}",
+          "unreadCount": "No leídos: {{value}}",
+          "lastFetchedAt": "Última actualización: {{value}}",
+          "createdAt": "Creado: {{value}}",
+          "targetUserId": "ID objetivo: {{value}}",
+          "action": "Acción: {{value}}"
+        },
+        "database": {
+          "title": "Base local",
+          "matchesTitle": "Matches",
+          "matchesEmpty": "No se encontraron matches.",
+          "matchesItem": "Match: {{id}} • Estado: {{status}} • Usuario: {{otherUserId}}",
+          "chatsTitle": "Chats",
+          "chatsEmpty": "No se encontraron chats.",
+          "chatsItem": "Chat: {{id}} • Match: {{matchId}} • Usuario: {{otherUserId}}",
+          "messagesTitle": "Mensajes",
+          "messagesEmpty": "No se encontraron mensajes.",
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
+          "discoveryTitle": "Perfiles de discovery",
+          "discoveryEmpty": "No se encontraron perfiles de discovery.",
+          "swipesTitle": "Cola de swipes",
+          "swipesEmpty": "No hay swipes pendientes.",
+          "profilesTitle": "Cache de perfiles",
+          "profilesEmpty": "No hay perfiles en caché."
+        },
+        "likerIds": {
+          "title": "Liker IDs",
+          "count": "Total: {{count}}",
+          "empty": "No se encontraron liker IDs."
         }
       },
 
@@ -878,8 +931,7 @@
   },
   "profileSwiper": {
     "emptyStateTitle": "Has visto todos los perfiles",
-    "emptyStateDescription": "¡Vuelve más tarde para ver gente nueva!",
-    "connectedWith": "¡Te conectaste con {{name}}!"
+    "emptyStateDescription": "¡Vuelve más tarde para ver gente nueva!"
   },
   "placePeople": {
     "premiumRequired": "Premium requerido",
@@ -893,7 +945,9 @@
     "emptyState": {
       "title": "Nadie por aquí todavía",
       "description": "¡Eres el primero! Cuando aparezcan otras personas aquí, te avisaremos."
-    }
+    },
+    "rewindBlockedTitle": "Rewind no disponible",
+    "rewindBlockedDescription": "No puedes deshacer un match."
   },
   "filters": {
     "title": "Filtros",

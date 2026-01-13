@@ -106,6 +106,7 @@
     "selected": "Selected",
     "done": "Done",
     "save": "Save",
+    "refresh": "Refresh",
     "buy": "Buy",
     "skip": "Skip",
     "select": "Select",
@@ -194,12 +195,64 @@
           "title": "ABOUT THE APP",
           "version": "Version"
         },
+        "dev": {
+          "title": "DEVELOPER",
+          "itemTitle": "Dev settings",
+          "itemDescription": "Local database tools and diagnostics."
+        },
         "session": {
           "title": "SESSION",
           "logout": "Logout",
           "logoutConfirm": "Are you sure you want to log out?",
           "deleteAccount": "Delete account",
           "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
+        }
+      },
+      "devSettings": {
+        "title": "Dev settings",
+        "fields": {
+          "id": "ID: {{value}}",
+          "matchId": "Match ID: {{value}}",
+          "otherUserId": "Other user ID: {{value}}",
+          "status": "Status: {{value}}",
+          "otherUser": "Other user: {{value}}",
+          "place": "Place: {{value}}",
+          "placeId": "Place ID: {{value}}",
+          "userId": "User ID: {{value}}",
+          "name": "Name: {{value}}",
+          "matchedAt": "Matched at: {{value}}",
+          "unmatchedAt": "Unmatched at: {{value}}",
+          "chatId": "Chat ID: {{value}}",
+          "firstMessageAt": "First message at: {{value}}",
+          "lastMessageAt": "Last message at: {{value}}",
+          "unreadCount": "Unread count: {{value}}",
+          "lastFetchedAt": "Last fetched at: {{value}}",
+          "createdAt": "Created at: {{value}}",
+          "targetUserId": "Target user ID: {{value}}",
+          "action": "Action: {{value}}"
+        },
+        "database": {
+          "title": "Local database",
+          "matchesTitle": "Matches",
+          "matchesEmpty": "No matches found.",
+          "matchesItem": "Match: {{id}} • Status: {{status}} • User: {{otherUserId}}",
+          "chatsTitle": "Chats",
+          "chatsEmpty": "No chats found.",
+          "chatsItem": "Chat: {{id}} • Match: {{matchId}} • User: {{otherUserId}}",
+          "messagesTitle": "Messages",
+          "messagesEmpty": "No messages found.",
+          "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
+          "discoveryTitle": "Discovery profiles",
+          "discoveryEmpty": "No discovery profiles found.",
+          "swipesTitle": "Swipe queue",
+          "swipesEmpty": "No swipes queued.",
+          "profilesTitle": "Profiles cache",
+          "profilesEmpty": "No cached profiles found."
+        },
+        "likerIds": {
+          "title": "Liker IDs",
+          "count": "Total: {{count}}",
+          "empty": "No liker IDs found."
         }
       },
 
@@ -878,8 +931,7 @@
   },
   "profileSwiper": {
     "emptyStateTitle": "You've seen all profiles",
-    "emptyStateDescription": "Come back later to see new people!",
-    "connectedWith": "You connected with {{name}}!"
+    "emptyStateDescription": "Come back later to see new people!"
   },
   "placePeople": {
     "premiumRequired": "Premium required",
@@ -890,6 +942,8 @@
     "subscribePremium": "Subscribe Premium",
     "backToPlaces": "Back to places",
     "howItWorks": "How it works",
+    "rewindBlockedTitle": "Rewind unavailable",
+    "rewindBlockedDescription": "You can’t rewind a match.",
     "emptyState": {
       "title": "No one here yet",
       "description": "You are the first! When other people appear here, we will notify you."

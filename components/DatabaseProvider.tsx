@@ -1,6 +1,7 @@
 import { useProfile } from "@/hooks/use-profile";
 import { getDatabase } from "@/modules/database";
 import { syncDatabase } from "@/modules/database/sync";
+import { flushSwipeQueueNow } from "@/modules/discovery/swipe-queue-orchestrator";
 import { logger } from "@/utils/logger";
 import { Database } from "@nozbe/watermelondb";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -21,23 +22,13 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
         const db = await getDatabase();
         setDatabase(db);
         logger.log("✅ DatabaseProvider initialized");
-
-        // Initial sync - only if user is authenticated
-        if (profile?.id) {
-          logger.log("🔄 User authenticated, starting initial sync");
-          syncDatabase(db).catch((error) => {
-            logger.error("Initial sync failed:", error);
-          });
-        } else {
-          logger.log("⏭️  Skipping initial sync - user not authenticated");
-        }
       } catch (error) {
         logger.error("Failed to initialize database in provider:", error);
       }
     };
 
     initDb();
-  }, [profile?.id]);
+  }, []);
 
   // Foreground sync to avoid missing messages if socket was down
   useEffect(() => {
@@ -48,6 +39,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     const handleAppStateChange = (nextState: AppStateStatus) => {
       if (currentState.match(/inactive|background/) && nextState === "active") {
         logger.log("📱 App active, running foreground sync");
+        void flushSwipeQueueNow({ database, reason: "foreground" });
         syncDatabase(database).catch((error) => {
           logger.error("Foreground sync failed:", error);
         });
@@ -62,6 +54,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     syncDatabase(database).catch((error) => {
       logger.error("Initial sync failed:", error);
     });
+    void flushSwipeQueueNow({ database, reason: "app-start" });
 
     return () => sub.remove();
   }, [database, profile?.id]);
