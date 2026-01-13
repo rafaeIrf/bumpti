@@ -30,35 +30,6 @@ Módulo auxiliar com funções de criptografia:
 
 **⚠️ Importante:** O texto plano NUNCA é armazenado no banco.
 
-### 3. `/supabase/functions/get-messages/index.ts` (ATUALIZADO)
-
-**Fluxo de descriptografia:**
-
-1. Busca mensagens do banco com `content_enc`, `content_iv`, `content_tag`
-2. Busca a chave de criptografia das Supabase Secrets
-3. Descriptografa cada mensagem usando AES-256-GCM
-4. Retorna array de mensagens com campo `content` já descriptografado:
-
-```json
-{
-  "messages": [
-    {
-      "id": "uuid",
-      "chat_id": "uuid",
-      "sender_id": "uuid",
-      "content": "mensagem descriptografada",
-      "created_at": "timestamp",
-      "read_at": null
-    }
-  ]
-}
-```
-
-**⚠️ Tratamento de erros:**
-
-- Se a descriptografia falhar, retorna `{ content: "[unable_to_decrypt]", error: "decryption_failed" }`
-- Se faltar dados de criptografia, retorna `{ content: "[unable_to_decrypt]", error: "missing_encryption_data" }`
-
 ## 🔐 Especificações Técnicas
 
 ### Algoritmo
@@ -146,31 +117,6 @@ curl -X POST https://your-project.supabase.co/functions/v1/send-message \
 }
 ```
 
-### 3. Buscar mensagens
-
-```bash
-curl -X GET "https://your-project.supabase.co/functions/v1/get-messages?chat_id=uuid" \
-  -H "Authorization: Bearer USER_JWT_TOKEN"
-```
-
-**Resposta:**
-
-```json
-{
-  "chat_id": "uuid",
-  "messages": [
-    {
-      "id": "uuid",
-      "chat_id": "uuid",
-      "sender_id": "uuid",
-      "content": "Hello, this will be encrypted!",
-      "created_at": "2025-12-01T10:00:00Z",
-      "read_at": null
-    }
-  ]
-}
-```
-
 ## 📊 Diagrama de Fluxo
 
 ```
@@ -200,31 +146,6 @@ curl -X GET "https://your-project.supabase.co/functions/v1/get-messages?chat_id=
       │<─────────────────────────┤                        │
       │                          │                        │
 
-┌─────────────────────────────────────────────────────────────┐
-│                    GET MESSAGES                              │
-└─────────────────────────────────────────────────────────────┘
-   Cliente                Edge Function              Database
-      │                          │                        │
-      │  GET /get-messages       │                        │
-      ├─────────────────────────>│                        │
-      │                          │                        │
-      │                          │  SELECT messages       │
-      │                          │  (content_enc, iv, tag)│
-      │                          ├───────────────────────>│
-      │                          │<───────────────────────┤
-      │                          │                        │
-      │                          │  Get encryption key    │
-      │                          │  from Secrets          │
-      │                          │  (MESSAGE_ENCRYPTION_KEY)
-      │                          │                        │
-      │                          │  Decrypt each message  │
-      │                          │  with AES-256-GCM      │
-      │                          │                        │
-      │  { messages: [          │                        │
-      │    { content: "Hello" }  │                        │
-      │  ]}                      │                        │
-      │<─────────────────────────┤                        │
-      │                          │                        │
 ```
 
 ## ⚠️ Pendências
