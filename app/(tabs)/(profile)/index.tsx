@@ -19,6 +19,7 @@ import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useIsProfileVerified } from "@/hooks/use-is-profile-verified";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useUserSubscription } from "@/modules/iap/hooks";
@@ -28,7 +29,7 @@ import { logger } from "@/utils/logger";
 import { calculateProfileCompletion } from "@/utils/profile-completion";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgProps } from "react-native-svg";
@@ -73,6 +74,13 @@ export default function ProfileScreen() {
 
   const handleCompleteProfile = () => {
     router.push("/(profile)/edit");
+  };
+
+  const handleVerifyProfile = () => {
+    // Only navigate if not verified
+    if (!isVerified) {
+      router.push("/(modals)/verification-webview");
+    }
   };
 
   const openEarlyCheckinSheet = () => {
@@ -134,6 +142,10 @@ export default function ProfileScreen() {
   const completionText = `${Math.round(profileProgress * 100)}%`;
   const shouldShowCompletionBadge = profileProgress < 1;
 
+  // Determine verification badge color - hook will re-render when status changes
+  const isVerified = useIsProfileVerified();
+  const verificationBadgeColor = isVerified ? colors.accent : colors.textSecondary;
+
   return (
     <BaseTemplateScreen
       useSafeArea={false}
@@ -187,11 +199,22 @@ export default function ProfileScreen() {
                   {profile?.name || t("screens.profile.title")}
                   {ageText}
                 </ThemedText>
-                <CircleCheckDashedIcon
-                  width={24}
-                  height={24}
-                  color={colors.textSecondary}
-                />
+                <Pressable
+                  onPress={handleVerifyProfile}
+                  disabled={isVerified}
+                  style={({ pressed }) => [
+                    styles.verificationBadge,
+                    {
+                      opacity: !isVerified && pressed ? 0.6 : 1,
+                    },
+                  ]}
+                >
+                  <CircleCheckDashedIcon
+                    width={24}
+                    height={24}
+                    color={verificationBadgeColor}
+                  />
+                </Pressable>
               </View>
 
               <Button
@@ -315,5 +338,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+  },
+  verificationBadge: {
+    padding: 2,
   },
 });

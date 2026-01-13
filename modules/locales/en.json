@@ -178,7 +178,15 @@
           "title": "ACCOUNT",
           "blockList": "Blocked list",
           "blockListDescription": "Manage who you have blocked.",
-          "verifyProfile": "Verify profile"
+          "verifyProfile": "Verify profile",
+          "verification": {
+            "pending": "Verification in progress",
+            "pendingDescription": "Your verification is being reviewed.",
+            "retryDescription": "Tap to continue or start a new verification.",
+            "pendingTitle": "Verification in progress",
+            "pendingMessage": "Your verification is already underway. Please wait.",
+            "alreadyVerified": "Your profile is already verified!"
+          }
         },
 
         "security": {

@@ -28,6 +28,7 @@ export type ProfilePayload = {
   relationship_key?: string | null;
   smoking_key?: string | null;
   height_cm?: number | null;
+  verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
   subscription?: any;
   notification_settings?: NotificationSettings;
 };
@@ -134,4 +135,46 @@ export async function updateNotificationSettings(
   }
 
   return data as NotificationSettings;
+}
+
+/**
+ * Create a verification session with Didit API.
+ * Returns the verification URL to open in WebView.
+ */
+export async function createVerificationSession(): Promise<{
+  verification_url: string;
+  session_id: string;
+  status: string;
+}> {
+  logger.log("[createVerificationSession] Invoking didit-session edge function");
+  
+  const { data, error } = await supabase.functions.invoke<{
+    success: boolean;
+    verification_url: string;
+    session_id: string;
+    status: string;
+  }>("didit-session", {
+    method: "POST",
+  });
+
+  logger.log("[createVerificationSession] Response:", {
+    hasData: !!data,
+    hasError: !!error,
+    errorMessage: error?.message,
+  });
+
+  if (error) {
+    logger.error("[createVerificationSession] Edge function error:", error);
+    throw error;
+  }
+
+  if (!data?.verification_url) {
+    throw new Error("No verification URL returned");
+  }
+
+  return {
+    verification_url: data.verification_url,
+    session_id: data.session_id,
+    status: data.status,
+  };
 }

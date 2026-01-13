@@ -1,6 +1,8 @@
 import { calculateAge } from "@/utils/calculate-age";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
+
 export type ProfileData = {
   id?: string;
   name?: string | null;
@@ -27,6 +29,7 @@ export type ProfileData = {
   favoritePlaces?: any[] | null;
   subscription?: SubscriptionData | null;
   notificationSettings?: NotificationSettings | null;
+  verification_status?: VerificationStatus | null;
 };
 
 export interface SubscriptionData {
@@ -94,6 +97,11 @@ const profileSlice = createSlice({
         state.data.subscription.checkin_credits = action.payload;
       }
     },
+    setVerificationStatus: (state, action: PayloadAction<VerificationStatus>) => {
+      if (state.data) {
+        state.data.verification_status = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
@@ -105,6 +113,7 @@ export const {
   setSubscription,
   setNotificationSettings,
   setCheckinCredits,
+  setVerificationStatus,
   resetProfile,
 } = profileSlice.actions;
 

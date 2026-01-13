@@ -13,6 +13,7 @@ export interface SettingItemProps {
   rightContent?: React.ReactNode;
   onClick?: () => void;
   showChevron?: boolean;
+  disabled?: boolean;
 }
 
 export function SettingItem({
@@ -22,18 +23,19 @@ export function SettingItem({
   rightContent,
   onClick,
   showChevron = true,
+  disabled = false,
 }: SettingItemProps) {
   const colors = useThemeColors();
 
   return (
     <Pressable
       onPress={onClick}
-      disabled={!onClick}
+      disabled={!onClick || disabled}
       style={({ pressed }) => [
         styles.settingItem,
         {
           backgroundColor: colors.surface,
-          opacity: onClick && pressed ? 0.9 : 1,
+          opacity: disabled ? 0.5 : onClick && pressed ? 0.9 : 1,
           transform: [{ scale: onClick && pressed ? 0.98 : 1 }],
         },
       ]}

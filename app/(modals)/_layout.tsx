@@ -14,6 +14,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="report" />
       <Stack.Screen name="profile-preview" />
       <Stack.Screen name="place-search" />
+      <Stack.Screen name="verification-webview" />
     </Stack>
   );
 }

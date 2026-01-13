@@ -13,6 +13,7 @@ import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { ReduxProvider } from "@/components/redux-provider";
+import { VerificationListener } from "@/components/verification-listener";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
@@ -59,6 +60,7 @@ export default function RootLayout() {
 
   return (
     <ReduxProvider>
+      <VerificationListener />
       <I18nProvider>
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}

@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
         .select(
           `
           *,
+          verification_status,
           education:education_levels(key),
           zodiac:zodiac_signs(key),
           smoking:smoking_habits(key),
