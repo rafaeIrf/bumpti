@@ -2,15 +2,12 @@ import { useAuthState } from "@/hooks/use-auth-state";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useProfile } from "@/hooks/use-profile";
-import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useAppSelector } from "@/modules/store/hooks";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { Redirect } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export default function RootIndex() {
-  const colors = useThemeColors();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthState();
   const { profile, isLoading: isProfileLoading } = useProfile({
     enabled: !!isAuthenticated,
@@ -19,6 +16,13 @@ export default function RootIndex() {
   const { isLoading: isLocationLoading } = useLocationPermission();
   const { isLoading: isNotificationLoading } = useNotificationPermission();
   const onboardingState = useAppSelector((state) => state.onboarding);
+
+  // Check if all loading is complete
+  const isLoading = 
+    isAuthLoading ||
+    (isAuthenticated && isProfileLoading) ||
+    isLocationLoading ||
+    isNotificationLoading;
 
   useEffect(() => {
     if (
@@ -38,53 +42,32 @@ export default function RootIndex() {
     onboardingState.currentStep,
   ]);
 
-  // Show loading while checking auth state or permissions
-  if (
-    isAuthLoading ||
-    (isAuthenticated && isProfileLoading) ||
-    isLocationLoading ||
-    isNotificationLoading
-  ) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
-  console.log("AAA profile", profile, isAuthenticated);
+  // Determine destination route
+  const getDestinationRoute = () => {
+    if (!isAuthenticated) {
+      return "/(auth)/welcome";
+    }
+    if (profile) {
+      return "/(tabs)/(home)";
+    }
+    if (
+      !onboardingState.currentStep ||
+      onboardingState.currentStep === "complete"
+    ) {
+      return "/(auth)/welcome";
+    }
+    const targetStep = onboardingState.currentStep;
+    return `/(onboarding)/${targetStep}`;
+  };
 
-  // If not authenticated, go to welcome (auth flow)
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
+  const destinationRoute = getDestinationRoute();
 
-  // User authenticated: if profile exists, onboarding is done
-  if (profile) {
-    return <Redirect href="/(tabs)/(home)" />;
-  }
-
-  // No profile yet: check if user has onboarding progress
-  // If no progress (e.g., after logout), redirect to welcome
-  if (
-    !onboardingState.currentStep ||
-    onboardingState.currentStep === "complete"
-  ) {
-    return <Redirect href="/(auth)/welcome" />;
+  // Show nothing while loading - native splash screen is visible
+  // Splash will be hidden by RootLayout when navigation container is ready
+  if (isLoading) {
+    return null;
   }
 
-  // User has onboarding progress: continue from last step
-  const targetStep = onboardingState.currentStep;
-  console.log("AAA targetStep", targetStep);
-
-  const onboardingRoute = `/(onboarding)/${targetStep}`;
-
-  return <Redirect href={onboardingRoute as any} />;
+  // Render redirect - splash will be hidden by RootLayout
+  return <Redirect href={destinationRoute as any} />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

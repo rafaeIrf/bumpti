@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
+import { AnimatedBootSplash } from "@/components/animated-bootsplash";
 import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { DatabaseProvider } from "@/components/DatabaseProvider";
@@ -25,12 +26,21 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import RNBootSplash from "react-native-bootsplash";
 
 export const unstable_settings = {
   initialRouteName: "index",
 };
+
+const styles = StyleSheet.create({
+  splashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    backgroundColor: "#000000", // Match native splash background
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -40,19 +50,46 @@ export default function RootLayout() {
     "Poppins-SemiBold": Poppins_600SemiBold,
     "Poppins-Bold": Poppins_700Bold,
   });
+  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true);
+  const [splashReady, setSplashReady] = useState(false);
+  const hasHiddenSplash = useRef(false);
 
   // Initialize FCM registration
   useFCMRegistration();
 
+  // Start animated splash hide when fonts are loaded and navigation is ready
+  // Following best practices from react-native-bootsplash documentation
   useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-  }, []);
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    if (fontsLoaded && !splashReady) {
+      // Wait for multiple frames to ensure Stack is fully mounted and rendered
+      // This is especially important in release builds where rendering can be slower
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setSplashReady(true); // Trigger animation in AnimatedBootSplash
+        });
+      });
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, splashReady]);
+
+  const handleAnimationEnd = async () => {
+    if (hasHiddenSplash.current) {
+      // Already hidden, just remove component
+      setShowAnimatedSplash(false);
+      return;
+    }
+
+    try {
+      // Hide native splash after custom animation completes
+      hasHiddenSplash.current = true;
+      await RNBootSplash.hide({ fade: false }); // Already animated, just hide
+    } catch (error) {
+      // Ignore errors if splash is already hidden
+      // This can happen if the native splash was already hidden
+    } finally {
+      // Remove animated component from tree
+      setShowAnimatedSplash(false);
+    }
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -115,6 +152,11 @@ export default function RootLayout() {
             </KeyboardProvider>
           </GestureHandlerRootView>
         </ThemeProvider>
+        {showAnimatedSplash && (
+          <View style={styles.splashOverlay} pointerEvents="none">
+            <AnimatedBootSplash ready={splashReady} onAnimationEnd={handleAnimationEnd} />
+          </View>
+        )}
       </I18nProvider>
     </ReduxProvider>
   );
