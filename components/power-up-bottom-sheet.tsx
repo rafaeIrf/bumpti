@@ -4,11 +4,12 @@ import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { IAP_SKUS } from "@/modules/iap/config";
-import { useIAP } from "@/modules/iap/hooks";
+import { useIAP, useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { logger } from "@/utils/logger";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgProps } from "react-native-svg";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,8 +71,10 @@ export function PowerUpBottomSheet({
     return options.find((o) => o.isHighlighted)?.id ?? options[0]?.id ?? "";
   });
 
+  const insets = useSafeAreaInsets();
   // Track if we initiated a purchase from this sheet
   const hasPurchaseStarted = useRef(false);
+  const { isPremium, showSubscriptionBonus } = useUserSubscription();
 
   // Watch for purchase completion (purchasing goes from true -> false)
   useEffect(() => {
@@ -148,7 +151,7 @@ export function PowerUpBottomSheet({
   const productsLoaded = products.length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.xl }]}>
       <Pressable
         onPress={onClose}
         hitSlop={8}
@@ -301,15 +304,17 @@ export function PowerUpBottomSheet({
         })}
       </View>
 
-      <ThemedText
-        style={[
-          styles.premiumHint,
-          typography.caption,
-          { color: colors.textSecondary },
-        ]}
-      >
-        {t(`${translationKey}.premiumHint`)}
-      </ThemedText>
+      {!isPremium && showSubscriptionBonus && (
+        <ThemedText
+          style={[
+            styles.premiumHint,
+            typography.caption,
+            { color: colors.textSecondary },
+          ]}
+        >
+          {t(`${translationKey}.premiumHint`)}
+        </ThemedText>
+      )}
 
       <View style={styles.buttonsContainer}>
         <Button
@@ -322,19 +327,21 @@ export function PowerUpBottomSheet({
           loading={isLoading}
           disabled={isLoading || !productsLoaded}
         />
-        <Button
-          onPress={onUpgradeToPremium}
-          fullWidth
-          size="lg"
-          variant="secondary"
-          label={t(`${translationKey}.upgradeCta`)}
-          disabled={isLoading}
-          style={[
-            styles.secondaryButton,
-            { borderColor: colors.accent, backgroundColor: colors.surface },
-          ]}
-          textStyle={{ color: colors.accent }}
-        />
+        {!isPremium && showSubscriptionBonus && (
+          <Button
+            onPress={onUpgradeToPremium}
+            fullWidth
+            size="lg"
+            variant="secondary"
+            label={t(`${translationKey}.upgradeCta`)}
+            disabled={isLoading}
+            style={[
+              styles.secondaryButton,
+              { borderColor: colors.accent, backgroundColor: colors.surface },
+            ]}
+            textStyle={{ color: colors.accent }}
+          />
+        )}
       </View>
     </View>
   );
@@ -348,7 +355,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
   },
   closeButton: {
     position: "absolute",
