@@ -1,7 +1,7 @@
-import { updateProfile } from "@/modules/profile/api";
-import { useUserSubscription } from "@/modules/iap/hooks";
-import { setInvisibleMode } from "@/modules/store/slices/profileActions";
 import { useProfile } from "@/hooks/use-profile";
+import { useUserSubscription } from "@/modules/iap/hooks";
+import { updateProfile } from "@/modules/profile/api";
+import { setInvisibleMode } from "@/modules/store/slices/profileActions";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 

@@ -418,8 +418,8 @@
       "powerUps": {
         "earlyCheckin": {
           "title": "Check-in+",
-          "subtitle": "Apareça no local antes de chegar.",
-          "premiumHint": "Check-in+ ilimitado no Bumpti Premium.",
+          "subtitle": "Faça early check-in antes de chegar ao local.",
+          "premiumHint": "Ganhe créditos de check-in grátis com Premium.",
           "purchaseCta": "Comprar {{quantity}} Check-in+",
           "upgradeCta": "Assinar Premium",
           "close": "Fechar",
@@ -445,7 +445,7 @@
         "pings": {
           "title": "Pings",
           "subtitle": "Envie sinais prioritários e chame atenção na hora.",
-          "premiumHint": "Pings ilimitados no Bumpti Premium.",
+          "premiumHint": "Ganhe créditos de check-in grátis com Premium.",
           "purchaseCta": "Comprar {{quantity}} Pings",
           "upgradeCta": "Assinar Premium",
           "close": "Fechar",
@@ -471,7 +471,7 @@
         "turbo": {
           "title": "Connect+",
           "subtitle": "Impulsione seu perfil para o topo do local.",
-          "premiumHint": "Pacotes Connect+ incluídos semanalmente no Premium.",
+          "premiumHint": "Ganhe créditos de check-in grátis com Premium.",
           "purchaseCta": "Comprar {{quantity}} Connect+",
           "upgradeCta": "Assinar Premium",
           "close": "Fechar",
