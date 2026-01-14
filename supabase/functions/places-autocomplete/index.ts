@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -80,6 +81,23 @@ serve(async (req) => {
             } : undefined
         };
     });
+
+    // 🔥 LAZY HYDRATION TRIGGER: If no results and we have coordinates, trigger city hydration
+    if (results.length === 0 && latNum && lngNum) {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+      const githubToken = Deno.env.get("GITHUB_HYDRATION_TOKEN") as string;
+      
+      // Trigger city hydration in background (don't wait for result)
+      triggerCityHydrationIfNeeded(
+        latNum,
+        lngNum,
+        supabaseUrl,
+        serviceRoleKey,
+        githubToken
+      ).catch((err) => {
+        console.error("City hydration trigger failed:", err);
+      });
+    }
 
     return new Response(JSON.stringify(results), {
       status: 200,

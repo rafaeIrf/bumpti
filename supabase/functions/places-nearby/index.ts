@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
+import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -120,8 +121,23 @@ serve(async (req) => {
         };
     });
 
-    // Note: The auto-seed logic was removed since places are now populated manually.
-    // If no places are found in a city, they need to be imported manually.
+    // 🔥 LAZY HYDRATION TRIGGER: If no results, trigger city hydration
+    if (results.length === 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+      const githubToken = Deno.env.get("GITHUB_HYDRATION_TOKEN") as string;
+      
+      // Trigger city hydration in background (don't wait for result)
+      triggerCityHydrationIfNeeded(
+        latNum,
+        lngNum,
+        supabaseUrl,
+        serviceRoleKey,
+        githubToken
+      ).catch((err) => {
+        console.error("City hydration trigger failed:", err);
+      });
+    }
 
     return new Response(JSON.stringify(results), {
       status: 200,
