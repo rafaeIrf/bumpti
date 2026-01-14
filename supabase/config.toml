@@ -360,3 +360,6 @@ verify_jwt = false
 
 [functions.iap-webhook-google]
 verify_jwt = false
+
+[functions.finalize-city-hydration]
+verify_jwt = false

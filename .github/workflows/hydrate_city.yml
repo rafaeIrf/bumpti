@@ -1,0 +1,57 @@
+name: Hydrate City from Overture Maps
+
+on:
+  repository_dispatch:
+    types: [hydrate_city]
+
+jobs:
+  hydrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install duckdb psycopg2-binary requests
+
+      - name: Run hydration script
+        id: hydrate
+        env:
+          DB_POOLER_URL: ${{ secrets.DB_POOLER_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_HYDRATION_TOKEN: ${{ secrets.GITHUB_HYDRATION_TOKEN }}
+        run: |
+          python scripts/hydrate_overture_city.py \
+            "${{ github.event.client_payload.city_id }}" \
+            "${{ github.event.client_payload.city_name }}" \
+            '${{ toJson(github.event.client_payload.bbox) }}' \
+            "${{ github.event.client_payload.country_code }}" \
+            "${{ github.event.client_payload.is_update }}"
+
+      - name: Notify completion (always runs)
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          GITHUB_HYDRATION_TOKEN: ${{ secrets.GITHUB_HYDRATION_TOKEN }}
+        run: |
+          if [ "${{ steps.hydrate.outcome }}" == "success" ]; then
+            STATUS="completed"
+          else
+            STATUS="failed"
+          fi
+
+          # Call finalize edge function
+          curl -X POST \
+            -H "x-github-token: $GITHUB_HYDRATION_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$SUPABASE_URL/functions/v1/finalize-city-hydration" \
+            -d "{\"city_id\": \"${{ github.event.client_payload.city_id }}\", \"status\": \"$STATUS\"}"

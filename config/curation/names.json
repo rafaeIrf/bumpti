@@ -1,0 +1,33 @@
+{
+  "blacklist": [
+    "advogados",
+    "advocacia",
+    "consultório",
+    "médico",
+    "dentista",
+    "contabilidade",
+    "escritório",
+    "logística",
+    "transporte",
+    "residência",
+    "casa do",
+    "apartamento",
+    "condomínio",
+    "edifício",
+    "lote",
+    "venda de"
+  ],
+  "suffixes_to_remove": [
+    " LTDA",
+    " S/A",
+    " S.A.",
+    " ME",
+    " EPP",
+    " MEI",
+    " Ltda",
+    " Ltda.",
+    " S.A",
+    " - ME",
+    " - EPP"
+  ]
+}
