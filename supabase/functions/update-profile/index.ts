@@ -39,6 +39,7 @@ type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
+  is_invisible?: boolean; // Invisible mode flag
   [key: string]: unknown;
 };
 
@@ -128,6 +129,7 @@ Deno.serve(async (req) => {
       height_cm,
       languages,
       favoritePlaces,
+      is_invisible,
       ...rest
     } = payload;
 
@@ -301,6 +303,31 @@ Deno.serve(async (req) => {
     if (smokingId !== undefined) updates.smoking_id = smokingId;
     if (relationshipId !== undefined) updates.relationship_id = relationshipId;
     if (height_cm !== undefined) updates.height_cm = height_cm;
+    
+    // Validate invisible mode: only premium users can enable it
+    if (is_invisible !== undefined) {
+      if (is_invisible === true) {
+        // Check if user is premium
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("subscription:user_subscriptions!inner(is_premium)")
+          .eq("id", userId)
+          .maybeSingle();
+
+        const isPremium = (profileData?.subscription as any)?.is_premium ?? false;
+
+        if (!isPremium) {
+          return new Response(
+            JSON.stringify({ 
+              error: "premium_required", 
+              message: "Invisible mode is only available for premium users" 
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+      updates.is_invisible = is_invisible;
+    }
 
     // Basic validations
     if (ageRangeMin !== undefined && ageRangeMin < 18) {

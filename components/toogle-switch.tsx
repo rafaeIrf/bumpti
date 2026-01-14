@@ -6,12 +6,14 @@ interface ToggleSwitchProps {
   value: boolean;
   onValueChange: (value: boolean) => void;
   colors: ReturnType<typeof useThemeColors>;
+  disabled?: boolean;
 }
 
 const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   value,
   onValueChange,
   colors,
+  disabled = false,
 }) => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: withSpring(value ? 24 : 0) }],
@@ -23,6 +25,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       onValueChange={onValueChange}
       trackColor={{ false: colors.border, true: colors.accent }}
       thumbColor={colors.text}
+      disabled={disabled}
     />
   );
 };

@@ -9,6 +9,7 @@
 -- - Excludes users with active matches with the viewer
 -- - Excludes users the viewer has blocked
 -- - Excludes users who have blocked the viewer
+-- - Excludes users in invisible mode (UNLESS they already liked the viewer)
 -- - Does NOT exclude unmatched users (allows re-matching)
 --
 -- Returns: Full user data for eligible users at the specified place
@@ -131,6 +132,20 @@ as $$
       FROM user_blocks ub
       WHERE ub.blocker_id = a.user_id
         AND ub.blocked_id = viewer_id
+    )
+
+    -- Exclude users in invisible mode UNLESS they already liked me
+    -- This maintains reciprocity: if invisible user liked me, I should see them
+    AND (
+      p.is_invisible = false
+      OR EXISTS (
+        SELECT 1
+        FROM user_interactions ui
+        WHERE ui.from_user_id = a.user_id
+          AND ui.to_user_id = viewer_id
+          AND ui.action = 'like'
+          AND ui.action_expires_at > now()
+      )
     )
 
     -- Filter by Gender Preference
