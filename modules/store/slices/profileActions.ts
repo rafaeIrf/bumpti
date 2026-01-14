@@ -3,6 +3,7 @@ import { calculateAge } from "@/utils/calculate-age";
 import {
   ProfileData,
   resetProfile as resetProfileAction,
+  setInvisibleMode as setInvisibleModeAction,
   setProfile as setProfileAction,
   setProfileLoading as setProfileLoadingAction,
   setSubscription as setSubscriptionAction,
@@ -121,4 +122,8 @@ export const updateProfilePhotosAction = async (newPhotos: string[]) => {
 export const handlePurchaseSuccess = (entitlements: SubscriptionData) => {
   logger.log("[ProfileActions] handlePurchaseSuccess called with entitlements:", entitlements);
   store.dispatch(setSubscriptionAction(entitlements));
+};
+
+export const setInvisibleMode = (isInvisible: boolean) => {
+  store.dispatch(setInvisibleModeAction(isInvisible));
 };

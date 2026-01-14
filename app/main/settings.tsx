@@ -6,15 +6,16 @@ import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
 import { t } from "@/modules/locales";
+import { useInvisibleMode } from "@/modules/profile/hooks/use-invisible-mode";
 import { openEmail, openPrivacyPolicy, openTermsOfUse } from "@/utils/linking";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { Alert, StyleSheet, View } from "react-native";
-import { useAppSelector } from "@/modules/store/hooks";
 
 interface SectionHeaderProps {
   title: string;
@@ -39,9 +40,8 @@ function SectionHeader({ title }: SectionHeaderProps) {
 export default function SettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const profile = useAppSelector((state) => state.profile.data);
-
-  const [invisibleMode, setInvisibleMode] = useState(false);
+  const { profile } = useProfile();
+  const { isInvisible, toggleInvisibleMode, isPremium } = useInvisibleMode();
 
   const handleClose = () => {
     router.back();
@@ -134,11 +134,18 @@ export default function SettingsScreen() {
               "screens.profile.settingsPage.presence.invisibleDescription"
             )}
             rightContent={
-              <ToggleSwitch
-                value={invisibleMode}
-                onValueChange={setInvisibleMode}
-                colors={colors}
-              />
+              <View style={styles.invisibleToggleContainer}>
+                {!isPremium && (
+                  <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
+                    <ThemedText style={styles.premiumBadgeText}>Premium</ThemedText>
+                  </View>
+                )}
+                <ToggleSwitch
+                  value={isInvisible}
+                  onValueChange={toggleInvisibleMode}
+                  colors={colors}
+                />
+              </View>
             }
             showChevron={false}
           />
@@ -329,5 +336,21 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: spacing.xl,
+  },
+  invisibleToggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  premiumBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 100,
+  },
+  premiumBadgeText: {
+    ...typography.caption,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

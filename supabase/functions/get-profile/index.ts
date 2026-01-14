@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
           `
           *,
           verification_status,
+          is_invisible,
           education:education_levels(key),
           zodiac:zodiac_signs(key),
           smoking:smoking_habits(key),
@@ -200,6 +201,7 @@ Deno.serve(async (req) => {
         gender_id: rest.gender_id ?? null,
         age_range_min: rest.age_range_min ?? null,
         age_range_max: rest.age_range_max ?? null,
+        is_invisible: rest.is_invisible ?? false,
         connectWith,
         intentions,
         favoritePlaces,

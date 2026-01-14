@@ -30,6 +30,7 @@ export type ProfileData = {
   subscription?: SubscriptionData | null;
   notificationSettings?: NotificationSettings | null;
   verification_status?: VerificationStatus | null;
+  is_invisible?: boolean | null;
 };
 
 export interface SubscriptionData {
@@ -102,6 +103,11 @@ const profileSlice = createSlice({
         state.data.verification_status = action.payload;
       }
     },
+    setInvisibleMode: (state, action: PayloadAction<boolean>) => {
+      if (state.data) {
+        state.data.is_invisible = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
@@ -114,6 +120,7 @@ export const {
   setNotificationSettings,
   setCheckinCredits,
   setVerificationStatus,
+  setInvisibleMode,
   resetProfile,
 } = profileSlice.actions;
 

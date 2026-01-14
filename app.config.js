@@ -12,11 +12,6 @@ module.exports = {
       supportsTablet: true,
       googleServicesFile: "./GoogleService-Info.plist",
       bundleIdentifier: "com.bumpti",
-      splash: {
-        image: "./assets/images/bumpti-logo.png",
-        resizeMode: "contain",
-        backgroundColor: "#000000",
-      },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription:
@@ -71,15 +66,12 @@ module.exports = {
         },
       ],
       [
-        "expo-splash-screen",
+        "react-native-bootsplash",
         {
-          image: "./assets/images/bumpti-logo.png",
-          imageWidth: 200,
-          resizeMode: "contain",
-          backgroundColor: "#000000",
-          dark: {
-            image: "./assets/images/bumpti-logo.png",
-            backgroundColor: "#000000",
+          assetsDir: "assets/bootsplash",
+          android: {
+            parentTheme: "EdgeToEdge",
+            darkContentBarsStyle: true,
           },
         },
       ],

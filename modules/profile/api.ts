@@ -29,6 +29,7 @@ export type ProfilePayload = {
   smoking_key?: string | null;
   height_cm?: number | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
+  is_invisible?: boolean | null;
   subscription?: any;
   notification_settings?: NotificationSettings;
 };
@@ -49,6 +50,7 @@ export type UpdateProfilePayload = {
   smoking_key?: string;
   relationship_key?: string;
   height_cm?: number;
+  is_invisible?: boolean;
   [key: string]: unknown;
 };
 

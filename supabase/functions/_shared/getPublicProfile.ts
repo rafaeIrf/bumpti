@@ -120,6 +120,7 @@ export async function getPublicProfile(
     zodiac_sign: profile.zodiac?.key,
     relationship_status: profile.relationship?.key,
     smoking_habit: profile.smoking?.key,
+    verification_status: profile.verification_status || null,
     favorite_places,
     entered_at: null, // Context specific
     expires_at: null, // Context specific

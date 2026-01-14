@@ -4,12 +4,11 @@ import {
   DumbbellIcon,
   FlameIcon,
   HeartIcon,
-  LogoName,
   MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
   StarIcon,
-  UtensilsCrossedIcon,
+  UtensilsCrossedIcon
 } from "@/assets/icons";
 import {
   Cocoa,
@@ -21,6 +20,7 @@ import {
   Toast,
   Weight,
 } from "@/assets/illustrations";
+import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
@@ -308,15 +308,15 @@ export default function HomeScreen() {
     <BaseTemplateScreen
       TopHeader={
         <ScreenToolbar
-          customTitleView={<LogoName />}
+        leftAction={{
+          icon: SlidersHorizontalIcon,
+          onClick: () => router.push("main/filters" as any),
+          ariaLabel: t("screens.home.toolbar.filters"),
+          color: colors.icon,
+        }}
+          customTitleView={<BumptiWideLogo height={28} width={100} />}
           titleIconColor={colors.accent}
           rightActions={[
-            {
-              icon: SlidersHorizontalIcon,
-              onClick: () => router.push("main/filters" as any),
-              ariaLabel: t("screens.home.toolbar.filters"),
-              color: colors.icon,
-            },
             {
               icon: SearchIcon,
               onClick: handleOpenSearch,

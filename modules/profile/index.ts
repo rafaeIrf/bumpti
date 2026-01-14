@@ -7,7 +7,10 @@ import { logger } from "@/utils/logger";
 export { getUserId } from "./helpers";
 
 // Export API methods
-export { createVerificationSession } from "./api";
+export { createVerificationSession, updateProfile } from "./api";
+
+// Export actions
+export { setInvisibleMode } from "@/modules/store/slices/profileActions";
 
 /**
  * Fetches the user profile from the backend and updates the Redux store.
@@ -48,6 +51,7 @@ export async function fetchAndSetUserProfile() {
       zodiac_key: data.zodiac_key ?? null,
       relationship_key: data.relationship_key ?? null,
       verification_status: data.verification_status ?? null,
+      is_invisible: data.is_invisible ?? false,
       subscription: data.subscription ?? null,
       notificationSettings: data.notification_settings ?? null,
     };
