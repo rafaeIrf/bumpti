@@ -3,6 +3,9 @@
 -- 
 -- Logic: Users with is_invisible = true are excluded from discovery feeds,
 -- UNLESS they have already liked the viewer (maintains reciprocity).
+--
+-- Premium-only: Only premium users can enable this feature.
+-- Auto-disable: Automatically disabled when subscription expires (see trigger in 20260116000001).
 
 ALTER TABLE profiles
 ADD COLUMN is_invisible boolean NOT NULL DEFAULT false;
