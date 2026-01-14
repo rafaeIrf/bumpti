@@ -23,21 +23,19 @@ export async function triggerCityHydrationIfNeeded(
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if coordinates are in existing city
-    // PostGIS: Check if point is contained within city geometry
-    const { data: existingCity, error: cityError } = await supabase
-      .from("cities_registry")
-      .select("*")
-      .eq("status", "completed")
-      .filter("geom", "cs", JSON.stringify({
-        type: "Point",
-        coordinates: [longitude, latitude]
-      }))
-      .single();
+    // Check if coordinates are in existing city using RPC
+    // PostGIS: ST_Contains(city_geom, point)
+    const { data: existingCities, error: cityError } = await supabase
+      .rpc("check_city_by_coordinates", {
+        user_lat: latitude,
+        user_lng: longitude
+      });
 
     if (cityError && cityError.code !== "PGRST116") {
       console.error("City lookup error:", cityError);
     }
+
+    const existingCity = existingCities && existingCities.length > 0 ? existingCities[0] : null;
 
     // If city found, check if stale (> 30 days)
     if (existingCity) {
@@ -204,6 +202,8 @@ export async function triggerCityHydrationIfNeeded(
     console.log("📍 Final geometry type:", geometry.type, "with", geometry.coordinates.length, "polygon(s)");
 
     // Insert city with GeoJSON geometry
+    console.log("💾 Attempting to insert city:", cityName, countryCode);
+    
     const { data: newCity, error: insertError } = await supabase
       .from("cities_registry")
       .insert({
@@ -218,15 +218,19 @@ export async function triggerCityHydrationIfNeeded(
       .single();
 
     if (insertError) {
+      console.error("❌ City insert error:", insertError);
       if (insertError.code === "23505") {
         // Unique constraint violation - city already exists
+        console.log("⚠️ City already exists, returning in_progress");
         return { status: "in_progress", cityName, countryCode };
       }
-      console.error("City insert error:", insertError);
       return { status: "error" };
     }
 
+    console.log("✅ City inserted successfully, ID:", newCity.id);
+
     // Dispatch GitHub Actions workflow
+    console.log("🚀 Dispatching GitHub Actions workflow...");
     const dispatchRes = await fetch(
       "https://api.github.com/repos/rafaeIrf/bumpin/dispatches",
       {
@@ -250,9 +254,12 @@ export async function triggerCityHydrationIfNeeded(
     );
 
     if (!dispatchRes.ok) {
-      console.error("GitHub dispatch failed:", await dispatchRes.text());
+      const errorText = await dispatchRes.text();
+      console.error("❌ GitHub dispatch failed:", errorText);
       return { status: "error" };
     }
+
+    console.log("✅ GitHub Actions workflow dispatched successfully");
 
     return {
       status: "triggered",
