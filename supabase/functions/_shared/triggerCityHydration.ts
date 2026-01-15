@@ -20,11 +20,11 @@ export async function triggerCityHydrationIfNeeded(
 
   try {
     // Check if this point is already covered by cities_registry
-    const { data: existingCity, error: rpcError } = await supabaseAdmin.rpc(
-      "check_city_contains_point",
+    const { data: cities, error: rpcError } = await supabaseAdmin.rpc(
+      "check_city_by_coordinates",
       {
-        p_lat: latNum,
-        p_lng: lngNum,
+        user_lat: latNum,
+        user_lng: lngNum,
       }
     );
 
@@ -33,10 +33,20 @@ export async function triggerCityHydrationIfNeeded(
       throw rpcError;
     }
 
+    const existingCity = cities && cities.length > 0 ? cities[0] : null;
+
+    // Calculate days since hydration
+    const daysSinceHydration = existingCity?.last_hydrated_at
+      ? Math.floor(
+          (Date.now() - new Date(existingCity.last_hydrated_at).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : null;
+
     // City found and recently hydrated
-    if (existingCity && existingCity.days_since_hydration <= 30) {
+    if (existingCity && daysSinceHydration !== null && daysSinceHydration <= 30) {
       console.log(
-        `✅ City "${existingCity.city_name}" is fresh (${existingCity.days_since_hydration} days old)`
+        `✅ City "${existingCity.city_name}" is fresh (${daysSinceHydration} days old)`
       );
       return {
         status: "covered",
@@ -46,9 +56,9 @@ export async function triggerCityHydrationIfNeeded(
     }
 
     // City found but needs revalidation (SWR pattern)
-    if (existingCity && existingCity.days_since_hydration > 30) {
+    if (existingCity && daysSinceHydration !== null && daysSinceHydration > 30) {
       console.log(
-        `🔄 City "${existingCity.city_name}" needs refresh (${existingCity.days_since_hydration} days old)`
+        `🔄 City "${existingCity.city_name}" needs refresh (${daysSinceHydration} days old)`
       );
 
       // Dispatch background update
