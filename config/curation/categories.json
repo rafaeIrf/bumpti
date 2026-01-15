@@ -119,14 +119,23 @@
     },
     "boosts": {
       "internal_category": {
-        "bar": 1.5,
+        "bar": 1.6,
         "nightclub": 1.6,
-        "stadium": 2.0,
-        "university": 1.8,
-        "park": 1.4,
+        "stadium": 1.4,
+        "university": 1.4,
+        "park": 1.3,
         "museum": 1.3,
         "theatre": 1.3,
-        "beach": 1.5
+        "restaurant": 1.0,
+        "cafe": 1.0,
+        "gym": 1.0,
+        "club": 1.2,
+        "library": 1.2,
+        "shopping": 1.1,
+        "event_venue": 1.3,
+        "sports_centre": 1.1,
+        "community_centre": 1.1,
+        "language_school": 1.0
       }
     },
     "base_scoring": {
