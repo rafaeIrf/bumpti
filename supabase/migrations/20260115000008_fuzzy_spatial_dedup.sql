@@ -1,5 +1,6 @@
 -- Fuzzy Spatial Deduplication - Quality-based merge with pg_trgm similarity
 -- This replaces the simple overture_id-based deduplication with intelligent fuzzy matching
+-- NOTE: Requires immutable_unaccent() function from migration 007
 
 -- Drop existing function to allow return type change
 DROP FUNCTION IF EXISTS merge_staging_to_production(UUID);
@@ -93,6 +94,7 @@ BEGIN
   ),
   fuzzy_matches AS (
     -- Match staging with existing places using spatial + text similarity
+    -- ADAPTIVE RADIUS: 800m for large venues (parks, universities, stadiums), 50m for others
     SELECT DISTINCT ON (fc.staging_id)
       fc.staging_id,
       p.id as existing_place_id,
@@ -113,27 +115,38 @@ BEGIN
       fc.original_category,
       fc.geom_wkb_hex,
       fc.overture_raw,
-      similarity(p.name, fc.staging_name) as name_similarity,
+      similarity(immutable_unaccent(lower(p.name)), immutable_unaccent(lower(fc.staging_name))) as name_similarity,
       ST_Distance(
         ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
         fc.staging_geom::geography
-      ) as distance_meters
+      ) as distance_meters,
+      -- Calculate adaptive radius based on category
+      CASE 
+        WHEN fc.staging_category IN ('park', 'university', 'stadium', 'airport', 'zoo', 'botanical_garden', 'golf_course', 'sports_center') 
+        THEN 800.0  -- 800 meters for large venues
+        ELSE 50.0   -- 50 meters for regular places
+      END as adaptive_radius
     FROM fuzzy_candidates fc
     JOIN places p ON (
-      -- Spatial proximity filter (30 meters)
+      -- ADAPTIVE SPATIAL PROXIMITY FILTER
       ST_DWithin(
         ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
         fc.staging_geom::geography,
-        30  -- 30 meters radius
+        CASE 
+          WHEN fc.staging_category IN ('park', 'university', 'stadium', 'airport', 'zoo', 'botanical_garden', 'golf_course', 'sports_center') 
+          THEN 800.0  -- 800 meters for large venues
+          ELSE 50.0   -- 50 meters for regular places
+        END
       )
-      -- Text similarity filter (70% match)
-      AND similarity(p.name, fc.staging_name) > 0.7
+      -- Text similarity filter (70% match) - case and accent insensitive
+      AND similarity(immutable_unaccent(lower(p.name)), immutable_unaccent(lower(fc.staging_name))) > 0.7
       -- Category compatibility (same category or NULL)
       AND (p.category = fc.staging_category OR p.category IS NULL OR fc.staging_category IS NULL)
       -- Only active places
       AND p.active = true
     )
-    ORDER BY fc.staging_id, similarity(p.name, fc.staging_name) DESC, distance_meters ASC
+    -- ORDER BY: prioritize higher name similarity, then closer distance
+    ORDER BY fc.staging_id, similarity(immutable_unaccent(lower(p.name)), immutable_unaccent(lower(fc.staging_name))) DESC, distance_meters ASC
   ),
   quality_winners AS (
     -- Update existing if staging has BETTER quality
@@ -289,4 +302,4 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION merge_staging_to_production(UUID) TO authenticated, service_role;
 
 -- Add comment
-COMMENT ON FUNCTION merge_staging_to_production IS 'Fuzzy spatial deduplication with quality-based conflict resolution. Uses pg_trgm similarity (>0.7) and ST_DWithin (30m) to identify duplicates. Keeps highest structural_score record.';
+COMMENT ON FUNCTION merge_staging_to_production IS 'Fuzzy spatial deduplication with quality-based conflict resolution and adaptive radius. Uses pg_trgm similarity (>0.7) and adaptive ST_DWithin (800m for parks/universities/stadiums, 50m for others). Keeps highest structural_score record.';
