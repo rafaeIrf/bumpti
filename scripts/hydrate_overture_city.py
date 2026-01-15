@@ -9,6 +9,7 @@ import os
 import json
 import duckdb
 import psycopg2
+import time  # For sleep between batches
 from psycopg2.extras import execute_values
 import requests
 
