@@ -512,7 +512,7 @@ def main():
         total_inserted = 0
         total_updated = 0
         
-for batch_num in range(num_batches):
+        for batch_num in range(num_batches):
             start_idx = batch_num * BATCH_SIZE
             end_idx = min(start_idx + BATCH_SIZE, total_pois)
             batch = all_pois[start_idx:end_idx]
