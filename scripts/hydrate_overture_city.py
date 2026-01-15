@@ -22,7 +22,7 @@ from hydration.ai_matcher import (
     save_hotlist_to_cache,
     ai_match_iconic_venues
 )
-from hydration.database import insert_city_to_registry, fetch_city_from_registry
+from hydration.database import upsert_city_to_registry, fetch_city_from_registry
 
 
 def load_curation_config():
@@ -249,33 +249,45 @@ def discover_city_from_overture(lat: float, lng: float):
     }
 
 
-def insert_city_to_registry(city_data: dict, pg_conn):
+def upsert_city_to_registry(city_data: dict, pg_conn):
     """
-    Insert discovered city into cities_registry.
+    Upsert discovered city into cities_registry.
+    If city exists (e.g., status='failed'), update it and reset to 'processing'.
     Returns city UUID.
     """
-    print(f"💾 Inserting city '{city_data['city_name']}' into registry")
+    print(f"💾 Upserting city '{city_data['city_name']}' into registry")
     
     pg_cur = pg_conn.cursor()
     
-    insert_sql = """
-    INSERT INTO cities_registry (city_name, country_code, geom, bbox, status)
-    VALUES (%s, %s, ST_Multi(ST_GeomFromWKB(%s, 4326)), %s, 'processing')
+    upsert_sql = """
+    INSERT INTO cities_registry (city_name, country_code, geom, bbox, status, lat, lng)
+    VALUES (%s, %s, ST_Multi(ST_GeomFromWKB(%s, 4326)), %s, 'processing', %s, %s)
+    ON CONFLICT (city_name, country_code) 
+    DO UPDATE SET
+        geom = EXCLUDED.geom,
+        bbox = EXCLUDED.bbox,
+        lat = EXCLUDED.lat,
+        lng = EXCLUDED.lng,
+        status = 'processing',
+        error_message = NULL,
+        updated_at = NOW()
     RETURNING id
     """
     
-    pg_cur.execute(insert_sql, (
+    pg_cur.execute(upsert_sql, (
         city_data['city_name'],
         city_data['country_code'],
         city_data['geom_wkb'],
-        city_data['bbox']  # [xmin, ymin, xmax, ymax]
+        city_data['bbox'],  # [xmin, ymin, xmax, ymax]
+        city_data.get('lat'),
+        city_data.get('lng')
     ))
     
     city_id = pg_cur.fetchone()[0]
     pg_conn.commit()
     pg_cur.close()
     
-    print(f"✅ City inserted with ID: {city_id}")
+    print(f"✅ City upserted with ID: {city_id}")
     return city_id
 
 
@@ -364,7 +376,7 @@ def main():
             # Discovery mode: find city from coordinates
             print(f"\n🆕 DISCOVERY MODE: Finding city at ({lat}, {lng})")
             city_data = discover_city_from_overture(lat, lng)
-            city_id = insert_city_to_registry(city_data, pg_conn)
+            city_id = upsert_city_to_registry(city_data, pg_conn)
         
         city_name = city_data['city_name']
         bbox = city_data['bbox']
