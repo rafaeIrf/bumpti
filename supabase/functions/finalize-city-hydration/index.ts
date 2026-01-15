@@ -12,6 +12,15 @@ Deno.serve(async (req) => {
     const githubToken = req.headers.get("x-github-token");
     const expectedToken = Deno.env.get("GITHUB_HYDRATION_TOKEN");
 
+    // Debug logging
+    console.log("🔐 Token validation:", {
+      hasReceivedToken: !!githubToken,
+      hasExpectedToken: !!expectedToken,
+      receivedLength: githubToken?.length,
+      expectedLength: expectedToken?.length,
+      tokensMatch: githubToken === expectedToken
+    });
+
     if (!githubToken || githubToken !== expectedToken) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
