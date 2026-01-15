@@ -39,7 +39,7 @@ def generate_hotlist(city_name):
     - Retorne estritamente o JSON categorizado: {{ "bar": [...], "nightclub": [...], ... }}"""
 
         response = client.chat.completions.create(
-            model="GPT-4o-mini ",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are an expert local guide who ONLY provides real, verified venue names. Never invent or use generic names."},
                 {"role": "user", "content": prompt}
