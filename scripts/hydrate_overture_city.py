@@ -299,6 +299,23 @@ def fetch_city_from_registry(city_id: str, pg_conn):
 
 
 def main():
+    """Main entry point for hydration script.
+    
+    Supports two modes:
+    1. Direct mode: python hydrate_overture_city.py [city_id] [lat] [lng] [is_update]
+    2. Worker mode: python hydrate_overture_city.py --worker
+    """
+    # Check for worker mode flag
+    if len(sys.argv) > 1 and sys.argv[1] == '--worker':
+        # Worker queue mode - process multiple cities
+        from hydration.queue import worker_main_loop
+        print("🔧 Starting in WORKER MODE - processing queue")
+        worker_main_loop(max_runtime_seconds=1500)  # 25 minutes
+        return
+    
+    # Direct mode - process single city
+    print("🔧 Starting in DIRECT MODE - single city processing")
+    
     # Parse CLI args: city_id, lat, lng, is_update
     city_id_arg = sys.argv[1] if len(sys.argv) > 1 else None
     lat = float(sys.argv[2]) if len(sys.argv) > 2 else None
@@ -308,6 +325,7 @@ def main():
     # Validate inputs
     if city_id_arg == 'null' or city_id_arg == '':
         city_id_arg = None
+
     
     if not lat or not lng:
         raise Exception("Latitude and longitude are required")
