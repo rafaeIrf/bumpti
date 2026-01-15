@@ -72,8 +72,12 @@ def validate_category_name(name, category, original_category, config):
     return True
 
 
-def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None):
-    """Calculate scores based on social signals AND address completeness."""
+def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None, 
+                      source_magnitude=1, has_brand=False):
+    """Calculate relevance score based on data magnitude and institutional authority.
+    
+    Returns: (relevance_score, bonus_flags) or None if rejected
+    """
     has_social = False
     if socials:
         for social in socials:
@@ -89,33 +93,55 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     if not has_online and confidence < 0.9:
         return None
     
-    base_score = 5
-    relevance = 0
+    # === RELEVANCE SCORE (all signals combined) ===
+    relevance = 5  # Base score
     
-    # Social/website scoring
+    # Bonus tracking for diagnostics
+    bonus_flags = {
+        'magnitude_bonus': 0,
+        'brand_bonus': False,
+        'dual_presence_bonus': False
+    }
+    
+    # SOCIAL SIGNALS
     if has_website:
-        base_score += 10
         relevance += 10
     
     if has_social:
-        base_score += 15
-        relevance += 20
+        relevance += 15
     
     if confidence >= 0.9:
-        base_score += 5
         relevance += 5
     
-    # ADDRESS COMPLETENESS SCORING (Quality Weights)
+    # ADDRESS COMPLETENESS
     if house_number and str(house_number).strip():
-        base_score += 5  # +5 for house number
+        relevance += 5
     
     if neighborhood and str(neighborhood).strip():
-        base_score += 3  # +3 for neighborhood
+        relevance += 3
     
     if street and str(street).strip():
-        base_score += 2  # +2 for street
+        relevance += 2
     
-    return (base_score, relevance)
+    # DATA MAGNITUDE BONUS: Multiple data sources = higher consensus
+    if source_magnitude >= 3:
+        relevance += 30
+        bonus_flags['magnitude_bonus'] = 30
+    elif source_magnitude == 2:
+        relevance += 10
+        bonus_flags['magnitude_bonus'] = 10
+    
+    # INSTITUTIONAL AUTHORITY: Has brand
+    if has_brand:
+        relevance += 20
+        bonus_flags['brand_bonus'] = True
+    
+    # DUAL PRESENCE BONUS: Has BOTH website AND social media
+    if has_website and has_social:
+        relevance += 20
+        bonus_flags['dual_presence_bonus'] = True
+    
+    return (relevance, bonus_flags)
 
 
 def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternate, config):
@@ -413,12 +439,8 @@ def main():
           sources[1] AS source_raw,
           websites,
           socials,
-          (SELECT list_filter(sources, x -> x.record_id LIKE 'Q%')[1].record_id) AS wikidata_id,
-          CASE 
-            WHEN ST_Dimension(geometry) = 2 
-            THEN ST_Area(ST_Transform(geometry, 'EPSG:4326', 'EPSG:3857'))
-            ELSE 0 
-          END AS area_sqm
+          len(sources) AS source_magnitude,
+          (brand IS NOT NULL) AS has_brand
         FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
@@ -473,43 +495,41 @@ def main():
                 metrics['rejected_validation'] += 1
                 continue
             
-            # Social scoring + Address completeness (confidence=row[10], websites=row[12], socials=row[13])
-            # Address fields: street=row[4], house_number=row[5], neighborhood=row[6]
+            # Extract new fields for scoring
+            source_count = row[14] if row[14] else 1  # source_count
+            brand_name = row[15]  # brand_name
+            
+            # Social scoring + Address completeness + Authority signals
             score_result = calculate_scores(
                 row[10],  # confidence
                 row[12],  # websites
                 row[13],  # socials
-                street=row[4],  # street
-                house_number=row[5],  # house_number
-                neighborhood=row[6]  # neighborhood
+                street=row[5],  # street
+                house_number=None,  # Parsed later
+                neighborhood=row[8],  # neighborhood
+                source_magnitude=source_count,
+                has_brand=bool(brand_name)
             )
             if not score_result:
                 metrics['rejected_confidence'] += 1
                 continue
             
-            structural_score, relevance_score = score_result
+            relevance_score, bonus_flags = score_result
             
-            # Add taxonomy bonus
+            # Add taxonomy weight bonus (from config/curation/taxonomy_rules.json)
             taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
             relevance_score += taxonomy_bonus
+            if taxonomy_bonus > 0:
+                metrics['taxonomy_bonus_count'] = metrics.get('taxonomy_bonus_count', 0) + 1
             
-            # AUTHORITY BONUS: Wikidata presence (+10)
-            wikidata_id = row[14]  # wikidata_id field
-            if wikidata_id and wikidata_id.strip():
-                relevance_score += 10
-                metrics['wikidata_bonus'] = metrics.get('wikidata_bonus', 0) + 1
-                print(f"  🏛️  AUTHORITY BONUS: {sanitized_name} has Wikidata ID {wikidata_id} (+10)")
-            
-            # SCALE BONUS: Polygon area (+5/+10)
-            area_sqm = row[15] if row[15] else 0  # area_sqm field
-            if area_sqm > 50000:  # > 50,000 m² (5 hectares)
-                relevance_score += 10
-                metrics['area_large_bonus'] = metrics.get('area_large_bonus', 0) + 1
-                print(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+10)")
-            elif area_sqm > 5000:  # > 5,000 m² (0.5 hectares)
-                relevance_score += 5
-                metrics['area_small_bonus'] = metrics.get('area_small_bonus', 0) + 1
-                print(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+5)")
+            # Track bonuses for diagnostics
+            metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count
+            if bonus_flags['brand_bonus']:
+                metrics['brand_bonus_count'] = metrics.get('brand_bonus_count', 0) + 1
+            if bonus_flags['dual_presence_bonus']:
+                metrics['dual_presence_count'] = metrics.get('dual_presence_count', 0) + 1
+            if bonus_flags['magnitude_bonus'] > 0:
+                metrics['magnitude_bonus_count'] = metrics.get('magnitude_bonus_count', 0) + 1
             
             geom_wkb_hex = row[4].hex()
             
@@ -656,20 +676,19 @@ def main():
         
         print(f"✅ Sanitization: {metrics['final_sent_to_staging']} POIs passed filters")
         
-        # Show bonus metrics
-        wikidata_count = metrics.get('wikidata_bonus', 0)
-        area_large_count = metrics.get('area_large_bonus', 0)
-        area_small_count = metrics.get('area_small_bonus', 0)
-        if wikidata_count or area_large_count or area_small_count:
-            print(f"📊 Relevance Bonuses Applied:")
-            if wikidata_count:
-                print(f"   🏛️  Wikidata Authority: {wikidata_count} POIs (+10 each)")
-            if area_large_count:
-                print(f"   📐 Large Area (>50k m²): {area_large_count} POIs (+10 each)")
-            if area_small_count:
-                print(f"   📐 Medium Area (>5k m²): {area_small_count} POIs (+5 each)")
-        else:
-            print(f"📊 No authority/scale bonuses found (all POIs are points without Wikidata)")
+        # Diagnostic logs for data magnitude
+        total_pois = metrics['final_sent_to_staging']
+        avg_sources = metrics.get('total_source_count', 0) / total_pois if total_pois > 0 else 0
+        brand_count = metrics.get('brand_bonus_count', 0)
+        dual_count = metrics.get('dual_presence_count', 0)
+        magnitude_count = metrics.get('magnitude_bonus_count', 0)
+        taxonomy_count = metrics.get('taxonomy_bonus_count', 0)
+        
+        print(f"📊 Relevance Bonuses Applied:")
+        print(f"   📚 Avg Sources: {avg_sources:.2f} | Multi-Source: {magnitude_count} POIs (+10/+30)")
+        print(f"   🏷️  Brand Authority: {brand_count} POIs (+20)")
+        print(f"   🌐 Dual Presence (web+social): {dual_count} POIs (+20)")
+        print(f"   🏷️  Taxonomy Weight: {taxonomy_count} POIs (configurable)")
         
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
