@@ -184,7 +184,10 @@ BEGIN
       NOW()
     FROM quality_winners qw
     JOIN fuzzy_matches fm ON fm.staging_id = qw.staging_id
-    ON CONFLICT (place_id, provider) DO NOTHING  -- Allow multiple overture IDs per place
+    ON CONFLICT (provider, external_id) DO UPDATE SET
+      place_id = EXCLUDED.place_id,  -- Allow re-linking to better place
+      raw = EXCLUDED.raw,
+      created_at = NOW()
     RETURNING *
   ),
   ignored_losers AS (
@@ -199,7 +202,10 @@ BEGIN
     FROM fuzzy_matches fm
     WHERE fm.staging_score <= fm.existing_score
       AND fm.staging_id NOT IN (SELECT staging_id FROM quality_winners)
-    ON CONFLICT (place_id, provider) DO NOTHING
+    ON CONFLICT (provider, external_id) DO UPDATE SET
+      place_id = EXCLUDED.place_id,
+      raw = EXCLUDED.raw,
+      created_at = NOW()
     RETURNING *
   )
   SELECT 
