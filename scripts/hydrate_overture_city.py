@@ -600,7 +600,9 @@ def main():
                     
                     if similar_group:
                         # Keep highest structural_score (if tie, just pick first)
-                        best = max(similar_group, key=lambda x: x['structural_score'])
+                        # Sort by score descending, then take first
+                        similar_group.sort(key=lambda x: x['structural_score'], reverse=True)
+                        best = similar_group[0]
                         print(f"     ✅ Winner: {best['name']} (score={best['structural_score']})")
                         deduped_large_venues.append(best)
             
