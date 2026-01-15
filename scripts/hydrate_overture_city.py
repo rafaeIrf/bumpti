@@ -175,6 +175,44 @@ def finalize_callback(city_id, status, error_msg=None, stats=None):
         print(f"⚠️ Callback failed: {e}", file=sys.stderr)
 
 
+def get_bbox_tiles(bbox, grid_size=4):
+    """Subdivide a bounding box into a grid of tiles for chunk processing.
+    
+    Args:
+        bbox: [xmin, ymin, xmax, ymax] - City bounding box
+        grid_size: Number of divisions per axis (default 4x4 = 16 tiles)
+    
+    Returns:
+        List of (tile_num, tile_bbox) tuples
+        
+    Example:
+        bbox = [-46.826, -23.740, -46.365, -23.357]  # São Paulo
+        tiles = get_bbox_tiles(bbox, 4)
+        # Returns 16 tiles numbered 1-16
+    """
+    xmin, ymin, xmax, ymax = bbox
+    
+    # Calculate step size for each dimension
+    x_step = (xmax - xmin) / grid_size
+    y_step = (ymax - ymin) / grid_size
+    
+    tiles = []
+    tile_num = 1
+    
+    for i in range(grid_size):
+        for j in range(grid_size):
+            # Calculate tile boundaries
+            tile_xmin = xmin + (j * x_step)
+            tile_xmax = xmin + ((j + 1) * x_step)
+            tile_ymin = ymin + (i * y_step)
+            tile_ymax = ymin + ((i + 1) * y_step)
+            
+            tiles.append((tile_num, [tile_xmin, tile_ymin, tile_xmax, tile_ymax]))
+            tile_num += 1
+    
+    return tiles
+
+
 def discover_city_from_overture(lat: float, lng: float):
     """
     Discover city from Overture Maps theme=divisions dataset.
