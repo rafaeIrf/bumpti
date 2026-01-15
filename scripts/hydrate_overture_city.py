@@ -200,33 +200,42 @@ def finalize_callback(city_id, status, error_msg=None, stats=None):
 
 def discover_city_from_overture(lat: float, lng: float):
     """
-    Discover city from Overture Maps theme=admins dataset.
-    Uses admin_level IN (8, 7, 9) with DESC priority for most specific division.
+    Discover city from Overture Maps theme=divisions dataset.
+    Uses JOIN between division_area (geometries) and division (metadata).
+    Filters by subtype='locality' for city-level boundaries.
     """
-    print(f"🔍 Discovering city from Overture Admins for point: ({lat}, {lng})")
+    print(f"🔍 Discovering city from Overture Divisions for point: ({lat}, {lng})")
+    print("✅ Using Overture Divisions theme for city discovery")
     
     con = duckdb.connect()
     con.execute("INSTALL spatial; LOAD spatial;")
     con.execute("INSTALL httpfs; LOAD httpfs;")
     con.execute("SET s3_region='us-west-2';")
     
-    # Use explicit latest stable version (2025-12-17.0)
-    s3_path = 's3://overturemaps-us-west-2/release/2025-12-17.0/theme=admins/type=administrative_boundary/*'
-    print(f"📂 Querying S3: {s3_path}")
+    # Use divisions theme (replaces deprecated admins)
+    # Note: If 2025-12-17.0 gives "No files found", fallback to 2024-11-13.0
+    release = '2025-12-17.0'
+    area_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division_area/*'
+    division_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division/*'
+    
+    print(f"📂 Querying division_area: {area_path}")
+    print(f"📂 Querying division: {division_path}")
     
     query = f"""
     SELECT 
-      id AS admin_id,
-      JSON_EXTRACT_STRING(names, 'primary') AS city_name,
-      bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax,
-      ST_AsWKB(geometry) AS geom_wkb,
-      country AS country_code,
-      region AS state,
-      admin_level
-    FROM read_parquet('{s3_path}', filename=true, hive_partitioning=1)
-    WHERE admin_level IN (8, 7, 9)
-      AND ST_Within(ST_Point({lng}, {lat}), geometry)
-    ORDER BY admin_level DESC
+      area.id AS area_id,
+      area.division_id,
+      JSON_EXTRACT_STRING(div.names, '$.primary') AS city_name,
+      div.country AS country_code,
+      div.region AS state,
+      area.bbox.xmin, area.bbox.xmax, area.bbox.ymin, area.bbox.ymax,
+      ST_AsWKB(area.geometry) AS geom_wkb,
+      div.subtype
+    FROM read_parquet('{area_path}', filename=true, hive_partitioning=1) AS area
+    JOIN read_parquet('{division_path}', filename=true, hive_partitioning=1) AS div
+      ON area.division_id = div.id
+    WHERE div.subtype = 'locality'
+      AND ST_Within(ST_Point({lng}, {lat}), area.geometry)
     LIMIT 1
     """
     
@@ -234,17 +243,17 @@ def discover_city_from_overture(lat: float, lng: float):
     con.close()
     
     if not result:
-        raise Exception(f"No administrative boundary found for coordinates ({lat}, {lng})")
+        raise Exception(f"No locality division found for coordinates ({lat}, {lng})")
     
-    print(f"✅ Found city: {result[1]} (admin_level={result[8]})")
+    print(f"✅ Found city: {result[2]} (subtype={result[10]})")
     
     return {
-        'admin_id': result[0],
-        'city_name': result[1],
-        'bbox': [result[2], result[4], result[3], result[5]],  # [xmin, ymin, xmax, ymax]
-        'geom_wkb': result[6],
-        'country_code': result[7],
-        'state': result[8]
+        'division_id': result[1],
+        'city_name': result[2],
+        'bbox': [result[5], result[7], result[6], result[8]],  # [xmin, ymin, xmax, ymax]
+        'geom_wkb': result[9],
+        'country_code': result[3],
+        'state': result[4]
     }
 
 
