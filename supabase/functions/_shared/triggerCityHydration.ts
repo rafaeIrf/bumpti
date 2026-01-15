@@ -1,7 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 // SWR revalidation period - cities older than this trigger background refresh
-const REVALIDATION_DAYS = 30;
+const REVALIDATION_DAYS = 60;
 
 /**
  * Trigger city hydration if needed (Overture-Native version)
