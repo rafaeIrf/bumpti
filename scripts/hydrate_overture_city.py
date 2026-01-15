@@ -249,8 +249,8 @@ def main():
           socials
         FROM read_parquet('s3://overturemaps-us-west-2/release/*/theme=places/**/*.parquet')
         WHERE 
-          bbox.minX >= {bbox[0]} AND bbox.maxX <= {bbox[2]}
-          AND bbox.minY >= {bbox[1]} AND bbox.maxY <= {bbox[3]}
+          bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
+          AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
           AND confidence >= 0.6
           AND categories.primary IS NOT NULL
           AND NOT list_has_any(
