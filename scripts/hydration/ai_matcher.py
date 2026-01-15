@@ -21,54 +21,31 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um guia local expert em {city_name}. Sua tarefa é listar os estabelecimentos mais FAMOSOS, BADALADOS e ICÔNICOS.
+        prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
+    Sua missão é listar EXATAMENTE 120 locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
+    
+    DISTRIBUIÇÃO OBRIGATÓRIA (Total 120):
+    - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
+    - nightclub: 20 locais (As baladas e casas noturnas mais icônicas)
+    - restaurant: 30 locais (Os maiores, mais populares e com alta rotatividade)
+    - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
+    - stadium: 10 locais (Grandes arenas e estádios principais)
+    - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
 
-REGRAS DE OURO (OBRIGATÓRIAS):
-❌ PROIBIDO inventar nomes ou usar nomes genéricos ("Bar do Zé", "Academia Fit", "Club X", "Restaurante Popular", etc.)
-❌ Se você não souber lugares REAIS e FAMOSOS, retorne APENAS os que você tem certeza absoluta que existem.
-✅ QUALIDADE > QUANTIDADE. Prefiro 50 lugares REAIS do que 200 inventados.
-✅ Foque em nomes que teriam uma conta grande no Instagram ou Google Maps com muitas avaliações.
-✅ Use o NOME OFICIAL completo do estabelecimento.
-
-EXEMPLOS DE NOMES REAIS (Curitiba):
-- Nightlife: "Taj Pharmacy", "+55", "Wit Bar", "Shed", "James Bar", "Hottel 418", "Sheridan's Irish Pub"
-- Gastronomy: "Madalosso", "Madero Prime", "Terrazza 40", "Bar do Alemão", "Coco Bambu", "Durski"
-- Parks: "Parque Barigui", "Bosque Alemão", "Jardim Botânico", "Parque TânguaEstadiums: "Çoço Couto Pereira", "Arena da Baixada", "Estádio Durival Britto"
-
-CATEGORIAS (retorne APENAS os que você conhece):
-- bar: bares famosos e badalados
-- nightclub: baladas e casas noturnas icônicas
-- park: parques conhecidos e frequentados
-- stadium: estádios de futebol principais
-- university: universidades reconhecidas
-- gym: academias de grande porte ou franquias conhecidas
-- club: clubes sociais tradicionais
-- restaurant: restaurantes famosos e renomados
-- shopping: shoppings principais
-
-Retorne APENAS um JSON:
-{{
-  "bar": ["Nome Real 1", "Nome Real 2", ...],
-  "nightclub": [...],
-  "park": [...],
-  "stadium": [...],
-  "university": [...],
-  "gym": [...],
-  "club": [...],
-  "restaurant": [...],
-  "shopping": [...]
-}}
-
-LEMBRETE FINAL: Se tiver dúvida sobre um nome, NÃO INCLUA. Só lugares que realmente existem e são famosos."""
+    REGRAS RÍGIDAS:
+    - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
+    - Use nomes OFICIAIS completos.
+    - Não invente nomes genéricos. Qualidade acima de tudo.
+    - Retorne estritamente o JSON categorizado: {{ "bar": [...], "nightclub": [...], ... }}"""
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="GPT-4o-mini ",
             messages=[
                 {"role": "system", "content": "You are an expert local guide who ONLY provides real, verified venue names. Never invent or use generic names."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.5
+            temperature=0.2
         )
         
         result = json.loads(response.choices[0].message.content)
