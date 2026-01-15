@@ -333,3 +333,33 @@ export async function saveSocialReview(payload: {
 
   return data;
 }
+
+/**
+ * Trigger proactive city hydration for given coordinates
+ * Used during onboarding to pre-populate user's city
+ */
+export async function triggerCityHydration(
+  latitude: number,
+  longitude: number
+): Promise<{ status: string; cityName?: string; countryCode?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      status: string;
+      cityName?: string;
+      countryCode?: string;
+    }>("trigger-city-hydration", {
+      body: { latitude, longitude },
+    });
+
+    if (error) {
+      logger.warn("City hydration trigger failed:", error);
+      return { status: "error" };
+    }
+
+    logger.log("✅ Proactive city hydration:", data);
+    return data || { status: "unknown" };
+  } catch (err) {
+    logger.warn("City hydration error (non-critical):", err);
+    return { status: "error" };
+  }
+}
