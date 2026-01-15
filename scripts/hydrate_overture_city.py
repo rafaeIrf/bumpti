@@ -511,7 +511,7 @@ def main():
                 row[9],  # state (region)
                 row[7],  # postal_code
                 row[6],  # country_code
-                structural_score,
+                relevance_score,  # Use relevance_score instead of structural_score
                 row[10],  # confidence
                 overture_cat,
                 row[0],  # overture_id
@@ -546,7 +546,7 @@ def main():
                     'state': row[7],
                     'postal_code': row[8],
                     'country_code': row[9],
-                    'structural_score': row[10],
+                    'relevance_score': row[10],  # Use relevance_score
                     'confidence': row[11],
                     'original_category': row[12],
                     'overture_id': row[13],
@@ -594,8 +594,8 @@ def main():
                 if len(cluster) == 1:
                     deduped_large_venues.append(cluster[0])
                 else:
-                    # Keep highest structural_score (if tie, just pick first)
-                    cluster.sort(key=lambda x: x['structural_score'], reverse=True)
+                    # Keep highest relevance_score (if tie, just pick first)
+                    cluster.sort(key=lambda x: x['relevance_score'], reverse=True)
                     best = cluster[0]
                     deduped_large_venues.append(best)
             
@@ -616,7 +616,7 @@ def main():
                     poi['state'],
                     poi['postal_code'],
                     poi['country_code'],
-                    poi['structural_score'],
+                    poi['relevance_score'],  # Use relevance_score
                     poi['confidence'],
                     poi['original_category'],
                     poi['overture_id'],
