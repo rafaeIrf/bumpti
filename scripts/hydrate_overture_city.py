@@ -198,18 +198,154 @@ def finalize_callback(city_id, status, error_msg=None, stats=None):
         print(f"⚠️ Callback failed: {e}", file=sys.stderr)
 
 
+def discover_city_from_overture(lat: float, lng: float):
+    """
+    Discover city from Overture Maps theme=admins dataset.
+    Uses admin_level IN (8, 7, 9) with DESC priority for most specific division.
+    """
+    print(f"🔍 Discovering city from Overture Admins for point: ({lat}, {lng})")
+    
+    con = duckdb.connect()
+    con.execute("INSTALL spatial; LOAD spatial;")
+    con.execute("INSTALL httpfs; LOAD httpfs;")
+    con.execute("SET s3_region='us-west-2';")
+    
+    query = f"""
+    SELECT 
+      id AS admin_id,
+      JSON_EXTRACT_STRING(names, 'primary') AS city_name,
+      bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax,
+      ST_AsWKB(geometry) AS geom_wkb,
+      country AS country_code,
+      region AS state,
+      admin_level
+    FROM read_parquet('s3://overturemaps-us-west-2/release/*/theme=admins/**/*.parquet')
+    WHERE admin_level IN (8, 7, 9)
+      AND ST_Within(ST_Point({lng}, {lat}), geometry)
+    ORDER BY admin_level DESC
+    LIMIT 1
+    """
+    
+    result = con.execute(query).fetchone()
+    con.close()
+    
+    if not result:
+        raise Exception(f"No administrative boundary found for coordinates ({lat}, {lng})")
+    
+    print(f"✅ Found city: {result[1]} (admin_level={result[8]})")
+    
+    return {
+        'admin_id': result[0],
+        'city_name': result[1],
+        'bbox': [result[2], result[4], result[3], result[5]],  # [xmin, ymin, xmax, ymax]
+        'geom_wkb': result[6],
+        'country_code': result[7],
+        'state': result[8]
+    }
+
+
+def insert_city_to_registry(city_data: dict, pg_conn):
+    """
+    Insert discovered city into cities_registry.
+    Returns city UUID.
+    """
+    print(f"💾 Inserting city '{city_data['city_name']}' into registry")
+    
+    pg_cur = pg_conn.cursor()
+    
+    insert_sql = """
+    INSERT INTO cities_registry (city_name, country_code, geom, hydrated_at)
+    VALUES (%s, %s, ST_GeomFromWKB(%s, 4326), NOW())
+    RETURNING id
+    """
+    
+    pg_cur.execute(insert_sql, (
+        city_data['city_name'],
+        city_data['country_code'],
+        city_data['geom_wkb']
+    ))
+    
+    city_id = pg_cur.fetchone()[0]
+    pg_conn.commit()
+    pg_cur.close()
+    
+    print(f"✅ City inserted with ID: {city_id}")
+    return city_id
+
+
+def fetch_city_from_registry(city_id: str, pg_conn):
+    """
+    Fetch existing city data from cities_registry.
+    """
+    print(f"🔍 Fetching city {city_id} from registry")
+    
+    pg_cur = pg_conn.cursor()
+    
+    query = """
+    SELECT 
+      city_name,
+      country_code,
+      ST_XMin(geom) as xmin,
+      ST_YMin(geom) as ymin,
+      ST_XMax(geom) as xmax,
+      ST_YMax(geom) as ymax
+    FROM cities_registry
+    WHERE id = %s
+    """
+    
+    pg_cur.execute(query, (city_id,))
+    result = pg_cur.fetchone()
+    pg_cur.close()
+    
+    if not result:
+        raise Exception(f"City {city_id} not found in registry")
+    
+    return {
+        'city_name': result[0],
+        'country_code': result[1],
+        'bbox': [result[2], result[3], result[4], result[5]]
+    }
+
+
 def main():
-    city_id = sys.argv[1]
-    city_name = sys.argv[2]
-    bbox_json = sys.argv[3]
-    country_code = sys.argv[4]
-    is_update = sys.argv[5].lower() == 'true'
+    # Parse CLI args: city_id, lat, lng, is_update
+    city_id_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    lat = float(sys.argv[2]) if len(sys.argv) > 2 else None
+    lng = float(sys.argv[3]) if len(sys.argv) > 3 else None
+    is_update = sys.argv[4].lower() == 'true' if len(sys.argv) > 4 else False
+    
+    # Validate inputs
+    if city_id_arg == 'null' or city_id_arg == '':
+        city_id_arg = None
+    
+    if not lat or not lng:
+        raise Exception("Latitude and longitude are required")
     
     try:
-        bbox = json.loads(bbox_json)
-        
-        # Load curation configurations
         config = load_curation_config()
+        
+        # PostgreSQL connection
+        pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
+        
+        # Determine mode: discovery or update
+        if city_id_arg:
+            # Update mode: city already exists in registry
+            print(f"\n🔄 UPDATE MODE: Refreshing city {city_id_arg}")
+            city_id = city_id_arg
+            city_data = fetch_city_from_registry(city_id, pg_conn)
+        else:
+            # Discovery mode: find city from coordinates
+            print(f"\n🆕 DISCOVERY MODE: Finding city at ({lat}, {lng})")
+            city_data = discover_city_from_overture(lat, lng)
+            city_id = insert_city_to_registry(city_data, pg_conn)
+        
+        city_name = city_data['city_name']
+        bbox = city_data['bbox']
+        
+        print(f"\n📍 Processing: {city_name}")
+        print(f"📦 BBox: {bbox}")
+        
+        # Load POIs from Overture Maps via DuckDB
         category_map = config['categories']['mapping']
         category_blacklist = config['categories']['blacklist']
         

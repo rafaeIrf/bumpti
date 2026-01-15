@@ -32,9 +32,8 @@ jobs:
         run: |
           python scripts/hydrate_overture_city.py \
             "${{ github.event.client_payload.city_id }}" \
-            "${{ github.event.client_payload.city_name }}" \
-            '${{ toJson(github.event.client_payload.bbox) }}' \
-            "${{ github.event.client_payload.country_code }}" \
+            "${{ github.event.client_payload.lat }}" \
+            "${{ github.event.client_payload.lng }}" \
             "${{ github.event.client_payload.is_update }}"
 
       - name: Notify completion (always runs)
