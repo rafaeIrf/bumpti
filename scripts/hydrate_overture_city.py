@@ -210,8 +210,8 @@ def discover_city_from_overture(lat: float, lng: float):
     con.execute("INSTALL httpfs; LOAD httpfs;")
     con.execute("SET s3_region='us-west-2';")
     
-    # Use specific type=administrative_boundary path per Overture docs
-    s3_path = 's3://overturemaps-us-west-2/release/2024-11-13.0/theme=admins/type=administrative_boundary/*'
+    # Use explicit latest stable version (2025-12-17.0)
+    s3_path = 's3://overturemaps-us-west-2/release/2025-12-17.0/theme=admins/type=administrative_boundary/*'
     print(f"📂 Querying S3: {s3_path}")
     
     query = f"""
@@ -392,7 +392,7 @@ def main():
           sources[1] AS source_raw,
           websites,
           socials
-        FROM read_parquet('s3://overturemaps-us-west-2/release/2024-11-13.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
+        FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
