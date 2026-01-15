@@ -87,23 +87,38 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Atue como um guia local especialista em {city_name}. Liste os 200 locais mais icônicos, populares e frequentados para encontrar pessoas, organizados por categoria.
+        prompt = f"""Você é um especialista em geolocalização e guia local de {city_name}.
 
-Retorne APENAS um JSON válido no formato:
+TAREFA: Gere uma lista de EXATAMENTE 200 estabelecimentos reais e populares.
+
+REGRAS OBRIGATÓRIAS:
+1. Se os locais mais famosos acabarem, complete com locais populares de bairro (alto movimento de jovens e público social).
+2. Use NOME COMPLETO e OFICIAL (ex: "Bar do Alemão", não "Alemão").
+3. APENAS locais que existem ATUALMENTE (não fechados ou fictícios).
+
+DISTRIBUIÇÃO OBRIGATÓRIA (total = 200):
+- bar: 40 locais
+- nightclub: 20 locais  
+- park: 20 locais
+- stadium: 10 locais
+- university: 10 locais
+- gym: 20 locais
+- club: 20 locais
+- restaurant: 40 locais
+- shopping: 20 locais
+
+Retorne estritamente um JSON:
 {{
-  "bar": ["Nome do Bar 1", "Nome do Bar 2", ...],
-  "nightclub": ["Nome da Balada 1", "Nome da Balada 2", ...],
-  "park": ["Nome do Parque 1", "Nome do Parque 2", ...],
-  "stadium": ["Nome do Estádio 1", ...],
-  "university": ["Nome da Universidade 1", ...],
-  "gym": ["Nome da Academia 1", ...],
-  "club": ["Nome do Clube 1", ...],
-  "restaurant": ["Nome do Restaurante 1", ...],
-  "shopping": ["Nome do Shopping 1", ...],
-  "event_venue": ["Nome do Local de Evento 1", ...]
-}}
-
-Use os nomes reais e específicos dos locais mais conhecidos de {city_name}."""
+  "bar": ["nome1", "nome2", ...],
+  "nightclub": [...],
+  "park": [...],
+  "stadium": [...],
+  "university": [...],
+  "gym": [...],
+  "club": [...],
+  "restaurant": [...],
+  "shopping": [...]
+}}"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -112,7 +127,7 @@ Use os nomes reais e específicos dos locais mais conhecidos de {city_name}."""
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.7
+            temperature=0.3
         )
         
         result = json.loads(response.choices[0].message.content)
@@ -128,7 +143,50 @@ Use os nomes reais e específicos dos locais mais conhecidos de {city_name}."""
         return {}
 
 
-def fuzzy_match_iconic(name, category, hotlist, threshold=0.85):
+
+def get_cached_hotlist(city_id, pg_conn):
+    """Retrieve cached hotlist from database if available and recent."""
+    try:
+        cur = pg_conn.cursor()
+        cur.execute("""
+            SELECT hotlist, generated_at, venue_count
+            FROM ai_city_hotlist
+            WHERE city_id = %s AND generated_at > NOW() - INTERVAL '30 days'
+        """, (city_id,))
+        row = cur.fetchone()
+        cur.close()
+        if row:
+            from datetime import datetime, timezone
+            hotlist, generated_at, venue_count = row
+            age_days = (datetime.now(timezone.utc) - generated_at).days
+            print(f"📦 Using cached hotlist ({venue_count} venues, {age_days} days old)")
+            return hotlist
+        return None
+    except Exception as e:
+        print(f"⚠️  Cache retrieval error: {str(e)}")
+        return None
+
+
+def save_hotlist_to_cache(city_id, hotlist, pg_conn):
+    """Save hotlist to database cache."""
+    try:
+        cur = pg_conn.cursor()
+        venue_count = sum(len(venues) for venues in hotlist.values())
+        cur.execute("""
+            INSERT INTO ai_city_hotlist (city_id, hotlist, venue_count, model_version, temperature)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (city_id) 
+            DO UPDATE SET hotlist = EXCLUDED.hotlist, venue_count = EXCLUDED.venue_count,
+                generated_at = NOW(), updated_at = NOW()
+        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4o-mini', 0.3))
+        pg_conn.commit()
+        cur.close()
+        print(f"💾 Hotlist cached to database ({venue_count} venues)")
+    except Exception as e:
+        print(f"⚠️  Cache save error: {str(e)}")
+        pg_conn.rollback()
+
+def fuzzy_match_iconic(name, category, hotlist, threshold=0.92):
     """Check if venue name matches any iconic venue in hotlist for the same category.
     
     Args:
@@ -156,14 +214,23 @@ def fuzzy_match_iconic(name, category, hotlist, threshold=0.85):
     for iconic_name in category_venues:
         iconic_normalized = iconic_name.lower().strip()
         
-        # Use token_set_ratio for better handling of variations
-        score = fuzz.token_set_ratio(name_normalized, iconic_normalized) / 100.0
+        # Short name filter: require exact match for names < 8 characters
+        is_short_name = len(name_normalized) < 8 or len(iconic_normalized) < 8
         
-        if score > best_score:
+        if is_short_name:
+            # Use exact ratio for short names to avoid false positives
+            score = fuzz.ratio(name_normalized, iconic_normalized) / 100.0
+            required_threshold = 1.0  # Must be exact match
+        else:
+            # Use token_set_ratio for longer names (better for variations)
+            score = fuzz.token_set_ratio(name_normalized, iconic_normalized) / 100.0
+            required_threshold = threshold
+        
+        if score >= required_threshold and score > best_score:
             best_score = score
             best_match = iconic_name
     
-    is_match = best_score >= threshold
+    is_match = best_score >= threshold if len(name) >= 8 else best_score == 1.0
     return (is_match, best_match, best_score)
 
 
@@ -605,12 +672,19 @@ def main():
         
         print(f"📊 DuckDB query found {metrics['total_found']} POIs in BBox")
         
-        # Generate AI hotlist of iconic venues (one call per city)
-        hotlist = generate_hotlist(city_name)
-        iconic_matches = []
         # PostgreSQL: Connect via Pooler (port 6543)
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
+        
+        # Try to get cached hotlist first (30-day cache)
+        hotlist = get_cached_hotlist(city_id, pg_conn)
+        if not hotlist:
+            # Generate AI hotlist if not cached
+            hotlist = generate_hotlist(city_name)
+            if hotlist:
+                save_hotlist_to_cache(city_id, hotlist, pg_conn)
+        
+        iconic_matches = []
         
         # Process and sanitize
         staging_rows = []
