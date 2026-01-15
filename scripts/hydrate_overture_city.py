@@ -73,11 +73,15 @@ def validate_category_name(name, category, original_category, config):
 
 
 def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None, 
-                      source_magnitude=1, has_brand=False):
+                      source_magnitude=1, has_brand=False, config=None):
     """Calculate relevance score based on data magnitude and institutional authority.
     
     Returns: (relevance_score, bonus_flags) or None if rejected
+    Uses values from config['categories']['scoring_modifiers']['base_scoring']
     """
+    # Get scoring values from config (required)
+    pts = config['categories']['scoring_modifiers']['base_scoring']
+    
     has_social = False
     if socials:
         for social in socials:
@@ -94,7 +98,7 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
         return None
     
     # === RELEVANCE SCORE (all signals combined) ===
-    relevance = 5  # Base score
+    relevance = pts['base']
     
     # Bonus tracking for diagnostics
     bonus_flags = {
@@ -105,43 +109,82 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     
     # SOCIAL SIGNALS
     if has_website:
-        relevance += 10
+        relevance += pts['website']
     
     if has_social:
-        relevance += 15
+        relevance += pts['social']
     
     if confidence >= 0.9:
-        relevance += 5
+        relevance += pts['high_confidence']
     
     # ADDRESS COMPLETENESS
     if house_number and str(house_number).strip():
-        relevance += 5
+        relevance += pts['house_number']
     
     if neighborhood and str(neighborhood).strip():
-        relevance += 3
+        relevance += pts['neighborhood']
     
     if street and str(street).strip():
-        relevance += 2
+        relevance += pts['street']
     
     # DATA MAGNITUDE BONUS: Multiple data sources = higher consensus
     if source_magnitude >= 3:
-        relevance += 30
-        bonus_flags['magnitude_bonus'] = 30
+        relevance += pts['source_magnitude_3plus']
+        bonus_flags['magnitude_bonus'] = pts['source_magnitude_3plus']
     elif source_magnitude == 2:
-        relevance += 10
-        bonus_flags['magnitude_bonus'] = 10
+        relevance += pts['source_magnitude_2']
+        bonus_flags['magnitude_bonus'] = pts['source_magnitude_2']
     
     # INSTITUTIONAL AUTHORITY: Has brand
     if has_brand:
-        relevance += 20
+        relevance += pts['brand_authority']
         bonus_flags['brand_bonus'] = True
     
     # DUAL PRESENCE BONUS: Has BOTH website AND social media
     if has_website and has_social:
-        relevance += 20
+        relevance += pts['dual_presence']
         bonus_flags['dual_presence_bonus'] = True
     
     return (relevance, bonus_flags)
+
+
+def apply_scoring_modifiers(relevance_score, internal_category, overture_category, config):
+    """Apply taxonomic penalties and boosts to relevance score.
+    
+    Returns: (modified_score, modifier_applied)
+    - Penalties: fast_food 0.25x, gas_station 0.15x, etc
+    - Boosts: stadium 2.0x, university 1.8x, etc
+    """
+    modifiers = config.get('categories', {}).get('scoring_modifiers', {})
+    if not modifiers:
+        return (relevance_score, 1.0)
+    
+    penalties = modifiers.get('penalties', {})
+    boosts = modifiers.get('boosts', {})
+    
+    modifier = 1.0
+    
+    # Check PRIMARY TAXONOMY penalties
+    taxonomy_primary = penalties.get('taxonomy_primary', {})
+    overture_lower = overture_category.lower() if overture_category else ''
+    if overture_lower in taxonomy_primary:
+        modifier = min(modifier, taxonomy_primary[overture_lower])
+    
+    # Check HIERARCHY KEYWORD penalties
+    taxonomy_keywords = penalties.get('taxonomy_hierarchy_keywords', {})
+    for keyword, penalty in taxonomy_keywords.items():
+        if keyword in overture_lower:
+            modifier = min(modifier, penalty)
+    
+    # Check INTERNAL CATEGORY boosts (only if no penalty applied)
+    if modifier >= 1.0:
+        internal_boosts = boosts.get('internal_category', {})
+        internal_lower = internal_category.lower() if internal_category else ''
+        if internal_lower in internal_boosts:
+            modifier = internal_boosts[internal_lower]
+    
+    modified_score = int(relevance_score * modifier)
+    return (modified_score, modifier)
 
 
 def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternate, config):
@@ -508,7 +551,8 @@ def main():
                 house_number=None,  # Parsed later
                 neighborhood=row[8],  # neighborhood
                 source_magnitude=source_count,
-                has_brand=bool(brand_name)
+                has_brand=bool(brand_name),
+                config=config
             )
             if not score_result:
                 metrics['rejected_confidence'] += 1
@@ -521,6 +565,13 @@ def main():
             relevance_score += taxonomy_bonus
             if taxonomy_bonus > 0:
                 metrics['taxonomy_bonus_count'] = metrics.get('taxonomy_bonus_count', 0) + 1
+            
+            # Apply taxonomic modifiers (penalties and boosts)
+            relevance_score, modifier = apply_scoring_modifiers(relevance_score, internal_cat, overture_cat, config)
+            if modifier < 1.0:
+                metrics['penalty_count'] = metrics.get('penalty_count', 0) + 1
+            elif modifier > 1.0:
+                metrics['boost_count'] = metrics.get('boost_count', 0) + 1
             
             # Track bonuses for diagnostics
             metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count
@@ -683,12 +734,17 @@ def main():
         dual_count = metrics.get('dual_presence_count', 0)
         magnitude_count = metrics.get('magnitude_bonus_count', 0)
         taxonomy_count = metrics.get('taxonomy_bonus_count', 0)
+        penalty_count = metrics.get('penalty_count', 0)
+        boost_count = metrics.get('boost_count', 0)
         
         print(f"📊 Relevance Bonuses Applied:")
         print(f"   📚 Avg Sources: {avg_sources:.2f} | Multi-Source: {magnitude_count} POIs (+10/+30)")
         print(f"   🏷️  Brand Authority: {brand_count} POIs (+20)")
         print(f"   🌐 Dual Presence (web+social): {dual_count} POIs (+20)")
         print(f"   🏷️  Taxonomy Weight: {taxonomy_count} POIs (configurable)")
+        print(f"📊 Taxonomic Modifiers:")
+        print(f"   ⬇️  Penalties Applied: {penalty_count} POIs (fast-food, gas stations)")
+        print(f"   ⬆️  Boosts Applied: {boost_count} POIs (bars, stadiums, parks)")
         
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")

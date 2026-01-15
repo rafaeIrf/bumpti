@@ -100,5 +100,47 @@
     "industrial_estate",
     "manufacturing",
     "wholesale_trade"
-  ]
+  ],
+  "scoring_modifiers": {
+    "penalties": {
+      "taxonomy_primary": {
+        "fast_food_restaurant": 0.25,
+        "gas_station": 0.15,
+        "convenience_store": 0.2,
+        "atm": 0.1,
+        "parking": 0.1
+      },
+      "taxonomy_hierarchy_keywords": {
+        "fast_food": 0.25,
+        "takeaway": 0.3,
+        "drive_through": 0.2,
+        "food_court": 0.35
+      }
+    },
+    "boosts": {
+      "internal_category": {
+        "bar": 1.5,
+        "nightclub": 1.6,
+        "stadium": 2.0,
+        "university": 1.8,
+        "park": 1.4,
+        "museum": 1.3,
+        "theatre": 1.3,
+        "beach": 1.5
+      }
+    },
+    "base_scoring": {
+      "base": 5,
+      "website": 10,
+      "social": 15,
+      "high_confidence": 5,
+      "house_number": 5,
+      "neighborhood": 3,
+      "street": 2,
+      "source_magnitude_3plus": 30,
+      "source_magnitude_2": 10,
+      "brand_authority": 20,
+      "dual_presence": 20
+    }
+  }
 }
