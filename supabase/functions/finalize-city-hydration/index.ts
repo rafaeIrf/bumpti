@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   try {
     // Authenticate GitHub Actions via custom header
     const githubToken = req.headers.get("x-github-token");
-    const expectedToken = Deno.env.get("GITHUB_HYDRATION_TOKEN");
+    const expectedToken = Deno.env.get("GH_HYDRATION_TOKEN");
 
     // Debug logging
     console.log("🔐 Token validation:", {
