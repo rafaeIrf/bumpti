@@ -22,21 +22,22 @@ def generate_hotlist(city_name):
         client = OpenAI(api_key=api_key)
         
         prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
-    Sua missão é listar EXATAMENTE 120 locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
+    Sua missão é listar locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL, se não encontrar a quantidade necessária, retorne menos locais.
     
     DISTRIBUIÇÃO OBRIGATÓRIA:
     - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
     - nightclub: 20 locais (As baladas e casas noturnas mais icônicas)
     - restaurant: 30 locais (Os maiores, mais populares e com alta rotatividade)
     - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
-    - stadium: 10 locais (Grandes arenas e estádios principais)
+    - stadium: 15 locais (Grandes arenas e estádios principais)
     - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
-    - cafe: 10 locais (Os maiores e principais cafés)
-    - university: 10 locais (Grandes universidades e faculdades principais)
+    - cafe: 15 locais (Os maiores e principais cafés)
+    - university: 15 locais (Grandes universidades e faculdades principais)
 
     REGRAS RÍGIDAS:
     - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
     - Use nomes OFICIAIS completos.
+    - Não retorne lugares que estão fechados permanentemente ou temporariamente.
     - Não invente nomes genéricos. Qualidade acima de tudo.
     - Retorne estritamente o JSON categorizado: {{ "bar": [...], "nightclub": [...], ... }}"""
 
