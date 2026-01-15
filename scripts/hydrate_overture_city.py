@@ -11,6 +11,8 @@ import duckdb
 import psycopg2
 from psycopg2.extras import execute_values
 import requests
+from openai import OpenAI
+from rapidfuzz import fuzz
 
 
 def load_curation_config():
@@ -72,8 +74,101 @@ def validate_category_name(name, category, original_category, config):
     return True
 
 
+def generate_hotlist(city_name):
+    """Generate categorized hotlist of 200 iconic venues using OpenAI.
+    
+    Returns: dict with categories as keys (e.g., {"bar": [...], "nightclub": [...]}) or empty dict if API fails
+    """
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        print("⚠️  OPENAI_API_KEY not set - skipping AI hotlist generation")
+        return {}
+    
+    try:
+        client = OpenAI(api_key=api_key)
+        
+        prompt = f"""Atue como um guia local especialista em {city_name}. Liste os 200 locais mais icônicos, populares e frequentados para encontrar pessoas, organizados por categoria.
+
+Retorne APENAS um JSON válido no formato:
+{{
+  "bar": ["Nome do Bar 1", "Nome do Bar 2", ...],
+  "nightclub": ["Nome da Balada 1", "Nome da Balada 2", ...],
+  "park": ["Nome do Parque 1", "Nome do Parque 2", ...],
+  "stadium": ["Nome do Estádio 1", ...],
+  "university": ["Nome da Universidade 1", ...],
+  "gym": ["Nome da Academia 1", ...],
+  "club": ["Nome do Clube 1", ...],
+  "restaurant": ["Nome do Restaurante 1", ...],
+  "shopping": ["Nome do Shopping 1", ...],
+  "event_venue": ["Nome do Local de Evento 1", ...]
+}}
+
+Use os nomes reais e específicos dos locais mais conhecidos de {city_name}."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a local expert providing structured JSON data."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Count total venues
+        total_venues = sum(len(venues) for venues in result.values())
+        print(f"🤖 AI Hotlist Generated: {total_venues} iconic venues across {len(result)} categories for {city_name}")
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ OpenAI API Error: {str(e)}")
+        return {}
+
+
+def fuzzy_match_iconic(name, category, hotlist, threshold=0.85):
+    """Check if venue name matches any iconic venue in hotlist for the same category.
+    
+    Args:
+        name: Venue name from Overture
+        category: Internal category (e.g., 'bar', 'nightclub')
+        hotlist: Dict of iconic venues by category from AI
+        threshold: Similarity threshold (0-1)
+    
+    Returns: (is_match, best_match_name, similarity_score)
+    """
+    if not hotlist or not name or not category:
+        return (False, None, 0.0)
+    
+    # Get category-specific venues from hotlist
+    category_venues = hotlist.get(category, [])
+    if not category_venues:
+        return (False, None, 0.0)
+    
+    # Normalize name for comparison
+    name_normalized = name.lower().strip()
+    
+    best_score = 0.0
+    best_match = None
+    
+    for iconic_name in category_venues:
+        iconic_normalized = iconic_name.lower().strip()
+        
+        # Use token_set_ratio for better handling of variations
+        score = fuzz.token_set_ratio(name_normalized, iconic_normalized) / 100.0
+        
+        if score > best_score:
+            best_score = score
+            best_match = iconic_name
+    
+    is_match = best_score >= threshold
+    return (is_match, best_match, best_score)
+
+
 def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None, 
-                      source_magnitude=1, has_brand=False, config=None):
+                      source_magnitude=1, has_brand=False, is_iconic=False, config=None):
     """Calculate relevance score based on data magnitude and institutional authority.
     
     Returns: (relevance_score, bonus_flags) or None if rejected
@@ -104,8 +199,14 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     bonus_flags = {
         'magnitude_bonus': 0,
         'brand_bonus': False,
-        'dual_presence_bonus': False
+        'dual_presence_bonus': False,
+        'iconic_bonus': False
     }
+    
+    # ICONIC BOOST: AI-identified iconic venues
+    if is_iconic:
+        relevance += 100  # Guarantees cap at 100
+        bonus_flags['iconic_bonus'] = True
     
     # SOCIAL SIGNALS
     if has_website:
@@ -504,6 +605,9 @@ def main():
         
         print(f"📊 DuckDB query found {metrics['total_found']} POIs in BBox")
         
+        # Generate AI hotlist of iconic venues (one call per city)
+        hotlist = generate_hotlist(city_name)
+        iconic_matches = []
         # PostgreSQL: Connect via Pooler (port 6543)
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
@@ -542,6 +646,15 @@ def main():
             source_count = row[14] if row[14] else 1  # source_count
             brand_name = row[15]  # brand_name
             
+            # Check if venue is iconic using AI-generated hotlist
+            is_iconic, matched_name, similarity = fuzzy_match_iconic(sanitized_name, internal_cat, hotlist)
+            if is_iconic:
+                iconic_matches.append({
+                    "name": sanitized_name,
+                    "matched": matched_name,
+                    "similarity": similarity,
+                    "category": internal_cat
+                })
             # Social scoring + Address completeness + Authority signals
             score_result = calculate_scores(
                 row[10],  # confidence
@@ -552,6 +665,7 @@ def main():
                 neighborhood=row[8],  # neighborhood
                 source_magnitude=source_count,
                 has_brand=bool(brand_name),
+                is_iconic=is_iconic,
                 config=config
             )
             if not score_result:
@@ -746,6 +860,14 @@ def main():
         print(f"   🌐 Dual Presence (web+social): {dual_count} POIs (+20)")
         print(f"   🏷️  Taxonomy Weight: {taxonomy_count} POIs (configurable)")
         print(f"📊 Taxonomic Modifiers:")
+        
+        # Log iconic matches
+        if iconic_matches:
+            print(f"\n✨ Iconic Matches Found: {len(iconic_matches)} venues")
+            for match in iconic_matches[:10]:  # Show first 10
+                name, matched, sim, cat = match.get("name", ""), match.get("matched", ""), match.get("similarity", 0.0), match.get("category", "")
+            if len(iconic_matches) > 10:
+                print(f"   ... and {len(iconic_matches) - 10} more")
         print(f"   ⬇️  Penalties Applied: {penalty_count} POIs (fast-food, gas stations)")
         print(f"   ⬆️  Boosts Applied: {boost_count} POIs (bars, stadiums, parks)")
         
