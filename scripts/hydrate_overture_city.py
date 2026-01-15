@@ -72,8 +72,8 @@ def validate_category_name(name, category, original_category, config):
     return True
 
 
-def calculate_scores(confidence, websites, socials):
-    """Calculate scores based on social signals."""
+def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None):
+    """Calculate scores based on social signals AND address completeness."""
     has_social = False
     if socials:
         for social in socials:
@@ -83,7 +83,7 @@ def calculate_scores(confidence, websites, socials):
                     has_social = True
                     break
     
-    has_website = bool(websites and len(websites) > 0)
+    has_website = bool(websites and isinstance(websites, (list, tuple)) and len(websites) > 0)
     has_online = has_website or has_social
     
     if not has_online and confidence < 0.9:
@@ -92,6 +92,7 @@ def calculate_scores(confidence, websites, socials):
     base_score = 5
     relevance = 0
     
+    # Social/website scoring
     if has_website:
         base_score += 10
         relevance += 10
@@ -103,6 +104,16 @@ def calculate_scores(confidence, websites, socials):
     if confidence >= 0.9:
         base_score += 5
         relevance += 5
+    
+    # ADDRESS COMPLETENESS SCORING (Quality Weights)
+    if house_number and str(house_number).strip():
+        base_score += 5  # +5 for house number
+    
+    if neighborhood and str(neighborhood).strip():
+        base_score += 3  # +3 for neighborhood
+    
+    if street and str(street).strip():
+        base_score += 2  # +2 for street
     
     return (base_score, relevance)
 
@@ -456,8 +467,16 @@ def main():
                 metrics['rejected_validation'] += 1
                 continue
             
-            # Social scoring (confidence=row[10], websites=row[12], socials=row[13])
-            score_result = calculate_scores(row[10], row[12], row[13])
+            # Social scoring + Address completeness (confidence=row[10], websites=row[12], socials=row[13])
+            # Address fields: street=row[4], house_number=row[5], neighborhood=row[6]
+            score_result = calculate_scores(
+                row[10],  # confidence
+                row[12],  # websites
+                row[13],  # socials
+                street=row[4],  # street
+                house_number=row[5],  # house_number
+                neighborhood=row[6]  # neighborhood
+            )
             if not score_result:
                 metrics['rejected_confidence'] += 1
                 continue
