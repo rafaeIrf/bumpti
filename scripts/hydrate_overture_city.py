@@ -408,6 +408,7 @@ def main():
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
           AND confidence >= 0.6
           AND categories.primary IS NOT NULL
+          AND (operating_status IS NULL OR operating_status = 'open')
           AND NOT list_has_any(
             list_append(categories.alternate, categories.primary),
             [{blacklist_sql}]
