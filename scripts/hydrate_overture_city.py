@@ -175,42 +175,19 @@ def finalize_callback(city_id, status, error_msg=None, stats=None):
         print(f"⚠️ Callback failed: {e}", file=sys.stderr)
 
 
-def get_bbox_tiles(bbox, grid_size=4):
-    """Subdivide a bounding box into a grid of tiles for chunk processing.
+
+
+def build_category_filter(config):
+    """Build SQL IN clause from category mapping keys.
     
-    Args:
-        bbox: [xmin, ymin, xmax, ymax] - City bounding box
-        grid_size: Number of divisions per axis (default 4x4 = 16 tiles)
+    This implements predicate pushdown - filtering at the DuckDB/S3 level
+    instead of pulling all data and filtering in Python.
     
     Returns:
-        List of (tile_num, tile_bbox) tuples
-        
-    Example:
-        bbox = [-46.826, -23.740, -46.365, -23.357]  # São Paulo
-        tiles = get_bbox_tiles(bbox, 4)
-        # Returns 16 tiles numbered 1-16
+        str: Comma-separated quoted category list for SQL IN clause
     """
-    xmin, ymin, xmax, ymax = bbox
-    
-    # Calculate step size for each dimension
-    x_step = (xmax - xmin) / grid_size
-    y_step = (ymax - ymin) / grid_size
-    
-    tiles = []
-    tile_num = 1
-    
-    for i in range(grid_size):
-        for j in range(grid_size):
-            # Calculate tile boundaries
-            tile_xmin = xmin + (j * x_step)
-            tile_xmax = xmin + ((j + 1) * x_step)
-            tile_ymin = ymin + (i * y_step)
-            tile_ymax = ymin + ((i + 1) * y_step)
-            
-            tiles.append((tile_num, [tile_xmin, tile_ymin, tile_xmax, tile_ymax]))
-            tile_num += 1
-    
-    return tiles
+    categories = list(config['categories']['mapping'].keys())
+    return ', '.join([f"'{cat}'" for cat in categories])
 
 
 def discover_city_from_overture(lat: float, lng: float):
@@ -469,11 +446,247 @@ def main():
             if hotlist:
                 save_hotlist_to_cache(city_id, hotlist, pg_conn)
         
-        # 🗺️ CHUNK PROCESSING: Divide city into 4x4 grid (16 tiles)
-        tiles = get_bbox_tiles(bbox, grid_size=4)
-        total_tiles = len(tiles)
+        # ====================================================================
+        # PREDICATE PUSHDOWN: Filter categories at DuckDB level
+        # ====================================================================
         
-        print(f"\n🗺️  CHUNK PROCESSING: Dividing {city_name} into {total_tiles} tiles")
+        # DuckDB: Query Overture with category filter
+        con = duckdb.connect(':memory:')
+        con.execute("INSTALL spatial; LOAD spatial;")
+        con.execute("INSTALL httpfs; LOAD httpfs;")
+        
+        category_map = config['categories']['mapping']
+        category_filter = build_category_filter(config)
+        
+        print(f"\n� Querying Overture with predicate pushdown...")
+        print(f"   Only fetching social POIs (bars, restaurants, parks, etc.)")
+        
+        query = f"""
+        SELECT 
+          id AS overture_id,
+          JSON_EXTRACT_STRING(names, 'primary') AS name,
+          categories.primary AS overture_category,
+          categories.alternate AS alternate_categories,
+          ST_AsWKB(geometry) AS geom_wkb,
+          addresses[1].freeform AS street,
+          addresses[1].locality AS neighborhood,
+          addresses[1].postcode AS postal_code,
+          addresses[1].region AS state,
+          confidence,
+          sources[1] AS source_raw,
+          websites,
+          socials,
+          len(sources) AS source_magnitude,
+          (brand IS NOT NULL) AS has_brand
+        FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
+        WHERE 
+          bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
+          AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
+          AND categories.primary IN ({category_filter})
+          AND confidence >= 0.7
+          AND (operating_status IS NULL OR operating_status = 'open')
+        LIMIT 500000
+        """
+        
+        all_pois = con.execute(query).fetchall()
+        con.close()
+        
+        total_pois = len(all_pois)
+        print(f"✅ Loaded {total_pois:,} social POIs (filtered at source)")
+        
+        if total_pois == 0:
+            print("⚠️  No POIs found in this city!")
+            finalize_callback(city_id, 'completed', stats={'inserted': 0, 'updated': 0})
+            return
+        
+        # ====================================================================
+        # BATCH PROCESSING: Process in 2000-record batches
+        # ====================================================================
+        
+        BATCH_SIZE = 2000
+        num_batches = (total_pois + BATCH_SIZE - 1) // BATCH_SIZE
+        
+        print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
+        print(f"   Strategy: Incremental commits to prevent database locks\n")
+        
+        total_inserted = 0
+        total_updated = 0
+        
+        for batch_num in range(num_batches):
+            start_idx = batch_num * BATCH_SIZE
+            end_idx = min(start_idx + BATCH_SIZE, total_pois)
+            batch = all_pois[start_idx:end_idx]
+            
+            print(f"{'='*70}")
+            print(f"[BATCH {batch_num+1}/{num_batches}] Processing {len(batch)} POIs...")
+            
+            # Collect POIs for AI matching
+            all_pois_by_category = {}
+            poi_data = {}
+            
+            for row in batch:
+                overture_cat = row[2]
+                internal_cat = category_map.get(overture_cat)
+                if not internal_cat:
+                    continue
+                
+                raw_name = row[1]
+                sanitized_name = sanitize_name(raw_name, config)
+                if not sanitized_name:
+                    continue
+                
+                poi_id = len(poi_data)
+                neighborhood = row[6]
+                
+                if internal_cat not in all_pois_by_category:
+                    all_pois_by_category[internal_cat] = []
+                
+                all_pois_by_category[internal_cat].append((sanitized_name, poi_id, neighborhood))
+                poi_data[poi_id] = (sanitized_name, row)
+            
+            # AI matching for this batch (reuse hotlist)
+            iconic_matches = ai_match_iconic_venues(hotlist, all_pois_by_category) if hotlist else []
+            iconic_ids = set(iconic_matches)
+            
+            print(f"   🤖 AI matched {len(iconic_ids)} iconic venues in this batch")
+            
+            # Process POIs in this batch
+            staging_rows = []
+            
+            for poi_id, (name, row) in poi_data.items():
+                overture_cat = row[2]
+                internal_cat = category_map.get(overture_cat)
+                
+                if not internal_cat:
+                    continue
+                
+                # Validation
+                if not validate_category_name(name, internal_cat, overture_cat, config):
+                    continue
+                
+                if not check_taxonomy_hierarchy(internal_cat, overture_cat, config):
+                    continue
+                
+                if filter_osm_red_flags(row[3], config):
+                    continue
+                
+                # Scoring
+                is_iconic = poi_id in iconic_ids
+                source_count = row[13]
+                brand_name = row[14]
+                
+                score_result = calculate_scores(
+                    row[9],  # confidence
+                    row[11],  # websites
+                    row[12],  # socials
+                    street=row[5],
+                    house_number=None,
+                    neighborhood=row[6],
+                    source_magnitude=source_count,
+                    has_brand=bool(brand_name),
+                    is_iconic=is_iconic,
+                    config=config
+                )
+                
+                if not score_result:
+                    continue
+                
+                relevance_score, bonus_flags = score_result
+                
+                # Taxonomy bonus
+                taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
+                relevance_score += taxonomy_bonus
+                
+                # Apply modifiers
+                relevance_score, modifier = apply_scoring_modifiers(relevance_score, internal_cat, overture_cat, config)
+                
+                # Prepare for staging
+                geom_wkb = row[4]
+                geom_hex = geom_wkb.hex() if geom_wkb else None
+                
+                staging_rows.append((
+                    name,
+                    internal_cat,
+                    geom_hex,
+                    row[5],  # street
+                    None,  # house_number
+                    row[6],  # neighborhood
+                    city_name,
+                    row[8],  # state
+                    row[7],  # postal_code
+                    city_data.get('country_code'),
+                    relevance_score,
+                    row[9],  # confidence
+                    overture_cat,
+                    row[0],  # overture_id
+                    str(row[10])  # source_raw
+                ))
+            
+            print(f"   ✅ Processed {len(staging_rows)} valid POIs")
+            
+            # Insert to staging
+            if staging_rows:
+                insert_sql = """
+                INSERT INTO staging_places (
+                  name, category, geom_wkb_hex, street, house_number,
+                  neighborhood, city, state, postal_code, country_code,
+                  relevance_score, confidence, original_category,
+                  overture_id, overture_raw
+                ) VALUES %s
+                """
+                
+                execute_values(pg_cur, insert_sql, staging_rows, page_size=500)
+                print(f"   💾 Inserted to staging")
+                
+                # Merge to production
+                merge_sql = "SELECT * FROM merge_staging_to_production(%s)"
+                pg_cur.execute(merge_sql, (city_id,))
+                merge_result = pg_cur.fetchone()
+                
+                if merge_result:
+                    inserted, updated = merge_result
+                    total_inserted += inserted
+                    total_updated += updated
+                    print(f"   🔄 Merged: {inserted} inserted, {updated} updated")
+                
+                # CRITICAL: Commit transaction (releases locks!)
+                pg_conn.commit()
+                print(f"   ✅ Transaction committed")
+                
+                # CRITICAL: Truncate staging for next batch
+                pg_cur.execute("TRUNCATE staging_places")
+                pg_conn.commit()
+                print(f"   🧹 Staging truncated")
+            
+            # CRITICAL: Sleep between batches (database recovery)
+            if batch_num < num_batches - 1:
+                print(f"   😴 Sleeping 2s for database recovery...")
+                time.sleep(2)
+        
+        # Close connections
+        pg_cur.close()
+        pg_conn.close()
+        
+        # Final report
+        print(f"\n{'='*70}")
+        print(f"🎯 BATCH PROCESSING COMPLETE: {city_name}")
+        print(f"{'='*70}")
+        print(f"Total POIs found:    {total_pois:,}")
+        print(f"Batches processed:   {num_batches}")
+        print(f"Total inserted:      {total_inserted:,}")
+        print(f"Total updated:       {total_updated:,}")
+        print(f"{'='*70}")
+        
+        stats = {
+            'inserted': total_inserted,
+            'updated': total_updated,
+            'batches_processed': num_batches
+        }
+        
+        finalize_callback(city_id, 'completed', stats=stats)
+        
+        
+    except Exception as e:
         print(f"   Grid size: 4x4 = {total_tiles} chunks")
         print(f"   Strategy: Independent commits per chunk to prevent DB locks\n")
         
