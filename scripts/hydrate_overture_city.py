@@ -599,7 +599,7 @@ def main():
                         continue
                     
                     # Validation
-                    if not validate_category_name(name, internal_cat, config):
+                    if not validate_category_name(name, internal_cat, overture_cat, config):
                         tile_metrics['rejected_validation'] += 1
                         continue
                     
