@@ -435,10 +435,13 @@ def main():
             # Generate temporary ID for POI (use row hash or index)
             poi_id = hash((sanitized_name, row[0]))  # hash of (name, overture_id)
             
-            # Store for AI matching
+            # Extract neighborhood for context
+            neighborhood = row[8] if row[8] else None  # neighborhood (locality)
+            
+            # Store for AI matching - now includes neighborhood
             if internal_cat not in all_pois_by_category:
                 all_pois_by_category[internal_cat] = []
-            all_pois_by_category[internal_cat].append((sanitized_name, poi_id))
+            all_pois_by_category[internal_cat].append((sanitized_name, poi_id, neighborhood))
             
             # Store row data for later
             poi_data[poi_id] = (sanitized_name, row)
