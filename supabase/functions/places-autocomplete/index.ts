@@ -85,7 +85,7 @@ serve(async (req) => {
     // 🔥 LAZY HYDRATION TRIGGER: If no results and we have coordinates, trigger city hydration
     if (results.length === 0 && latNum && lngNum) {
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-      const githubToken = Deno.env.get("GITHUB_HYDRATION_TOKEN") as string;
+      const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
       
       // Trigger city hydration in background (don't wait for result)
       triggerCityHydrationIfNeeded(

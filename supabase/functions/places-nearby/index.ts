@@ -125,7 +125,7 @@ serve(async (req) => {
     if (results.length === 0) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-      const githubToken = Deno.env.get("GITHUB_HYDRATION_TOKEN") as string;
+      const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
       
       // Trigger city hydration in background (don't wait for result)
       triggerCityHydrationIfNeeded(
