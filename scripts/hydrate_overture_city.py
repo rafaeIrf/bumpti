@@ -694,8 +694,8 @@ def main():
         
         
         
+        
     except Exception as e:
-        print(f"   Strategy: Independent commits per chunk to prevent DB locks\n")
         
         # Aggregated stats across all tiles
         aggregated_stats = {
