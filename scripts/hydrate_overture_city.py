@@ -83,8 +83,7 @@ def calculate_scores(confidence, websites, socials):
                     has_social = True
                     break
     
-    # Validate types before accessing length
-    has_website = bool(websites and isinstance(websites, (list, tuple)) and len(websites) > 0)
+    has_website = bool(websites and len(websites) > 0)
     has_online = has_website or has_social
     
     if not has_online and confidence < 0.9:
