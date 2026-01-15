@@ -576,16 +576,22 @@ def main():
             
             # For each cluster, keep only the best POI
             deduped_large_venues = []
-            for cluster_pois in clusters.values():
+            for cluster_key, cluster_pois in clusters.items():
                 if len(cluster_pois) == 1:
                     deduped_large_venues.append(cluster_pois[0])
                 else:
+                    # DEBUG: Print cluster info
+                    print(f"  🔍 Cluster '{cluster_key}': {len(cluster_pois)} POIs")
+                    for poi in cluster_pois:
+                        print(f"     - {poi['name']} (cat={poi['category']}, score={poi['structural_score']})")
+                    
                     # Check if names are actually similar (>70% match)
                     base_name = cluster_pois[0]['name'].lower()
                     similar_group = []
                     
                     for poi in cluster_pois:
                         similarity = SequenceMatcher(None, base_name, poi['name'].lower()).ratio()
+                        print(f"     Similarity({base_name} vs {poi['name'].lower()}): {similarity:.2f}")
                         if similarity > 0.7:
                             similar_group.append(poi)
                         else:
@@ -593,9 +599,9 @@ def main():
                             deduped_large_venues.append(poi)
                     
                     if similar_group:
-                        # Keep the one with highest structural_score
                         # Keep highest structural_score (if tie, just pick first)
                         best = max(similar_group, key=lambda x: x['structural_score'])
+                        print(f"     ✅ Winner: {best['name']} (score={best['structural_score']})")
                         deduped_large_venues.append(best)
             
             # Combine deduped large venues with untouched others
