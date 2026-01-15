@@ -72,8 +72,12 @@ def validate_category_name(name, category, original_category, config):
     return True
 
 
-def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None):
-    """Calculate scores based on social signals AND address completeness."""
+def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None, 
+                      source_magnitude=1, has_brand=False):
+    """Calculate relevance score based on data magnitude and institutional authority.
+    
+    Returns: (relevance_score, bonus_flags) or None if rejected
+    """
     has_social = False
     if socials:
         for social in socials:
@@ -89,33 +93,55 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     if not has_online and confidence < 0.9:
         return None
     
-    base_score = 5
-    relevance = 0
+    # === RELEVANCE SCORE (all signals combined) ===
+    relevance = 5  # Base score
     
-    # Social/website scoring
+    # Bonus tracking for diagnostics
+    bonus_flags = {
+        'magnitude_bonus': 0,
+        'brand_bonus': False,
+        'dual_presence_bonus': False
+    }
+    
+    # SOCIAL SIGNALS
     if has_website:
-        base_score += 10
         relevance += 10
     
     if has_social:
-        base_score += 15
-        relevance += 20
+        relevance += 15
     
     if confidence >= 0.9:
-        base_score += 5
         relevance += 5
     
-    # ADDRESS COMPLETENESS SCORING (Quality Weights)
+    # ADDRESS COMPLETENESS
     if house_number and str(house_number).strip():
-        base_score += 5  # +5 for house number
+        relevance += 5
     
     if neighborhood and str(neighborhood).strip():
-        base_score += 3  # +3 for neighborhood
+        relevance += 3
     
     if street and str(street).strip():
-        base_score += 2  # +2 for street
+        relevance += 2
     
-    return (base_score, relevance)
+    # DATA MAGNITUDE BONUS: Multiple data sources = higher consensus
+    if source_magnitude >= 3:
+        relevance += 30
+        bonus_flags['magnitude_bonus'] = 30
+    elif source_magnitude == 2:
+        relevance += 10
+        bonus_flags['magnitude_bonus'] = 10
+    
+    # INSTITUTIONAL AUTHORITY: Has brand
+    if has_brand:
+        relevance += 20
+        bonus_flags['brand_bonus'] = True
+    
+    # DUAL PRESENCE BONUS: Has BOTH website AND social media
+    if has_website and has_social:
+        relevance += 20
+        bonus_flags['dual_presence_bonus'] = True
+    
+    return (relevance, bonus_flags)
 
 
 def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternate, config):
@@ -412,7 +438,9 @@ def main():
           confidence,
           sources[1] AS source_raw,
           websites,
-          socials
+          socials,
+          len(sources) AS source_magnitude,
+          (brand IS NOT NULL) AS has_brand
         FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
@@ -467,25 +495,35 @@ def main():
                 metrics['rejected_validation'] += 1
                 continue
             
-            # Social scoring + Address completeness (confidence=row[10], websites=row[12], socials=row[13])
-            # Address fields: street=row[4], house_number=row[5], neighborhood=row[6]
+            # Extract new fields for scoring
+            source_count = row[14] if row[14] else 1  # source_count
+            brand_name = row[15]  # brand_name
+            
+            # Social scoring + Address completeness + Authority signals
             score_result = calculate_scores(
                 row[10],  # confidence
                 row[12],  # websites
                 row[13],  # socials
-                street=row[4],  # street
-                house_number=row[5],  # house_number
-                neighborhood=row[6]  # neighborhood
+                street=row[5],  # street
+                house_number=None,  # Parsed later
+                neighborhood=row[8],  # neighborhood
+                source_magnitude=source_count,
+                has_brand=bool(brand_name)
             )
             if not score_result:
                 metrics['rejected_confidence'] += 1
                 continue
             
-            structural_score, relevance_score = score_result
+            relevance_score, bonus_flags = score_result
             
-            # Add taxonomy bonus
-            taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
-            relevance_score += taxonomy_bonus
+            # Track bonuses for diagnostics
+            metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count
+            if bonus_flags['brand_bonus']:
+                metrics['brand_bonus_count'] = metrics.get('brand_bonus_count', 0) + 1
+            if bonus_flags['dual_presence_bonus']:
+                metrics['dual_presence_count'] = metrics.get('dual_presence_count', 0) + 1
+            if bonus_flags['magnitude_bonus'] > 0:
+                metrics['magnitude_bonus_count'] = metrics.get('magnitude_bonus_count', 0) + 1
             
             geom_wkb_hex = row[4].hex()
             
@@ -631,6 +669,18 @@ def main():
         deduped_count = len(staging_rows)
         
         print(f"✅ Sanitization: {metrics['final_sent_to_staging']} POIs passed filters")
+        
+        # Diagnostic logs for data magnitude
+        total_pois = metrics['final_sent_to_staging']
+        avg_sources = metrics.get('total_source_count', 0) / total_pois if total_pois > 0 else 0
+        brand_count = metrics.get('brand_bonus_count', 0)
+        dual_count = metrics.get('dual_presence_count', 0)
+        magnitude_count = metrics.get('magnitude_bonus_count', 0)
+        
+        print(f"📊 Data Magnitude Bonuses:")
+        print(f"   📚 Avg Sources: {avg_sources:.2f} | Multi-Source: {magnitude_count} POIs (+10/+30)")
+        print(f"   🏷️  Brand Authority: {brand_count} POIs (+20)")
+        print(f"   🌐 Dual Presence (web+social): {dual_count} POIs (+20)")
         
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
