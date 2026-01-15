@@ -193,80 +193,140 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
         print(f"⚠️  Cache save error: {str(e)}")
         pg_conn.rollback()
 
-
-# Generic stopwords to filter out from venue names
-GENERIC_STOPWORDS = {
-    'bar', 'do', 'da', 'de', 'restaurante', 'academia', 'clube', 'club', 
-    'the', 'and', 'dos', 'das', 'e', 'no', 'na', 'em', 'al', 'ou',
-    'casa', 'espaco', 'espaço', 'centro', 'beer', 'pub', 'lounge'
-}
-
-
-def normalize_preserve_special(text):
-    """Normalize text preserving special chars like '+' but removing accents."""
-    import unicodedata
-    nfd = unicodedata.normalize('NFD', text)
-    normalized = ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
-    return normalized.lower().strip()
-
-
-def extract_relevant_tokens(name):
-    """Extract meaningful tokens from name, removing generic stopwords."""
-    import re
-    normalized = normalize_preserve_special(name)
-    tokens = re.findall(r'[+\w]+', normalized)
-    relevant_tokens = [t for t in tokens if t not in GENERIC_STOPWORDS and len(t) > 1]
-    return relevant_tokens, normalized
-
-def fuzzy_match_iconic(name, category, hotlist, threshold=0.92):
-    """Check if venue name matches iconic venue with anti-generic protection."""
-    import re
+def extract_brand_identity(name, category, overture_category=None):
+    """Extract brand identity by removing contextual noise dynamically.
     
+    Removes:
+    - Category keywords (internal + overture)
+    - Short words (≤3 chars) without special symbols
+    
+    Preserves:
+    - Brand names with special chars ('+55', 'C&A')
+    - Unique short identifiers
+    """
+    import re
+    import unicodedata
+    
+    # Normalize: remove accents but preserve special chars
+    nfd = unicodedata.normalize('NFD', name)
+    normalized = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+    normalized = normalized.lower().strip()
+    
+    # Tokenize
+    tokens = re.findall(r'[\w+&-]+', normalized)
+    
+    # Build dynamic stopwords from context
+    contextual_noise = set()
+    
+    # Add category keywords
+    if category:
+        contextual_noise.add(category.lower())
+    if overture_category:
+        contextual_noise.add(overture_category.lower())
+    
+    # Filter tokens
+    brand_tokens = []
+    for token in tokens:
+        # Skip category keywords
+        if token in contextual_noise:
+            continue
+        
+        # Keep if has special chars ('+', '&', '-') - likely brand identifier
+        if any(c in token for c in ['+', '&', '-']):
+            brand_tokens.append(token)
+            continue
+        
+        # Skip short generic words (≤3 chars) unless it's the only meaningful token
+        if len(token) <= 3:
+            # Check if token is purely alphanumeric and short
+            if token.isalnum():
+                continue  # Skip generic short words like 'do', 'da', 'the', etc.
+        
+        # Keep everything else
+        brand_tokens.append(token)
+    
+    # If we removed everything, return original normalized (preserve brand identity)
+    if not brand_tokens:
+        return normalized, tokens
+    
+    brand_identity = ' '.join(brand_tokens)
+    return brand_identity, brand_tokens
+
+
+def fuzzy_match_iconic(name, category, hotlist, overture_category=None, threshold=0.92):
+    """Match iconic venues using dynamic brand identity extraction.
+    
+    Language-agnostic approach:
+    - No static stopword lists
+    - Contextual noise removal based on category
+    - Works globally (US, Spain, Japan, etc.)
+    
+    Args:
+        name: Venue name from Overture
+        category: Internal category (e.g., 'bar', 'nightclub')
+        hotlist: Dict of iconic venues by category from AI
+        overture_category: Original Overture category (optional)
+        threshold: Similarity threshold (0-1)
+    
+    Returns: (is_match, best_match_name, similarity_score)
+    """
     if not hotlist or not name or not category:
         return (False, None, 0.0)
     
+    # Category lock: only match within same category
     category_venues = hotlist.get(category, [])
     if not category_venues:
         return (False, None, 0.0)
     
-    overture_tokens, overture_normalized = extract_relevant_tokens(name)
+    # Extract brand identity from Overture name
+    overture_identity, overture_tokens = extract_brand_identity(name, category, overture_category)
+    
     best_score = 0.0
     best_match = None
     
     for iconic_name in category_venues:
-        iconic_tokens, iconic_normalized = extract_relevant_tokens(iconic_name)
-        if not iconic_tokens:
+        # Extract brand identity from AI-suggested name
+        iconic_identity, iconic_tokens = extract_brand_identity(iconic_name, category)
+        
+        # Skip if no meaningful identity
+        if not iconic_identity or not overture_identity:
             continue
         
-        iconic_core = ' '.join(iconic_tokens)
-        overture_core = ' '.join(overture_tokens) if overture_tokens else overture_normalized
-        
-        # CASE A: Short/Brand Names (<5 chars in core)
-        if len(iconic_core) < 5:
-            exact_token_match = iconic_core in overture_tokens
-            exact_string_match = iconic_normalized == overture_normalized
-            
-            if exact_token_match or exact_string_match:
+        # CASE A: Short brand names (identity ≤5 chars)
+        # Examples: '+55', 'Shed', 'Vibe'
+        if len(iconic_identity.replace(' ', '')) <= 5:
+            # Require exact or near-exact match
+            # Check if iconic identity appears as exact token
+            if iconic_identity in overture_tokens or iconic_identity == overture_identity:
                 score = 1.0
-            elif iconic_core in overture_normalized:
-                pattern = r'\b' + re.escape(iconic_core) + r'\b'
-                score = 0.95 if re.search(pattern, overture_normalized) else 0.0
             else:
-                score = 0.0
-            required_threshold = 0.95
+                # Use exact ratio for short brands
+                score = fuzz.ratio(iconic_identity, overture_identity) / 100.0
+            
+            required_threshold = 0.95  # Must be near-perfect for short names
         
-        # CASE B: Medium/Long Names (≥5 chars in core)
+        # CASE B: Long brand names (identity >5 chars)
+        # Examples: 'Madalosso', 'Parque Barigui'
         else:
-            score = fuzz.token_set_ratio(iconic_normalized, overture_normalized) / 100.0
-            main_token = max(iconic_tokens, key=len) if iconic_tokens else iconic_core
-            if main_token not in overture_normalized:
-                score = 0.0
-            required_threshold = threshold
+            # Use token_set_ratio for flexibility (handles word order, extra words)
+            score = fuzz.token_set_ratio(iconic_identity, overture_identity) / 100.0
+            
+            # Additional check: main brand token must be present
+            # Get longest token from iconic identity (likely the key brand term)
+            if iconic_tokens:
+                main_brand_token = max(iconic_tokens, key=len)
+                # Verify main token appears in overture identity
+                if main_brand_token not in overture_identity:
+                    score = 0.0  # Reject if key brand term missing
+            
+            required_threshold = threshold  # Default 0.92
         
+        # Update best match if score meets threshold
         if score >= required_threshold and score > best_score:
             best_score = score
             best_match = iconic_name
     
+    # Final decision
     is_match = best_score >= 0.92
     return (is_match, best_match, best_score)
 
