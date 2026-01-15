@@ -574,15 +574,15 @@ def main():
                 used.add(i)
                 base_name = poi['name'].lower().strip()
                 
-                # Find all other POIs similar to this one
+                # Find all other POIs with EXACT same name
                 for j, other_poi in enumerate(large_venues):
                     if j in used:
                         continue
                     
                     other_name = other_poi['name'].lower().strip()
-                    similarity = SequenceMatcher(None, base_name, other_name).ratio()
                     
-                    if similarity == 1:  # 85% similarity threshold (raised from 70% to avoid false positives like "Faculdade X" vs "Faculdade Y")
+                    # EXACT match only (100% similarity)
+                    if base_name == other_name:
                         cluster.append(other_poi)
                         used.add(j)
                 
