@@ -1,5 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+// SWR revalidation period - cities older than this trigger background refresh
+const REVALIDATION_DAYS = 30;
+
 /**
  * Trigger city hydration if needed (Overture-Native version)
  * Simplified: No Nominatim calls, discovery happens in Python worker
@@ -44,7 +47,7 @@ export async function triggerCityHydrationIfNeeded(
       : null;
 
     // City found and recently hydrated
-    if (existingCity && daysSinceHydration !== null && daysSinceHydration <= 30) {
+    if (existingCity && daysSinceHydration !== null && daysSinceHydration <= REVALIDATION_DAYS) {
       console.log(
         `✅ City "${existingCity.city_name}" is fresh (${daysSinceHydration} days old)`
       );
@@ -56,7 +59,7 @@ export async function triggerCityHydrationIfNeeded(
     }
 
     // City found but needs revalidation (SWR pattern)
-    if (existingCity && daysSinceHydration !== null && daysSinceHydration > 30) {
+    if (existingCity && daysSinceHydration !== null && daysSinceHydration > REVALIDATION_DAYS) {
       console.log(
         `🔄 City "${existingCity.city_name}" needs refresh (${daysSinceHydration} days old)`
       );
