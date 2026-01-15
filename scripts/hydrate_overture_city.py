@@ -193,51 +193,81 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
         print(f"⚠️  Cache save error: {str(e)}")
         pg_conn.rollback()
 
+
+# Generic stopwords to filter out from venue names
+GENERIC_STOPWORDS = {
+    'bar', 'do', 'da', 'de', 'restaurante', 'academia', 'clube', 'club', 
+    'the', 'and', 'dos', 'das', 'e', 'no', 'na', 'em', 'al', 'ou',
+    'casa', 'espaco', 'espaço', 'centro', 'beer', 'pub', 'lounge'
+}
+
+
+def normalize_preserve_special(text):
+    """Normalize text preserving special chars like '+' but removing accents."""
+    import unicodedata
+    nfd = unicodedata.normalize('NFD', text)
+    normalized = ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
+    return normalized.lower().strip()
+
+
+def extract_relevant_tokens(name):
+    """Extract meaningful tokens from name, removing generic stopwords."""
+    import re
+    normalized = normalize_preserve_special(name)
+    tokens = re.findall(r'[+\w]+', normalized)
+    relevant_tokens = [t for t in tokens if t not in GENERIC_STOPWORDS and len(t) > 1]
+    return relevant_tokens, normalized
+
 def fuzzy_match_iconic(name, category, hotlist, threshold=0.92):
-    """Check if venue name matches any iconic venue in hotlist for the same category.
+    """Check if venue name matches iconic venue with anti-generic protection."""
+    import re
     
-    Args:
-        name: Venue name from Overture
-        category: Internal category (e.g., 'bar', 'nightclub')
-        hotlist: Dict of iconic venues by category from AI
-        threshold: Similarity threshold (0-1)
-    
-    Returns: (is_match, best_match_name, similarity_score)
-    """
     if not hotlist or not name or not category:
         return (False, None, 0.0)
     
-    # Get category-specific venues from hotlist
     category_venues = hotlist.get(category, [])
     if not category_venues:
         return (False, None, 0.0)
     
-    # Normalize name for comparison
-    name_normalized = name.lower().strip()
-    
+    overture_tokens, overture_normalized = extract_relevant_tokens(name)
     best_score = 0.0
     best_match = None
     
     for iconic_name in category_venues:
-        iconic_normalized = iconic_name.lower().strip()
+        iconic_tokens, iconic_normalized = extract_relevant_tokens(iconic_name)
+        if not iconic_tokens:
+            continue
         
-        # Short name filter: require exact match for names < 8 characters
-        is_short_name = len(name_normalized) < 8 or len(iconic_normalized) < 8
+        iconic_core = ' '.join(iconic_tokens)
+        overture_core = ' '.join(overture_tokens) if overture_tokens else overture_normalized
         
-        if is_short_name:
-            # Use exact ratio for short names to avoid false positives
-            score = fuzz.ratio(name_normalized, iconic_normalized) / 100.0
-            required_threshold = 1.0  # Must be exact match
+        # CASE A: Short/Brand Names (<5 chars in core)
+        if len(iconic_core) < 5:
+            exact_token_match = iconic_core in overture_tokens
+            exact_string_match = iconic_normalized == overture_normalized
+            
+            if exact_token_match or exact_string_match:
+                score = 1.0
+            elif iconic_core in overture_normalized:
+                pattern = r'\b' + re.escape(iconic_core) + r'\b'
+                score = 0.95 if re.search(pattern, overture_normalized) else 0.0
+            else:
+                score = 0.0
+            required_threshold = 0.95
+        
+        # CASE B: Medium/Long Names (≥5 chars in core)
         else:
-            # Use token_set_ratio for longer names (better for variations)
-            score = fuzz.token_set_ratio(name_normalized, iconic_normalized) / 100.0
+            score = fuzz.token_set_ratio(iconic_normalized, overture_normalized) / 100.0
+            main_token = max(iconic_tokens, key=len) if iconic_tokens else iconic_core
+            if main_token not in overture_normalized:
+                score = 0.0
             required_threshold = threshold
         
         if score >= required_threshold and score > best_score:
             best_score = score
             best_match = iconic_name
     
-    is_match = best_score >= threshold if len(name) >= 8 else best_score == 1.0
+    is_match = best_score >= 0.92
     return (is_match, best_match, best_score)
 
 
