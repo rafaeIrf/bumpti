@@ -193,142 +193,149 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
         print(f"⚠️  Cache save error: {str(e)}")
         pg_conn.rollback()
 
-def extract_brand_identity(name, category, overture_category=None):
-    """Extract brand identity by removing contextual noise dynamically.
-    
-    Removes:
-    - Category keywords (internal + overture)
-    - Short words (≤3 chars) without special symbols
-    
-    Preserves:
-    - Brand names with special chars ('+55', 'C&A')
-    - Unique short identifiers
-    """
-    import re
-    import unicodedata
-    
-    # Normalize: remove accents but preserve special chars
-    nfd = unicodedata.normalize('NFD', name)
-    normalized = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
-    normalized = normalized.lower().strip()
-    
-    # Tokenize
-    tokens = re.findall(r'[\w+&-]+', normalized)
-    
-    # Build dynamic stopwords from context
-    contextual_noise = set()
-    
-    # Add category keywords
-    if category:
-        contextual_noise.add(category.lower())
-    if overture_category:
-        contextual_noise.add(overture_category.lower())
-    
-    # Filter tokens
-    brand_tokens = []
-    for token in tokens:
-        # Skip category keywords
-        if token in contextual_noise:
-            continue
-        
-        # Keep if has special chars ('+', '&', '-') - likely brand identifier
-        if any(c in token for c in ['+', '&', '-']):
-            brand_tokens.append(token)
-            continue
-        
-        # Skip short generic words (≤3 chars) unless it's the only meaningful token
-        if len(token) <= 3:
-            # Check if token is purely alphanumeric and short
-            if token.isalnum():
-                continue  # Skip generic short words like 'do', 'da', 'the', etc.
-        
-        # Keep everything else
-        brand_tokens.append(token)
-    
-    # If we removed everything, return original normalized (preserve brand identity)
-    if not brand_tokens:
-        return normalized, tokens
-    
-    brand_identity = ' '.join(brand_tokens)
-    return brand_identity, brand_tokens
 
-
-def fuzzy_match_iconic(name, category, hotlist, overture_category=None, threshold=0.92):
-    """Match iconic venues using dynamic brand identity extraction.
-    
-    Language-agnostic approach:
-    - No static stopword lists
-    - Contextual noise removal based on category
-    - Works globally (US, Spain, Japan, etc.)
+def find_candidates_for_iconic(iconic_name, all_pois, category, max_candidates=5, min_similarity=70):
+    """STAGE 1: Pre-filter POIs using fuzzy matching to find candidates.
     
     Args:
-        name: Venue name from Overture
-        category: Internal category (e.g., 'bar', 'nightclub')
-        hotlist: Dict of iconic venues by category from AI
-        overture_category: Original Overture category (optional)
-        threshold: Similarity threshold (0-1)
+        iconic_name: Name from AI hotlist
+        all_pois: List of all POIs from Overture [(name, internal_id), ...]
+        category: Category to match
+        max_candidates: Maximum candidates to return
+        min_similarity: Minimum token_set_ratio score (0-100)
     
-    Returns: (is_match, best_match_name, similarity_score)
+    Returns: List of (poi_name, poi_id, similarity_score)
     """
-    if not hotlist or not name or not category:
-        return (False, None, 0.0)
+    candidates = []
+    iconic_normalized = iconic_name.lower().strip()
     
-    # Category lock: only match within same category
-    category_venues = hotlist.get(category, [])
-    if not category_venues:
-        return (False, None, 0.0)
-    
-    # Extract brand identity from Overture name
-    overture_identity, overture_tokens = extract_brand_identity(name, category, overture_category)
-    
-    best_score = 0.0
-    best_match = None
-    
-    for iconic_name in category_venues:
-        # Extract brand identity from AI-suggested name
-        iconic_identity, iconic_tokens = extract_brand_identity(iconic_name, category)
+    for poi_name, poi_id in all_pois:
+        poi_normalized = poi_name.lower().strip()
         
-        # Skip if no meaningful identity
-        if not iconic_identity or not overture_identity:
+        # Calculate similarity
+        similarity = fuzz.token_set_ratio(iconic_normalized, poi_normalized)
+        
+        if similarity >= min_similarity:
+            candidates.append((poi_name, poi_id, similarity))
+    
+    # Sort by similarity and take top N
+    candidates.sort(key=lambda x: x[2], reverse=True)
+    return candidates[:max_candidates]
+
+
+def ai_validate_matches_batch(validation_batch, api_key):
+    """STAGE 2: Use gpt-4o-mini as semantic judge to validate matches in batch.
+    
+    Args:
+        validation_batch: List of {"iconic_name": str, "candidates": [{"id": int, "name": str}]}
+        api_key: OpenAI API key
+    
+    Returns: Dict mapping iconic_name -> matched_poi_id (or None)
+    """
+    if not validation_batch or not api_key:
+        return {}
+    
+    try:
+        client = OpenAI(api_key=api_key)
+        
+        # Build batch prompt
+        batch_data = json.dumps(validation_batch, ensure_ascii=False, indent=2)
+        
+        prompt = f"""Você é um validador semântico de locais. Sua tarefa é identificar matches corretos entre locais icônicos e candidatos reais.
+
+REGRAS:
+1. Um match é válido quando o candidato claramente se refere ao MESMO estabelecimento que o local icônico.
+2. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
+3. Matches INVÁLIDOS: 'Bar do Zé' ≠ 'Bar do Pedro', 'Academia Fit' ≠ 'Academia Smart Fit'
+4. Se NENHUM candidato for um match óbvio, retorne null para aquele local.
+
+LOCAIS E CANDIDATOS:
+{batch_data}
+
+Retorne um JSON com o formato:
+{{
+  "matches": {{
+    "nome_do_local_iconico": candidate_id_ou_null,
+    ...
+  }}
+}}
+
+Retorne APENAS o JSON, sem texto adicional."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        return result.get('matches', {})
+        
+    except Exception as e:
+        print(f"⚠️  AI validation error: {str(e)}")
+        return {}
+
+
+def ai_match_iconic_venues(hotlist, all_pois_by_category):
+    """Complete AI matcher pipeline: pre-filter + batch validation.
+    
+    Args:
+        hotlist: Dict of {category: [iconic_names]}
+        all_pois_by_category: Dict of {category: [(name, internal_id)]}
+    
+    Returns: Dict mapping poi_id -> iconic_name for matched venues
+    """
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        print("⚠️  OPENAI_API_KEY not set - skipping AI matching")
+        return {}
+    
+    matched_pois = {}  # poi_id -> iconic_name
+    validation_queue = []
+    poi_id_to_name = {}  # Track poi_id -> poi_name for later lookup
+    
+    # STAGE 1: Build candidates for all iconic venues
+    for category, iconic_names in hotlist.items():
+        all_pois = all_pois_by_category.get(category, [])
+        if not all_pois:
             continue
         
-        # CASE A: Short brand names (identity ≤5 chars)
-        # Examples: '+55', 'Shed', 'Vibe'
-        if len(iconic_identity.replace(' ', '')) <= 5:
-            # Require exact or near-exact match
-            # Check if iconic identity appears as exact token
-            if iconic_identity in overture_tokens or iconic_identity == overture_identity:
-                score = 1.0
-            else:
-                # Use exact ratio for short brands
-                score = fuzz.ratio(iconic_identity, overture_identity) / 100.0
+        for iconic_name in iconic_names:
+            candidates = find_candidates_for_iconic(iconic_name, all_pois, category)
             
-            required_threshold = 0.95  # Must be near-perfect for short names
-        
-        # CASE B: Long brand names (identity >5 chars)
-        # Examples: 'Madalosso', 'Parque Barigui'
-        else:
-            # Use token_set_ratio for flexibility (handles word order, extra words)
-            score = fuzz.token_set_ratio(iconic_identity, overture_identity) / 100.0
-            
-            # Additional check: main brand token must be present
-            # Get longest token from iconic identity (likely the key brand term)
-            if iconic_tokens:
-                main_brand_token = max(iconic_tokens, key=len)
-                # Verify main token appears in overture identity
-                if main_brand_token not in overture_identity:
-                    score = 0.0  # Reject if key brand term missing
-            
-            required_threshold = threshold  # Default 0.92
-        
-        # Update best match if score meets threshold
-        if score >= required_threshold and score > best_score:
-            best_score = score
-            best_match = iconic_name
+            if candidates:
+                # Prepare for AI validation
+                candidate_list = []
+                for poi_name, poi_id, similarity in candidates:
+                    candidate_list.append({"id": poi_id, "name": poi_name})
+                    poi_id_to_name[poi_id] = poi_name
+                
+                validation_queue.append({
+                    "iconic_name": iconic_name,
+                    "candidates": candidate_list
+                })
     
-    # Final decision
-    is_match = best_score >= 0.92
-    return (is_match, best_match, best_score)
+    # STAGE 2: Batch validate in chunks of 20
+    batch_size = 20
+    for i in range(0, len(validation_queue), batch_size):
+        batch = validation_queue[i:i + batch_size]
+        
+        print(f"🤖 AI validating batch {i//batch_size + 1} ({len(batch)} venues)...")
+        
+        matches = ai_validate_matches_batch(batch, api_key)
+        
+        # Process results
+        for iconic_name, matched_id in matches.items():
+            if matched_id and matched_id in poi_id_to_name:
+                matched_pois[matched_id] = iconic_name
+                print(f"   ✅ '{iconic_name}' → '{poi_id_to_name[matched_id]}'")
+    
+    print(f"✨ AI Matcher: {len(matched_pois)} iconic venues matched")
+    return matched_pois
 
 
 def calculate_scores(confidence, websites, socials, street=None, house_number=None, neighborhood=None, 
@@ -783,6 +790,38 @@ def main():
         
         iconic_matches = []
         
+        # STAGE 0: Collect all POIs by category for AI matching
+        print("📦 Collecting POIs for AI matching...")
+        all_pois_by_category = {}
+        poi_data = {}  # poi_id -> (name, row_data) for later processing
+        
+        for row in result:
+            overture_cat = row[2]
+            internal_cat = category_map.get(overture_cat)
+            if not internal_cat:
+                continue
+            
+            # Sanitize name early
+            raw_name = row[1]
+            sanitized_name = sanitize_name(raw_name, config)
+            if not sanitized_name:
+                continue
+            
+            # Generate temporary ID for POI (use row hash or index)
+            poi_id = hash((sanitized_name, row[0]))  # hash of (name, overture_id)
+            
+            # Store for AI matching
+            if internal_cat not in all_pois_by_category:
+                all_pois_by_category[internal_cat] = []
+            all_pois_by_category[internal_cat].append((sanitized_name, poi_id))
+            
+            # Store row data for later
+            poi_data[poi_id] = (sanitized_name, row)
+        
+        # Run AI matcher once on all POIs
+        matched_iconic_pois = ai_match_iconic_venues(hotlist, all_pois_by_category)
+        
+
         # Process and sanitize
         staging_rows = []
         for row in result:
@@ -817,13 +856,19 @@ def main():
             source_count = row[14] if row[14] else 1  # source_count
             brand_name = row[15]  # brand_name
             
-            # Check if venue is iconic using AI-generated hotlist
-            is_iconic, matched_name, similarity = fuzzy_match_iconic(sanitized_name, internal_cat, hotlist)
-            if is_iconic:
+            
+            # Generate POI ID for matching
+            poi_id = hash((sanitized_name, row[0]))
+            
+            # Check if this POI was matched as iconic by AI
+            is_iconic = False
+            matched_name = None
+            if poi_id in matched_iconic_pois:
+                is_iconic = True
+                matched_name = matched_iconic_pois[poi_id]
                 iconic_matches.append({
                     "name": sanitized_name,
                     "matched": matched_name,
-                    "similarity": similarity,
                     "category": internal_cat
                 })
             # Social scoring + Address completeness + Authority signals
