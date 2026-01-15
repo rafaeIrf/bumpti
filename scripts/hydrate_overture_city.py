@@ -519,8 +519,6 @@ def main():
             ))
             metrics['final_sent_to_staging'] += 1
         
-        print(f"✅ {metrics['final_sent_to_staging']} POIs passed sanitization")
-        
         # ===========================================
         # DEDUPLICATION: Fuzzy matching for large venues
         # ===========================================
@@ -565,17 +563,12 @@ def main():
             # Grid-based clustering for large venues
             clusters = {}
             for poi in large_venues:
-                # Get lat/lng from first staging row (we need to parse geom_wkb_hex)
-                # For simplicity, use a name-based approximation
-                # Grid: round to 2 decimals = ~1.1km precision
-                # We'll use the name as primary key since we don't have parsed coords yet
-                
                 # Normalize name for fuzzy matching
                 norm_name = poi['name'].lower().strip()
                 
-                # Simple clustering: group by first 10 chars of name
-                # This is an approximation - ideally we'd parse geometry
-                cluster_key = (norm_name[:15], poi['category'])
+                # Simple clustering: group by first 15 chars of normalized name
+                # DON'T include category in key - Overture often miscategorizes (e.g., park as restaurant)
+                cluster_key = norm_name[:15]  # Removed category from key
                 
                 if cluster_key not in clusters:
                     clusters[cluster_key] = []
@@ -601,7 +594,8 @@ def main():
                     
                     if similar_group:
                         # Keep the one with highest structural_score
-                        best = max(similar_group, key=lambda x: (x['structural_score'], x['confidence'], x['street'] is not None))
+                        # Keep highest structural_score (if tie, just pick first)
+                        best = max(similar_group, key=lambda x: x['structural_score'])
                         deduped_large_venues.append(best)
             
             # Combine deduped large venues with untouched others
@@ -635,8 +629,10 @@ def main():
         staging_rows = deduplicate_staging_pois(staging_rows)
         deduped_count = len(staging_rows)
         
+        print(f"✅ Sanitization: {metrics['final_sent_to_staging']} POIs passed filters")
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
+        print(f"💾 Final count for staging: {deduped_count} POIs")
         
         # Bulk insert to staging
         insert_sql = """
