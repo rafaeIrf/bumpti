@@ -243,6 +243,8 @@ def main():
           addresses[1].freeform AS street,
           addresses[1].country AS country_code,
           addresses[1].postcode AS postal_code,
+          addresses[1].locality AS neighborhood,
+          addresses[1].region AS state,
           confidence,
           sources[1] AS source_raw,
           websites,
@@ -314,22 +316,33 @@ def main():
             
             geom_wkb_hex = row[4].hex()
             
+            # Parse house number from street (format: "Street Name, 123")
+            street_full = row[5] or ''
+            house_number = None
+            street_clean = street_full
+            
+            if street_full and ',' in street_full:
+                parts = street_full.rsplit(',', 1)
+                if len(parts) == 2 and parts[1].strip().replace('-', '').replace('/', '').isdigit():
+                    street_clean = parts[0].strip()
+                    house_number = parts[1].strip()
+            
             staging_rows.append((
                 sanitized_name,
                 internal_cat,
                 geom_wkb_hex,
-                row[5],  # street
-                None,  # house_number
-                None,  # neighborhood
+                street_clean,  # street without number
+                house_number,  # extracted house number
+                row[8],  # neighborhood (locality)
                 city_name,
-                None,  # state
+                row[9],  # state (region)
                 row[7],  # postal_code
                 row[6],  # country_code
                 structural_score,
-                row[8],  # confidence
+                row[10],  # confidence
                 overture_cat,
                 row[0],  # overture_id
-                json.dumps(row[9]) if row[9] else None  # overture_raw
+                json.dumps(row[11]) if row[11] else None  # overture_raw
             ))
             metrics['final_sent_to_staging'] += 1
         
