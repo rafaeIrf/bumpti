@@ -31,8 +31,8 @@ def generate_hotlist(city_name):
     - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
     - stadium: 10 locais (Grandes arenas e estádios principais)
     - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
-    - cafe: 10 locais (Os maiores e principais cafés)
-    - university: 10 locais (Grandes universidades e faculdades principais)
+    - cafe: 15 locais (Os maiores e principais cafés)
+    - university: 15 locais (Grandes universidades e faculdades principais)
 
     REGRAS RÍGIDAS:
     - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
