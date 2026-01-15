@@ -354,6 +354,7 @@ def main():
         merge_sql = "SELECT * FROM merge_staging_to_production(%s)"
         pg_cur.execute(merge_sql, (city_id if is_update else None,))
         merge_result = pg_cur.fetchone()
+        pg_conn.commit()  # Commit merge transaction
         
         pg_cur.close()
         pg_conn.close()
