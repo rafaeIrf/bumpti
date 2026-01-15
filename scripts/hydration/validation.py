@@ -26,20 +26,21 @@ def validate_category_name(name, category, original_category, config):
 
 
 def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categories, config):
-    """Check if the category is valid within the taxonomy hierarchy."""
-    # Get taxonomy config
+    """Check if the category is valid (not in forbidden list)."""
+    # Get forbidden terms from taxonomy config
     taxonomy_config = config.get('taxonomy', {})
-    category_hierarchy = taxonomy_config.get('category_hierarchy', {})
+    forbidden_terms = taxonomy_config.get('forbidden_hierarchy_terms', [])
     
-    # Combine with alternates
+    # Combine primary and alternate categories
     all_cats = [overture_category] + (alternate_categories or [])
     
-    # Check if any category is in our whitelist
+    # Reject if ANY category contains forbidden terms
     for cat in all_cats:
-        if cat in category_hierarchy:
-            return True
+        if cat and cat.lower() in forbidden_terms:
+            return False
     
-    return False
+    # Accept by default (POIs are innocent until proven guilty)
+    return True
 
 
 def filter_osm_red_flags(category_tags, config):
