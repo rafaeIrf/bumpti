@@ -255,7 +255,7 @@ BEGIN
   -- ===========================================
   WITH sources_upserted AS (
     INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
-    SELECT
+    SELECT DISTINCT ON (s.overture_id)
       p.id,
       'overture'::text,
       s.overture_id,
@@ -272,6 +272,7 @@ BEGIN
       AND s.overture_id NOT IN (
         SELECT external_id FROM place_sources WHERE provider = 'overture'
       )
+    ORDER BY s.overture_id, p.created_at DESC  -- Prefer most recent place if multiple matches
     ON CONFLICT (provider, external_id) DO UPDATE SET
       place_id = EXCLUDED.place_id,
       raw = EXCLUDED.raw,
