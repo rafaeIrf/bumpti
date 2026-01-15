@@ -77,10 +77,10 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     """Calculate relevance score based on data magnitude and institutional authority.
     
     Returns: (relevance_score, bonus_flags) or None if rejected
-    Uses values from config['scoring_modifiers']['base_scoring']
+    Uses values from config['categories']['scoring_modifiers']['base_scoring']
     """
     # Get scoring values from config (required)
-    pts = config['scoring_modifiers']['base_scoring']
+    pts = config['categories']['scoring_modifiers']['base_scoring']
     
     has_social = False
     if socials:
@@ -155,7 +155,7 @@ def apply_scoring_modifiers(relevance_score, internal_category, overture_categor
     - Penalties: fast_food 0.25x, gas_station 0.15x, etc
     - Boosts: stadium 2.0x, university 1.8x, etc
     """
-    modifiers = config.get('scoring_modifiers', {})
+    modifiers = config.get('categories', {}).get('scoring_modifiers', {})
     if not modifiers:
         return (relevance_score, 1.0)
     
