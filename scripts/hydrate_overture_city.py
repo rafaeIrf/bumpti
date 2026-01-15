@@ -87,29 +87,34 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um especialista em geolocalização e guia local de {city_name}.
+        prompt = f"""Você é um guia local expert em {city_name}. Sua tarefa é listar os estabelecimentos mais FAMOSOS, BADALADOS e ICÔNICOS.
 
-TAREFA: Gere uma lista de EXATAMENTE 200 estabelecimentos reais e populares.
+REGRAS DE OURO (OBRIGATÓRIAS):
+❌ PROIBIDO inventar nomes ou usar nomes genéricos ("Bar do Zé", "Academia Fit", "Club X", "Restaurante Popular", etc.)
+❌ Se você não souber lugares REAIS e FAMOSOS, retorne APENAS os que você tem certeza absoluta que existem.
+✅ QUALIDADE > QUANTIDADE. Prefiro 50 lugares REAIS do que 200 inventados.
+✅ Foque em nomes que teriam uma conta grande no Instagram ou Google Maps com muitas avaliações.
+✅ Use o NOME OFICIAL completo do estabelecimento.
 
-REGRAS OBRIGATÓRIAS:
-1. Se os locais mais famosos acabarem, complete com locais populares de bairro (alto movimento de jovens e público social).
-2. Use NOME COMPLETO e OFICIAL (ex: "Bar do Alemão", não "Alemão").
-3. APENAS locais que existem ATUALMENTE (não fechados ou fictícios).
+EXEMPLOS DE NOMES REAIS (Curitiba):
+- Nightlife: "Taj Pharmacy", "+55", "Wit Bar", "Shed", "James Bar", "Hottel 418", "Sheridan's Irish Pub"
+- Gastronomy: "Madalosso", "Madero Prime", "Terrazza 40", "Bar do Alemão", "Coco Bambu", "Durski"
+- Parks: "Parque Barigui", "Bosque Alemão", "Jardim Botânico", "Parque TânguaEstadiums: "Ço Couto Pereira", "Arena da Baixada", "Estádio Durival Britto"
 
-DISTRIBUIÇÃO OBRIGATÓRIA (total = 200):
-- bar: 40 locais
-- nightclub: 20 locais  
-- park: 20 locais
-- stadium: 10 locais
-- university: 10 locais
-- gym: 20 locais
-- club: 20 locais
-- restaurant: 40 locais
-- shopping: 20 locais
+CATEGORIAS (retorne APENAS os que você conhece):
+- bar: bares famosos e badalados
+- nightclub: baladas e casas noturnas icônicas
+- park: parques conhecidos e frequentados
+- stadium: estádios de futebol principais
+- university: universidades reconhecidas
+- gym: academias de grande porte ou franquias conhecidas
+- club: clubes sociais tradicionais
+- restaurant: restaurantes famosos e renomados
+- shopping: shoppings principais
 
-Retorne estritamente um JSON:
+Retorne APENAS um JSON:
 {{
-  "bar": ["nome1", "nome2", ...],
+  "bar": ["Nome Real 1", "Nome Real 2", ...],
   "nightclub": [...],
   "park": [...],
   "stadium": [...],
@@ -118,16 +123,18 @@ Retorne estritamente um JSON:
   "club": [...],
   "restaurant": [...],
   "shopping": [...]
-}}"""
+}}
+
+LEMBRETE FINAL: Se tiver dúvida sobre um nome, NÃO INCLUA. Só lugares que realmente existem e são famosos."""
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a local expert providing structured JSON data."},
+                {"role": "system", "content": "You are an expert local guide who ONLY provides real, verified venue names. Never invent or use generic names."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.3
+            temperature=0.2
         )
         
         result = json.loads(response.choices[0].message.content)
@@ -178,7 +185,7 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
             ON CONFLICT (city_id) 
             DO UPDATE SET hotlist = EXCLUDED.hotlist, venue_count = EXCLUDED.venue_count,
                 generated_at = NOW(), updated_at = NOW()
-        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4o-mini', 0.3))
+        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4o', 0.2))
         pg_conn.commit()
         cur.close()
         print(f"💾 Hotlist cached to database ({venue_count} venues)")
