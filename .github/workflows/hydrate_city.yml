@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install duckdb psycopg2-binary requests
+          pip install duckdb psycopg2-binary requests openai rapidfuzz
 
       - name: Run hydration script
         id: hydrate
@@ -29,6 +29,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GH_HYDRATION_TOKEN: ${{ secrets.GH_HYDRATION_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python scripts/hydrate_overture_city.py \
             "${{ github.event.client_payload.city_id }}" \
