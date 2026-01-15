@@ -89,14 +89,12 @@ serve(async (req) => {
       
       // Trigger city hydration in background (don't wait for result)
       triggerCityHydrationIfNeeded(
-        latNum,
-        lngNum,
         supabaseUrl,
         serviceRoleKey,
+        latNum.toString(),
+        lngNum.toString(),
         githubToken
-      ).catch((err) => {
-        console.error("City hydration trigger failed:", err);
-      });
+      ).catch((err) => console.error("Hydration trigger failed:", err));
     }
 
     return new Response(JSON.stringify(results), {
