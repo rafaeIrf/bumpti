@@ -565,17 +565,14 @@ def main():
             # Grid-based clustering for large venues
             clusters = {}
             for poi in large_venues:
-                # Get lat/lng from first staging row (we need to parse geom_wkb_hex)
-                # For simplicity, use a name-based approximation
-                # Grid: round to 2 decimals = ~1.1km precision
-                # We'll use the name as primary key since we don't have parsed coords yet
-                
                 # Normalize name for fuzzy matching
                 norm_name = poi['name'].lower().strip()
                 
-                # Simple clustering: group by first 10 chars of name
-                # This is an approximation - ideally we'd parse geometry
-                cluster_key = (norm_name[:15], poi['category'])
+                # Simple clustering: group by first 15 chars of normalized name
+                # DON'T include category in key - Overture often miscategorizes
+
+ (e.g., park as restaurant)
+                cluster_key = norm_name[:15]  # Removed category from key
                 
                 if cluster_key not in clusters:
                     clusters[cluster_key] = []
