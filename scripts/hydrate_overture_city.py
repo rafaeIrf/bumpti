@@ -536,7 +536,7 @@ def main():
                 WHERE 
                   bbox.xmin >= {tile_bbox[0]} AND bbox.xmax <= {tile_bbox[2]}
                   AND bbox.ymin >= {tile_bbox[1]} AND bbox.ymax <= {tile_bbox[3]}
-                  AND confidence >= 0.6
+                  AND confidence >= 0.7
                   AND categories.primary IS NOT NULL
                   AND (operating_status IS NULL OR operating_status = 'open')
                   AND NOT list_has_any(
