@@ -182,7 +182,7 @@ def finalize_callback(city_id, status, error_msg=None, stats=None):
     """Call Edge Function callback to update cities_registry."""
     url = f"{os.environ['SUPABASE_URL']}/functions/v1/finalize-city-hydration"
     headers = {
-        'x-github-token': os.environ['GITHUB_HYDRATION_TOKEN'],
+        'x-github-token': os.environ['GH_HYDRATION_TOKEN'],
         'Content-Type': 'application/json'
     }
     payload = {'city_id': city_id, 'status': status}
