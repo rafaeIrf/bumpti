@@ -224,34 +224,37 @@ BEGIN
         PARTITION BY 
           -- Group by normalized name
           immutable_unaccent(lower(s.name)),
-          -- Group by approximate location (floor to ~110m precision for large venues, ~11m for regular)
+          -- Group by approximate location using adaptive grid:
+          -- * 100 for large venues = ~1.1km grid (captures parks with 500m spread)
+          -- * 10000 for regular places = ~11m grid (prevents merging neighboring bars)
           CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000) -- 3 decimal places ~110m
-            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000) -- 4 decimal places ~11m
+            WHEN s.category IN ('park', 'university', 'stadium', 'airport', 'beach')
+            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 100) -- 1.1km grid
+            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000) -- 11m grid
           END,
           CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            WHEN s.category IN ('park', 'university', 'stadium', 'airport', 'beach')
+            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 100)
             ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
           END
         ORDER BY 
-          s.structural_score DESC,  -- Highest quality first
-          s.confidence DESC,         -- Then confidence
-          s.created_at ASC           -- Then oldest (stable sort)
+          s.structural_score DESC,   -- Highest quality first
+          s.confidence DESC,          -- Then confidence
+          (s.street IS NOT NULL) DESC, -- Then street completeness (better address data)
+          s.created_at ASC            -- Then oldest (stable sort)
       ) as staging_rank,
       -- Track group size for debugging
       COUNT(*) OVER (
         PARTITION BY 
           immutable_unaccent(lower(s.name)),
           CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
-            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+            WHEN s.category IN ('park', 'university', 'stadium', 'airport', 'beach')
+            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 100)  -- 1.1km grid
+            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000) -- 11m grid
           END,
           CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            WHEN s.category IN ('park', 'university', 'stadium', 'airport', 'beach')
+            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 100)
             ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
           END
       ) as group_size
@@ -336,7 +339,7 @@ BEGIN
         ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
         ST_SetSRID(ST_MakePoint(asg.lng, asg.lat), 4326)::geography,
         CASE 
-          WHEN asg.category IN ('park', 'university', 'stadium', 'airport') 
+          WHEN asg.category IN ('park', 'university', 'stadium', 'airport', 'beach') 
           THEN 1000.0  -- 1km para vincular todos os membros do cluster de grandes venues
           ELSE 50.0     -- 50m para locais normais
         END
