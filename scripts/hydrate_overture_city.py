@@ -494,16 +494,19 @@ def main():
             relevance_score += taxonomy_bonus
             
             # AUTHORITY BONUS: Wikidata presence (+10)
-            wikidata_id = row[14]  # wikidata field
+            wikidata_id = row[14]  # wikidata_id field
             if wikidata_id and wikidata_id.strip():
                 relevance_score += 10
+                logger.log(f"  🏛️  AUTHORITY BONUS: {sanitized_name} has Wikidata ID {wikidata_id} (+10)")
             
             # SCALE BONUS: Polygon area (+5/+10)
             area_sqm = row[15] if row[15] else 0  # area_sqm field
             if area_sqm > 50000:  # > 50,000 m² (5 hectares)
                 relevance_score += 10
+                logger.log(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+10)")
             elif area_sqm > 5000:  # > 5,000 m² (0.5 hectares)
                 relevance_score += 5
+                logger.log(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+5)")
             
             geom_wkb_hex = row[4].hex()
             
