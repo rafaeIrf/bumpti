@@ -686,8 +686,8 @@ def main():
         finalize_callback(city_id, 'completed', stats=stats)
         
         
+        
     except Exception as e:
-        print(f"   Grid size: 4x4 = {total_tiles} chunks")
         print(f"   Strategy: Independent commits per chunk to prevent DB locks\n")
         
         # Aggregated stats across all tiles
