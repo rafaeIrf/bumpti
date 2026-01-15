@@ -412,7 +412,13 @@ def main():
           confidence,
           sources[1] AS source_raw,
           websites,
-          socials
+          socials,
+          (SELECT list_filter(sources, x -> x.record_id LIKE 'Q%')[1].record_id) AS wikidata_id,
+          CASE 
+            WHEN ST_Dimension(geometry) = 2 
+            THEN ST_Area(ST_Transform(geometry, 'EPSG:4326', 'EPSG:3857'))
+            ELSE 0 
+          END AS area_sqm
         FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
@@ -486,6 +492,18 @@ def main():
             # Add taxonomy bonus
             taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
             relevance_score += taxonomy_bonus
+            
+            # AUTHORITY BONUS: Wikidata presence (+10)
+            wikidata_id = row[14]  # wikidata field
+            if wikidata_id and wikidata_id.strip():
+                relevance_score += 10
+            
+            # SCALE BONUS: Polygon area (+5/+10)
+            area_sqm = row[15] if row[15] else 0  # area_sqm field
+            if area_sqm > 50000:  # > 50,000 m² (5 hectares)
+                relevance_score += 10
+            elif area_sqm > 5000:  # > 5,000 m² (0.5 hectares)
+                relevance_score += 5
             
             geom_wkb_hex = row[4].hex()
             
