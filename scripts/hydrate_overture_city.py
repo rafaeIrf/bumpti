@@ -210,6 +210,10 @@ def discover_city_from_overture(lat: float, lng: float):
     con.execute("INSTALL httpfs; LOAD httpfs;")
     con.execute("SET s3_region='us-west-2';")
     
+    # Use specific type=administrative_boundary path
+    s3_path = 's3://overturemaps-us-west-2/release/2024-11-13.0/theme=admins/type=administrative_boundary/*.parquet'
+    print(f"📂 Querying S3: {s3_path}")
+    
     query = f"""
     SELECT 
       id AS admin_id,
@@ -219,7 +223,7 @@ def discover_city_from_overture(lat: float, lng: float):
       country AS country_code,
       region AS state,
       admin_level
-    FROM read_parquet('s3://overturemaps-us-west-2/release/*/theme=admins/**/*.parquet')
+    FROM read_parquet('{s3_path}')
     WHERE admin_level IN (8, 7, 9)
       AND ST_Within(ST_Point({lng}, {lat}), geometry)
     ORDER BY admin_level DESC
@@ -320,6 +324,9 @@ def main():
     
     if not lat or not lng:
         raise Exception("Latitude and longitude are required")
+    
+    # Initialize city_id for error handler
+    city_id = city_id_arg
     
     try:
         config = load_curation_config()
