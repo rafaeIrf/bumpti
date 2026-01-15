@@ -24,13 +24,15 @@ def generate_hotlist(city_name):
         prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
     Sua missão é listar EXATAMENTE 120 locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
     
-    DISTRIBUIÇÃO OBRIGATÓRIA (Total 120):
+    DISTRIBUIÇÃO OBRIGATÓRIA:
     - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
     - nightclub: 20 locais (As baladas e casas noturnas mais icônicas)
     - restaurant: 30 locais (Os maiores, mais populares e com alta rotatividade)
     - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
     - stadium: 10 locais (Grandes arenas e estádios principais)
     - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
+    - cafe: 10 locais (Os maiores e principais cafés)
+    - university: 10 locais (Grandes universidades e faculdades principais)
 
     REGRAS RÍGIDAS:
     - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
@@ -109,27 +111,31 @@ def find_candidates_for_iconic(iconic_name, all_pois, category, max_candidates=5
     
     Args:
         iconic_name: Name from AI hotlist
-        all_pois: List of all POIs from Overture [(name, internal_id), ...]
+        all_pois: List of all POIs from Overture [(name, internal_id, neighborhood), ...]
         category: Category to match
         max_candidates: Maximum candidates to return
         min_similarity: Minimum token_set_ratio score (0-100)
     
-    Returns: List of (poi_name, poi_id, similarity_score)
+    Returns: List of (poi_name, poi_id, neighborhood, similarity_score)
     """
     candidates = []
     iconic_normalized = iconic_name.lower().strip()
     
-    for poi_name, poi_id in all_pois:
+    for poi_tuple in all_pois:
+        poi_name = poi_tuple[0]
+        poi_id = poi_tuple[1]
+        poi_neighborhood = poi_tuple[2] if len(poi_tuple) > 2 else None
+        
         poi_normalized = poi_name.lower().strip()
         
         # Calculate similarity
         similarity = fuzz.token_set_ratio(iconic_normalized, poi_normalized)
         
         if similarity >= min_similarity:
-            candidates.append((poi_name, poi_id, similarity))
+            candidates.append((poi_name, poi_id, poi_neighborhood, similarity))
     
     # Sort by similarity and take top N
-    candidates.sort(key=lambda x: x[2], reverse=True)
+    candidates.sort(key=lambda x: x[3], reverse=True)
     return candidates[:max_candidates]
 
 
@@ -137,7 +143,7 @@ def ai_validate_matches_batch(validation_batch, api_key):
     """STAGE 2: Use gpt-4o-mini as semantic judge to validate matches in batch.
     
     Args:
-        validation_batch: List of {"iconic_name": str, "candidates": [{"id": int, "name": str}]}
+        validation_batch: List of {"iconic_name": str, "candidates": [{"id": int, "name": str, "neighborhood": str}]}
         api_key: OpenAI API key
     
     Returns: Dict mapping iconic_name -> matched_poi_id (or None)
@@ -155,11 +161,12 @@ def ai_validate_matches_batch(validation_batch, api_key):
 
 REGRAS:
 1. Um match é válido quando o candidato claramente se refere ao MESMO estabelecimento que o local icônico.
-2. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
-3. Matches INVÁLIDOS: 'Bar do Zé' ≠ 'Bar do Pedro', 'Academia Fit' ≠ 'Academia Smart Fit'
-4. Se NENHUM candidato for um match óbvio, retorne null para aquele local.
+2. Use o BAIRRO (neighborhood) como contexto adicional para evitar falsos positivos.
+3. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
+4. Se o bairro não bater, desconfie: 'Bar do João' no Batel ≠ 'Bar do João' no Centro
+5. Se NENHUM candidato for um match óbvio (nome E localização), retorne null.
 
-LOCAIS E CANDIDATOS:
+LOCAIS E CANDIDATOS (com bairros):
 {batch_data}
 
 Retorne um JSON com o formato:
@@ -175,7 +182,7 @@ Retorne APENAS o JSON, sem texto adicional."""
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON."},
+                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON. Consider both name AND neighborhood when matching."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
@@ -218,10 +225,14 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
             candidates = find_candidates_for_iconic(iconic_name, all_pois, category)
             
             if candidates:
-                # Prepare for AI validation
+                # Prepare for AI validation - now includes neighborhood
                 candidate_list = []
-                for poi_name, poi_id, similarity in candidates:
-                    candidate_list.append({"id": poi_id, "name": poi_name})
+                for poi_name, poi_id, poi_neighborhood, similarity in candidates:
+                    candidate_list.append({
+                        "id": poi_id,
+                        "name": poi_name,
+                        "neighborhood": poi_neighborhood or "N/A"
+                    })
                     poi_id_to_name[poi_id] = poi_name
                 
                 validation_queue.append({

@@ -435,10 +435,13 @@ def main():
             # Generate temporary ID for POI (use row hash or index)
             poi_id = hash((sanitized_name, row[0]))  # hash of (name, overture_id)
             
-            # Store for AI matching
+            # Extract neighborhood for context
+            neighborhood = row[8] if row[8] else None  # neighborhood (locality)
+            
+            # Store for AI matching - now includes neighborhood
             if internal_cat not in all_pois_by_category:
                 all_pois_by_category[internal_cat] = []
-            all_pois_by_category[internal_cat].append((sanitized_name, poi_id))
+            all_pois_by_category[internal_cat].append((sanitized_name, poi_id, neighborhood))
             
             # Store row data for later
             poi_data[poi_id] = (sanitized_name, row)
@@ -528,8 +531,10 @@ def main():
             elif modifier > 1.0:
                 metrics['boost_count'] = metrics.get('boost_count', 0) + 1
             
-            # CAP AT 100 to allow distance/engagement to break ties
-            relevance_score = min(relevance_score, 100)
+            
+            # CAP removed to allow iconic venues (+100 boost) to rank at top
+            # Distance and engagement will still break ties at same relevance level
+
             
             # Track bonuses for diagnostics
             metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count
