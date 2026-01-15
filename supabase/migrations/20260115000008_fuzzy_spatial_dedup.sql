@@ -16,7 +16,7 @@ RETURNS TABLE (
 DECLARE
   v_inserted INT := 0;
   v_updated INT := 0;
-  v_source INT := 0;
+  v_sources_updated INT := 0;  -- Renamed from v_source for consistency
   v_deactivated INT := 0;
   v_fuzzy_merged INT := 0;
   v_city_bbox GEOMETRY;
@@ -122,7 +122,7 @@ BEGIN
       ) as distance_meters,
       -- Calculate adaptive radius based on category
       CASE 
-        WHEN fc.staging_category IN ('park', 'university', 'stadium', 'airport', 'zoo', 'botanical_garden', 'golf_course', 'sports_center') 
+        WHEN fc.staging_category IN ('park', 'university', 'stadium', 'airport') 
         THEN 800.0  -- 800 meters for large venues
         ELSE 50.0   -- 50 meters for regular places
       END as adaptive_radius
@@ -133,7 +133,7 @@ BEGIN
         ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
         fc.staging_geom::geography,
         CASE 
-          WHEN fc.staging_category IN ('park', 'university', 'stadium', 'airport', 'zoo', 'botanical_garden', 'golf_course', 'sports_center') 
+          WHEN fc.staging_category IN ('park', 'university', 'stadium') 
           THEN 800.0  -- 800 meters for large venues
           ELSE 50.0   -- 50 meters for regular places
         END
@@ -207,9 +207,62 @@ BEGIN
   INTO v_fuzzy_merged;
 
   -- ===========================================
-  -- STEP 3: INSERT truly new places (no fuzzy match found)
+  -- STEP 3: INTERNAL STAGING DEDUPLICATION + INSERT truly new places
+  -- Dedup within staging batch BEFORE inserting to prevent intra-batch duplicates
   -- ===========================================
-  WITH inserted AS (
+  WITH ranked_staging AS (
+    -- Rank staging records by quality within duplicate groups
+    SELECT 
+      s.*,
+      ROW_NUMBER() OVER (
+        PARTITION BY 
+          -- Group by normalized name
+          immutable_unaccent(lower(s.name)),
+          -- Group by approximate location (floor to ~110m precision for large venues, ~11m for regular)
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000) -- 3 decimal places ~110m
+            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000) -- 4 decimal places ~11m
+          END,
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+          END
+        ORDER BY 
+          s.structural_score DESC,  -- Highest quality first
+          s.confidence DESC,         -- Then confidence
+          s.created_at ASC           -- Then oldest (stable sort)
+      ) as staging_rank,
+      -- Track group size for debugging
+      COUNT(*) OVER (
+        PARTITION BY 
+          immutable_unaccent(lower(s.name)),
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+          END,
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+          END
+      ) as group_size
+    FROM staging_places s
+    WHERE s.overture_id NOT IN (
+      -- Exclude already matched (exact or fuzzy) from previous steps
+      SELECT external_id FROM place_sources WHERE provider = 'overture'
+    )
+  ),
+  winners_only AS (
+    -- Select only the best record from each duplicate group
+    SELECT *
+    FROM ranked_staging
+    WHERE staging_rank = 1
+  ),
+  inserted AS (
+    -- Insert only winner records to places
     INSERT INTO places (
       name, category, lat, lng, street, house_number,
       neighborhood, city, state, postal_code, country_code,
@@ -217,59 +270,92 @@ BEGIN
       active, created_at
     )
     SELECT
-      s.name,
-      s.category,
-      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) as lat,
-      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng,
-      s.street,
-      s.house_number,
-      s.neighborhood,
-      s.city,
-      s.state,
-      s.postal_code,
-      s.country_code,
-      s.structural_score,
-      s.confidence,
-      s.original_category,
-      true,
-      s.created_at
-    FROM staging_places s
-    WHERE s.overture_id NOT IN (
-      -- Exclude already matched (exact or fuzzy)
-      SELECT external_id FROM place_sources WHERE provider = 'overture'
-    )
-    RETURNING id
+      name,
+      category,
+      ST_Y(staging_wkb_to_geom(geom_wkb_hex)) as lat,
+      ST_X(staging_wkb_to_geom(geom_wkb_hex)) as lng,
+      street,
+      house_number,
+      neighborhood,
+      city,
+      state,
+      postal_code,
+      country_code,
+      structural_score,
+      confidence,
+      original_category,
+      true as active,
+      created_at
+    FROM winners_only
+    RETURNING id, name, created_at
   )
   SELECT COUNT(*) INTO v_inserted FROM inserted;
 
   -- ===========================================
-  -- STEP 4: UPSERT place_sources for new inserts
+  -- STEP 4: LINK ALL overture_ids (winners + losers from internal dedup)
+  -- Map ALL staging records in each group to the winner place_id
   -- ===========================================
-  WITH sources_upserted AS (
-    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
-    SELECT
-      p.id,
-      'overture'::text,
+  WITH all_staging_grouped AS (
+    -- Re-partition ALL staging to find their groups (same logic as Step 3)
+    SELECT 
       s.overture_id,
       s.overture_raw,
-      NOW()
+      s.name,
+      s.category,
+      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) as lat,
+      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng,
+      ROW_NUMBER() OVER (
+        PARTITION BY 
+          immutable_unaccent(lower(s.name)),
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+          END,
+          CASE 
+            WHEN s.category IN ('park', 'university', 'stadium')
+            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
+            ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
+          END
+        ORDER BY s.structural_score DESC, s.confidence DESC, s.created_at ASC
+      ) as group_rank
     FROM staging_places s
-    JOIN places p ON (
-      -- Match newly inserted by proximity + name
-      ABS(p.lat - ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND ABS(p.lng - ST_X(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND p.name = s.name
+    WHERE s.overture_id NOT IN (
+      SELECT external_id FROM place_sources WHERE provider = 'overture'
     )
-    WHERE s.overture_id IS NOT NULL
-      AND s.overture_id NOT IN (
-        SELECT external_id FROM place_sources WHERE provider = 'overture'
+  ),
+  sources_upserted AS (
+    -- Link ALL overture_ids to their group's winner place
+    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
+    SELECT DISTINCT ON (asg.overture_id)  -- Ensure each external_id appears only once
+      p.id as place_id,
+      'overture'::text,
+      asg.overture_id,
+      asg.overture_raw,
+      NOW()
+    FROM all_staging_grouped asg
+    JOIN places p ON (
+      -- Match exato pelo nome normalizado e categoria
+      immutable_unaccent(lower(p.name)) = immutable_unaccent(lower(asg.name))
+      AND p.category = asg.category
+      -- Proximidade MUITO RÍGIDA usando ST_DWithin (sub-métrico, ~10 metros)
+      -- Garante que estamos linkando ao lugar exato que acabou de ser inserido
+      AND ST_DWithin(
+        ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
+        ST_SetSRID(ST_MakePoint(asg.lng, asg.lat), 4326)::geography,
+        10.0  -- 10 metros - precisão sub-métrica para evitar ambiguidade
       )
-    ON CONFLICT (place_id, provider) DO UPDATE SET
+    )
+    WHERE asg.overture_id IS NOT NULL
+    -- Use (provider, external_id) PRIMARY KEY for conflict resolution
+    -- DO UPDATE allows re-linking external_id to a better quality place if needed
+    ON CONFLICT (provider, external_id) DO UPDATE SET
+      place_id = EXCLUDED.place_id,
       raw = EXCLUDED.raw,
       created_at = NOW()
     RETURNING *
   )
-  SELECT COUNT(*) INTO v_source FROM sources_upserted;
+  SELECT COUNT(*) INTO v_sources_updated FROM sources_upserted;
 
   -- ===========================================
   -- STEP 5: SOFT DELETE missing places (update mode only)
@@ -294,7 +380,7 @@ BEGIN
   END IF;
 
   -- Return comprehensive stats
-  RETURN QUERY SELECT v_inserted, v_updated, v_source, v_deactivated, v_fuzzy_merged;
+  RETURN QUERY SELECT v_inserted, v_updated, v_sources_updated, v_deactivated, v_fuzzy_merged;
 END;
 $$ LANGUAGE plpgsql;
 
