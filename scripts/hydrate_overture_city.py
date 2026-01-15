@@ -516,6 +516,12 @@ def main():
             
             relevance_score, bonus_flags = score_result
             
+            # Add taxonomy weight bonus (from config/curation/taxonomy_rules.json)
+            taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
+            relevance_score += taxonomy_bonus
+            if taxonomy_bonus > 0:
+                metrics['taxonomy_bonus_count'] = metrics.get('taxonomy_bonus_count', 0) + 1
+            
             # Track bonuses for diagnostics
             metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count
             if bonus_flags['brand_bonus']:
@@ -676,11 +682,13 @@ def main():
         brand_count = metrics.get('brand_bonus_count', 0)
         dual_count = metrics.get('dual_presence_count', 0)
         magnitude_count = metrics.get('magnitude_bonus_count', 0)
+        taxonomy_count = metrics.get('taxonomy_bonus_count', 0)
         
-        print(f"📊 Data Magnitude Bonuses:")
+        print(f"📊 Relevance Bonuses Applied:")
         print(f"   📚 Avg Sources: {avg_sources:.2f} | Multi-Source: {magnitude_count} POIs (+10/+30)")
         print(f"   🏷️  Brand Authority: {brand_count} POIs (+20)")
         print(f"   🌐 Dual Presence (web+social): {dual_count} POIs (+20)")
+        print(f"   🏷️  Taxonomy Weight: {taxonomy_count} POIs (configurable)")
         
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
