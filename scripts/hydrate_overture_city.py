@@ -497,16 +497,19 @@ def main():
             wikidata_id = row[14]  # wikidata_id field
             if wikidata_id and wikidata_id.strip():
                 relevance_score += 10
-                logger.log(f"  🏛️  AUTHORITY BONUS: {sanitized_name} has Wikidata ID {wikidata_id} (+10)")
+                metrics['wikidata_bonus'] = metrics.get('wikidata_bonus', 0) + 1
+                print(f"  🏛️  AUTHORITY BONUS: {sanitized_name} has Wikidata ID {wikidata_id} (+10)")
             
             # SCALE BONUS: Polygon area (+5/+10)
             area_sqm = row[15] if row[15] else 0  # area_sqm field
             if area_sqm > 50000:  # > 50,000 m² (5 hectares)
                 relevance_score += 10
-                logger.log(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+10)")
+                metrics['area_large_bonus'] = metrics.get('area_large_bonus', 0) + 1
+                print(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+10)")
             elif area_sqm > 5000:  # > 5,000 m² (0.5 hectares)
                 relevance_score += 5
-                logger.log(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+5)")
+                metrics['area_small_bonus'] = metrics.get('area_small_bonus', 0) + 1
+                print(f"  📐 SCALE BONUS: {sanitized_name} has area {area_sqm:,.0f}m² (+5)")
             
             geom_wkb_hex = row[4].hex()
             
@@ -652,6 +655,22 @@ def main():
         deduped_count = len(staging_rows)
         
         print(f"✅ Sanitization: {metrics['final_sent_to_staging']} POIs passed filters")
+        
+        # Show bonus metrics
+        wikidata_count = metrics.get('wikidata_bonus', 0)
+        area_large_count = metrics.get('area_large_bonus', 0)
+        area_small_count = metrics.get('area_small_bonus', 0)
+        if wikidata_count or area_large_count or area_small_count:
+            print(f"📊 Relevance Bonuses Applied:")
+            if wikidata_count:
+                print(f"   🏛️  Wikidata Authority: {wikidata_count} POIs (+10 each)")
+            if area_large_count:
+                print(f"   📐 Large Area (>50k m²): {area_large_count} POIs (+10 each)")
+            if area_small_count:
+                print(f"   📐 Medium Area (>5k m²): {area_small_count} POIs (+5 each)")
+        else:
+            print(f"📊 No authority/scale bonuses found (all POIs are points without Wikidata)")
+        
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
         print(f"💾 Final count for staging: {deduped_count} POIs")

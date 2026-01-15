@@ -45,7 +45,7 @@ BEGIN
       state = s.state,
       postal_code = s.postal_code,
       country_code = s.country_code,
-      structural_score = s.structural_score,
+      relevance_score = s.relevance_score,
       confidence = s.confidence,
       original_category = s.original_category,
       active = true,
@@ -220,7 +220,7 @@ BEGIN
     INSERT INTO places (
       name, category, lat, lng, street, house_number,
       neighborhood, city, state, postal_code, country_code,
-      structural_score, confidence, original_category,
+      relevance_score, confidence, original_category,
       active, created_at
     )
     SELECT
@@ -235,7 +235,7 @@ BEGIN
       s.state,
       s.postal_code,
       s.country_code,
-      s.structural_score,
+      s.relevance_score,
       s.confidence,
       s.original_category,
       true,
@@ -255,7 +255,7 @@ BEGIN
   -- ===========================================
   WITH sources_upserted AS (
     INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
-    SELECT
+    SELECT DISTINCT ON (s.overture_id)
       p.id,
       'overture'::text,
       s.overture_id,
@@ -272,6 +272,7 @@ BEGIN
       AND s.overture_id NOT IN (
         SELECT external_id FROM place_sources WHERE provider = 'overture'
       )
+    ORDER BY s.overture_id, p.created_at DESC  -- Prefer most recent place if multiple matches
     ON CONFLICT (provider, external_id) DO UPDATE SET
       place_id = EXCLUDED.place_id,
       raw = EXCLUDED.raw,
