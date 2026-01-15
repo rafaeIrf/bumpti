@@ -257,7 +257,7 @@ def main():
             list_append(categories.alternate, categories.primary),
             [{blacklist_sql}]
           )
-        LIMIT 50000
+        LIMIT 400000
         """
         
         result = con.execute(query).fetchall()
