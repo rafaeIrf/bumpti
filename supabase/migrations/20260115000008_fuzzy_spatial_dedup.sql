@@ -300,6 +300,7 @@ BEGIN
   -- ===========================================
   -- STEP 4: LINK ALL overture_ids (winners + losers from internal dedup)
   -- Map ALL staging records in each group to the winner place_id
+  -- CRITICAL: Use adaptive radius matching STEP 3 clustering to ensure all cluster members link
   -- ===========================================
   WITH all_staging_grouped AS (
     -- Re-partition ALL staging to find their groups (same logic as Step 3)
@@ -309,22 +310,7 @@ BEGIN
       s.name,
       s.category,
       ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) as lat,
-      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng,
-      ROW_NUMBER() OVER (
-        PARTITION BY 
-          immutable_unaccent(lower(s.name)),
-          CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
-            ELSE floor(ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
-          END,
-          CASE 
-            WHEN s.category IN ('park', 'university', 'stadium')
-            THEN floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 1000)
-            ELSE floor(ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) * 10000)
-          END
-        ORDER BY s.structural_score DESC, s.confidence DESC, s.created_at ASC
-      ) as group_rank
+      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng
     FROM staging_places s
     WHERE s.overture_id NOT IN (
       SELECT external_id FROM place_sources WHERE provider = 'overture'
@@ -343,14 +329,20 @@ BEGIN
     JOIN places p ON (
       -- Match exato pelo nome normalizado e categoria
       immutable_unaccent(lower(p.name)) = immutable_unaccent(lower(asg.name))
-      AND p.category = asg.category
-      -- Proximidade MUITO RÍGIDA usando ST_DWithin (sub-métrico, ~10 metros)
-      -- Garante que estamos linkando ao lugar exato que acabou de ser inserido
+      AND (p.category = asg.category OR p.category IS NULL)
+      -- RAIO ADAPTATIVO - FUNDAMENTAL: Deve ser >= ao raio de agrupamento do STEP 3
+      -- Se STEP 3 agrupou por floor(lat*1000) (~110m), precisamos de raio maior para linkar todos
       AND ST_DWithin(
         ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
         ST_SetSRID(ST_MakePoint(asg.lng, asg.lat), 4326)::geography,
-        10.0  -- 10 metros - precisão sub-métrica para evitar ambiguidade
+        CASE 
+          WHEN asg.category IN ('park', 'university', 'stadium', 'airport') 
+          THEN 1000.0  -- 1km para vincular todos os membros do cluster de grandes venues
+          ELSE 50.0     -- 50m para locais normais
+        END
       )
+      -- Garante que estamos linkando a registros inseridos/atualizados nesta transação
+      AND p.updated_at >= NOW() - INTERVAL '1 minute'
     )
     WHERE asg.overture_id IS NOT NULL
     -- Use (provider, external_id) PRIMARY KEY for conflict resolution
