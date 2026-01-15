@@ -267,7 +267,7 @@ def insert_city_to_registry(city_data: dict, pg_conn):
     pg_cur = pg_conn.cursor()
     
     insert_sql = """
-    INSERT INTO cities_registry (city_name, country_code, geom, hydrated_at)
+    INSERT INTO cities_registry (city_name, country_code, geom, last_hydrated_at)
     VALUES (%s, %s, ST_GeomFromWKB(%s, 4326), NOW())
     RETURNING id
     """
