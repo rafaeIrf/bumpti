@@ -469,9 +469,289 @@ def main():
             if hotlist:
                 save_hotlist_to_cache(city_id, hotlist, pg_conn)
         
-        iconic_matches = []
+        # 🗺️ CHUNK PROCESSING: Divide city into 4x4 grid (16 tiles)
+        tiles = get_bbox_tiles(bbox, grid_size=4)
+        total_tiles = len(tiles)
         
-        # STAGE 0: Collect all POIs by category for AI matching
+        print(f"\n🗺️  CHUNK PROCESSING: Dividing {city_name} into {total_tiles} tiles")
+        print(f"   Grid size: 4x4 = {total_tiles} chunks")
+        print(f"   Strategy: Independent commits per chunk to prevent DB locks\n")
+        
+        # Aggregated stats across all tiles
+        aggregated_stats = {
+            'total_found': 0,
+            'total_inserted': 0,
+            'total_updated': 0,
+            'tiles_processed': 0,
+            'tiles_failed': 0,
+            'failed_tiles': []
+        }
+        
+        # Process each tile independently
+        for tile_num, tile_bbox in tiles:
+            print(f"\n{'='*70}")
+            print(f"[CHUNK {tile_num}/{total_tiles}] Processing tile...")
+            print(f"   BBox: [{tile_bbox[0]:.4f}, {tile_bbox[1]:.4f}, {tile_bbox[2]:.4f}, {tile_bbox[3]:.4f}]")
+            
+            try:
+                # Metrics for this tile
+                tile_metrics = {
+                    'total_found': 0,
+                    'rejected_category': 0,
+                    'rejected_taxonomy': 0,
+                    'rejected_osm_tags': 0,
+                    'rejected_name': 0,
+                    'rejected_validation': 0,
+                    'rejected_confidence': 0,
+                    'final_sent_to_staging': 0
+                }
+                
+                # DuckDB: Query Overture for THIS TILE only
+                con = duckdb.connect(':memory:')
+                con.execute("INSTALL spatial; LOAD spatial;")
+                con.execute("INSTALL httpfs; LOAD httpfs;")
+                
+                category_map = config['categories']['mapping']
+                category_blacklist = config['categories']['blacklist']
+                blacklist_sql = ', '.join([f"'{cat}'" for cat in category_blacklist])
+                
+                query = f"""
+                SELECT 
+                  id AS overture_id,
+                  JSON_EXTRACT_STRING(names, 'primary') AS name,
+                  categories.primary AS overture_category,
+                  categories.alternate AS alternate_categories,
+                  ST_AsWKB(geometry) AS geom_wkb,
+                  addresses[1].freeform AS street,
+                  addresses[1].locality AS neighborhood,
+                  addresses[1].postcode AS postal_code,
+                  addresses[1].region AS state,
+                  confidence,
+                  sources[1] AS source_raw,
+                  websites,
+                  socials,
+                  len(sources) AS source_magnitude,
+                  (brand IS NOT NULL) AS has_brand
+                FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
+                WHERE 
+                  bbox.xmin >= {tile_bbox[0]} AND bbox.xmax <= {tile_bbox[2]}
+                  AND bbox.ymin >= {tile_bbox[1]} AND bbox.ymax <= {tile_bbox[3]}
+                  AND confidence >= 0.6
+                  AND categories.primary IS NOT NULL
+                  AND (operating_status IS NULL OR operating_status = 'open')
+                  AND NOT list_has_any(
+                    list_append(categories.alternate, categories.primary),
+                    [{blacklist_sql}]
+                  )
+                LIMIT 100000
+                """
+                
+                result = con.execute(query).fetchall()
+                tile_metrics['total_found'] = len(result)
+                con.close()
+                
+                print(f"   📍 Found {tile_metrics['total_found']} POIs in this tile")
+                
+                if tile_metrics['total_found'] == 0:
+                    print(f"   ⏭️  Empty tile, skipping to next")
+                    aggregated_stats['tiles_processed'] += 1
+                    continue
+                
+                # Collect POIs for AI matching (use shared hotlist)
+                all_pois_by_category = {}
+                poi_data = {}
+                
+                for row in result:
+                    overture_cat = row[2]
+                    internal_cat = category_map.get(overture_cat)
+                    if not internal_cat:
+                        continue
+                    
+                    raw_name = row[1]
+                    sanitized_name = sanitize_name(raw_name, config)
+                    if not sanitized_name:
+                        tile_metrics['rejected_name'] += 1
+                        continue
+                    
+                    poi_id = len(poi_data)
+                    neighborhood = row[6]  # locality
+                    
+                    if internal_cat not in all_pois_by_category:
+                        all_pois_by_category[internal_cat] = []
+                    
+                    all_pois_by_category[internal_cat].append((sanitized_name, poi_id, neighborhood))
+                    poi_data[poi_id] = (sanitized_name, row)
+                
+                # AI matching for this tile
+                iconic_matches = ai_match_iconic_venues(hotlist, all_pois_by_category) if hotlist else []
+                iconic_ids = set(iconic_matches)
+                
+                print(f"   🤖 AI matched {len(iconic_ids)} iconic venues in this tile")
+                
+                # Process POIs in this tile
+                staging_rows = []
+                
+                for poi_id, (name, row) in poi_data.items():
+                    overture_cat = row[2]
+                    internal_cat = category_map.get(overture_cat)
+                    
+                    if not internal_cat:
+                        continue
+                    
+                    # Validation
+                    if not validate_category_name(name, internal_cat, config):
+                        tile_metrics['rejected_validation'] += 1
+                        continue
+                    
+                    if not check_taxonomy_hierarchy(internal_cat, overture_cat, config):
+                        tile_metrics['rejected_taxonomy'] += 1
+                        continue
+                    
+                    if filter_osm_red_flags(row[3], config):  # alternate_categories
+                        tile_metrics['rejected_osm_tags'] += 1
+                        continue
+                    
+                    # Scoring
+                    is_iconic = poi_id in iconic_ids
+                    source_count = row[13]
+                    brand_name = row[14]
+                    
+                    score_result = calculate_scores(
+                        row[9],  # confidence
+                        row[11],  # websites
+                        row[12],  # socials
+                        street=row[5],
+                        house_number=None,
+                        neighborhood=row[6],
+                        source_magnitude=source_count,
+                        has_brand=bool(brand_name),
+                        is_iconic=is_iconic,
+                        config=config
+                    )
+                    
+                    if not score_result:
+                        tile_metrics['rejected_confidence'] += 1
+                        continue
+                    
+                    relevance_score, bonus_flags = score_result
+                    
+                    # Taxonomy bonus
+                    taxonomy_bonus = calculate_taxonomy_weight(internal_cat, overture_cat, config)
+                    relevance_score += taxonomy_bonus
+                    
+                    # Apply modifiers
+                    relevance_score, modifier = apply_scoring_modifiers(relevance_score, internal_cat, overture_cat, config)
+                    
+                    # Prepare for staging
+                    geom_wkb = row[4]
+                    geom_hex = geom_wkb.hex() if geom_wkb else None
+                    
+                    staging_rows.append((
+                        name,
+                        internal_cat,
+                        geom_hex,
+                        row[5],  # street
+                        None,  # house_number
+                        row[6],  # neighborhood
+                        city_name,
+                        row[8],  # state
+                        row[7],  # postal_code
+                        city_data.get('country_code'),
+                        relevance_score,
+                        row[9],  # confidence
+                        overture_cat,
+                        row[0],  # overture_id
+                        str(row[10])  # source_raw
+                    ))
+                    
+                    tile_metrics['final_sent_to_staging'] += 1
+                
+                print(f"   ✅ Processed {tile_metrics['final_sent_to_staging']} valid POIs")
+                
+                # Insert to staging
+                if staging_rows:
+                    insert_sql = """
+                    INSERT INTO staging_places (
+                      name, category, geom_wkb_hex, street, house_number,
+                      neighborhood, city, state, postal_code, country_code,
+                      relevance_score, confidence, original_category,
+                      overture_id, overture_raw
+                    ) VALUES %s
+                    """
+                    
+                    execute_values(pg_cur, insert_sql, staging_rows, page_size=500)
+                    print(f"   💾 Inserted to staging")
+                    
+                    # Merge to production
+                    merge_sql = "SELECT * FROM merge_staging_to_production(%s)"
+                    pg_cur.execute(merge_sql, (city_id,))
+                    merge_result = pg_cur.fetchone()
+                    
+                    if merge_result:
+                        inserted, updated = merge_result
+                        aggregated_stats['total_inserted'] += inserted
+                        aggregated_stats['total_updated'] += updated
+                        print(f"   🔄 Merged: {inserted} inserted, {updated} updated")
+                    
+                    # CRITICAL: Commit transaction (releases locks!)
+                    pg_conn.commit()
+                    print(f"   ✅ Transaction committed")
+                    
+                    # CRITICAL: Truncate staging for next tile
+                    pg_cur.execute("TRUNCATE staging_places")
+                    pg_conn.commit()
+                    print(f"   🧹 Staging truncated")
+                
+                # Update aggregated stats
+                aggregated_stats['total_found'] += tile_metrics['total_found']
+                aggregated_stats['tiles_processed'] += 1
+                
+                # CRITICAL: Sleep between tiles (database recovery)
+                if tile_num < total_tiles:
+                    print(f"   😴 Sleeping 5s for database recovery...")
+                    time.sleep(5)
+                
+            except Exception as e:
+                error_msg = f"Tile {tile_num} failed: {str(e)}"
+                print(f"   ❌ {error_msg}")
+                aggregated_stats['tiles_failed'] += 1
+                aggregated_stats['failed_tiles'].append({
+                    'tile_num': tile_num,
+                    'bbox': tile_bbox,
+                    'error': str(e)
+                })
+                # Continue to next tile (resilience!)
+                continue
+        
+        # Close connections
+        pg_cur.close()
+        pg_conn.close()
+        
+        # Final report
+        print(f"\n{'='*70}")
+        print(f"🎯 CHUNK PROCESSING COMPLETE: {city_name}")
+        print(f"{'='*70}")
+        print(f"Tiles processed:  {aggregated_stats['tiles_processed']}/{total_tiles}")
+        print(f"Tiles failed:     {aggregated_stats['tiles_failed']}")
+        print(f"Total POIs found: {aggregated_stats['total_found']}")
+        print(f"Total inserted:   {aggregated_stats['total_inserted']}")
+        print(f"Total updated:    {aggregated_stats['total_updated']}")
+        
+        if aggregated_stats['failed_tiles']:
+            print(f"\n⚠️  Failed tiles: {[t['tile_num'] for t in aggregated_stats['failed_tiles']]}")
+        
+        print(f"{'='*70}")
+        
+        stats = {
+            'inserted': aggregated_stats['total_inserted'],
+            'updated': aggregated_stats['total_updated'],
+            'tiles_processed': aggregated_stats['tiles_processed'],
+            'tiles_failed': aggregated_stats['tiles_failed']
+        }
+        
+        finalize_callback(city_id, 'completed', stats=stats)
+        
+    except Exception as e:
         print("📦 Collecting POIs for AI matching...")
         all_pois_by_category = {}
         poi_data = {}  # poi_id -> (name, row_data) for later processing
