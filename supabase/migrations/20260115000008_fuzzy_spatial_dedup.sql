@@ -63,7 +63,7 @@ BEGIN
   -- ===========================================
   -- STEP 2: FUZZY SPATIAL DEDUPLICATION
   -- Find potential duplicates using proximity + name similarity
-  -- Resolution: Keep record with highest structural_score
+  -- Resolution: Keep record with highest relevance_score
   -- ===========================================
   WITH fuzzy_candidates AS (
     -- Find staging records NOT in place_sources (potential new inserts)
@@ -71,7 +71,7 @@ BEGIN
       s.overture_id as staging_id,
       s.name as staging_name,
       s.category as staging_category,
-      s.structural_score as staging_score,
+      s.relevance_score as staging_score,
       ST_SetSRID(ST_MakePoint(
         ST_X(staging_wkb_to_geom(s.geom_wkb_hex)),
         ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))
@@ -99,7 +99,7 @@ BEGIN
       fc.staging_id,
       p.id as existing_place_id,
       p.name as existing_name,
-      p.structural_score as existing_score,
+      p.relevance_score as existing_score,
       fc.staging_score,
       fc.staging_name,
       fc.staging_category,
@@ -163,7 +163,7 @@ BEGIN
       state = fm.state,
       postal_code = fm.postal_code,
       country_code = fm.country_code,
-      structural_score = fm.staging_score,
+      relevance_score = fm.staging_score,
       confidence = fm.confidence,
       original_category = fm.original_category,
       active = true,
@@ -302,6 +302,11 @@ BEGIN
     SELECT COUNT(*) INTO v_deactivated FROM deactivated;
   END IF;
 
+  -- ===========================================
+  -- STEP 6: CLEANUP staging_places
+  -- ===========================================
+  TRUNCATE staging_places;
+
   -- Return comprehensive stats
   RETURN QUERY SELECT v_inserted, v_updated, v_sources_updated, v_deactivated, v_fuzzy_merged;
 END;
@@ -311,4 +316,4 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION merge_staging_to_production(UUID) TO authenticated, service_role;
 
 -- Add comment
-COMMENT ON FUNCTION merge_staging_to_production IS 'Fuzzy spatial deduplication with quality-based conflict resolution and adaptive radius. Uses pg_trgm similarity (>0.7) and adaptive ST_DWithin (800m for parks/universities/stadiums, 50m for others). Keeps highest structural_score record.';
+COMMENT ON FUNCTION merge_staging_to_production IS 'Fuzzy spatial deduplication with quality-based conflict resolution and adaptive radius. Uses pg_trgm similarity (>0.7) and adaptive ST_DWithin (800m for parks/universities/stadiums, 50m for others). Keeps highest relevance_score record.';
