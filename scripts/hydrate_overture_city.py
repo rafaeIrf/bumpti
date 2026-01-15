@@ -531,8 +531,10 @@ def main():
             elif modifier > 1.0:
                 metrics['boost_count'] = metrics.get('boost_count', 0) + 1
             
-            # CAP AT 100 to allow distance/engagement to break ties
-            relevance_score = min(relevance_score, 100)
+            
+            # CAP removed to allow iconic venues (+100 boost) to rank at top
+            # Distance and engagement will still break ties at same relevance level
+
             
             # Track bonuses for diagnostics
             metrics['total_source_count'] = metrics.get('total_source_count', 0) + source_count

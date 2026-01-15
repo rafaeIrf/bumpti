@@ -24,13 +24,15 @@ def generate_hotlist(city_name):
         prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
     Sua missão é listar EXATAMENTE 120 locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
     
-    DISTRIBUIÇÃO OBRIGATÓRIA (Total 120):
+    DISTRIBUIÇÃO OBRIGATÓRIA:
     - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
     - nightclub: 20 locais (As baladas e casas noturnas mais icônicas)
     - restaurant: 30 locais (Os maiores, mais populares e com alta rotatividade)
     - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
     - stadium: 10 locais (Grandes arenas e estádios principais)
     - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
+    - cafe: 10 locais (Os maiores e principais cafés)
+    - university: 10 locais (Grandes universidades e faculdades principais)
 
     REGRAS RÍGIDAS:
     - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
