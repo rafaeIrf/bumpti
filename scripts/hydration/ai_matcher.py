@@ -95,7 +95,7 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
             ON CONFLICT (city_id) 
             DO UPDATE SET hotlist = EXCLUDED.hotlist, venue_count = EXCLUDED.venue_count,
                 generated_at = NOW(), updated_at = NOW()
-        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4o', 0.2))
+        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-5.2', 0.2))
         pg_conn.commit()
         cur.close()
         print(f"💾 Hotlist cached to database ({venue_count} venues)")
