@@ -83,7 +83,8 @@ def calculate_scores(confidence, websites, socials):
                     has_social = True
                     break
     
-    has_website = bool(websites and len(websites) > 0)
+    # Validate types before accessing length
+    has_website = bool(websites and isinstance(websites, (list, tuple)) and len(websites) > 0)
     has_online = has_website or has_social
     
     if not has_online and confidence < 0.9:
@@ -455,8 +456,8 @@ def main():
                 metrics['rejected_validation'] += 1
                 continue
             
-            # Social scoring
-            score_result = calculate_scores(row[8], row[10], row[11])
+            # Social scoring (confidence=row[10], websites=row[12], socials=row[13])
+            score_result = calculate_scores(row[10], row[12], row[13])
             if not score_result:
                 metrics['rejected_confidence'] += 1
                 continue
