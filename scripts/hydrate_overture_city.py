@@ -914,6 +914,8 @@ def main():
                 metrics['dual_presence_count'] = metrics.get('dual_presence_count', 0) + 1
             if bonus_flags['magnitude_bonus'] > 0:
                 metrics['magnitude_bonus_count'] = metrics.get('magnitude_bonus_count', 0) + 1
+            if bonus_flags.get('iconic_bonus', False):
+                metrics['iconic_bonus_count'] = metrics.get('iconic_bonus_count', 0) + 1
             
             geom_wkb_hex = row[4].hex()
             
