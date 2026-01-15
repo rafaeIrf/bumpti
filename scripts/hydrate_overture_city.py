@@ -582,7 +582,7 @@ def main():
                     other_name = other_poi['name'].lower().strip()
                     similarity = SequenceMatcher(None, base_name, other_name).ratio()
                     
-                    if similarity > 0.7:  # 70% similarity threshold
+                    if similarity == 1:  # 85% similarity threshold (raised from 70% to avoid false positives like "Faculdade X" vs "Faculdade Y")
                         cluster.append(other_poi)
                         used.add(j)
                 
