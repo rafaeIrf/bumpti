@@ -560,51 +560,51 @@ def main():
             if not large_venues:
                 return rows  # No dedup needed
             
-            # Grid-based clustering for large venues
-            clusters = {}
-            for poi in large_venues:
-                # Normalize name for fuzzy matching
-                norm_name = poi['name'].lower().strip()
+            # Fuzzy clustering: group POIs with similar names together
+            # Use Union-Find / connected components approach
+            clusters = []
+            used = set()
+            
+            for i, poi in enumerate(large_venues):
+                if i in used:
+                    continue
                 
-                # Simple clustering: group by first 15 chars of normalized name
-                # DON'T include category in key - Overture often miscategorizes (e.g., park as restaurant)
-                cluster_key = norm_name[:15]  # Removed category from key
+                # Start new cluster with this POI
+                cluster = [poi]
+                used.add(i)
+                base_name = poi['name'].lower().strip()
                 
-                if cluster_key not in clusters:
-                    clusters[cluster_key] = []
-                clusters[cluster_key].append(poi)
+                # Find all other POIs similar to this one
+                for j, other_poi in enumerate(large_venues):
+                    if j in used:
+                        continue
+                    
+                    other_name = other_poi['name'].lower().strip()
+                    similarity = SequenceMatcher(None, base_name, other_name).ratio()
+                    
+                    if similarity > 0.7:  # 70% similarity threshold
+                        cluster.append(other_poi)
+                        used.add(j)
+                
+                clusters.append(cluster)
             
             # For each cluster, keep only the best POI
             deduped_large_venues = []
-            for cluster_key, cluster_pois in clusters.items():
-                if len(cluster_pois) == 1:
-                    deduped_large_venues.append(cluster_pois[0])
+            for cluster in clusters:
+                if len(cluster) == 1:
+                    deduped_large_venues.append(cluster[0])
                 else:
                     # DEBUG: Print cluster info
-                    print(f"  🔍 Cluster '{cluster_key}': {len(cluster_pois)} POIs")
-                    for poi in cluster_pois:
+                    names = [p['name'] for p in cluster]
+                    print(f"  🔍 Cluster with {len(cluster)} POIs: {names}")
+                    for poi in cluster:
                         print(f"     - {poi['name']} (cat={poi['category']}, score={poi['structural_score']})")
                     
-                    # Check if names are actually similar (>70% match)
-                    base_name = cluster_pois[0]['name'].lower()
-                    similar_group = []
-                    
-                    for poi in cluster_pois:
-                        similarity = SequenceMatcher(None, base_name, poi['name'].lower()).ratio()
-                        print(f"     Similarity({base_name} vs {poi['name'].lower()}): {similarity:.2f}")
-                        if similarity > 0.7:
-                            similar_group.append(poi)
-                        else:
-                            # Not similar enough, keep as separate
-                            deduped_large_venues.append(poi)
-                    
-                    if similar_group:
-                        # Keep highest structural_score (if tie, just pick first)
-                        # Sort by score descending, then take first
-                        similar_group.sort(key=lambda x: x['structural_score'], reverse=True)
-                        best = similar_group[0]
-                        print(f"     ✅ Winner: {best['name']} (score={best['structural_score']})")
-                        deduped_large_venues.append(best)
+                    # Keep highest structural_score (if tie, just pick first)
+                    cluster.sort(key=lambda x: x['structural_score'], reverse=True)
+                    best = cluster[0]
+                    print(f"     ✅ Winner: {best['name']} (score={best['structural_score']})")
+                    deduped_large_venues.append(best)
             
             # Combine deduped large venues with untouched others
             all_deduped = deduped_large_venues + others
