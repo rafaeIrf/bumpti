@@ -32,7 +32,7 @@ from .ai_matcher import (
 
 # Database
 from .database import (
-    insert_city_to_registry,
+    upsert_city_to_registry,
     fetch_city_from_registry
 )
 
@@ -57,6 +57,6 @@ __all__ = [
     'ai_validate_matches_batch',
     'ai_match_iconic_venues',
     # Database
-    'insert_city_to_registry',
+    'upsert_city_to_registry',
     'fetch_city_from_registry',
 ]
