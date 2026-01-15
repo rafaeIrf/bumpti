@@ -267,15 +267,16 @@ def insert_city_to_registry(city_data: dict, pg_conn):
     pg_cur = pg_conn.cursor()
     
     insert_sql = """
-    INSERT INTO cities_registry (city_name, country_code, geom, last_hydrated_at)
-    VALUES (%s, %s, ST_GeomFromWKB(%s, 4326), NOW())
+    INSERT INTO cities_registry (city_name, country_code, geom, bbox, status)
+    VALUES (%s, %s, ST_Multi(ST_GeomFromWKB(%s, 4326)), %s, 'processing')
     RETURNING id
     """
     
     pg_cur.execute(insert_sql, (
         city_data['city_name'],
         city_data['country_code'],
-        city_data['geom_wkb']
+        city_data['geom_wkb'],
+        city_data['bbox']  # [xmin, ymin, xmax, ymax]
     ))
     
     city_id = pg_cur.fetchone()[0]
