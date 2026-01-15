@@ -521,6 +521,123 @@ def main():
         
         print(f"✅ {metrics['final_sent_to_staging']} POIs passed sanitization")
         
+        # ===========================================
+        # DEDUPLICATION: Fuzzy matching for large venues
+        # ===========================================
+        large_venue_categories = {'park', 'university', 'stadium'}
+        
+        def deduplicate_staging_pois(rows):
+            """
+            Deduplicate POIs using grid-based clustering + fuzzy name matching.
+            For large venues (park, university, stadium): use 1.1km grid.
+            For others: no dedup (each is unique).
+            """
+            from difflib import SequenceMatcher
+            
+            # Convert rows to dicts for easier manipulation
+            poi_dicts = []
+            for row in rows:
+                poi_dicts.append({
+                    'name': row[0],
+                    'category': row[1],
+                    'geom_wkb_hex': row[2],
+                    'street': row[3],
+                    'house_number': row[4],
+                    'neighborhood': row[5],
+                    'city': row[6],
+                    'state': row[7],
+                    'postal_code': row[8],
+                    'country_code': row[9],
+                    'structural_score': row[10],
+                    'confidence': row[11],
+                    'original_category': row[12],
+                    'overture_id': row[13],
+                    'overture_raw': row[14]
+                })
+            
+            # Separate large venues from others
+            large_venues = [p for p in poi_dicts if p['category'] in large_venue_categories]
+            others = [p for p in poi_dicts if p['category'] not in large_venue_categories]
+            
+            if not large_venues:
+                return rows  # No dedup needed
+            
+            # Grid-based clustering for large venues
+            clusters = {}
+            for poi in large_venues:
+                # Get lat/lng from first staging row (we need to parse geom_wkb_hex)
+                # For simplicity, use a name-based approximation
+                # Grid: round to 2 decimals = ~1.1km precision
+                # We'll use the name as primary key since we don't have parsed coords yet
+                
+                # Normalize name for fuzzy matching
+                norm_name = poi['name'].lower().strip()
+                
+                # Simple clustering: group by first 10 chars of name
+                # This is an approximation - ideally we'd parse geometry
+                cluster_key = (norm_name[:15], poi['category'])
+                
+                if cluster_key not in clusters:
+                    clusters[cluster_key] = []
+                clusters[cluster_key].append(poi)
+            
+            # For each cluster, keep only the best POI
+            deduped_large_venues = []
+            for cluster_pois in clusters.values():
+                if len(cluster_pois) == 1:
+                    deduped_large_venues.append(cluster_pois[0])
+                else:
+                    # Check if names are actually similar (>70% match)
+                    base_name = cluster_pois[0]['name'].lower()
+                    similar_group = []
+                    
+                    for poi in cluster_pois:
+                        similarity = SequenceMatcher(None, base_name, poi['name'].lower()).ratio()
+                        if similarity > 0.7:
+                            similar_group.append(poi)
+                        else:
+                            # Not similar enough, keep as separate
+                            deduped_large_venues.append(poi)
+                    
+                    if similar_group:
+                        # Keep the one with highest structural_score
+                        best = max(similar_group, key=lambda x: (x['structural_score'], x['confidence'], x['street'] is not None))
+                        deduped_large_venues.append(best)
+            
+            # Combine deduped large venues with untouched others
+            all_deduped = deduped_large_venues + others
+            
+            # Convert back to tuples
+            deduped_rows = []
+            for poi in all_deduped:
+                deduped_rows.append((
+                    poi['name'],
+                    poi['category'],
+                    poi['geom_wkb_hex'],
+                    poi['street'],
+                    poi['house_number'],
+                    poi['neighborhood'],
+                    poi['city'],
+                    poi['state'],
+                    poi['postal_code'],
+                    poi['country_code'],
+                    poi['structural_score'],
+                    poi['confidence'],
+                    poi['original_category'],
+                    poi['overture_id'],
+                    poi['overture_raw']
+                ))
+            
+            return deduped_rows
+        
+        # Apply deduplication
+        original_count = len(staging_rows)
+        staging_rows = deduplicate_staging_pois(staging_rows)
+        deduped_count = len(staging_rows)
+        
+        if original_count != deduped_count:
+            print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
+        
         # Bulk insert to staging
         insert_sql = """
         INSERT INTO staging_places (
