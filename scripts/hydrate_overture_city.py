@@ -512,13 +512,16 @@ def main():
         total_inserted = 0
         total_updated = 0
         
-        for batch_num in range(num_batches):
+for batch_num in range(num_batches):
             start_idx = batch_num * BATCH_SIZE
             end_idx = min(start_idx + BATCH_SIZE, total_pois)
             batch = all_pois[start_idx:end_idx]
             
+            # Detect if this is the final batch
+            is_final_batch = (batch_num == num_batches - 1)
+            
             print(f"{'='*70}")
-            print(f"[BATCH {batch_num+1}/{num_batches}] Processing {len(batch)} POIs...")
+            print(f"[BATCH {batch_num+1}/{num_batches}] Processing {len(batch)} POIs... (Final Batch: {is_final_batch})")
             
             # Collect POIs for AI matching
             all_pois_by_category = {}
@@ -638,16 +641,20 @@ def main():
                 execute_values(pg_cur, insert_sql, staging_rows, page_size=500)
                 print(f"   💾 Inserted to staging")
                 
-                # Merge to production
-                merge_sql = "SELECT * FROM merge_staging_to_production(%s)"
-                pg_cur.execute(merge_sql, (city_id,))
+                # Merge to production (pass is_final_batch flag)
+                merge_sql = "SELECT * FROM merge_staging_to_production(%s, %s)"
+                pg_cur.execute(merge_sql, (city_id, is_final_batch))
                 merge_result = pg_cur.fetchone()
                 
                 if merge_result:
-                    inserted, updated = merge_result
+                    inserted, updated, sources_updated, deactivated, fuzzy_merged = merge_result
                     total_inserted += inserted
                     total_updated += updated
+                    
+                    # Log results
                     print(f"   🔄 Merged: {inserted} inserted, {updated} updated")
+                    if is_final_batch and deactivated > 0:
+                        print(f"   🗑️  Soft deleted: {deactivated} missing places (final batch cleanup)")
                 
                 # CRITICAL: Commit transaction (releases locks!)
                 pg_conn.commit()
