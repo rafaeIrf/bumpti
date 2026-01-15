@@ -28,7 +28,7 @@ jobs:
           DB_POOLER_URL: ${{ secrets.DB_POOLER_URL }}
           SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GITHUB_HYDRATION_TOKEN: ${{ secrets.GITHUB_HYDRATION_TOKEN }}
+          GITHUB_HYDRATION_TOKEN: ${{ secrets.GH_HYDRATION_TOKEN }}
         run: |
           python scripts/hydrate_overture_city.py \
             "${{ github.event.client_payload.city_id }}" \
@@ -41,7 +41,7 @@ jobs:
         if: always()
         env:
           SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          GITHUB_HYDRATION_TOKEN: ${{ secrets.GITHUB_HYDRATION_TOKEN }}
+          GITHUB_HYDRATION_TOKEN: ${{ secrets.GH_HYDRATION_TOKEN }}
         run: |
           if [ "${{ steps.hydrate.outcome }}" == "success" ]; then
             STATUS="completed"
