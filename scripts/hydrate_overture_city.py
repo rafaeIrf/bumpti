@@ -594,16 +594,9 @@ def main():
                 if len(cluster) == 1:
                     deduped_large_venues.append(cluster[0])
                 else:
-                    # DEBUG: Print cluster info
-                    names = [p['name'] for p in cluster]
-                    print(f"  🔍 Cluster with {len(cluster)} POIs: {names}")
-                    for poi in cluster:
-                        print(f"     - {poi['name']} (cat={poi['category']}, score={poi['structural_score']})")
-                    
                     # Keep highest structural_score (if tie, just pick first)
                     cluster.sort(key=lambda x: x['structural_score'], reverse=True)
                     best = cluster[0]
-                    print(f"     ✅ Winner: {best['name']} (score={best['structural_score']})")
                     deduped_large_venues.append(best)
             
             # Combine deduped large venues with untouched others
