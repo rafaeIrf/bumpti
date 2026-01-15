@@ -519,8 +519,6 @@ def main():
             ))
             metrics['final_sent_to_staging'] += 1
         
-        print(f"✅ {metrics['final_sent_to_staging']} POIs passed sanitization")
-        
         # ===========================================
         # DEDUPLICATION: Fuzzy matching for large venues
         # ===========================================
@@ -596,7 +594,8 @@ def main():
                     
                     if similar_group:
                         # Keep the one with highest structural_score
-                        best = max(similar_group, key=lambda x: (x['structural_score'], x['confidence'], x['street'] is not None))
+                        # Keep highest structural_score (if tie, just pick first)
+                        best = max(similar_group, key=lambda x: x['structural_score'])
                         deduped_large_venues.append(best)
             
             # Combine deduped large venues with untouched others
@@ -630,8 +629,10 @@ def main():
         staging_rows = deduplicate_staging_pois(staging_rows)
         deduped_count = len(staging_rows)
         
+        print(f"✅ Sanitization: {metrics['final_sent_to_staging']} POIs passed filters")
         if original_count != deduped_count:
             print(f"🔍 Deduplication: {original_count} → {deduped_count} POIs ({original_count - deduped_count} duplicates removed)")
+        print(f"💾 Final count for staging: {deduped_count} POIs")
         
         # Bulk insert to staging
         insert_sql = """
