@@ -661,7 +661,7 @@ def main():
         INSERT INTO staging_places (
           name, category, geom_wkb_hex, street, house_number,
           neighborhood, city, state, postal_code, country_code,
-          structural_score, confidence, original_category,
+          relevance_score, confidence, original_category,
           overture_id, overture_raw
         ) VALUES %s
         """
