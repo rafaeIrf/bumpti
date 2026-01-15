@@ -134,7 +134,7 @@ LEMBRETE FINAL: Se tiver dúvida sobre um nome, NÃO INCLUA. Só lugares que rea
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.2
+            temperature=0.5
         )
         
         result = json.loads(response.choices[0].message.content)
