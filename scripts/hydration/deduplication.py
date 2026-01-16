@@ -309,7 +309,7 @@ def deduplicate_pois_in_memory(
         # Extract lat/lng from WKB geometry
         if row[POIColumn.GEOM_WKB]:
             import struct
-            wkb = bytes.fromhex(row[POIColumn.GEOM_WKB])
+            wkb = row[POIColumn.GEOM_WKB]  # Already bytes from DuckDB
             # WKB Point format: [byte_order(1)][wkb_type(4)][X(8)][Y(8)]
             if len(wkb) >= 21:
                 lng, lat = struct.unpack('<dd', wkb[5:21])
