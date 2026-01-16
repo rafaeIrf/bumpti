@@ -253,7 +253,6 @@ const colors = useThemeColors();
 When creating or modifying ANY screen or component, you MUST:
 
 0.  **Logging - ALWAYS REQUIRED:**
-
     - ❌ NEVER use `console.log`, `console.error`, `console.warn`, `console.info`, or `console.debug` directly
     - ✅ ALWAYS use the logger utility from `@/utils/logger`
     - ✅ Import: `import { logger } from "@/utils/logger";`
@@ -273,7 +272,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 1.  **i18n (Internationalization) - ALWAYS REQUIRED:**
-
     - ❌ NEVER hardcode user-facing text in any language (PT, EN, ES, etc.)
     - ✅ ALWAYS use `t("translation.key")` for ALL user-facing strings
     - ✅ ALWAYS add translation keys to ALL three locale files: `pt.json`, `en.json`, `es.json`
@@ -291,7 +289,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 2.  **Typography - ALWAYS REQUIRED:**
-
     - ❌ NEVER hardcode fontSize, lineHeight, fontWeight, fontFamily, letterSpacing
     - ✅ ALWAYS use typography tokens: `typography.heading`, `typography.subheading`, `typography.body`, `typography.caption`
     - ✅ Import: `import { typography, spacing } from "@/constants/theme";`
@@ -310,7 +307,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 3.  **Theme Colors - ALWAYS REQUIRED:**
-
     - ❌ NEVER hardcode colors like `#FFFFFF`, `#000000`, `rgb(...)`, etc.
     - ✅ ALWAYS use `useThemeColors()` hook for colors
     - ✅ Available colors: `background`, `surface`, `text`, `textSecondary`, `accent`, `border`, `error`, `success`
@@ -327,7 +323,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 4.  **Spacing - ALWAYS REQUIRED:**
-
     - ❌ NEVER hardcode spacing values like `margin: 16`, `padding: 24`, etc.
     - ✅ ALWAYS use spacing tokens: `spacing.xs`, `spacing.sm`, `spacing.md`, `spacing.lg`, `spacing.xl`, `spacing.xxl`
     - Example:
@@ -344,7 +339,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 5.  **Loading State - ALWAYS REQUIRED:**
-
     - ❌ NEVER use `ActivityIndicator` directly or build custom loading views inline.
     - ✅ ALWAYS use `LoadingView` component from `@/components/loading-view`.
     - ✅ Import: `import { LoadingView } from "@/components/loading-view";`
@@ -362,7 +356,6 @@ When creating or modifying ANY screen or component, you MUST:
       ```
 
 6.  **Structure and Styles - ALWAYS REQUIRED:**
-
     - ❌ NEVER use inline styles for static layout/spacing/sizing.
     - ✅ ALWAYS define styles using `const styles = StyleSheet.create({...})` at the end of the file.
     - ✅ ONLY use inline styles for dynamic values (e.g. `colors` from hook, animations).
@@ -384,7 +377,6 @@ When creating or modifying ANY screen or component, you MUST:
            ```
 
 7.  **Separation of Concerns - ALWAYS REQUIRED:**
-
     - ❌ NEVER write to database directly in UI components
     - ❌ NEVER make API calls directly in UI components
     - ✅ ALWAYS encapsulate database operations in custom hooks
@@ -579,6 +571,49 @@ When in doubt, consult official docs:
 - Do: create new route groups with `_layout.tsx` when needed.
 - Don’t: use raw React Navigation if Expo Router suffices.
 - Don’t: add heavy libs without justification.
+
+## Database & Migrations (Supabase)
+
+### **CRITICAL: Always Verify Schema via MCP Before Creating Migrations**
+
+Before creating or modifying any SQL migration that interacts with existing tables, you **MUST** verify the actual database schema using Supabase MCP tools:
+
+```typescript
+// ✅ CORRECT - Verify schema first
+await mcp_supabase_mcp_server_execute_sql({
+  project_id: "xxx",
+  query: `
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'places' 
+    ORDER BY ordinal_position;
+  `,
+});
+
+// Then create migration with correct field names
+```
+
+**Why this is critical:**
+
+- Prevents "column does not exist" errors
+- Avoids type mismatches (numeric vs double precision)
+- Ensures you use correct field names (e.g., `geom_wkb_hex` not `lat/lng`, `overture_raw` not `source_raw`)
+- Saves hours of debugging failed hydration runs
+
+**Common pitfalls prevented:**
+
+- Using `s.lat` when only `geom_wkb_hex` exists in `staging_places`
+- Using `source_raw` in `place_sources` when field is actually named `raw`
+- Assuming field types without checking (e.g., `total_score` is `numeric` not `float`)
+
+**Process:**
+
+1. Use MCP to query `information_schema.columns` for target table
+2. Verify field names, types, and nullability
+3. Write migration using correct schema
+4. Test migration on staging before production
+
+❌ **NEVER assume schema structure** - always verify via MCP first!
 
 ## Prompts to ask Copilot
 
