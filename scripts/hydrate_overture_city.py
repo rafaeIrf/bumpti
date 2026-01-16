@@ -368,10 +368,10 @@ def main():
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
         
-        # ATOMIC LOCK: Check if city exists and lock it in one query
-        print(f"🔍 Checking if city exists at ({lat}, {lng})...")
+        # ATOMIC LOCK: Try to acquire exclusive lock on city
+        print(f"🔍 Looking for city at ({lat}, {lng})...")
         check_sql = """
-        SELECT id, city_name, country_code, bbox 
+        SELECT id, city_name, country_code, bbox, status
         FROM cities_registry
         WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
         FOR UPDATE SKIP LOCKED
@@ -382,38 +382,40 @@ def main():
         existing_city = pg_cur.fetchone()
         
         if existing_city:
-            # City exists and we got the lock - update status IMMEDIATELY
+            # Got the lock - update status and process
             city_id = existing_city[0]
             city_name = existing_city[1]
+            current_status = existing_city[4]
             
-            print(f"✅ Found existing city: {city_name} ({city_id})")
-            print(f"🔒 Acquired row lock, updating status...")
+            print(f"✅ Locked city: {city_name} ({city_id}, status={current_status})")
             
+            # Update to processing
             pg_cur.execute(
                 "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
                 (city_id,)
             )
             pg_conn.commit()
-            print("✅ City locked to 'processing'")
+            print("✅ Status updated to 'processing'")
             
-            # Load city data from registry
             city_data = {
                 'city_name': existing_city[1],
                 'country_code': existing_city[2],
                 'bbox': existing_city[3]
             }
         else:
-            # City doesn't exist OR is locked by another worker
-            print("⚠️  City not found or locked by another worker")
-            print("🆕 Discovering city from Overture...")
+            # Couldn't lock - either doesn't exist OR already locked by another worker
+            # Try to discover (if doesn't exist, will insert)
+            print("⚠️  Could not lock city (doesn't exist or locked by another worker)")
             city_data = discover_city_from_overture(lat, lng)
+            
+            # Try to insert/upsert
             city_id = upsert_city_to_registry(city_data, pg_conn)
             
             if not city_id:
-                # Another worker beat us to it
-                print("❌ Another worker is processing this city, aborting")
-                finalize_callback(None, 'skipped', error_msg="City locked by another worker")
-                return
+                # Another worker is processing this city
+                print("❌ City is being processed by another worker, aborting")
+                pg_conn.close()
+                sys.exit(0)  # Exit gracefully
             
             city_name = city_data['city_name']
         
