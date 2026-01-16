@@ -693,7 +693,7 @@ def main():
                     row[9],  # confidence
                     overture_cat,
                     row[0],  # overture_id
-                    str(row[10])  # source_raw
+                    json.dumps(row[10]) if row[10] else None  # source_raw (JSONB)
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
