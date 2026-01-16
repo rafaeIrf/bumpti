@@ -42,17 +42,24 @@ export async function triggerCityHydrationIfNeeded(
     if (existingCity) {
       console.log(`📍 Found city: ${existingCity.city_name} (${existingCity.id})`);
       
-      // Query status from cities_registry
-      const { data: cityStatus, error: statusError } = await supabaseAdmin
-        .from("cities_registry")
-        .select("id, city_name, country_code, status, last_hydrated_at")
-        .eq("id", existingCity.id)
-        .single();
+      // Query status with row-level lock (SELECT ... FOR UPDATE)
+      // This prevents race conditions - lock held until transaction commits
+      const { data: statusData, error: statusError } = await supabaseAdmin.rpc(
+        "get_city_status_with_lock",
+        { city_id: existingCity.id }
+      );
 
       if (statusError) {
         console.error("❌ Failed to check city status:", statusError);
         throw statusError;
       }
+
+      if (!statusData || statusData.length === 0) {
+        console.error("❌ City not found in registry");
+        throw new Error("City not found");
+      }
+
+      const cityStatus = statusData[0];
 
       // Skip if already processing
       if (cityStatus.status === "processing") {
