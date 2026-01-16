@@ -16,12 +16,19 @@ type CityData = {
  * All logic handled in single atomic RPC call
  */
 export async function triggerCityHydrationIfNeeded(
-  supabaseUrl: string,
-  serviceRoleKey: string,
   latitude: string,
-  longitude: string,
-  githubToken: string
+  longitude: string
 ): Promise<{ status: string; cityName?: string; countryCode?: string }> {
+  // Read env vars internally
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const githubToken = Deno.env.get("GH_HYDRATION_TOKEN");
+
+  if (!supabaseUrl || !serviceRoleKey || !githubToken) {
+    console.error("❌ Missing required environment variables");
+    return { status: "error" };
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   const latNum = parseFloat(latitude);

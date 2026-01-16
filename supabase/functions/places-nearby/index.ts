@@ -54,17 +54,11 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
     
-    // Trigger in background (don't wait for result, don't block response)
+    // Trigger city hydration check in background
     triggerCityHydrationIfNeeded(
-      supabaseUrl,
-      serviceRoleKey,
       latNum.toString(),
-      lngNum.toString(),
-      githubToken
+      lngNum.toString()
     ).catch((err) => console.error("Hydration trigger failed:", err));
 
     const parsedPage = Number(page);
