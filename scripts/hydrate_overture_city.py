@@ -542,10 +542,10 @@ def main():
             return
         
         # ====================================================================
-        # BATCH PROCESSING: Process in 2000-record batches
+        # BATCH PROCESSING: Process in 8000-record batches
         # ====================================================================
         
-        BATCH_SIZE = 2000
+        BATCH_SIZE = 8000
         num_batches = (total_pois + BATCH_SIZE - 1) // BATCH_SIZE
         
         print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
