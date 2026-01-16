@@ -33,8 +33,8 @@ BEGIN
     SET
       name = s.name,
       category = s.category,
-      lat = s.lat,
-      lng = s.lng,
+      lat = ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)),
+      lng = ST_X(staging_wkb_to_geom(s.geom_wkb_hex)),
       street = s.street,
       house_number = s.house_number,
       neighborhood = s.neighborhood,
@@ -42,9 +42,11 @@ BEGIN
       state = s.state,
       postal_code = s.postal_code,
       country_code = s.country_code,
+      relevance_score = s.relevance_score,
       confidence = s.confidence,
-      source_raw = s.source_raw,
-      updated_at = now()
+      original_category = s.original_category,
+      active = true,
+      updated_at = NOW()
     FROM staging_places s
     JOIN place_sources ps ON (
       ps.external_id = s.overture_id
@@ -64,10 +66,23 @@ BEGIN
       neighborhood, city, state, postal_code, country_code,
       confidence, source_raw, city_id, active
     )
-    SELECT
-      s.name, s.category, s.lat, s.lng, s.street, s.house_number,
-      s.neighborhood, s.city, s.state, s.postal_code, s.country_code,
-      s.confidence, s.source_raw, p_city_id, true
+    SELECT DISTINCT ON (s.overture_id)
+      s.name,
+      s.category,
+      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)),
+      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)),
+      s.street,
+      s.house_number,
+      s.neighborhood,
+      s.city,
+      s.state,
+      s.postal_code,
+      s.country_code,
+      s.relevance_score,
+      s.confidence,
+      s.original_category,
+      true,
+      NOW()
     FROM staging_places s
     WHERE s.overture_id NOT IN (
       SELECT external_id FROM place_sources WHERE provider = 'overture'
@@ -80,14 +95,18 @@ BEGIN
   -- STEP 4: Link new places to place_sources
   -- ====================================================================
   WITH linked AS (
-    INSERT INTO place_sources (place_id, provider, external_id, source_raw)
-    SELECT p.id, 'overture', s.overture_id, s.source_raw
+    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
+    SELECT DISTINCT ON (s.overture_id)
+      p.id,
+      'overture'::text,
+      s.overture_id,
+      s.overture_raw,
+      NOW()
     FROM staging_places s
     JOIN places p ON (
-      p.lat = s.lat
-      AND p.lng = s.lng
+      ABS(p.lat - ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
+      AND ABS(p.lng - ST_X(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
       AND p.name = s.name
-      AND p.city_id = p_city_id
     )
     WHERE NOT EXISTS (
       SELECT 1 FROM place_sources ps
@@ -95,9 +114,10 @@ BEGIN
         AND ps.provider = 'overture'
         AND ps.external_id = s.overture_id
     )
-    ON CONFLICT (place_id, provider) DO UPDATE
-    SET external_id = EXCLUDED.external_id,
-        source_raw = EXCLUDED.source_raw
+    ORDER BY s.overture_id, p.created_at DESC
+    ON CONFLICT (provider, external_id) DO UPDATE SET
+      place_id = EXCLUDED.place_id,
+      raw = EXCLUDED.raw
     RETURNING place_id
   )
   SELECT count(*) INTO v_linked FROM linked;
