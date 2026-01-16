@@ -205,7 +205,9 @@ def deduplicate_pois_in_memory(
                 continue
             
             nearby_poi = pois[nearby_idx]
-            if names_are_similar(poi.name, nearby_poi.name):
+            # CRITICAL: Must match BOTH category AND name to be considered duplicate
+            if (nearby_poi.category == poi.category and 
+                names_are_similar(poi.name, nearby_poi.name)):
                 cluster.append(nearby_idx)
                 processed.add(nearby_idx)
         
