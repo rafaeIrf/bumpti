@@ -1,11 +1,9 @@
 -- ============================================================================
--- FIX: Soft delete should check place_sources, not staging_places
+-- FIX: Duplicate key error in place_sources insert
 -- ============================================================================
--- PROBLEM: Soft delete deactivates places not in final batch
--- SOLUTION: Check place_sources (all processed overture_ids) instead
+-- PROBLEM: RETURNING used name+category lookup, matching wrong POI
+-- SOLUTION: Use lat/lng correlation for accurate overture_id mapping
 -- ============================================================================
-
-DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
 
 DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
 
@@ -14,18 +12,19 @@ CREATE OR REPLACE FUNCTION merge_staging_to_production(
   is_final_batch boolean DEFAULT false
 )
 RETURNS TABLE (
-  inserted bigint,
-  updated bigint,
-  deactivated bigint,
-  linked bigint
+  exact_updated bigint,
+  exact_inserted bigint,
+  duplicate_links bigint,
+  soft_deleted bigint
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
-  v_inserted bigint := 0;
-  v_updated bigint := 0;
-  v_deactivated bigint := 0;
-  v_linked bigint := 0;
+  v_exact_updated bigint := 0;
+  v_exact_inserted bigint := 0;
+  v_duplicate_links bigint := 0;
+  v_soft_deleted bigint := 0;
 BEGIN
   -- ====================================================================
   -- STEP 1: UPDATE existing places via exact overture_id match
@@ -57,23 +56,18 @@ BEGIN
     WHERE p.id = ps.place_id
     RETURNING p.id
   )
-  SELECT count(*) INTO v_updated FROM updated;
+  SELECT count(*) INTO v_exact_updated FROM updated;
 
   -- ====================================================================
-  -- STEP 3: INSERT new places (overture_id not in place_sources)
+  -- STEP 2: INSERT new places (no match in place_sources)
+  -- FIX: Use geom_wkb_hex for correlation instead of name+category
   -- ====================================================================
-  WITH inserted AS (
-    INSERT INTO places (
-      name, category, lat, lng, street, house_number,
-      neighborhood, city, state, postal_code, country_code,
-      relevance_score, confidence, original_category,
-      city_id, active, created_at
-    )
-    SELECT DISTINCT ON (s.overture_id)
+  WITH new_places AS (
+    SELECT
       s.name,
       s.category,
-      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)),
-      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)),
+      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) as lat,
+      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng,
       s.street,
       s.house_number,
       s.neighborhood,
@@ -84,44 +78,44 @@ BEGIN
       s.relevance_score,
       s.confidence,
       s.original_category,
-      p_city_id,
-      true,
-      NOW()
-    FROM staging_places s
-    WHERE s.overture_id NOT IN (
-      SELECT external_id FROM place_sources WHERE provider = 'overture'
-    )
-    RETURNING id
-  )
-  SELECT count(*) INTO v_inserted FROM inserted;
-
-  -- ====================================================================
-  -- STEP 4: Link IDs na place_sources
-  -- ====================================================================
-  WITH linked AS (
-    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
-    SELECT DISTINCT ON (s.overture_id)
-      p.id,
-      'overture'::text,
       s.overture_id,
-      s.overture_raw,
-      NOW()
+      s.geom_wkb_hex  -- Keep for correlation
     FROM staging_places s
-    JOIN places p ON (
-      -- Match por precisão de GPS (WKB) + Nome
-      ABS(p.lat - ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND ABS(p.lng - ST_X(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND p.name = s.name
+    WHERE NOT EXISTS (
+      SELECT 1 FROM place_sources ps
+      WHERE ps.external_id = s.overture_id
+      AND ps.provider = 'overture'
     )
-    ON CONFLICT (provider, external_id) DO UPDATE SET
-      place_id = EXCLUDED.place_id,
-      raw = EXCLUDED.raw
-    RETURNING place_id
+  ),
+  inserted AS (
+    INSERT INTO places (
+      name, category, lat, lng, street, house_number, neighborhood,
+      city, state, postal_code, country_code, relevance_score,
+      confidence, original_category, active
+    )
+    SELECT
+      name, category, lat, lng, street, house_number, neighborhood,
+      city, state, postal_code, country_code, relevance_score,
+      confidence, original_category, true
+    FROM new_places
+    RETURNING id, lat, lng
   )
-  SELECT count(*) INTO v_linked FROM linked;
+  INSERT INTO place_sources (place_id, provider, external_id, raw)
+  SELECT 
+    i.id, 
+    'overture', 
+    np.overture_id, 
+    NULL
+  FROM inserted i
+  JOIN new_places np ON (
+    abs(i.lat - np.lat) < 0.0000001 
+    AND abs(i.lng - np.lng) < 0.0000001
+  );
+
+  GET DIAGNOSTICS v_exact_inserted = ROW_COUNT;
 
   -- ====================================================================
-  -- STEP 5: Soft delete (Somente no lote final)
+  -- STEP 3: Soft delete (Somente no lote final)
   -- ====================================================================
   IF is_final_batch THEN
     WITH deactivated AS (
@@ -132,12 +126,16 @@ BEGIN
           SELECT ps.place_id
           FROM place_sources ps
           WHERE ps.provider = 'overture'
+          AND EXISTS (
+            SELECT 1 FROM staging_places s
+            WHERE s.overture_id = ps.external_id
+          )
         )
       RETURNING id
     )
-    SELECT count(*) INTO v_deactivated FROM deactivated;
+    SELECT count(*) INTO v_soft_deleted FROM deactivated;
   END IF;
 
-  RETURN QUERY SELECT v_inserted, v_updated, v_deactivated, v_linked;
+  RETURN QUERY SELECT v_exact_updated, v_exact_inserted, v_duplicate_links, v_soft_deleted;
 END;
 $$;
