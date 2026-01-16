@@ -567,13 +567,13 @@ def main():
         parsed_pois = []
         for row in all_pois:
             # Parse freeform address (index 5 = street)
-            freeform = row[5]
+            freeform = row[POIColumn.STREET]
             street, house_number = parse_street_address(freeform)
             
             # Replace freeform with parsed street and add house_number
             parsed_row = list(row)
-            parsed_row[5] = street  # street
-            parsed_row[6] = house_number  # house_number (was NULL)
+            parsed_row[POIColumn.STREET] = street
+            parsed_row[POIColumn.HOUSE_NUMBER] = house_number
             parsed_pois.append(tuple(parsed_row))
         
         all_pois = parsed_pois
@@ -589,7 +589,7 @@ def main():
         # PYTHON DEDUPLICATION: Remove duplicates in-memory before DB insert
         # ====================================================================
         print(f"\n🧹 Deduplicating {total_pois:,} POIs in-memory...")
-        from hydration.deduplication import deduplicate_pois_in_memory
+        from hydration.deduplication import deduplicate_pois_in_memory, POIColumn
         
         deduplicated_pois, overture_id_mappings = deduplicate_pois_in_memory(all_pois, config)
         total_unique = len(deduplicated_pois)
@@ -626,18 +626,18 @@ def main():
             poi_data = {}
             
             for row in batch_pois:
-                overture_cat = row[2]
+                overture_cat = row[POIColumn.OVERTURE_CATEGORY]
                 internal_cat = category_map.get(overture_cat)
                 if not internal_cat:
                     continue
                 
-                raw_name = row[1]
+                raw_name = row[POIColumn.NAME]
                 sanitized_name = sanitize_name(raw_name, config)
                 if not sanitized_name:
                     continue
                 
                 poi_id = len(poi_data)
-                neighborhood = row[6]
+                neighborhood = row[POIColumn.NEIGHBORHOOD]  # Fixed: was row[6] (HOUSE_NUMBER)
                 
                 if internal_cat not in all_pois_by_category:
                     all_pois_by_category[internal_cat] = []
@@ -664,7 +664,7 @@ def main():
             }
             
             for poi_id, (name, row) in poi_data.items():
-                overture_cat = row[2]
+                overture_cat = row[POIColumn.OVERTURE_CATEGORY]
                 internal_cat = category_map.get(overture_cat)
                 
                 if not internal_cat:
@@ -676,18 +676,18 @@ def main():
                     debug_rejected['validate_name'] += 1
                     continue
                 
-                if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[3], config):
+                if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config):
                     debug_rejected['taxonomy'] += 1
                     continue
                 
-                if filter_osm_source_tags(row[10], config):  # row[10] is source_raw
+                if filter_osm_source_tags(row[POIColumn.SOURCE_RAW], config):  # Fixed: was row[10] (CONFIDENCE)
                     debug_rejected['osm_flags'] += 1
                     continue
                 
                 # Scoring
                 is_iconic = poi_id in iconic_ids
-                source_count = row[13]
-                brand_name = row[14]
+                source_magnitude = row[POIColumn.SOURCE_MAGNITUDE]  # Fixed: was row[13] (SOCIALS)
+                has_brand = row[POIColumn.HAS_BRAND]  # Fixed: was row[14] (SOURCE_MAGNITUDE)
                 
                 score_result = calculate_scores(
                     float(row[POIColumn.CONFIDENCE]) if row[POIColumn.CONFIDENCE] else 0.0,
@@ -696,8 +696,8 @@ def main():
                     street=row[POIColumn.STREET],
                     house_number=row[POIColumn.HOUSE_NUMBER],
                     neighborhood=row[POIColumn.NEIGHBORHOOD],
-                    source_magnitude=source_count,
-                    has_brand=bool(brand_name),
+                    source_magnitude=source_magnitude,
+                    has_brand=bool(has_brand),
                     is_iconic=is_iconic,
                     config=config
                 )
@@ -716,25 +716,25 @@ def main():
                 relevance_score, modifier = apply_scoring_modifiers(relevance_score, internal_cat, overture_cat, config)
                 
                 # Prepare for staging
-                geom_wkb = row[4]
+                geom_wkb = row[POIColumn.GEOM_WKB]
                 geom_hex = geom_wkb.hex() if geom_wkb else None
                 
                 staging_rows.append((
                     name,
                     internal_cat,
                     geom_hex,
-                    row[5],  # street (freeform)
-                    row[6],  # house_number
-                    row[7],  # neighborhood
+                    row[POIColumn.STREET],
+                    row[POIColumn.HOUSE_NUMBER],
+                    row[POIColumn.NEIGHBORHOOD],
                     city_name,
-                    row[9],  # state
-                    row[8],  # postal_code
+                    row[POIColumn.STATE],
+                    row[POIColumn.POSTAL_CODE],
                     city_data.get('country_code'),
                     relevance_score,
-                    row[10],  # confidence
+                    row[POIColumn.CONFIDENCE],
                     overture_cat,
-                    row[0],  # overture_id
-                    json.dumps(row[11]) if row[11] else None  # source_raw (JSONB)
+                    row[POIColumn.OVERTURE_ID],
+                    json.dumps(row[POIColumn.SOURCE_RAW]) if row[POIColumn.SOURCE_RAW] else None
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
@@ -777,7 +777,7 @@ def main():
                 # This prevents re-processing the same POIs next month
                 duplicate_links = []
                 for row in batch_pois:
-                    overture_id = row[0]
+                    overture_id = row[POIColumn.OVERTURE_ID]
                     winner_id = overture_id_mappings.get(overture_id, overture_id)
                     
                     # Only process if this is a "loser" (merged into another)
@@ -794,7 +794,7 @@ def main():
                                 winner_place[0],  # place_id (winner's)
                                 'overture',
                                 overture_id,  # external_id (loser's)
-                                json.dumps(row[10]) if row[10] else None  # raw
+                                json.dumps(row[POIColumn.SOURCE_RAW]) if row[POIColumn.SOURCE_RAW] else None  # Fixed: was row[10] (CONFIDENCE)
                             ))
                 
                 # Batch insert duplicate links

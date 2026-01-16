@@ -1,12 +1,10 @@
 -- ============================================================================
 -- Atomic check and update with skip logic in SQL
 -- ============================================================================
--- Single RPC that handles all logic:
--- 1. Check if city exists and lock
--- 2. Evaluate if should skip (processing, fresh)
--- 3. Update status if should proceed
--- All in one atomic transaction
+-- FIXED: bbox is ARRAY not JSONB - use array indices
 -- ============================================================================
+
+DROP FUNCTION check_and_lock_city_for_hydration(double precision,double precision);
 
 CREATE OR REPLACE FUNCTION check_and_lock_city_for_hydration(
   user_lat DOUBLE PRECISION,
@@ -18,7 +16,7 @@ RETURNS TABLE (
   country_code text,
   status text,
   last_hydrated_at timestamptz,
-  bbox jsonb,
+  bbox double precision[],
   should_hydrate boolean,
   skip_reason text
 )
@@ -44,10 +42,10 @@ BEGIN
   FROM cities_registry c
   WHERE ST_Contains(
     ST_MakeEnvelope(
-      (c.bbox->>'min_lng')::float,
-      (c.bbox->>'min_lat')::float,
-      (c.bbox->>'max_lng')::float,
-      (c.bbox->>'max_lat')::float,
+      c.bbox[1],  -- min_lng
+      c.bbox[2],  -- min_lat
+      c.bbox[3],  -- max_lng
+      c.bbox[4],  -- max_lat
       4326
     ),
     ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)
@@ -98,7 +96,7 @@ BEGIN
   RETURN QUERY SELECT 
     city_record.id,
     city_record.city_name,
-    city_record.country_code,
+    city_record.country_code::text,  -- Cast char(2) to text
     city_record.status,
     city_record.last_hydrated_at,
     city_record.bbox,
@@ -113,4 +111,5 @@ COMMENT ON FUNCTION check_and_lock_city_for_hydration IS
 'Atomically check city, evaluate skip logic, and update status.
 All logic in single transaction with lock held throughout.
 Returns should_hydrate=true only if city needs hydration.
-Skip reasons: already_processing, fresh, stale, needs_hydration.';
+Skip reasons: already_processing, fresh, stale, needs_hydration.
+FIXED: bbox is array [min_lng, min_lat, max_lng, max_lat] not JSONB.';
