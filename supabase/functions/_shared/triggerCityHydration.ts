@@ -1,19 +1,34 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// SWR revalidation period - cities older than this trigger background refresh
-const REVALIDATION_DAYS = 60;
+type CityData = {
+  id: string;
+  city_name: string;
+  country_code: string;
+  status: string;
+  last_hydrated_at: string | null;
+  bbox: any;
+  should_hydrate: boolean;
+  skip_reason: string;
+};
 
 /**
  * Trigger city hydration if needed (Overture-Native version)
- * Simplified: No Nominatim calls, discovery happens in Python worker
+ * All logic handled in single atomic RPC call
  */
 export async function triggerCityHydrationIfNeeded(
-  supabaseUrl: string,
-  serviceRoleKey: string,
   latitude: string,
-  longitude: string,
-  githubToken: string
+  longitude: string
 ): Promise<{ status: string; cityName?: string; countryCode?: string }> {
+  // Read env vars internally
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const githubToken = Deno.env.get("GH_HYDRATION_TOKEN");
+
+  if (!supabaseUrl || !serviceRoleKey || !githubToken) {
+    console.error("❌ Missing required environment variables");
+    return { status: "error" };
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   const latNum = parseFloat(latitude);
@@ -22,9 +37,13 @@ export async function triggerCityHydrationIfNeeded(
   console.log(`🔍 Checking city coverage for point: (${latNum}, ${lngNum})`);
 
   try {
-    // Check if this point is already covered by cities_registry
+    // Single atomic RPC call handles everything:
+    // 1. Find city with lock
+    // 2. Check if should skip (processing, fresh)
+    // 3. Update status to 'processing' if needed
+    // 4. Return should_hydrate flag
     const { data: cities, error: rpcError } = await supabaseAdmin.rpc(
-      "check_city_by_coordinates",
+      "check_and_lock_city_for_hydration",
       {
         user_lat: latNum,
         user_lng: lngNum,
@@ -36,58 +55,75 @@ export async function triggerCityHydrationIfNeeded(
       throw rpcError;
     }
 
-    const existingCity = cities && cities.length > 0 ? cities[0] : null;
+    const city = cities && cities.length > 0 ? cities[0] : null;
 
-    // Calculate days since hydration
-    const daysSinceHydration = existingCity?.last_hydrated_at
-      ? Math.floor(
-          (Date.now() - new Date(existingCity.last_hydrated_at).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : null;
-
-    // City found and recently hydrated
-    if (existingCity && daysSinceHydration !== null && daysSinceHydration <= REVALIDATION_DAYS) {
-      console.log(
-        `✅ City "${existingCity.city_name}" is fresh (${daysSinceHydration} days old)`
-      );
-      return {
-        status: "covered",
-        cityName: existingCity.city_name,
-        countryCode: existingCity.country_code,
-      };
+    // No city found - trigger discovery
+    if (!city) {
+      console.log("🆕 New territory detected, dispatching discovery workflow");
+      await dispatchGitHubHydration(null, latitude, longitude, githubToken, false);
+      return { status: "hydrating" };
     }
 
-    // City found but needs revalidation (SWR pattern)
-    if (existingCity && daysSinceHydration !== null && daysSinceHydration > REVALIDATION_DAYS) {
-      console.log(
-        `🔄 City "${existingCity.city_name}" needs refresh (${daysSinceHydration} days old)`
-      );
+    console.log(`📍 Found city: ${city.city_name} (${city.id})`);
 
-      // Dispatch background update
-      await dispatchGitHubHydration(
-        existingCity.id,
-        latitude,
-        longitude,
-        githubToken,
-        true
-      );
-
-      return {
-        status: "refreshing",
-        cityName: existingCity.city_name,
-        countryCode: existingCity.country_code,
-      };
+    // Handle skip reasons
+    if (!city.should_hydrate) {
+      return handleSkipReason(city);
     }
 
-    // New territory - dispatch discovery workflow
-    console.log("🆕 New territory detected, dispatching discovery workflow");
-    await dispatchGitHubHydration(null, latitude, longitude, githubToken, false);
+    // This request won the race - dispatch hydration
+    console.log(`🚀 Status updated to 'processing', dispatching workflow...`);
+    
+    await dispatchGitHubHydration(
+      city.id,
+      latitude,
+      longitude,
+      githubToken,
+      true
+    );
 
-    return { status: "hydrating" };
+    return {
+      status: "refreshing",
+      cityName: city.city_name,
+      countryCode: city.country_code,
+    };
   } catch (error) {
     console.error("❌ City hydration trigger failed:", error);
     return { status: "error" };
+  }
+}
+
+/**
+ * Handle skip reasons from RPC
+ */
+function handleSkipReason(city: CityData): { status: string; cityName: string; countryCode: string } {
+  switch (city.skip_reason) {
+    case "already_processing":
+      console.log(`⏳ City "${city.city_name}" is already being processed - skipping`);
+      return {
+        status: "processing",
+        cityName: city.city_name,
+        countryCode: city.country_code,
+      };
+    
+    case "fresh":
+      const daysSince = city.last_hydrated_at
+        ? Math.floor((Date.now() - new Date(city.last_hydrated_at).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      console.log(`✅ City "${city.city_name}" is fresh (${daysSince} days old) - skipping`);
+      return {
+        status: "covered",
+        cityName: city.city_name,
+        countryCode: city.country_code,
+      };
+    
+    default:
+      console.warn(`⚠️ Unexpected skip reason: ${city.skip_reason}`);
+      return {
+        status: "skipped",
+        cityName: city.city_name,
+        countryCode: city.country_code,
+      };
   }
 }
 

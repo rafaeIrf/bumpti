@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
+import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.js";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -54,6 +54,12 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }
+    
+    // Trigger city hydration check in background
+    triggerCityHydrationIfNeeded(
+      latNum.toString(),
+      lngNum.toString()
+    ).catch((err) => console.error("Hydration trigger failed:", err));
 
     const parsedPage = Number(page);
     const pageNumber =
@@ -120,22 +126,6 @@ serve(async (req) => {
             } : undefined
         };
     });
-
-    // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
-    // Even if results exist, trigger hydration if city is stale (>60 days)
-    // This ensures popular cities stay fresh without manual intervention
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
-    
-    // Trigger in background (don't wait for result, don't block response)
-    triggerCityHydrationIfNeeded(
-      supabaseUrl,
-      serviceRoleKey,
-      latNum.toString(),
-      lngNum.toString(),
-      githubToken
-    ).catch((err) => console.error("Hydration trigger failed:", err));
 
     return new Response(JSON.stringify(results), {
       status: 200,
