@@ -364,6 +364,7 @@ def main():
     
     # Initialize city_id for error handler
     city_id = city_id_arg
+    pg_conn = None
     
     try:
         config = load_curation_config()
@@ -771,6 +772,16 @@ def main():
         traceback.print_exc()
         finalize_callback(city_id, 'failed', error_msg=error_msg)
         sys.exit(1)
+    
+    finally:
+        # CRITICAL: Always close connection to release locks
+        if pg_conn:
+            try:
+                pg_conn.rollback()  # Rollback any uncommitted transaction
+                pg_conn.close()
+                print("🔓 Database connection closed")
+            except Exception as cleanup_error:
+                print(f"⚠️  Error during cleanup: {cleanup_error}", file=sys.stderr)
 
 
 if __name__ == '__main__':
