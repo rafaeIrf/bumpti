@@ -15,6 +15,7 @@ import requests
 
 # Import from hydration modules
 from hydration.utils import load_config, build_category_map, sanitize_name, parse_street_address
+from hydration.deduplication import POIColumn
 from hydration.validation import validate_category_name, check_taxonomy_hierarchy, filter_osm_red_flags
 from hydration.scoring import calculate_scores, apply_scoring_modifiers, calculate_taxonomy_weight
 from hydration.ai_matcher import (
@@ -689,12 +690,12 @@ def main():
                 brand_name = row[14]
                 
                 score_result = calculate_scores(
-                    row[9],  # confidence
-                    row[11],  # websites
-                    row[12],  # socials
-                    street=row[5],
-                    house_number=None,
-                    neighborhood=row[6],
+                    float(row[POIColumn.CONFIDENCE]) if row[POIColumn.CONFIDENCE] else 0.0,
+                    row[POIColumn.WEBSITES],
+                    row[POIColumn.SOCIALS],
+                    street=row[POIColumn.STREET],
+                    house_number=row[POIColumn.HOUSE_NUMBER],
+                    neighborhood=row[POIColumn.NEIGHBORHOOD],
                     source_magnitude=source_count,
                     has_brand=bool(brand_name),
                     is_iconic=is_iconic,

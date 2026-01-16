@@ -1,14 +1,14 @@
 -- ============================================================================
--- Add FOR UPDATE lock to check_city_by_coordinates RPC
+-- Simplify check_city_by_coordinates - just check, don't update
 -- ============================================================================
--- Consolidates lock logic into existing RPC instead of creating new one
--- Atomically updates status to 'processing' when hydration should proceed
+-- Separate concerns: checking vs updating
+-- Add dedicated update_city_status_to_processing function
 -- ============================================================================
 
+-- 1. Simplify check to just return city data with lock
 CREATE OR REPLACE FUNCTION check_city_by_coordinates(
   user_lat DOUBLE PRECISION,
-  user_lng DOUBLE PRECISION,
-  should_update_status BOOLEAN DEFAULT FALSE
+  user_lng DOUBLE PRECISION
 )
 RETURNS TABLE (
   id uuid,
@@ -16,17 +16,13 @@ RETURNS TABLE (
   country_code text,
   status text,
   last_hydrated_at timestamptz,
-  bbox jsonb,
-  status_updated boolean
+  bbox jsonb
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
-DECLARE
-  city_record RECORD;
-  updated boolean := FALSE;
 BEGIN
-  -- Find city with lock
+  RETURN QUERY
   SELECT 
     c.id,
     c.city_name,
@@ -34,7 +30,6 @@ BEGIN
     c.status,
     c.last_hydrated_at,
     c.bbox
-  INTO city_record
   FROM cities_registry c
   WHERE ST_Contains(
     ST_MakeEnvelope(
@@ -47,39 +42,49 @@ BEGIN
     ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)
   )
   LIMIT 1
-  FOR UPDATE;  -- Acquires exclusive row lock
-  
-  -- If city found and should update status
-  IF city_record.id IS NOT NULL AND should_update_status THEN
-    -- Update status to processing if not already processing or completed+fresh
-    IF city_record.status != 'processing' THEN
-      UPDATE cities_registry
-      SET status = 'processing',
-          updated_at = NOW()
-      WHERE cities_registry.id = city_record.id;
-      
-      updated := TRUE;
-      city_record.status := 'processing';  -- Update local record
-    END IF;
-  END IF;
-  
-  -- Return city data
-  IF city_record.id IS NOT NULL THEN
-    RETURN QUERY SELECT 
-      city_record.id,
-      city_record.city_name,
-      city_record.country_code,
-      city_record.status,
-      city_record.last_hydrated_at,
-      city_record.bbox,
-      updated;
-  END IF;
+  FOR UPDATE;  -- Lock to prevent race conditions
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION check_city_by_coordinates(DOUBLE PRECISION, DOUBLE PRECISION, BOOLEAN) TO authenticated, anon, service_role;
+-- 2. Add dedicated function to update status to processing
+CREATE OR REPLACE FUNCTION update_city_status_to_processing(
+  city_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_status text;
+BEGIN
+  -- Get current status with lock
+  SELECT status INTO current_status
+  FROM cities_registry
+  WHERE id = city_id
+  FOR UPDATE;
+  
+  -- Only update if not already processing
+  IF current_status != 'processing' THEN
+    UPDATE cities_registry
+    SET status = 'processing',
+        updated_at = NOW()
+    WHERE cities_registry.id = city_id;
+    
+    RETURN TRUE;  -- Status was updated
+  END IF;
+  
+  RETURN FALSE;  -- Status was already processing
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION check_city_by_coordinates(DOUBLE PRECISION, DOUBLE PRECISION) TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION update_city_status_to_processing(uuid) TO authenticated, anon, service_role;
 
 COMMENT ON FUNCTION check_city_by_coordinates IS 
-'Check if coordinates fall within any city bbox and optionally update status to processing.
-When should_update_status=true, atomically sets status to processing within locked transaction.
-This prevents race conditions where multiple requests trigger hydration for same city.';
+'Check if coordinates fall within any city bbox and acquire row lock.
+Returns city data. Lock prevents concurrent operations on same city.';
+
+COMMENT ON FUNCTION update_city_status_to_processing IS 
+'Atomically update city status to processing if not already processing.
+Returns true if updated, false if already processing.
+Must be called after check_city_by_coordinates to maintain lock.';
