@@ -68,8 +68,8 @@ serve(async (req) => {
             addressParts.push(p.street);
         }
 
-        // Destructure to remove raw review fields from top-level response
-        const { review_average, review_count, review_tags, ...placeData } = p;
+        // Destructure to remove raw fields from top-level response
+        const { review_average, review_count, review_tags, search_rank, ...placeData } = p;
         
         return {
             ...placeData,
@@ -78,7 +78,9 @@ serve(async (req) => {
                 average: p.review_average,
                 count: p.review_count,
                 tags: p.review_tags
-            } : undefined
+            } : undefined,
+            // Optionally expose search_rank for debugging (remove in production)
+            ...(process.env.DENO_ENV === 'development' && { search_rank: p.search_rank })
         };
     });
 
