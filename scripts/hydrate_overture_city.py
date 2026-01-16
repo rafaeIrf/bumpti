@@ -559,11 +559,23 @@ def main():
             return
         
         # ====================================================================
-        # BATCH PROCESSING: Process in 8000-record batches
+        # PYTHON DEDUPLICATION: Remove duplicates in-memory before DB insert
+        # ====================================================================
+        print(f"\n🧹 Deduplicating {total_pois:,} POIs in-memory...")
+        from hydration.deduplication import deduplicate_pois_in_memory
+        
+        deduplicated_pois, overture_id_mappings = deduplicate_pois_in_memory(all_pois, config)
+        total_unique = len(deduplicated_pois)
+        total_duplicates = total_pois - total_unique
+        
+        print(f"✅ Deduplication complete: {total_unique:,} unique POIs ({total_duplicates:,} duplicates removed)")
+        
+        # ====================================================================
+        # BATCH PROCESSING: Process deduplicated POIs in 3000-record batches
         # ====================================================================
         
-        BATCH_SIZE = 8000
-        num_batches = (total_pois + BATCH_SIZE - 1) // BATCH_SIZE
+        BATCH_SIZE = 3000
+        num_batches = (total_unique + BATCH_SIZE - 1) // BATCH_SIZE
         
         print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
         print(f"   Strategy: Incremental commits to prevent database locks\n")
@@ -573,8 +585,8 @@ def main():
         
         for batch_num in range(num_batches):
             start_idx = batch_num * BATCH_SIZE
-            end_idx = min(start_idx + BATCH_SIZE, total_pois)
-            batch = all_pois[start_idx:end_idx]
+            end_idx = min(start_idx + BATCH_SIZE, total_unique)
+            batch_pois = deduplicated_pois[start_idx:end_idx]
             
             # Detect if this is the final batch
             is_final_batch = (batch_num == num_batches - 1)
@@ -586,7 +598,7 @@ def main():
             all_pois_by_category = {}
             poi_data = {}
             
-            for row in batch:
+            for row in batch_pois:
                 overture_cat = row[2]
                 internal_cat = category_map.get(overture_cat)
                 if not internal_cat:
