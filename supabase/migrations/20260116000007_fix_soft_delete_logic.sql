@@ -47,7 +47,6 @@ BEGIN
       relevance_score = s.relevance_score,
       confidence = s.confidence,
       original_category = s.original_category,
-      city_id = p_city_id,
       active = true,
       updated_at = NOW()
     FROM staging_places s
@@ -128,8 +127,7 @@ BEGIN
     WITH deactivated AS (
       UPDATE places
       SET active = false, updated_at = now()
-      WHERE city_id = p_city_id
-        AND active = true
+      WHERE active = true
         AND id NOT IN (
           SELECT ps.place_id
           FROM place_sources ps
