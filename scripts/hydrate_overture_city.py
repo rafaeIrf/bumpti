@@ -395,13 +395,13 @@ def main():
             
             print(f"✅ Locked city: {city_name} ({city_id}, status={current_status})")
             
-            # Update to processing
+            # Update to processing (NO COMMIT - keep lock!)
             pg_cur.execute(
                 "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
                 (city_id,)
             )
-            pg_conn.commit()
-            print("✅ Status updated to 'processing'")
+            # CRITICAL: Do NOT commit here - lock must persist until processing completes
+            print("✅ Status updated to 'processing' (lock held)")
             
             city_data = {
                 'city_name': existing_city[1],
