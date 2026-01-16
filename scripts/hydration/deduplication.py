@@ -164,79 +164,63 @@ def deduplicate_pois_in_memory(
             
         pois.append(poi)
     
+    
     # Build spatial index for fast radius queries
-    # Convert lat/lng to approximate meters for KDTree
-    # 1 degree ≈ 111km at equator
-    coords = [(poi.lat * 111000, poi.lng * 111000) for poi in pois]
+    coords = np.array([(poi.lat, poi.lng) for poi in pois])
     tree = KDTree(coords)
     
-    # Track which POIs have been merged
-    merged_into: Dict[int, int] = {}  # poi_index -> winner_index
-    clusters: Dict[int, Set[int]] = {}  # winner_index -> set of merged indices
+    processed = set()
+    winners = []
+    losers_to_winner = {}  # Maps loser overture_id → winner overture_id
     
-    # Process each POI
-    for i, poi in enumerate(pois):
-        if i in merged_into:
-            continue  # Already merged into another POI
+    for idx, poi in enumerate(pois):
+        if idx in processed:
+            continue
         
-        # Get adaptive radius for this category
+        # Determine search radius based on category
         radius_meters = get_adaptive_radius(poi.category)
         
         # Find nearby POIs within radius
-        nearby_indices = tree.query_ball_point(coords[i], radius_meters)
+        radius_degrees = radius_meters / 111000  # Approx conversion
+        nearby_indices = tree.query_ball_point([poi.lat, poi.lng], radius_degrees)
         
-        # Check each nearby POI for potential duplicate
-        for j in nearby_indices:
-            if i == j or j in merged_into:
+        # Check for duplicates in nearby POIs
+        cluster = [idx]
+        for nearby_idx in nearby_indices:
+            if nearby_idx in processed or nearby_idx == idx:
                 continue
             
-            other = pois[j]
-            
-            # Category must match (or one is NULL)
-            if poi.category and other.category and poi.category != other.category:
-                continue
-            
-            # Name must be similar (>70%)
-            if not names_are_similar(poi.name, other.name):
-                continue
-            
-            # Found a duplicate! Determine winner
-            if poi.relevance_score >= other.relevance_score:
-                # Current POI wins
-                merged_into[j] = i
-                if i not in clusters:
-                    clusters[i] = {i}
-                clusters[i].add(j)
-            else:
-                # Other POI wins
-                merged_into[i] = j
-                if j not in clusters:
-                    clusters[j] = {j}
-                clusters[j].add(i)
-                break  # Current POI is merged, stop checking
-    
-    # Build deduplicated list and mappings
-    deduplicated = []
-    overture_id_mappings = {}
-    
-    for i, poi in enumerate(pois):
-        if i in merged_into:
-            # This POI was merged into another
-            winner_idx = merged_into[i]
-            winner_poi = pois[winner_idx]
-            overture_id_mappings[poi.overture_id] = winner_poi.overture_id
+            nearby_poi = pois[nearby_idx]
+            if names_are_similar(poi.name, nearby_poi.name):
+                cluster.append(nearby_idx)
+                processed.add(nearby_idx)
+        
+        # Pick winner from cluster
+        if len(cluster) == 1:
+            winners.append(poi.row_data)
         else:
-            # This POI is a winner (or standalone)
-            deduplicated.append(poi.row_data)
-            overture_id_mappings[poi.overture_id] = poi.overture_id
+            # Score each POI in cluster by relevance_score (already calculated)
+            best_idx = max(cluster, key=lambda i: pois[i].relevance_score)
+            winner_poi = pois[best_idx]
+            winners.append(winner_poi.row_data)
             
-            # Map all merged POIs to this winner
-            if i in clusters:
-                for merged_idx in clusters[i]:
-                    if merged_idx != i:
-                        merged_poi = pois[merged_idx]
-                        overture_id_mappings[merged_poi.overture_id] = poi.overture_id
+            # Map all losers to winner
+            for loser_idx in cluster:
+                loser_poi = pois[loser_idx]
+                if loser_idx != best_idx:
+                    losers_to_winner[loser_poi.overture_id] = winner_poi.overture_id
+        
+        processed.add(idx)
     
-    print(f"🧹 Deduplication: {len(pois)} POIs → {len(deduplicated)} unique ({len(pois) - len(deduplicated)} duplicates removed)")
+    # Build mappings: all overture_ids (winners + losers) → their winning overture_id
+    all_mappings = {}
+    for winner_row in winners:
+        winner_id = winner_row[0]  # overture_id is first column
+        all_mappings[winner_id] = winner_id  # Winners map to themselves
     
-    return deduplicated, overture_id_mappings
+    # Add loser mappings
+    all_mappings.update(losers_to_winner)
+    
+    print(f"🧹 Deduplication: {len(pois)} POIs → {len(winners)} unique ({len(pois) - len(winners)} duplicates removed)")
+    
+    return winners, all_mappings

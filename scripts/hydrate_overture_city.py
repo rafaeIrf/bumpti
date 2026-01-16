@@ -14,9 +14,7 @@ from psycopg2.extras import execute_values
 import requests
 
 # Import from hydration modules
-from hydration.utils import load_config, build_category_map, sanitize_name
-from hydration.validation import validate_category_name, check_taxonomy_hierarchy, filter_osm_red_flags
-from hydration.scoring import calculate_scores, apply_scoring_modifiers, calculate_taxonomy_weight
+from hydration.utils import load_config, build_category_map, sanitize_name, parse_street_address
 from hydration.ai_matcher import (
     generate_hotlist,
     get_cached_hotlist,
@@ -110,50 +108,6 @@ def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternat
                         return False
     
     return True
-
-
-def parse_street_address(freeform: str) -> tuple[str, str | None]:
-    """
-    Parse freeform address to extract street name and house number.
-    
-    Common patterns:
-    - "123 Main Street" → ("Main Street", "123")
-    - "Rua XV de Novembro, 123" → ("Rua XV de Novembro", "123")  
-    - "Avenida Paulista 1000" → ("Avenida Paulista", "1000")
-    - "Main St" → ("Main St", None)
-    
-    Returns: (street_name, house_number)
-    """
-    if not freeform:
-        return (None, None)
-    
-    import re
-    
-    # Remove leading/trailing whitespace
-    freeform = freeform.strip()
-    
-    # Pattern 1: Number at the start (English style: "123 Main Street")
-    match = re.match(r'^(\d+[\w/-]*)\s+(.+)$', freeform)
-    if match:
-        return (match.group(2).strip(), match.group(1).strip())
-    
-    # Pattern 2: Number after comma (Brazilian style: "Rua XV de Novembro, 123")
-    match = re.match(r'^(.+?),\s*(\d+[\w/-]*)$', freeform)
-    if match:
-        return (match.group(1).strip(), match.group(2).strip())
-    
-    # Pattern 3: Number at the end (no comma: "Avenida Paulista 1000")
-    match = re.match(r'^(.+?)\s+(\d+[\w/-]*)$', freeform)
-    if match:
-        # Only extract if the number is clearly separated
-        street_part = match.group(1).strip()
-        number_part = match.group(2).strip()
-        # Avoid false positives like "XV de Novembro" → street="XV de", number="Novembro"
-        if number_part.isdigit() or re.match(r'^\d+[A-Za-z]?$', number_part):
-            return (street_part, number_part)
-    
-    # No number found, return as-is
-    return (freeform, None)
 
 
 def filter_osm_source_tags(source_raw, config):
