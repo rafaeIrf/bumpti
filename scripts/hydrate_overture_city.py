@@ -746,6 +746,45 @@ def main():
                 pg_conn.commit()
                 print(f"   ✅ Transaction committed")
                 
+                # CRITICAL IDEMPOTENCY FIX: Link duplicate overture_ids to winners
+                # This prevents re-processing the same POIs next month
+                duplicate_links = []
+                for row in batch_pois:
+                    overture_id = row[0]
+                    winner_id = overture_id_mappings.get(overture_id, overture_id)
+                    
+                    # Only process if this is a "loser" (merged into another)
+                    if winner_id != overture_id:
+                        # Find the place_id of the winner
+                        pg_cur.execute(
+                            "SELECT place_id FROM place_sources WHERE provider = 'overture' AND external_id = %s",
+                            (winner_id,)
+                        )
+                        winner_place = pg_cur.fetchone()
+                        
+                        if winner_place:
+                            duplicate_links.append((
+                                winner_place[0],  # place_id (winner's)
+                                'overture',
+                                overture_id,  # external_id (loser's)
+                                json.dumps(row[10]) if row[10] else None  # raw
+                            ))
+                
+                # Batch insert duplicate links
+                if duplicate_links:
+                    link_sql = """
+                    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
+                    VALUES %s
+                    ON CONFLICT (provider, external_id) DO UPDATE SET
+                        place_id = EXCLUDED.place_id,
+                        raw = EXCLUDED.raw,
+                        created_at = NOW()
+                    """
+                    execute_values(pg_cur, link_sql, 
+                                 [(pid, prov, eid, raw, 'NOW()') for pid, prov, eid, raw in duplicate_links])
+                    pg_conn.commit()
+                    print(f"   🔗 Linked {len(duplicate_links)} duplicate IDs to winners")
+                
                 # CRITICAL: Truncate staging for next batch
                 pg_cur.execute("TRUNCATE staging_places")
                 pg_conn.commit()
