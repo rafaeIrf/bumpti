@@ -44,11 +44,10 @@ BEGIN
       state = s.state,
       postal_code = s.postal_code,
       country_code = s.country_code,
-      relevance_score = s.relevance_score, -- Adicionado
       relevance_score = s.relevance_score,
       confidence = s.confidence,
       original_category = s.original_category,
-      city_id = p_city_id, -- Vincula à cidade atual
+      city_id = p_city_id,
       active = true,
       updated_at = NOW()
     FROM staging_places s
@@ -68,7 +67,7 @@ BEGIN
     INSERT INTO places (
       name, category, lat, lng, street, house_number,
       neighborhood, city, state, postal_code, country_code,
-      relevance_score, relevance_score, confidence, original_category,
+      relevance_score, confidence, original_category,
       city_id, active, created_at
     )
     SELECT DISTINCT ON (s.overture_id)
@@ -83,7 +82,6 @@ BEGIN
       s.state,
       s.postal_code,
       s.country_code,
-      s.relevance_score,
       s.relevance_score,
       s.confidence,
       s.original_category,
@@ -132,7 +130,6 @@ BEGIN
       SET active = false, updated_at = now()
       WHERE city_id = p_city_id
         AND active = true
-        AND provider_type_id IS NULL -- Não desativa lugares criados manualmente por usuários
         AND id NOT IN (
           SELECT ps.place_id
           FROM place_sources ps
