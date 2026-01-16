@@ -18,9 +18,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          pip install duckdb psycopg2-binary requests openai rapidfuzz
+          pip install --upgrade pip
+          pip install psycopg2-binary duckdb requests openai scipy unidecode rapidfuzz
 
       - name: Run hydration script
         id: hydrate
