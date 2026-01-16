@@ -252,6 +252,10 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
         
         # Process results
         for iconic_name, matched_id in matches.items():
+            # OpenAI sometimes returns list instead of single ID - handle both
+            if isinstance(matched_id, list):
+                matched_id = matched_id[0] if matched_id else None
+            
             if matched_id and matched_id in poi_id_to_name:
                 matched_pois[matched_id] = iconic_name
                 print(f"   ✅ '{iconic_name}' → '{poi_id_to_name[matched_id]}'")
