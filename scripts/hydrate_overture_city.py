@@ -733,7 +733,7 @@ def main():
                 merge_result = pg_cur.fetchone()
                 
                 if merge_result:
-                    inserted, updated, sources_updated, deactivated, fuzzy_merged = merge_result
+                    inserted, updated, sources_updated, deactivated = merge_result
                     total_inserted += inserted
                     total_updated += updated
                     
