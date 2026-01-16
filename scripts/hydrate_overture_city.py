@@ -112,14 +112,17 @@ def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternat
     return True
 
 
-def filter_osm_red_flags(source_raw, config):
-    """Check OSM source tags for red flags."""
+def filter_osm_source_tags(source_raw, config):
+    """
+    Check OSM source tags for red flags (different from alternate categories check).
+    Returns TRUE to REJECT, FALSE to ACCEPT.
+    """
     if not source_raw or not isinstance(source_raw, dict):
-        return True
+        return False  # No source = accept (innocent until proven guilty)
     
     tags = source_raw.get('tags', {})
     if not tags:
-        return True
+        return False  # No tags = accept
     
     osm_flags = config['taxonomy']['osm_red_flags']
     
@@ -128,6 +131,7 @@ def filter_osm_red_flags(source_raw, config):
         if not tag_value:
             continue
         
+        # Special case: allow therapeutic massage, reject erotic
         if key == 'healthcare' and tag_value == 'massage':
             massage_type = tags.get('massage', '').lower()
             if massage_type in ['spa', 'sports', 'medical', 'physiotherapy']:
@@ -135,9 +139,9 @@ def filter_osm_red_flags(source_raw, config):
         
         for forbidden in forbidden_values:
             if forbidden in tag_value:
-                return False
+                return True  # REJECT - has red flag
     
-    return True
+    return False  # ACCEPT - no red flags found
 
 
 def calculate_taxonomy_weight(category, original_category, config):
@@ -635,7 +639,7 @@ def main():
                     debug_rejected['taxonomy'] += 1
                     continue
                 
-                if filter_osm_red_flags(row[3], config):
+                if filter_osm_source_tags(row[10], config):  # row[10] is source_raw
                     debug_rejected['osm_flags'] += 1
                     continue
                 
