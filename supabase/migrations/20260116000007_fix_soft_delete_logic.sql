@@ -7,6 +7,8 @@
 
 DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
 
+DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
+
 CREATE OR REPLACE FUNCTION merge_staging_to_production(
   p_city_id uuid,
   is_final_batch boolean DEFAULT false
@@ -42,9 +44,11 @@ BEGIN
       state = s.state,
       postal_code = s.postal_code,
       country_code = s.country_code,
+      relevance_score = s.relevance_score, -- Adicionado
       relevance_score = s.relevance_score,
       confidence = s.confidence,
       original_category = s.original_category,
+      city_id = p_city_id, -- Vincula à cidade atual
       active = true,
       updated_at = NOW()
     FROM staging_places s
@@ -64,7 +68,8 @@ BEGIN
     INSERT INTO places (
       name, category, lat, lng, street, house_number,
       neighborhood, city, state, postal_code, country_code,
-      confidence, source_raw, city_id, active
+      relevance_score, relevance_score, confidence, original_category,
+      city_id, active, created_at
     )
     SELECT DISTINCT ON (s.overture_id)
       s.name,
@@ -79,8 +84,10 @@ BEGIN
       s.postal_code,
       s.country_code,
       s.relevance_score,
+      s.relevance_score,
       s.confidence,
       s.original_category,
+      p_city_id,
       true,
       NOW()
     FROM staging_places s
@@ -92,7 +99,7 @@ BEGIN
   SELECT count(*) INTO v_inserted FROM inserted;
 
   -- ====================================================================
-  -- STEP 4: Link new places to place_sources
+  -- STEP 4: Link IDs na place_sources
   -- ====================================================================
   WITH linked AS (
     INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
@@ -104,17 +111,11 @@ BEGIN
       NOW()
     FROM staging_places s
     JOIN places p ON (
+      -- Match por precisão de GPS (WKB) + Nome
       ABS(p.lat - ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
       AND ABS(p.lng - ST_X(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
       AND p.name = s.name
     )
-    WHERE NOT EXISTS (
-      SELECT 1 FROM place_sources ps
-      WHERE ps.place_id = p.id
-        AND ps.provider = 'overture'
-        AND ps.external_id = s.overture_id
-    )
-    ORDER BY s.overture_id, p.created_at DESC
     ON CONFLICT (provider, external_id) DO UPDATE SET
       place_id = EXCLUDED.place_id,
       raw = EXCLUDED.raw
@@ -123,7 +124,7 @@ BEGIN
   SELECT count(*) INTO v_linked FROM linked;
 
   -- ====================================================================
-  -- STEP 5: Soft delete (ONLY final batch) - FIXED LOGIC
+  -- STEP 5: Soft delete (Somente no lote final)
   -- ====================================================================
   IF is_final_batch THEN
     WITH deactivated AS (
@@ -131,14 +132,11 @@ BEGIN
       SET active = false, updated_at = now()
       WHERE city_id = p_city_id
         AND active = true
-        -- FIX: Check place_sources instead of staging_places
+        AND provider_type_id IS NULL -- Não desativa lugares criados manualmente por usuários
         AND id NOT IN (
           SELECT ps.place_id
           FROM place_sources ps
           WHERE ps.provider = 'overture'
-            AND ps.place_id IN (
-              SELECT id FROM places WHERE city_id = p_city_id
-            )
         )
       RETURNING id
     )
@@ -148,10 +146,3 @@ BEGIN
   RETURN QUERY SELECT v_inserted, v_updated, v_deactivated, v_linked;
 END;
 $$;
-
-COMMENT ON FUNCTION merge_staging_to_production IS 
-'Merges staging_places into production with Python deduplication.
-STEP 1: Update via overture_id
-STEP 3: Insert new (not in place_sources)
-STEP 4: Link to place_sources
-STEP 5: Soft delete (checks place_sources, not staging) - FIXED';
