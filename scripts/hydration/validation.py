@@ -44,15 +44,22 @@ def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categor
 
 
 def filter_osm_red_flags(category_tags, config):
-    """Filter out POIs with problematic OSM tags."""
+    """
+    Check if POI should be REJECTED due to OSM red flags.
+    Returns TRUE to REJECT, FALSE to ACCEPT.
+    """
     if not category_tags:
-        return True
+        return False  # No tags = accept (innocent until proven guilty)
     
-    osm_config = config.get('taxonomy', {}).get('osm_red_flags', [])
+    taxonomy_config = config.get('taxonomy', {})
+    osm_red_flags = taxonomy_config.get('osm_red_flags', {})
     
+    # Check if any red flag category exists in tags
     category_tags_lower = category_tags.lower()
-    for red_flag in osm_config:
-        if red_flag in category_tags_lower:
-            return False
     
-    return True
+    for category, flag_list in osm_red_flags.items():
+        for flag in flag_list:
+            if flag in category_tags_lower:
+                return True  # Reject - has red flag
+    
+    return False  # Accept - no red flags found
