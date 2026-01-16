@@ -1,8 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// SWR revalidation period - cities older than this trigger background refresh
-const REVALIDATION_DAYS = 60;
-
 type CityData = {
   id: string;
   city_name: string;
@@ -10,11 +7,13 @@ type CityData = {
   status: string;
   last_hydrated_at: string | null;
   bbox: any;
+  should_hydrate: boolean;
+  skip_reason: string;
 };
 
 /**
  * Trigger city hydration if needed (Overture-Native version)
- * Simplified: No Nominatim calls, discovery happens in Python worker
+ * All logic handled in single atomic RPC call
  */
 export async function triggerCityHydrationIfNeeded(
   supabaseUrl: string,
@@ -31,9 +30,13 @@ export async function triggerCityHydrationIfNeeded(
   console.log(`🔍 Checking city coverage for point: (${latNum}, ${lngNum})`);
 
   try {
-    // Check if city exists (acquires lock)
+    // Single atomic RPC call handles everything:
+    // 1. Find city with lock
+    // 2. Check if should skip (processing, fresh)
+    // 3. Update status to 'processing' if needed
+    // 4. Return should_hydrate flag
     const { data: cities, error: rpcError } = await supabaseAdmin.rpc(
-      "check_city_by_coordinates",
+      "check_and_lock_city_for_hydration",
       {
         user_lat: latNum,
         user_lng: lngNum,
@@ -56,32 +59,14 @@ export async function triggerCityHydrationIfNeeded(
 
     console.log(`📍 Found city: ${city.city_name} (${city.id})`);
 
-    // Check if should skip hydration
-    const skipReason = shouldSkipHydration(city);
-    if (skipReason) {
-      console.log(skipReason.message);
-      return skipReason.response;
+    // Handle skip reasons
+    if (!city.should_hydrate) {
+      return handleSkipReason(city);
     }
 
-    // City needs hydration - update status to 'processing'
-    console.log(`🚀 Updating status to 'processing'...`);
+    // This request won the race - dispatch hydration
+    console.log(`🚀 Status updated to 'processing', dispatching workflow...`);
     
-    const { data: updated, error: updateError } = await supabaseAdmin.rpc(
-      "update_city_status_to_processing",
-      { city_id: city.id }
-    );
-
-    if (updateError) {
-      console.error("❌ Failed to update city status:", updateError);
-      throw updateError;
-    }
-    
-    if (!updated) {
-      console.warn("⚠️ Status was already 'processing' (another request locked this city)");
-      return { status: "skipped" };
-    }
-
-    // Dispatch hydration workflow
     await dispatchGitHubHydration(
       city.id,
       latitude,
@@ -102,47 +87,37 @@ export async function triggerCityHydrationIfNeeded(
 }
 
 /**
- * Determine if hydration should be skipped for a city
+ * Handle skip reasons from RPC
  */
-function shouldSkipHydration(city: CityData): { message: string; response: any } | null {
-  // Skip if already processing
-  if (city.status === "processing") {
-    return {
-      message: `⏳ City "${city.city_name}" is already being processed - skipping`,
-      response: {
+function handleSkipReason(city: CityData): { status: string; cityName: string; countryCode: string } {
+  switch (city.skip_reason) {
+    case "already_processing":
+      console.log(`⏳ City "${city.city_name}" is already being processed - skipping`);
+      return {
         status: "processing",
         cityName: city.city_name,
         countryCode: city.country_code,
-      },
-    };
-  }
-
-  // Skip if completed and fresh
-  if (city.status === "completed" && city.last_hydrated_at) {
-    const daysSinceHydration = Math.floor(
-      (Date.now() - new Date(city.last_hydrated_at).getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-
-    if (daysSinceHydration <= REVALIDATION_DAYS) {
-      return {
-        message: `✅ City "${city.city_name}" is fresh (${daysSinceHydration} days old) - skipping`,
-        response: {
-          status: "covered",
-          cityName: city.city_name,
-          countryCode: city.country_code,
-        },
       };
-    }
-
-    console.log(
-      `🔄 City "${city.city_name}" needs refresh (${daysSinceHydration} days old)`
-    );
-  } else {
-    console.log(`🔧 City "${city.city_name}" status is "${city.status}" - needs hydration`);
+    
+    case "fresh":
+      const daysSince = city.last_hydrated_at
+        ? Math.floor((Date.now() - new Date(city.last_hydrated_at).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      console.log(`✅ City "${city.city_name}" is fresh (${daysSince} days old) - skipping`);
+      return {
+        status: "covered",
+        cityName: city.city_name,
+        countryCode: city.country_code,
+      };
+    
+    default:
+      console.warn(`⚠️ Unexpected skip reason: ${city.skip_reason}`);
+      return {
+        status: "skipped",
+        cityName: city.city_name,
+        countryCode: city.country_code,
+      };
   }
-
-  return null; // Don't skip
 }
 
 /**
