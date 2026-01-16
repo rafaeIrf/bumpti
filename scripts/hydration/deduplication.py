@@ -7,9 +7,31 @@ Uses KDTree for spatial clustering and rapidfuzz for name similarity.
 
 from typing import List, Tuple, Dict, Set
 from dataclasses import dataclass
+from enum import IntEnum
 from scipy.spatial import KDTree
 from rapidfuzz import fuzz
 from unidecode import unidecode
+
+
+class POIColumn(IntEnum):
+    """DuckDB query column indices - eliminates magic numbers."""
+    OVERTURE_ID = 0
+    NAME = 1
+    OVERTURE_CATEGORY = 2
+    ALTERNATE_CATEGORIES = 3
+    GEOM_WKB = 4
+    STREET = 5
+    HOUSE_NUMBER = 6
+    NEIGHBORHOOD = 7
+    POSTAL_CODE = 8
+    STATE = 9
+    CONFIDENCE = 10
+    SOURCE_RAW = 11
+    WEBSITES = 12
+    SOCIALS = 13
+    SOURCE_MAGNITUDE = 14
+    HAS_BRAND = 15
+
 
 
 @dataclass
@@ -114,49 +136,40 @@ def deduplicate_pois_in_memory(
     if not pois_list:
         return [], {}
     
-    # Parse POIs into structured format
-    # DuckDB query columns (0-indexed):
-    # 0: overture_id, 1: name, 2: overture_category, 3: alternate_categories,
-    # 4: geom_wkb, 5: street, 6: neighborhood, 7: postal_code, 8: state,
-    # 9: confidence, 10: source_raw, 11: websites, 12: socials,
-    # 13: source_magnitude, 14: has_brand
+    # Parse POIs into structured format using named column indices
     pois = []
     for row in pois_list:
-        # Calculate simple quality score from available fields
-        # (relevance_score is calculated later in validation loop)
+        # Calculate quality score based on data completeness
         quality_score = 0
-        quality_score += row[13] * 10 if row[13] else 0  # source_magnitude (more sources = better)
-        quality_score += 50 if row[14] else 0  # has_brand (branded places prioritized)
-        quality_score += int(row[9] * 100) if row[9] else 0  # confidence (0.7-1.0 → 70-100)
+        quality_score += row[POIColumn.SOURCE_MAGNITUDE] * 10 if row[POIColumn.SOURCE_MAGNITUDE] else 0
+        quality_score += 50 if row[POIColumn.HAS_BRAND] else 0
+        quality_score += int(row[POIColumn.CONFIDENCE] * 100) if row[POIColumn.CONFIDENCE] else 0
         
         # Get internal category from overture category using config mapping
-        overture_cat = row[2]
+        overture_cat = row[POIColumn.OVERTURE_CATEGORY]
         category_map = config.get('categories', {}).get('mapping', {})
-        internal_cat = category_map.get(overture_cat, overture_cat)  # Fallback to overture if not mapped
+        internal_cat = category_map.get(overture_cat, overture_cat)
         
         poi = POI(
-            overture_id=row[0],
-            name=row[1],
-            lat=None,  # Extract from geom_wkb
-            lng=None,  # Extract from geom_wkb
+            overture_id=row[POIColumn.OVERTURE_ID],
+            name=row[POIColumn.NAME],
+            lat=None,  # Extract from WKB
+            lng=None,  # Extract from WKB
             category=internal_cat,
             relevance_score=quality_score,
             row_data=row
         )
         
         # Extract lat/lng from WKB geometry
-        if row[4]:  # geom_wkb
+        if row[POIColumn.GEOM_WKB]:
             try:
-                # WKB format: first byte is endianness, next 4 bytes are geometry type,
-                # then 8 bytes for X (lng), 8 bytes for Y (lat)
                 import struct
-                wkb = row[4]
+                wkb = row[POIColumn.GEOM_WKB]
                 # Skip first 5 bytes (endianness + type), read X and Y as doubles
                 lng, lat = struct.unpack('<dd', wkb[5:21])
                 poi.lat = lat
                 poi.lng = lng
             except Exception:
-                # Skip POIs with invalid geometry
                 continue
         
         if poi.lat is None or poi.lng is None:
@@ -215,7 +228,7 @@ def deduplicate_pois_in_memory(
     # Build mappings: all overture_ids (winners + losers) → their winning overture_id
     all_mappings = {}
     for winner_row in winners:
-        winner_id = winner_row[0]  # overture_id is first column
+        winner_id = winner_row[POIColumn.OVERTURE_ID]
         all_mappings[winner_id] = winner_id  # Winners map to themselves
     
     # Add loser mappings
