@@ -162,28 +162,31 @@ def ai_validate_matches_batch(validation_batch, api_key):
 
 REGRAS:
 1. Um match é válido quando o candidato claramente se refere ao MESMO estabelecimento que o local icônico.
-2. Use o BAIRRO (neighborhood) como contexto adicional para evitar falsos positivos.
-3. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
-4. Se o bairro não bater, desconfie: 'Bar do João' no Batel ≠ 'Bar do João' no Centro
-5. Se NENHUM candidato for um match óbvio (nome E localização), retorne null.
+2. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
+3. Aceite variações de sufixos: 'Shopping X', 'Unidade Y', etc.
+4. Se NENHUM candidato for um match óbvio, retorne null.
 
-LOCAIS E CANDIDATOS (com bairros):
+LOCAIS E CANDIDATOS:
 {batch_data}
 
-Retorne um JSON com o formato:
+FORMATO DE RETORNO OBRIGATÓRIO:
 {{
   "matches": {{
-    "nome_do_local_iconico": candidate_id_ou_null,
-    ...
+    "nome_do_local_iconico": 123,
+    "outro_local": 456,
+    "sem_match": null
   }}
 }}
 
-Retorne APENAS o JSON, sem texto adicional."""
+IMPORTANTE: 
+- Os valores devem ser NÚMEROS INTEIROS (candidate id), NÃO arrays
+- Use null (não lista vazia) quando não houver match
+- Retorne APENAS o JSON, sem texto adicional."""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON. Consider both name AND neighborhood when matching."},
+                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON. Match venues by name similarity."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
@@ -226,13 +229,12 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
             candidates = find_candidates_for_iconic(iconic_name, all_pois, category)
             
             if candidates:
-                # Prepare for AI validation - now includes neighborhood
+                # Prepare for AI validation - send only ID and name
                 candidate_list = []
                 for poi_name, poi_id, poi_neighborhood, similarity in candidates:
                     candidate_list.append({
                         "id": poi_id,
-                        "name": poi_name,
-                        "neighborhood": poi_neighborhood or "N/A"
+                        "name": poi_name
                     })
                     poi_id_to_name[poi_id] = poi_name
                 
@@ -252,6 +254,10 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
         
         # Process results
         for iconic_name, matched_id in matches.items():
+            # OpenAI sometimes returns list instead of single ID - handle both
+            if isinstance(matched_id, list):
+                matched_id = matched_id[0] if matched_id else None
+            
             if matched_id and matched_id in poi_id_to_name:
                 matched_pois[matched_id] = iconic_name
                 print(f"   ✅ '{iconic_name}' → '{poi_id_to_name[matched_id]}'")
