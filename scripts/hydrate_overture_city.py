@@ -533,7 +533,7 @@ def main():
           categories.primary AS overture_category,
           categories.alternate AS alternate_categories,
           ST_AsWKB(geometry) AS geom_wkb,
-          COALESCE(addresses[1].road, addresses[1].freeform) AS street,
+          addresses[1].freeform AS street,
           addresses[1].number AS house_number,
           addresses[1].locality AS neighborhood,
           addresses[1].postcode AS postal_code,
