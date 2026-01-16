@@ -115,17 +115,53 @@ def deduplicate_pois_in_memory(
         return [], {}
     
     # Parse POIs into structured format
+    # DuckDB query columns (0-indexed):
+    # 0: overture_id, 1: name, 2: overture_category, 3: alternate_categories,
+    # 4: geom_wkb, 5: street, 6: neighborhood, 7: postal_code, 8: state,
+    # 9: confidence, 10: source_raw, 11: websites, 12: socials,
+    # 13: source_magnitude, 14: has_brand
     pois = []
     for row in pois_list:
+        # Calculate simple quality score from available fields
+        # (relevance_score is calculated later in validation loop)
+        quality_score = 0
+        quality_score += row[13] * 10 if row[13] else 0  # source_magnitude (more sources = better)
+        quality_score += 50 if row[14] else 0  # has_brand (branded places prioritized)
+        quality_score += int(row[9] * 100) if row[9] else 0  # confidence (0.7-1.0 → 70-100)
+        
+        # Get internal category from overture category
+        # Note: This is a simplified mapping - full mapping happens in validation
+        overture_cat = row[2]
+        internal_cat = overture_cat  # Will be mapped properly later
+        
         poi = POI(
             overture_id=row[0],
             name=row[1],
-            lat=row[2],
-            lng=row[3],
-            category=row[4],
-            relevance_score=row[11],  # Adjust index based on actual query
+            lat=None,  # Extract from geom_wkb
+            lng=None,  # Extract from geom_wkb
+            category=internal_cat,
+            relevance_score=quality_score,
             row_data=row
         )
+        
+        # Extract lat/lng from WKB geometry
+        if row[4]:  # geom_wkb
+            try:
+                # WKB format: first byte is endianness, next 4 bytes are geometry type,
+                # then 8 bytes for X (lng), 8 bytes for Y (lat)
+                import struct
+                wkb = row[4]
+                # Skip first 5 bytes (endianness + type), read X and Y as doubles
+                lng, lat = struct.unpack('<dd', wkb[5:21])
+                poi.lat = lat
+                poi.lng = lng
+            except Exception:
+                # Skip POIs with invalid geometry
+                continue
+        
+        if poi.lat is None or poi.lng is None:
+            continue
+            
         pois.append(poi)
     
     # Build spatial index for fast radius queries
