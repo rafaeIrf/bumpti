@@ -754,9 +754,9 @@ def main():
                 execute_values(pg_cur, insert_sql, staging_rows, page_size=500)
                 print(f"   💾 Inserted to staging")
                 
-                # Merge to production (pass is_final_batch flag)
-                merge_sql = "SELECT * FROM merge_staging_to_production(%s, %s)"
-                pg_cur.execute(merge_sql, (city_id, is_final_batch))
+                # Merge to production (pass bbox for timestamp+spatial soft delete)
+                merge_sql = "SELECT * FROM merge_staging_to_production(%s, %s, %s)"
+                pg_cur.execute(merge_sql, (city_id, bbox, is_final_batch))
                 merge_result = pg_cur.fetchone()
                 
                 if merge_result:

@@ -1,31 +1,34 @@
 -- ============================================================================
--- FIX: Soft delete should check place_sources, not staging_places
+-- FIX: Critical Soft Delete Bug - Timestamp + BBox Filtering
 -- ============================================================================
--- PROBLEM: Soft delete deactivates places not in final batch
--- SOLUTION: Check place_sources (all processed overture_ids) instead
+-- PROBLEM: Soft delete checked staging_places (only current batch)
+--          Would deactivate all POIs from previous batches!
+-- SOLUTION: Timestamp marking + bbox spatial filter
 -- ============================================================================
 
 DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
-
-DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
+DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, double precision[], boolean);
 
 CREATE OR REPLACE FUNCTION merge_staging_to_production(
   p_city_id uuid,
+  p_bbox double precision[],  -- [min_lng, min_lat, max_lng, max_lat]
   is_final_batch boolean DEFAULT false
 )
 RETURNS TABLE (
-  inserted bigint,
-  updated bigint,
-  deactivated bigint,
-  linked bigint
+  exact_updated bigint,
+  exact_inserted bigint,
+  duplicate_links bigint,
+  soft_deleted bigint
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
-  v_inserted bigint := 0;
-  v_updated bigint := 0;
-  v_deactivated bigint := 0;
-  v_linked bigint := 0;
+  v_exact_updated bigint := 0;
+  v_exact_inserted bigint := 0;
+  v_duplicate_links bigint := 0;
+  v_soft_deleted bigint := 0;
+  execution_start timestamptz := NOW();
 BEGIN
   -- ====================================================================
   -- STEP 1: UPDATE existing places via exact overture_id match
@@ -47,9 +50,8 @@ BEGIN
       relevance_score = s.relevance_score,
       confidence = s.confidence,
       original_category = s.original_category,
-      city_id = p_city_id,
       active = true,
-      updated_at = NOW()
+      updated_at = execution_start  -- Mark as touched in this execution
     FROM staging_places s
     JOIN place_sources ps ON (
       ps.external_id = s.overture_id
@@ -58,23 +60,17 @@ BEGIN
     WHERE p.id = ps.place_id
     RETURNING p.id
   )
-  SELECT count(*) INTO v_updated FROM updated;
+  SELECT count(*) INTO v_exact_updated FROM updated;
 
   -- ====================================================================
-  -- STEP 3: INSERT new places (overture_id not in place_sources)
+  -- STEP 2: INSERT new places (no match in place_sources)
   -- ====================================================================
-  WITH inserted AS (
-    INSERT INTO places (
-      name, category, lat, lng, street, house_number,
-      neighborhood, city, state, postal_code, country_code,
-      relevance_score, confidence, original_category,
-      city_id, active, created_at
-    )
-    SELECT DISTINCT ON (s.overture_id)
+  WITH new_places AS (
+    SELECT
       s.name,
       s.category,
-      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)),
-      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)),
+      ST_Y(staging_wkb_to_geom(s.geom_wkb_hex)) as lat,
+      ST_X(staging_wkb_to_geom(s.geom_wkb_hex)) as lng,
       s.street,
       s.house_number,
       s.neighborhood,
@@ -85,61 +81,67 @@ BEGIN
       s.relevance_score,
       s.confidence,
       s.original_category,
-      p_city_id,
-      true,
-      NOW()
-    FROM staging_places s
-    WHERE s.overture_id NOT IN (
-      SELECT external_id FROM place_sources WHERE provider = 'overture'
-    )
-    RETURNING id
-  )
-  SELECT count(*) INTO v_inserted FROM inserted;
-
-  -- ====================================================================
-  -- STEP 4: Link IDs na place_sources
-  -- ====================================================================
-  WITH linked AS (
-    INSERT INTO place_sources (place_id, provider, external_id, raw, created_at)
-    SELECT DISTINCT ON (s.overture_id)
-      p.id,
-      'overture'::text,
       s.overture_id,
-      s.overture_raw,
-      NOW()
+      s.geom_wkb_hex
     FROM staging_places s
-    JOIN places p ON (
-      -- Match por precisão de GPS (WKB) + Nome
-      ABS(p.lat - ST_Y(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND ABS(p.lng - ST_X(staging_wkb_to_geom(s.geom_wkb_hex))) < 0.00001
-      AND p.name = s.name
+    WHERE NOT EXISTS (
+      SELECT 1 FROM place_sources ps
+      WHERE ps.external_id = s.overture_id
+      AND ps.provider = 'overture'
     )
-    ON CONFLICT (provider, external_id) DO UPDATE SET
-      place_id = EXCLUDED.place_id,
-      raw = EXCLUDED.raw
-    RETURNING place_id
+  ),
+  inserted AS (
+    INSERT INTO places (
+      name, category, lat, lng, street, house_number, neighborhood,
+      city, state, postal_code, country_code, relevance_score,
+      confidence, original_category, active, created_at, updated_at
+    )
+    SELECT
+      name, category, lat, lng, street, house_number, neighborhood,
+      city, state, postal_code, country_code, relevance_score,
+      confidence, original_category, true, execution_start, execution_start
+    FROM new_places
+    RETURNING id, lat, lng
   )
-  SELECT count(*) INTO v_linked FROM linked;
+  INSERT INTO place_sources (place_id, provider, external_id, raw)
+  SELECT 
+    i.id, 
+    'overture', 
+    np.overture_id, 
+    NULL
+  FROM inserted i
+  JOIN new_places np ON (
+    abs(i.lat - np.lat) < 0.0000001 
+    AND abs(i.lng - np.lng) < 0.0000001
+  );
+
+  GET DIAGNOSTICS v_exact_inserted = ROW_COUNT;
 
   -- ====================================================================
-  -- STEP 5: Soft delete (Somente no lote final)
+  -- STEP 3: Soft delete (Final batch only)
+  -- FIX: Timestamp marking + bbox prevents deactivating previous batches
   -- ====================================================================
   IF is_final_batch THEN
     WITH deactivated AS (
-      UPDATE places
-      SET active = false, updated_at = now()
-      WHERE city_id = p_city_id
-        AND active = true
-        AND id NOT IN (
-          SELECT ps.place_id
-          FROM place_sources ps
-          WHERE ps.provider = 'overture'
+      UPDATE places p
+      SET active = false, updated_at = execution_start
+      WHERE p.active = true
+        -- Only Overture POIs
+        AND EXISTS (
+          SELECT 1 FROM place_sources ps
+          WHERE ps.place_id = p.id
+          AND ps.provider = 'overture'
         )
-      RETURNING id
+        -- NOT touched in this execution (all batches)
+        AND p.updated_at < execution_start - INTERVAL '1 minute'
+        -- Within city bbox (spatial filter)
+        AND p.lng >= p_bbox[1] AND p.lng <= p_bbox[3]
+        AND p.lat >= p_bbox[2] AND p.lat <= p_bbox[4]
+      RETURNING p.id
     )
-    SELECT count(*) INTO v_deactivated FROM deactivated;
+    SELECT count(*) INTO v_soft_deleted FROM deactivated;
   END IF;
 
-  RETURN QUERY SELECT v_inserted, v_updated, v_deactivated, v_linked;
+  RETURN QUERY SELECT v_exact_updated, v_exact_inserted, v_duplicate_links, v_soft_deleted;
 END;
 $$;
