@@ -22,12 +22,13 @@ export async function triggerCityHydrationIfNeeded(
   console.log(`🔍 Checking city coverage for point: (${latNum}, ${lngNum})`);
 
   try {
-    // Check if this point is already covered by cities_registry
+    // STEP 1: Check if city exists (without updating status yet)
     const { data: cities, error: rpcError } = await supabaseAdmin.rpc(
       "check_city_by_coordinates",
       {
         user_lat: latNum,
         user_lng: lngNum,
+        should_update_status: false,  // Just check first
       }
     );
 
