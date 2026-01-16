@@ -46,20 +46,23 @@ def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categor
 def filter_osm_red_flags(category_tags, config):
     """
     Check if POI should be REJECTED due to OSM red flags.
+    category_tags is a dict like {"amenity": "restaurant", "cuisine": "italian"}
     Returns TRUE to REJECT, FALSE to ACCEPT.
     """
     if not category_tags:
-        return False  # No tags = accept (innocent until proven guilty)
+        return False  # No tags = accept
     
     taxonomy_config = config.get('taxonomy', {})
     osm_red_flags = taxonomy_config.get('osm_red_flags', {})
     
-    # Check if any red flag category exists in tags
-    category_tags_lower = category_tags.lower()
-    
-    for category, flag_list in osm_red_flags.items():
-        for flag in flag_list:
-            if flag in category_tags_lower:
-                return True  # Reject - has red flag
+    # category_tags is a dict, not a string!
+    # Check if any red flag matches
+    for osm_key, red_flag_values in osm_red_flags.items():
+        tag_value = category_tags.get(osm_key)
+        if tag_value:
+            tag_value_lower = str(tag_value).lower()
+            for flag in red_flag_values:
+                if flag.lower() in tag_value_lower:
+                    return True  # Reject - has red flag
     
     return False  # Accept - no red flags found
