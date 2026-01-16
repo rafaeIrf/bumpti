@@ -369,8 +369,8 @@ def main():
     try:
         config = load_curation_config()
         
-        # Process in batches (3k records per commit - balanced for performance/safety)
-        BATCH_SIZE = 3000
+        # Process in batches (10000k records per commit - balanced for performance/safety)
+        BATCH_SIZE = 10000
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
         
@@ -395,13 +395,19 @@ def main():
             
             print(f"✅ Locked city: {city_name} ({city_id}, status={current_status})")
             
-            # Update to processing
+            # Skip if already completed (unless is_update=true)
+            if current_status == 'completed' and not is_update:
+                print(f"⏭️  City already completed, skipping (use is_update=true to force re-hydration)")
+                pg_conn.close()
+                sys.exit(0)
+            
+            # Update to processing (NO COMMIT - keep lock!)
             pg_cur.execute(
                 "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
                 (city_id,)
             )
-            pg_conn.commit()
-            print("✅ Status updated to 'processing'")
+            # CRITICAL: Do NOT commit here - lock must persist until processing completes
+            print("✅ Status updated to 'processing' (lock held)")
             
             city_data = {
                 'city_name': existing_city[1],
@@ -527,7 +533,8 @@ def main():
           categories.primary AS overture_category,
           categories.alternate AS alternate_categories,
           ST_AsWKB(geometry) AS geom_wkb,
-          addresses[1].freeform AS street,
+          COALESCE(addresses[1].road, addresses[1].freeform) AS street,
+          addresses[1].number AS house_number,
           addresses[1].locality AS neighborhood,
           addresses[1].postcode AS postal_code,
           addresses[1].region AS state,
@@ -571,10 +578,10 @@ def main():
         print(f"✅ Deduplication complete: {total_unique:,} unique POIs ({total_duplicates:,} duplicates removed)")
         
         # ====================================================================
-        # BATCH PROCESSING: Process deduplicated POIs in 3000-record batches
+        # BATCH PROCESSING: Process deduplicated POIs in 10000-record batches
         # ====================================================================
         
-        BATCH_SIZE = 3000
+        BATCH_SIZE = 10000
         num_batches = (total_unique + BATCH_SIZE - 1) // BATCH_SIZE
         
         print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
@@ -696,18 +703,18 @@ def main():
                     name,
                     internal_cat,
                     geom_hex,
-                    row[5],  # street
-                    None,  # house_number
-                    row[6],  # neighborhood
+                    row[5],  # street (freeform)
+                    row[6],  # house_number
+                    row[7],  # neighborhood
                     city_name,
-                    row[8],  # state
-                    row[7],  # postal_code
+                    row[9],  # state
+                    row[8],  # postal_code
                     city_data.get('country_code'),
                     relevance_score,
-                    row[9],  # confidence
+                    row[10],  # confidence
                     overture_cat,
                     row[0],  # overture_id
-                    json.dumps(row[10]) if row[10] else None  # source_raw (JSONB)
+                    json.dumps(row[11]) if row[11] else None  # source_raw (JSONB)
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")

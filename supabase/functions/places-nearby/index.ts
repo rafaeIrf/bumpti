@@ -121,21 +121,21 @@ serve(async (req) => {
         };
     });
 
-    // 🔥 LAZY HYDRATION TRIGGER: If no results, trigger city hydration
-    if (results.length === 0) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-      const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
-      
-      // Trigger city hydration in background (don't wait for result)
-      triggerCityHydrationIfNeeded(
-        supabaseUrl,
-        serviceRoleKey,
-        latNum.toString(),
-        lngNum.toString(),
-        githubToken
-      ).catch((err) => console.error("Hydration trigger failed:", err));
-    }
+    // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
+    // Even if results exist, trigger hydration if city is stale (>60 days)
+    // This ensures popular cities stay fresh without manual intervention
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+    const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
+    
+    // Trigger in background (don't wait for result, don't block response)
+    triggerCityHydrationIfNeeded(
+      supabaseUrl,
+      serviceRoleKey,
+      latNum.toString(),
+      lngNum.toString(),
+      githubToken
+    ).catch((err) => console.error("Hydration trigger failed:", err));
 
     return new Response(JSON.stringify(results), {
       status: 200,
