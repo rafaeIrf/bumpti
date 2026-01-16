@@ -592,7 +592,7 @@ def main():
             is_final_batch = (batch_num == num_batches - 1)
             
             print(f"{'='*70}")
-            print(f"[BATCH {batch_num+1}/{num_batches}] Processing {len(batch)} POIs... (Final Batch: {is_final_batch})")
+            print(f"[BATCH {batch_num+1}/{num_batches}] Processing {len(batch_pois)} POIs... (Final Batch: {is_final_batch})")
             
             # Collect POIs for AI matching
             all_pois_by_category = {}
