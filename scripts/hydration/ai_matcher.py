@@ -162,12 +162,11 @@ def ai_validate_matches_batch(validation_batch, api_key):
 
 REGRAS:
 1. Um match é válido quando o candidato claramente se refere ao MESMO estabelecimento que o local icônico.
-2. Use o BAIRRO (neighborhood) como contexto adicional para evitar falsos positivos.
-3. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
-4. Se o bairro não bater, desconfie: 'Bar do João' no Batel ≠ 'Bar do João' no Centro
-5. Se NENHUM candidato for um match óbvio (nome E localização), retorne null.
+2. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
+3. Aceite variações de sufixos: 'Shopping X', 'Unidade Y', etc.
+4. Se NENHUM candidato for um match óbvio, retorne null.
 
-LOCAIS E CANDIDATOS (com bairros):
+LOCAIS E CANDIDATOS:
 {batch_data}
 
 FORMATO DE RETORNO OBRIGATÓRIO:
@@ -187,7 +186,7 @@ IMPORTANTE:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON. Consider both name AND neighborhood when matching."},
+                {"role": "system", "content": "You are a precise semantic validator. Return only valid JSON. Match venues by name similarity."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
