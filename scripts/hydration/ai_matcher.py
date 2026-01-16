@@ -229,13 +229,12 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
             candidates = find_candidates_for_iconic(iconic_name, all_pois, category)
             
             if candidates:
-                # Prepare for AI validation - now includes neighborhood
+                # Prepare for AI validation - send only ID and name
                 candidate_list = []
                 for poi_name, poi_id, poi_neighborhood, similarity in candidates:
                     candidate_list.append({
                         "id": poi_id,
-                        "name": poi_name,
-                        "neighborhood": poi_neighborhood or "N/A"
+                        "name": poi_name
                     })
                     poi_id_to_name[poi_id] = poi_name
                 
