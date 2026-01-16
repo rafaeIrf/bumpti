@@ -1,14 +1,17 @@
 -- ============================================================================
--- FIX: Duplicate key error in place_sources insert
+-- FIX: Critical Soft Delete Bug - Timestamp + BBox Filtering
 -- ============================================================================
--- PROBLEM: RETURNING used name+category lookup, matching wrong POI
--- SOLUTION: Use lat/lng correlation for accurate overture_id mapping
+-- PROBLEM: Soft delete checked staging_places (only current batch)
+--          Would deactivate all POIs from previous batches!
+-- SOLUTION: Timestamp marking + bbox spatial filter
 -- ============================================================================
 
 DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, boolean);
+DROP FUNCTION IF EXISTS merge_staging_to_production(uuid, double precision[], boolean);
 
 CREATE OR REPLACE FUNCTION merge_staging_to_production(
   p_city_id uuid,
+  p_bbox double precision[],  -- [min_lng, min_lat, max_lng, max_lat]
   is_final_batch boolean DEFAULT false
 )
 RETURNS TABLE (
@@ -25,6 +28,7 @@ DECLARE
   v_exact_inserted bigint := 0;
   v_duplicate_links bigint := 0;
   v_soft_deleted bigint := 0;
+  execution_start timestamptz := NOW();
 BEGIN
   -- ====================================================================
   -- STEP 1: UPDATE existing places via exact overture_id match
@@ -47,7 +51,7 @@ BEGIN
       confidence = s.confidence,
       original_category = s.original_category,
       active = true,
-      updated_at = NOW()
+      updated_at = execution_start  -- Mark as touched in this execution
     FROM staging_places s
     JOIN place_sources ps ON (
       ps.external_id = s.overture_id
@@ -60,7 +64,6 @@ BEGIN
 
   -- ====================================================================
   -- STEP 2: INSERT new places (no match in place_sources)
-  -- FIX: Use geom_wkb_hex for correlation instead of name+category
   -- ====================================================================
   WITH new_places AS (
     SELECT
@@ -79,7 +82,7 @@ BEGIN
       s.confidence,
       s.original_category,
       s.overture_id,
-      s.geom_wkb_hex  -- Keep for correlation
+      s.geom_wkb_hex
     FROM staging_places s
     WHERE NOT EXISTS (
       SELECT 1 FROM place_sources ps
@@ -91,12 +94,12 @@ BEGIN
     INSERT INTO places (
       name, category, lat, lng, street, house_number, neighborhood,
       city, state, postal_code, country_code, relevance_score,
-      confidence, original_category, active
+      confidence, original_category, active, created_at, updated_at
     )
     SELECT
       name, category, lat, lng, street, house_number, neighborhood,
       city, state, postal_code, country_code, relevance_score,
-      confidence, original_category, true
+      confidence, original_category, true, execution_start, execution_start
     FROM new_places
     RETURNING id, lat, lng
   )
@@ -115,23 +118,26 @@ BEGIN
   GET DIAGNOSTICS v_exact_inserted = ROW_COUNT;
 
   -- ====================================================================
-  -- STEP 3: Soft delete (Somente no lote final)
+  -- STEP 3: Soft delete (Final batch only)
+  -- FIX: Timestamp marking + bbox prevents deactivating previous batches
   -- ====================================================================
   IF is_final_batch THEN
     WITH deactivated AS (
-      UPDATE places
-      SET active = false, updated_at = now()
-      WHERE active = true
-        AND id NOT IN (
-          SELECT ps.place_id
-          FROM place_sources ps
-          WHERE ps.provider = 'overture'
-          AND EXISTS (
-            SELECT 1 FROM staging_places s
-            WHERE s.overture_id = ps.external_id
-          )
+      UPDATE places p
+      SET active = false, updated_at = execution_start
+      WHERE p.active = true
+        -- Only Overture POIs
+        AND EXISTS (
+          SELECT 1 FROM place_sources ps
+          WHERE ps.place_id = p.id
+          AND ps.provider = 'overture'
         )
-      RETURNING id
+        -- NOT touched in this execution (all batches)
+        AND p.updated_at < execution_start - INTERVAL '1 minute'
+        -- Within city bbox (spatial filter)
+        AND p.lng >= p_bbox[1] AND p.lng <= p_bbox[3]
+        AND p.lat >= p_bbox[2] AND p.lat <= p_bbox[4]
+      RETURNING p.id
     )
     SELECT count(*) INTO v_soft_deleted FROM deactivated;
   END IF;
