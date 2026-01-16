@@ -82,12 +82,13 @@ serve(async (req) => {
         };
     });
 
-    // 🔥 LAZY HYDRATION TRIGGER: If no results and we have coordinates, trigger city hydration
-    if (results.length === 0 && latNum && lngNum) {
+    // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
+    // Even if results exist, trigger hydration if city is stale (>60 days)
+    if (latNum && lngNum) {
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
       const githubToken = Deno.env.get("GH_HYDRATION_TOKEN") as string;
       
-      // Trigger city hydration in background (don't wait for result)
+      // Trigger in background (don't wait for result, don't block response)
       triggerCityHydrationIfNeeded(
         supabaseUrl,
         serviceRoleKey,
