@@ -134,7 +134,7 @@ BEGIN
           AND ps.provider = 'overture'
         )
         -- NOT touched in this execution (all batches)
-        AND p.updated_at < execution_start - INTERVAL '1 minute'
+        AND p.updated_at < execution_start - INTERVAL '1 hour'
         -- Within city bbox (spatial filter)
         AND p.lng >= p_bbox[1] AND p.lng <= p_bbox[3]
         AND p.lat >= p_bbox[2] AND p.lat <= p_bbox[4]
