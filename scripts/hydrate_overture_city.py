@@ -112,6 +112,50 @@ def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternat
     return True
 
 
+def parse_street_address(freeform: str) -> tuple[str, str | None]:
+    """
+    Parse freeform address to extract street name and house number.
+    
+    Common patterns:
+    - "123 Main Street" → ("Main Street", "123")
+    - "Rua XV de Novembro, 123" → ("Rua XV de Novembro", "123")  
+    - "Avenida Paulista 1000" → ("Avenida Paulista", "1000")
+    - "Main St" → ("Main St", None)
+    
+    Returns: (street_name, house_number)
+    """
+    if not freeform:
+        return (None, None)
+    
+    import re
+    
+    # Remove leading/trailing whitespace
+    freeform = freeform.strip()
+    
+    # Pattern 1: Number at the start (English style: "123 Main Street")
+    match = re.match(r'^(\d+[\w/-]*)\s+(.+)$', freeform)
+    if match:
+        return (match.group(2).strip(), match.group(1).strip())
+    
+    # Pattern 2: Number after comma (Brazilian style: "Rua XV de Novembro, 123")
+    match = re.match(r'^(.+?),\s*(\d+[\w/-]*)$', freeform)
+    if match:
+        return (match.group(1).strip(), match.group(2).strip())
+    
+    # Pattern 3: Number at the end (no comma: "Avenida Paulista 1000")
+    match = re.match(r'^(.+?)\s+(\d+[\w/-]*)$', freeform)
+    if match:
+        # Only extract if the number is clearly separated
+        street_part = match.group(1).strip()
+        number_part = match.group(2).strip()
+        # Avoid false positives like "XV de Novembro" → street="XV de", number="Novembro"
+        if number_part.isdigit() or re.match(r'^\d+[A-Za-z]?$', number_part):
+            return (street_part, number_part)
+    
+    # No number found, return as-is
+    return (freeform, None)
+
+
 def filter_osm_source_tags(source_raw, config):
     """
     Check OSM source tags for red flags (different from alternate categories check).
@@ -534,7 +578,7 @@ def main():
           categories.alternate AS alternate_categories,
           ST_AsWKB(geometry) AS geom_wkb,
           addresses[1].freeform AS street,
-          addresses[1].number AS house_number,
+          NULL AS house_number,  -- number field doesn't exist in Overture schema
           addresses[1].locality AS neighborhood,
           addresses[1].postcode AS postal_code,
           addresses[1].region AS state,
@@ -559,6 +603,24 @@ def main():
         
         total_pois = len(all_pois)
         print(f"✅ Loaded {total_pois:,} social POIs (filtered at source)")
+    
+    # Parse addresses to extract street and house_number from freeform
+    print(f"🏠 Parsing addresses to extract house numbers...")
+    parsed_pois = []
+    for row in all_pois:
+        # Parse freeform address (index 6)
+        freeform = row[5] # street is at index 5
+        street, house_number = parse_street_address(freeform)
+        
+        # Replace freeform with parsed street and add house_number
+        parsed_row = list(row)
+        parsed_row[5] = street  # street
+        parsed_row[6] = house_number  # house_number (was NULL)
+        parsed_pois.append(tuple(parsed_row))
+    
+    all_pois = parsed_pois
+    print(f"✅ Parsed {len(all_pois):,} addresses")
+
         
         if total_pois == 0:
             print("⚠️  No POIs found in this city!")
