@@ -586,16 +586,17 @@ def main():
         
         
         # ====================================================================
-        # PYTHON DEDUPLICATION: Remove duplicates in-memory before DB insert
+        # PYTHON ENTITY RESOLUTION: Dedup using normalization keys + address
         # ====================================================================
-        print(f"\n🧹 Deduplicating {total_pois:,} POIs in-memory...")
+        print(f"\n🧹 Entity Resolution: Deduplicating {total_pois:,} POIs...")
         from hydration.deduplication import deduplicate_pois_in_memory
         
-        deduplicated_pois, overture_id_mappings = deduplicate_pois_in_memory(all_pois, config)
+        # Non-destructive architecture: preserve ALL POI data
+        deduplicated_pois, duplicate_mappings, all_pois_data = deduplicate_pois_in_memory(all_pois, config)
         total_unique = len(deduplicated_pois)
-        total_duplicates = total_pois - total_unique
+        total_duplicates = len(duplicate_mappings)
         
-        print(f"✅ Deduplication complete: {total_unique:,} unique POIs ({total_duplicates:,} duplicates removed)")
+        print(f"✅ Entity Resolution complete: {total_unique:,} unique POIs ({total_duplicates:,} duplicates removed)")
         
         # ====================================================================
         # BATCH PROCESSING: Process deduplicated POIs in 10000-record batches
@@ -778,7 +779,7 @@ def main():
                 duplicate_links = []
                 for row in batch_pois:
                     overture_id = row[POIColumn.OVERTURE_ID]
-                    winner_id = overture_id_mappings.get(overture_id, overture_id)
+                    winner_id = duplicate_mappings.get(overture_id, overture_id)
                     
                     # Only process if this is a "loser" (merged into another)
                     if winner_id != overture_id:

@@ -113,7 +113,8 @@ BEGIN
   JOIN new_places np ON (
     abs(i.lat - np.lat) < 0.0000001 
     AND abs(i.lng - np.lng) < 0.0000001
-  );
+  )
+  ON CONFLICT (provider, external_id) DO NOTHING;
 
   GET DIAGNOSTICS v_exact_inserted = ROW_COUNT;
 
@@ -133,7 +134,7 @@ BEGIN
           AND ps.provider = 'overture'
         )
         -- NOT touched in this execution (all batches)
-        AND p.updated_at < execution_start - INTERVAL '1 minute'
+        AND p.updated_at < execution_start - INTERVAL '1 hour'
         -- Within city bbox (spatial filter)
         AND p.lng >= p_bbox[1] AND p.lng <= p_bbox[3]
         AND p.lat >= p_bbox[2] AND p.lat <= p_bbox[4]
