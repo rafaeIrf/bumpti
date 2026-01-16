@@ -113,7 +113,8 @@ BEGIN
   JOIN new_places np ON (
     abs(i.lat - np.lat) < 0.0000001 
     AND abs(i.lng - np.lng) < 0.0000001
-  );
+  )
+  ON CONFLICT (provider, external_id) DO NOTHING;
 
   GET DIAGNOSTICS v_exact_inserted = ROW_COUNT;
 
