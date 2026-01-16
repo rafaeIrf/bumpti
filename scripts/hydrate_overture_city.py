@@ -765,8 +765,10 @@ def main():
         finalize_callback(city_id, 'completed', stats=stats)
         
     except Exception as e:
+        import traceback
         error_msg = f"Critical failure: {str(e)}"
         print(f"❌ {error_msg}", file=sys.stderr)
+        traceback.print_exc()
         finalize_callback(city_id, 'failed', error_msg=error_msg)
         sys.exit(1)
 
