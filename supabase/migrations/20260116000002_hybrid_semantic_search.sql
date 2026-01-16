@@ -116,11 +116,11 @@ BEGIN
           null::float
       end as dist_meters,
       
-      -- Python-calculated relevance score (for tiebreaker)
+      -- Python-calculated relevance score (kept for reference, not used in ranking)
       p.total_score as relevance_score,
       
       -- ====================================================================
-      -- HYBRID SEMANTIC RANKING (3 components)
+      -- HYBRID SEMANTIC RANKING (2 components)
       -- ====================================================================
       (
         -- Component 1: FTS Semantic Rank (0-100)
@@ -139,12 +139,6 @@ BEGIN
           THEN 50.0 
           ELSE 0.0 
         END)
-        
-        +
-        
-        -- Component 3: Relevance Score Boost (0-10 points)
-        -- Python quality score as tiebreaker for iconic venues
-        (LEAST(p.total_score / 100.0, 1.0) * 10.0)
         
       ) as search_rank
       
@@ -207,7 +201,7 @@ COMMENT ON FUNCTION search_places_autocomplete IS
 Ranking components:
 - ts_rank_cd: Semantic relevance via word rarity (0-100pts)
 - Prefix boost: Exact prefix match (50pts)
-- Relevance score: Python quality score (0-10pts)
+Search is purely text-based, not influenced by quality scores.
 Exposes search_rank for debugging. Uses functional GIN index on name column.';
 
 -- ============================================================================
