@@ -15,7 +15,7 @@ import requests
 
 # Import from hydration modules
 from hydration.utils import load_config, build_category_map, sanitize_name, parse_street_address
-from hydration.deduplication import POIColumn
+from hydration.deduplication import deduplicate_pois_in_memory, POIColumn
 from hydration.validation import validate_category_name, check_taxonomy_hierarchy, filter_osm_red_flags
 from hydration.scoring import calculate_scores, apply_scoring_modifiers, calculate_taxonomy_weight
 from hydration.ai_matcher import (
@@ -589,7 +589,7 @@ def main():
         # PYTHON DEDUPLICATION: Remove duplicates in-memory before DB insert
         # ====================================================================
         print(f"\n🧹 Deduplicating {total_pois:,} POIs in-memory...")
-        from hydration.deduplication import deduplicate_pois_in_memory, POIColumn
+        from hydration.deduplication import deduplicate_pois_in_memory
         
         deduplicated_pois, overture_id_mappings = deduplicate_pois_in_memory(all_pois, config)
         total_unique = len(deduplicated_pois)
