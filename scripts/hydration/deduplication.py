@@ -129,10 +129,10 @@ def deduplicate_pois_in_memory(
         quality_score += 50 if row[14] else 0  # has_brand (branded places prioritized)
         quality_score += int(row[9] * 100) if row[9] else 0  # confidence (0.7-1.0 → 70-100)
         
-        # Get internal category from overture category
-        # Note: This is a simplified mapping - full mapping happens in validation
+        # Get internal category from overture category using config mapping
         overture_cat = row[2]
-        internal_cat = overture_cat  # Will be mapped properly later
+        category_map = config.get('categories', {}).get('mapping', {})
+        internal_cat = category_map.get(overture_cat, overture_cat)  # Fallback to overture if not mapped
         
         poi = POI(
             overture_id=row[0],
