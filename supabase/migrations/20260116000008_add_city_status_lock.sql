@@ -96,7 +96,7 @@ BEGIN
   RETURN QUERY SELECT 
     city_record.id,
     city_record.city_name,
-    city_record.country_code,
+    city_record.country_code::text,  -- Cast char(2) to text
     city_record.status,
     city_record.last_hydrated_at,
     city_record.bbox,
