@@ -41,8 +41,7 @@ RETURNS TABLE (
   country text,
   active_users bigint,
   dist_meters float,
-  relevance_score float,
-  search_rank float  -- NEW: Expose for debugging
+  search_rank float  -- Expose for debugging
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -116,9 +115,6 @@ BEGIN
           null::float
       end as dist_meters,
       
-      -- Python-calculated relevance score (kept for reference, not used in ranking)
-      p.total_score as relevance_score,
-      
       -- ====================================================================
       -- HYBRID SEMANTIC RANKING (2 components)
       -- ====================================================================
@@ -178,7 +174,6 @@ BEGIN
     rp.country,
     rp.active_users,
     rp.dist_meters,
-    rp.relevance_score,
     rp.search_rank
   FROM ranked_places rp
   ORDER BY 
