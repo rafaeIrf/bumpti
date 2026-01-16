@@ -15,6 +15,8 @@ import requests
 
 # Import from hydration modules
 from hydration.utils import load_config, build_category_map, sanitize_name, parse_street_address
+from hydration.validation import validate_category_name, check_taxonomy_hierarchy, filter_osm_red_flags
+from hydration.scoring import calculate_scores, apply_scoring_modifiers, calculate_taxonomy_weight
 from hydration.ai_matcher import (
     generate_hotlist,
     get_cached_hotlist,
