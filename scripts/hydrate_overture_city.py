@@ -696,18 +696,18 @@ def main():
                     name,
                     internal_cat,
                     geom_hex,
-                    row[5],  # street
-                    None,  # house_number
-                    row[6],  # neighborhood
+                    row[5],  # street (freeform)
+                    row[6],  # house_number
+                    row[7],  # neighborhood
                     city_name,
-                    row[8],  # state
-                    row[7],  # postal_code
+                    row[9],  # state
+                    row[8],  # postal_code
                     city_data.get('country_code'),
                     relevance_score,
-                    row[9],  # confidence
+                    row[10],  # confidence
                     overture_cat,
                     row[0],  # overture_id
-                    json.dumps(row[10]) if row[10] else None  # source_raw (JSONB)
+                    json.dumps(row[11]) if row[11] else None  # source_raw (JSONB)
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
