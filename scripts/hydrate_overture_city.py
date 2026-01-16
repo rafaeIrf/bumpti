@@ -368,12 +368,13 @@ def main():
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
         
-        # IMMEDIATE LOCK: Check if city already exists using lat/lng
-        print(f"🔍 Checking if city exists at ({lat}, {lng})...")
+        # ATOMIC LOCK: Try to acquire exclusive lock on city
+        print(f"🔍 Looking for city at ({lat}, {lng})...")
         check_sql = """
-        SELECT id, city_name, country_code, bbox 
+        SELECT id, city_name, country_code, bbox, status
         FROM cities_registry
         WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+        FOR UPDATE SKIP LOCKED
         LIMIT 1
         """
         
@@ -381,31 +382,41 @@ def main():
         existing_city = pg_cur.fetchone()
         
         if existing_city:
-            # City exists - lock it IMMEDIATELY
+            # Got the lock - update status and process
             city_id = existing_city[0]
             city_name = existing_city[1]
+            current_status = existing_city[4]
             
-            print(f"✅ Found existing city: {city_name} ({city_id})")
-            print(f"🔒 Locking city for processing...")
+            print(f"✅ Locked city: {city_name} ({city_id}, status={current_status})")
             
+            # Update to processing
             pg_cur.execute(
                 "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
                 (city_id,)
             )
             pg_conn.commit()
-            print("✅ City locked to 'processing'")
+            print("✅ Status updated to 'processing'")
             
-            # Load city data from registry
             city_data = {
                 'city_name': existing_city[1],
                 'country_code': existing_city[2],
                 'bbox': existing_city[3]
             }
         else:
-            # City doesn't exist - discover it
-            print("🆕 City not found in registry, discovering...")
+            # Couldn't lock - either doesn't exist OR already locked by another worker
+            # Try to discover (if doesn't exist, will insert)
+            print("⚠️  Could not lock city (doesn't exist or locked by another worker)")
             city_data = discover_city_from_overture(lat, lng)
+            
+            # Try to insert/upsert
             city_id = upsert_city_to_registry(city_data, pg_conn)
+            
+            if not city_id:
+                # Another worker is processing this city
+                print("❌ City is being processed by another worker, aborting")
+                pg_conn.close()
+                sys.exit(0)  # Exit gracefully
+            
             city_name = city_data['city_name']
         
         bbox = city_data['bbox']
@@ -598,21 +609,34 @@ def main():
             # Process POIs in this batch
             staging_rows = []
             
+            # Debug counters
+            debug_rejected = {
+                'no_cat': 0,
+                'validate_name': 0,
+                'taxonomy': 0,
+                'osm_flags': 0,
+                'score': 0
+            }
+            
             for poi_id, (name, row) in poi_data.items():
                 overture_cat = row[2]
                 internal_cat = category_map.get(overture_cat)
                 
                 if not internal_cat:
+                    debug_rejected['no_cat'] += 1
                     continue
                 
                 # Validation
                 if not validate_category_name(name, internal_cat, overture_cat, config):
+                    debug_rejected['validate_name'] += 1
                     continue
                 
                 if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[3], config):
+                    debug_rejected['taxonomy'] += 1
                     continue
                 
                 if filter_osm_red_flags(row[3], config):
+                    debug_rejected['osm_flags'] += 1
                     continue
                 
                 # Scoring
@@ -634,6 +658,7 @@ def main():
                 )
                 
                 if not score_result:
+                    debug_rejected['score'] += 1
                     continue
                 
                 relevance_score, bonus_flags = score_result
@@ -668,6 +693,7 @@ def main():
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
+            print(f"   🐛 DEBUG Rejections: no_cat={debug_rejected['no_cat']}, validate_name={debug_rejected['validate_name']}, taxonomy={debug_rejected['taxonomy']}, osm_flags={debug_rejected['osm_flags']}, score={debug_rejected['score']}")
             
             # Insert to staging
             if staging_rows:
