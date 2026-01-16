@@ -609,21 +609,34 @@ def main():
             # Process POIs in this batch
             staging_rows = []
             
+            # Debug counters
+            debug_rejected = {
+                'no_cat': 0,
+                'validate_name': 0,
+                'taxonomy': 0,
+                'osm_flags': 0,
+                'score': 0
+            }
+            
             for poi_id, (name, row) in poi_data.items():
                 overture_cat = row[2]
                 internal_cat = category_map.get(overture_cat)
                 
                 if not internal_cat:
+                    debug_rejected['no_cat'] += 1
                     continue
                 
                 # Validation
                 if not validate_category_name(name, internal_cat, overture_cat, config):
+                    debug_rejected['validate_name'] += 1
                     continue
                 
                 if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[3], config):
+                    debug_rejected['taxonomy'] += 1
                     continue
                 
                 if filter_osm_red_flags(row[3], config):
+                    debug_rejected['osm_flags'] += 1
                     continue
                 
                 # Scoring
@@ -645,6 +658,7 @@ def main():
                 )
                 
                 if not score_result:
+                    debug_rejected['score'] += 1
                     continue
                 
                 relevance_score, bonus_flags = score_result
@@ -679,6 +693,7 @@ def main():
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
+            print(f"   🐛 DEBUG Rejections: no_cat={debug_rejected['no_cat']}, validate_name={debug_rejected['validate_name']}, taxonomy={debug_rejected['taxonomy']}, osm_flags={debug_rejected['osm_flags']}, score={debug_rejected['score']}")
             
             # Insert to staging
             if staging_rows:
