@@ -369,7 +369,8 @@ def main():
     try:
         config = load_curation_config()
         
-        # PostgreSQL connection
+        # Process in batches (3k records per commit - balanced for performance/safety)
+        BATCH_SIZE = 3000
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
         
