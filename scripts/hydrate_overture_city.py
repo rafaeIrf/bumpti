@@ -586,9 +586,9 @@ def main():
         
         
         # ====================================================================
-        # PYTHON ENTITY RESOLUTION: Dedup using normalization keys + address
+        # SIMPLE DEDUP: Remove exact duplicates (same name + street + house_number)
         # ====================================================================
-        print(f"\n🧹 Entity Resolution: Deduplicating {total_pois:,} POIs...")
+        print(f"\n🧹 Removing exact duplicates from {total_pois:,} POIs...")
         from hydration.deduplication import deduplicate_pois_in_memory
         
         # Non-destructive architecture: preserve ALL POI data
@@ -596,7 +596,7 @@ def main():
         total_unique = len(deduplicated_pois)
         total_duplicates = len(duplicate_mappings)
         
-        print(f"✅ Entity Resolution complete: {total_unique:,} unique POIs ({total_duplicates:,} duplicates removed)")
+        print(f"✅ Deduplication complete: {total_unique:,} unique POIs ({total_duplicates:,} exact duplicates removed)")
         
         # ====================================================================
         # BATCH PROCESSING: Process deduplicated POIs in 10000-record batches
