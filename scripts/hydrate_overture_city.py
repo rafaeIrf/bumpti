@@ -366,21 +366,50 @@ def main():
         
         # PostgreSQL connection
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
+        pg_cur = pg_conn.cursor()
         
-        # Determine mode: discovery or update
-        if city_id_arg:
-            # Update mode: city already exists in registry
-            print(f"\n🔄 UPDATE MODE: Refreshing city {city_id_arg}")
-            city_id = city_id_arg
-            city_data = fetch_city_from_registry(city_id, pg_conn)
+        # IMMEDIATE LOCK: Check if city already exists using lat/lng
+        print(f"🔍 Checking if city exists at ({lat}, {lng})...")
+        check_sql = """
+        SELECT id, city_name, country_code, bbox 
+        FROM cities_registry
+        WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+        LIMIT 1
+        """
+        
+        pg_cur.execute(check_sql, (lng, lat))
+        existing_city = pg_cur.fetchone()
+        
+        if existing_city:
+            # City exists - lock it IMMEDIATELY
+            city_id = existing_city[0]
+            city_name = existing_city[1]
+            
+            print(f"✅ Found existing city: {city_name} ({city_id})")
+            print(f"🔒 Locking city for processing...")
+            
+            pg_cur.execute(
+                "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
+                (city_id,)
+            )
+            pg_conn.commit()
+            print("✅ City locked to 'processing'")
+            
+            # Load city data from registry
+            city_data = {
+                'city_name': existing_city[1],
+                'country_code': existing_city[2],
+                'bbox': existing_city[3]
+            }
         else:
-            # Discovery mode: find city from coordinates
-            print(f"\n🆕 DISCOVERY MODE: Finding city at ({lat}, {lng})")
+            # City doesn't exist - discover it
+            print("🆕 City not found in registry, discovering...")
             city_data = discover_city_from_overture(lat, lng)
             city_id = upsert_city_to_registry(city_data, pg_conn)
+            city_name = city_data['city_name']
         
-        city_name = city_data['city_name']
         bbox = city_data['bbox']
+        pg_cur = pg_conn.cursor()
         
         print(f"\n📍 Processing: {city_name}")
         print(f"📦 BBox: {bbox}")
@@ -513,10 +542,10 @@ def main():
             return
         
         # ====================================================================
-        # BATCH PROCESSING: Process in 2000-record batches
+        # BATCH PROCESSING: Process in 8000-record batches
         # ====================================================================
         
-        BATCH_SIZE = 2000
+        BATCH_SIZE = 8000
         num_batches = (total_pois + BATCH_SIZE - 1) // BATCH_SIZE
         
         print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
