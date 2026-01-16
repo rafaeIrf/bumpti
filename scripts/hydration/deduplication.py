@@ -8,6 +8,7 @@ Uses KDTree for spatial clustering and rapidfuzz for name similarity.
 from typing import List, Tuple, Dict, Set
 from dataclasses import dataclass
 from enum import IntEnum
+import numpy as np
 from scipy.spatial import KDTree
 from rapidfuzz import fuzz
 from unidecode import unidecode
