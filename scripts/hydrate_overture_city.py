@@ -395,6 +395,12 @@ def main():
             
             print(f"✅ Locked city: {city_name} ({city_id}, status={current_status})")
             
+            # Skip if already completed (unless is_update=true)
+            if current_status == 'completed' and not is_update:
+                print(f"⏭️  City already completed, skipping (use is_update=true to force re-hydration)")
+                pg_conn.close()
+                sys.exit(0)
+            
             # Update to processing (NO COMMIT - keep lock!)
             pg_cur.execute(
                 "UPDATE cities_registry SET status = 'processing', updated_at = NOW() WHERE id = %s",
