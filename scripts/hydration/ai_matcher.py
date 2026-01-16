@@ -170,15 +170,19 @@ REGRAS:
 LOCAIS E CANDIDATOS (com bairros):
 {batch_data}
 
-Retorne um JSON com o formato:
+FORMATO DE RETORNO OBRIGATÓRIO:
 {{
   "matches": {{
-    "nome_do_local_iconico": candidate_id_ou_null,
-    ...
+    "nome_do_local_iconico": 123,
+    "outro_local": 456,
+    "sem_match": null
   }}
 }}
 
-Retorne APENAS o JSON, sem texto adicional."""
+IMPORTANTE: 
+- Os valores devem ser NÚMEROS INTEIROS (candidate id), NÃO arrays
+- Use null (não lista vazia) quando não houver match
+- Retorne APENAS o JSON, sem texto adicional."""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
