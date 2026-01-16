@@ -601,31 +601,32 @@ def main():
         all_pois = con.execute(query).fetchall()
         con.close()
         
+        
         total_pois = len(all_pois)
         print(f"✅ Loaded {total_pois:,} social POIs (filtered at source)")
-    
-    # Parse addresses to extract street and house_number from freeform
-    print(f"🏠 Parsing addresses to extract house numbers...")
-    parsed_pois = []
-    for row in all_pois:
-        # Parse freeform address (index 6)
-        freeform = row[5] # street is at index 5
-        street, house_number = parse_street_address(freeform)
         
-        # Replace freeform with parsed street and add house_number
-        parsed_row = list(row)
-        parsed_row[5] = street  # street
-        parsed_row[6] = house_number  # house_number (was NULL)
-        parsed_pois.append(tuple(parsed_row))
-    
-    all_pois = parsed_pois
-    print(f"✅ Parsed {len(all_pois):,} addresses")
-
+        # Parse addresses to extract street and house_number from freeform
+        print(f"🏠 Parsing addresses to extract house numbers...")
+        parsed_pois = []
+        for row in all_pois:
+            # Parse freeform address (index 5 = street)
+            freeform = row[5]
+            street, house_number = parse_street_address(freeform)
+            
+            # Replace freeform with parsed street and add house_number
+            parsed_row = list(row)
+            parsed_row[5] = street  # street
+            parsed_row[6] = house_number  # house_number (was NULL)
+            parsed_pois.append(tuple(parsed_row))
+        
+        all_pois = parsed_pois
+        print(f"✅ Parsed {len(all_pois):,} addresses")
         
         if total_pois == 0:
             print("⚠️  No POIs found in this city!")
             finalize_callback(city_id, 'completed', stats={'inserted': 0, 'updated': 0})
             return
+        
         
         # ====================================================================
         # PYTHON DEDUPLICATION: Remove duplicates in-memory before DB insert
