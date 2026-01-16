@@ -723,18 +723,18 @@ def main():
                     name,
                     internal_cat,
                     geom_hex,
-                    row[5],  # street (freeform)
-                    row[6],  # house_number
-                    row[7],  # neighborhood
+                    row[POIColumn.STREET],
+                    row[POIColumn.HOUSE_NUMBER],
+                    row[POIColumn.NEIGHBORHOOD],
                     city_name,
-                    row[9],  # state
-                    row[8],  # postal_code
+                    row[POIColumn.STATE],
+                    row[POIColumn.POSTAL_CODE],
                     city_data.get('country_code'),
                     relevance_score,
-                    row[10],  # confidence
+                    row[POIColumn.CONFIDENCE],
                     overture_cat,
-                    row[0],  # overture_id
-                    json.dumps(row[11]) if row[11] else None  # source_raw (JSONB)
+                    row[POIColumn.OVERTURE_ID],
+                    json.dumps(row[POIColumn.SOURCE_RAW]) if row[POIColumn.SOURCE_RAW] else None
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
