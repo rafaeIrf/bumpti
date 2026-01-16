@@ -26,7 +26,7 @@ def calculate_scores(confidence, websites, socials, street=None, house_number=No
     has_website = bool(websites and isinstance(websites, (list, tuple)) and len(websites) > 0)
     has_online = has_website or has_social
     
-    if not has_online and confidence < 0.9:
+    if not has_online and confidence < 0.6:
         return None
     
     # === RELEVANCE SCORE (all signals combined) ===

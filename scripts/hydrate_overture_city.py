@@ -550,7 +550,7 @@ def main():
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
           AND categories.primary IN ({category_filter})
-          AND confidence >= 0.7
+          AND confidence >= 0.6
           AND (operating_status IS NULL OR operating_status = 'open')
         LIMIT 500000
         """
