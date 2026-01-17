@@ -8,11 +8,23 @@ from openai import OpenAI
 from rapidfuzz import fuzz
 
 
-def generate_hotlist(city_name):
+def generate_hotlist(city_name, state=None, country_code=None):
     """Generate categorized hotlist of iconic venues using OpenAI gpt-4o.
+    
+    Args:
+        city_name: Name of the city
+        state: State/region code (e.g., 'SP', 'PR') for disambiguation
+        country_code: Country code (e.g., 'BR') for additional context
     
     Returns: dict with categories as keys (e.g., {"bar": [...], "nightclub": [...]}) or empty dict if API fails
     """
+    # Build location string with state and country for disambiguation
+    location = city_name
+    if state:
+        location = f"{city_name}, {state}"
+    if country_code:
+        location = f"{location}, {country_code}"
+    
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
         print("⚠️  OPENAI_API_KEY not set - skipping AI hotlist generation")
@@ -21,9 +33,9 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um especialista local em {city_name} com conhecimento profundo sobre estabelecimentos reais da cidade.
+        prompt = f"""Você é um especialista local em {location} com conhecimento profundo sobre estabelecimentos reais da cidade.
 
-TAREFA: Listar locais REAIS e VERIFICÁVEIS de {city_name}, priorizando dos mais famosos aos moderadamente conhecidos.
+TAREFA: Listar locais REAIS e VERIFICÁVEIS de {location}, priorizando dos mais famosos aos moderadamente conhecidos.
 
 📊 DISTRIBUIÇÃO OBRIGATÓRIA (mínimos por categoria):
 - bar: 30 locais mínimo
@@ -43,7 +55,7 @@ TAREFA: Listar locais REAIS e VERIFICÁVEIS de {city_name}, priorizando dos mais
 ✅ REGRAS OBRIGATÓRIAS:
 1. **NUNCA retorne arrays vazios** - se não souber 30 bares icônicos, inclua os conhecidos
 2. **Use nomes oficiais completos** - ex: "Boteco da Esquina", não "Esquina"
-3. **Apenas lugares REAIS** - que existem ou existiram recentemente em {city_name}
+3. **Apenas lugares REAIS** - que existem ou existiram recentemente em {location}
 4. **Sem lugares fechados** - não inclua estabelecimentos permanentemente fechados
 5. **Diversifique geograficamente** - cubra diferentes bairros quando possível
 6. **Para cidades pequenas** - inclua estabelecimentos menores mas legítimos
@@ -76,10 +88,10 @@ RETORNE APENAS JSON VÁLIDO no formato:
         response = client.chat.completions.create(
             model="gpt-4o",  # Changed from gpt-5.2 (doesn't exist) to gpt-4o
             messages=[
-                {"role": "system", "content": f"You are a comprehensive local expert for {city_name}. You MUST provide AT LEAST the minimum number of real venues for each category. NEVER return empty arrays. If you don't know enough famous places, include legitimate smaller establishments. Real places only - no generic or invented names."},
+                {"role": "system", "content": f"You are a comprehensive local expert for {location}. You MUST provide AT LEAST the minimum number of real venues for each category. NEVER return empty arrays. If you don't know enough famous places, include legitimate smaller establishments. Real places only - no generic or invented names."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={{"type": "json_object"}},
+            response_format={"type": "json_object"},
             temperature=0.3  # Slightly higher for more creativity in smaller cities
         )
         
@@ -87,7 +99,7 @@ RETORNE APENAS JSON VÁLIDO no formato:
         
         # Count total venues
         total_venues = sum(len(venues) for venues in result.values())
-        print(f"🤖 AI Hotlist Generated: {total_venues} iconic venues across {len(result)} categories for {city_name}")
+        print(f"🤖 AI Hotlist Generated: {total_venues} iconic venues across {len(result)} categories for {location}")
         
         return result
         

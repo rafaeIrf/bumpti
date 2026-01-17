@@ -516,7 +516,11 @@ def main():
         hotlist = get_cached_hotlist(city_id, pg_conn)
         if not hotlist:
             # Generate AI hotlist if not cached
-            hotlist = generate_hotlist(city_name)
+            hotlist = generate_hotlist(
+                city_name,
+                state=city_data.get('state'),
+                country_code=city_data.get('country_code')
+            )
             if hotlist:
                 save_hotlist_to_cache(city_id, hotlist, pg_conn)
         
