@@ -503,6 +503,15 @@ def main():
         metrics['total_found'] = len(result)
         con.close()
         
+        # DEBUG: Check if Bossa Bar is in raw Overture data
+        bossa_found = [poi for poi in result if 'bossa' in poi[1].lower()]
+        if bossa_found:
+            print(f"\n🔍 DEBUG: Found {len(bossa_found)} POI(s) with 'bossa' in name:")
+            for poi in bossa_found:
+                print(f"   Name: {poi[1]}, Primary: {poi[2]}, Alternates: {poi[3]}, Confidence: {poi[10]}")
+        else:
+            print(f"\n⚠️  DEBUG: 'Bossa Bar' NOT found in Overture query results")
+        
         print(f"📊 DuckDB query found {metrics['total_found']} POIs in BBox")
         
         # PostgreSQL: Connect via Pooler (port 6543)
@@ -638,12 +647,28 @@ def main():
             for row in batch_pois:
                 overture_cat = row[POIColumn.OVERTURE_CATEGORY]
                 internal_cat = category_map.get(overture_cat)
+                
+                # DEBUG: Track Bossa Bar
+                if 'bossa' in row[POIColumn.NAME].lower():
+                    print(f"\n🔍 DEBUG [Bossa Bar] - Category mapping:")
+                    print(f"   Overture category: {overture_cat}")
+                    print(f"   Internal category: {internal_cat}")
+                
                 if not internal_cat:
+                    if 'bossa' in row[POIColumn.NAME].lower():
+                        print(f"   ❌ REJECTED: No category mapping for '{overture_cat}'")
                     continue
                 
                 raw_name = row[POIColumn.NAME]
                 sanitized_name = sanitize_name(raw_name, config)
+                
+                # DEBUG: Track Bossa Bar
+                if 'bossa' in raw_name.lower():
+                    print(f"   Name sanitization: '{raw_name}' → '{sanitized_name}'")
+                
                 if not sanitized_name:
+                    if 'bossa' in raw_name.lower():
+                        print(f"   ❌ REJECTED: Sanitized name is empty")
                     continue
                 
                 poi_id = len(poi_data)
