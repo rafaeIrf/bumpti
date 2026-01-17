@@ -462,58 +462,6 @@ def main():
             'final_sent_to_staging': 0
         }
         
-        # DuckDB: Query Overture Maps with dynamic category filter
-        con = duckdb.connect(':memory:')
-        con.execute("INSTALL spatial; LOAD spatial;")
-        con.execute("INSTALL httpfs; LOAD httpfs;")
-        
-        # Generate SQL blacklist dynamically
-        blacklist_sql = ', '.join([f"'{cat}'" for cat in category_blacklist])
-        
-        query = f"""
-        SELECT 
-          id AS overture_id,
-          JSON_EXTRACT_STRING(names, 'primary') AS name,
-          categories.primary AS overture_category,
-          categories.alternate AS alternate_categories,
-          ST_AsWKB(geometry) AS geom_wkb,
-          addresses[1].freeform AS street,
-          addresses[1].country AS country_code,
-          addresses[1].postcode AS postal_code,
-          addresses[1].locality AS neighborhood,
-          addresses[1].region AS state,
-          confidence,
-          sources[1] AS source_raw,
-          websites,
-          socials,
-          len(sources) AS source_magnitude,
-          (brand IS NOT NULL) AS has_brand
-        FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
-        WHERE 
-          bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
-          AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
-          AND confidence >= 0.5
-          AND categories.primary IS NOT NULL
-          AND (operating_status IS NULL OR operating_status = 'open')
-          AND categories.primary NOT IN ({blacklist_sql})
-        LIMIT 400000
-        """
-        
-        result = con.execute(query).fetchall()
-        metrics['total_found'] = len(result)
-        con.close()
-        
-        # DEBUG: Check if Bossa Bar is in raw Overture data
-        bossa_found = [poi for poi in result if 'bossa' in poi[1].lower()]
-        if bossa_found:
-            print(f"\n🔍 DEBUG: Found {len(bossa_found)} POI(s) with 'bossa' in name:")
-            for poi in bossa_found:
-                print(f"   Name: {poi[1]}, Primary: {poi[2]}, Alternates: {poi[3]}, Confidence: {poi[10]}")
-        else:
-            print(f"\n⚠️  DEBUG: 'Bossa Bar' NOT found in Overture query results")
-        
-        print(f"📊 DuckDB query found {metrics['total_found']} POIs in BBox")
-        
         # PostgreSQL: Connect via Pooler (port 6543)
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
@@ -528,11 +476,14 @@ def main():
                 country_code=city_data.get('country_code')
             )
             if hotlist:
-                save_hotlist_to_cache(city_id, hotlist, pg_conn)
+        save_hotlist_to_cache(city_id, hotlist, pg_conn)
         
         # ====================================================================
-        # PREDICATE PUSHDOWN: Filter categories at DuckDB level
+        # DUCKDB QUERY: Fetch POIs with predicate pushdown
         # ====================================================================
+        # Use existing DuckDB connection and category filter
+        print(f"\n🗂️ Querying Overture with predicate pushdown...")
+        print(f"   Only fetching social POIs (bars, restaurants, parks, etc.)")
         
         # DuckDB: Query Overture with category filter
         con = duckdb.connect(':memory:')
@@ -541,9 +492,8 @@ def main():
         
         category_map = config['categories']['mapping']
         category_filter = build_category_filter(config)
-        
-        print(f"\n� Querying Overture with predicate pushdown...")
-        print(f"   Only fetching social POIs (bars, restaurants, parks, etc.)")
+        category_blacklist = config['categories']['blacklist']
+        blacklist_sql = ', '.join([f"'{cat}'" for cat in category_blacklist])
         
         query = f"""
         SELECT 
@@ -568,6 +518,7 @@ def main():
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
           AND categories.primary IN ({category_filter})
+          AND categories.primary NOT IN ({blacklist_sql})
           AND confidence >= 0.5
           AND (operating_status IS NULL OR operating_status = 'open')
         LIMIT 500000
@@ -575,6 +526,15 @@ def main():
         
         all_pois = con.execute(query).fetchall()
         con.close()
+        
+        # DEBUG: Check if Bossa Bar is in results
+        bossa_found = [poi for poi in all_pois if 'bossa' in poi[1].lower()]
+        if bossa_found:
+            print(f"\n🔍 DEBUG: Found {len(bossa_found)} POI(s) with 'bossa' in name:")
+            for poi in bossa_found:
+                print(f"   Name: {poi[1]}, Primary: {poi[2]}, Alternates: {poi[3]}, Confidence: {poi[10]}")
+        else:
+            print(f"\n⚠️  DEBUG: 'Bossa Bar' NOT found in query results")
         
         
         total_pois = len(all_pois)
