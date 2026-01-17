@@ -89,7 +89,7 @@ RETURN ONLY VALID JSON in this format:
 }}"""
 
         response = client.chat.completions.create(
-            model="gpt-4o",  # Changed from gpt-5.2 (doesn't exist) to gpt-4o
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": f"You are a strict quality-focused local expert for {location}. CRITICAL: Only return venues you are CERTAIN exist. It's better to return 5 real places than 30 fake ones. NEVER invent sequential names (Club 100, 101...) or generic variations (Bar X, Bar X II...). If uncertain, return FEWER venues."},
                 {"role": "user", "content": prompt}
