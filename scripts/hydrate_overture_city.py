@@ -476,7 +476,7 @@ def main():
                 country_code=city_data.get('country_code')
             )
             if hotlist:
-        save_hotlist_to_cache(city_id, hotlist, pg_conn)
+                save_hotlist_to_cache(city_id, hotlist, pg_conn)
         
         # ====================================================================
         # DUCKDB QUERY: Fetch POIs with predicate pushdown
