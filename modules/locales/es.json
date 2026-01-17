@@ -581,8 +581,12 @@
           "description": "Lugares tranquilos para concentrarse."
         },
         "nearby": {
-          "title": "Qué hay cerca",
-          "description": "Mira los lugares a tu alrededor"
+          "title": "Lo que hay cerca",
+          "description": "Mira la actividad a tu alrededor"
+        },
+        "mostFrequent": {
+          "title": "Más frecuentados",
+          "description": "Lugares a los que la gente siempre vuelve."
         }
       }
     },

@@ -582,7 +582,11 @@
         },
         "nearby": {
           "title": "What's nearby",
-          "description": "See movement around you"
+          "description": "See activity around you"
+        },
+        "mostFrequent": {
+          "title": "Most frequent",
+          "description": "Places people keep coming back to."
         }
       }
     },

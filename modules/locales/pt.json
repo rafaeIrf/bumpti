@@ -584,6 +584,10 @@
         "nearby": {
           "title": "O que está por perto",
           "description": "Veja o movimento ao redor"
+        },
+        "mostFrequent": {
+          "title": "Mais frequentados",
+          "description": "Lugares que a galera sempre vai."
         }
       }
     },

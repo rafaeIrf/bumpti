@@ -8,6 +8,7 @@ import {
   SearchIcon,
   SlidersHorizontalIcon,
   StarIcon,
+  UsersIcon,
   UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
@@ -23,6 +24,7 @@ import {
 import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
+import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -35,7 +37,7 @@ import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -150,6 +152,16 @@ export default function HomeScreen() {
       illustration: Heart,
     },
     {
+      id: "most_frequent",
+      icon: UsersIcon,
+      title: t("screens.home.categories.mostFrequent.title"),
+      description: t("screens.home.categories.mostFrequent.description"),
+      iconColor: "#FFFFFF",
+      iconBgColor: "rgba(255, 255, 255, 0.2)",
+      color: colors.pastelGreen,
+      illustration: Passion,
+    },
+    {
       id: "bars",
       icon: BeerIcon,
       title: t("screens.home.categories.nightlife.title"),
@@ -261,8 +273,8 @@ export default function HomeScreen() {
     },
   ];
 
-  const featuredCategoriesItems = categories.slice(0, 3);
-  const browseCategories = categories.slice(3);
+  const featuredCategoriesItems = categories.slice(0, 4);
+  const browseCategories = categories.slice(4);
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);
@@ -287,9 +299,14 @@ export default function HomeScreen() {
                     trending: "true",
                     categoryName: category.title,
                   }
-                : {
-                    category: category.category,
-                  }),
+                : category.id === "most_frequent"
+                  ? {
+                      mostFrequent: "true",
+                      categoryName: category.title,
+                    }
+                  : {
+                      category: category.category,
+                    }),
         isPremium: "false", // TODO: Get from user premium status
       },
     });
@@ -344,25 +361,19 @@ export default function HomeScreen() {
         <ThemedView style={styles.contentContainer}>
           {/* Featured Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featuredList}
-            >
+            <View style={styles.gridContainer}>
               {featuredCategoriesItems.map((item) => (
-                <CategoryCard
+                <PlaceCardFeatured
                   key={item.id}
-                  category={item}
-                  isSelected={selectedCategory === item.id}
-                  onClick={() => handleCategoryClick(item)}
+                  title={item.title}
+                  icon={item.icon}
                   color={item.color}
-                  illustration={item.illustration}
-                  style={styles.featuredItem}
+                  onClick={() => handleCategoryClick(item)}
+                  containerStyle={styles.featuredItem}
                 />
               ))}
-            </ScrollView>
+            </View>
           </Animated.View>
-
           {/* Nearby Section - Between Featured and Explore */}
           {/* Intermediate Section - Nearby & Explore */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
@@ -380,7 +391,6 @@ export default function HomeScreen() {
               style={styles.nearbyCard}
             />
           </Animated.View>
-
           {/* Explore Section */}
           <Animated.View entering={FadeInDown.delay(300).springify()}>
             <View style={styles.gridContainer}>
