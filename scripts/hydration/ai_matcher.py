@@ -33,106 +33,74 @@ def generate_hotlist(city_name, state=None, country_code=None):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""You are a FACTUAL DATA EXTRACTION ENGINE.
+        prompt = f"""You are NOT generating a list.
+You are performing FACTUAL RECOGNITION.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GEOGRAPHIC SCOPE RULE (CRITICAL)
+CORE RULE (MOST IMPORTANT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-You must list venues that are PHYSICALLY LOCATED inside {location}.
+Only include venues that you STRONGLY RECOGNIZE as real, named, established places
+that you have seen referenced multiple times in real-world contexts.
 
-❌ DO NOT include venues from:
-- other cities
-- metropolitan areas
-- nearby towns
-- neighboring regions
-- same brand in another city
-
-If a venue is famous nationally but NOT located in {location} → DO NOT INCLUDE.
-
-If you are not certain the venue has a physical presence inside {location} → DO NOT INCLUDE.
+If a name is created by a common pattern (e.g. "Bar do X", "Café do Y"):
+→ DO NOT include it unless it is a widely famous, unmistakable venue.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LOCATION USAGE RULE (CRITICAL)
+GEOGRAPHIC BOUNDARY (HARD)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{location} is used ONLY to FILTER geography.
-
-❌ NEVER:
-- Add {location}, neighborhoods, districts or landmarks to venue names
-- Use {location} to differentiate branches or units
+Only include venues that are physically located in {location}.
+Do NOT include nearby cities or metropolitan regions.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ABSOLUTE BRAND RULE (CRITICAL)
+ANTI-FABRICATION RULE (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-If a venue is a BRAND with multiple locations:
-→ Include it ONLY IF it has a physical unit in {location}
-→ List the brand ONCE
-→ Use the OFFICIAL BRAND NAME ONLY
-→ NEVER list branches or neighborhoods
+You are FORBIDDEN from:
+- inventing plausible local names
+- completing lists
+- using cultural naming patterns
+- guessing small or neighborhood places
+- using generic names or personal names
 
-Examples:
-✅ "Bar do Alemão" (exists in {location})
-❌ "Bar do Alemão São Paulo"
-❌ "Bar do Alemão Batel"
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FORBIDDEN NAME PATTERNS (HARD BLOCK)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Remove any venue that matches these patterns:
-
-- "<Brand> <Neighborhood>"
-- "<Brand> - <Location>"
-- "<Brand> Unidade <X>"
-- "Café do <Place>"
-- "Bar do <Place>"
-- "Restaurante do <Place>"
-- Any name containing a neighborhood or landmark
+If you feel tempted to "fill the list":
+STOP and return fewer items.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CATEGORY DEFINITIONS (STRICT)
+BRAND & NAME RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- bar: alcohol-focused establishments
-- nightclub: dance / DJ / nightlife venues
-- restaurant: food-first establishments
-- cafe: coffee-focused establishments
-- club: private or social clubs (NOT nightclubs)
-- stadium: officially named sports stadiums
-- park: officially named public parks
-- university: accredited higher-education institutions
+- Brands are listed ONCE
+- No branches, no units
+- No "Original", "Centro", "Shopping", "Batel", etc.
+- No abbreviations unless they are the official name
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DEDUPLICATION RULE (GLOBAL)
+CATEGORY RULE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A venue name may appear ONLY ONCE in the ENTIRE RESPONSE.
-
-If two names look like variants of the same place:
-→ KEEP the most official one
-→ REMOVE the rest
+Each venue appears in ONE category only.
+If unsure about the category → EXCLUDE.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TARGET COUNTS (SOFT LIMITS)
+TARGET COUNTS (MAXIMUM, NOT GOALS)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-These are MAXIMUMS, NOT GOALS:
+These are upper bounds, NOT expectations:
 
-- bar: up to 30
-- nightclub: up to 20
-- restaurant: up to 30
-- club: up to 20
-- stadium: up to 15
-- park: up to 15
-- cafe: up to 20
-- university: up to 15
+- bar: max 30
+- nightclub: max 20
+- restaurant: max 30
+- club: max 20
+- stadium: max 15
+- park: max 15
+- cafe: max 20
+- university: max 15
 
-Return FEWER items if necessary.
+Returning 5–10 items is PERFECTLY ACCEPTABLE.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FINAL SANITY CHECK (MANDATORY)
+FINAL SELF-CHECK (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Before outputting:
-1. Verify each venue exists physically in {location}
-2. Remove anything outside {location}
-3. Remove expanded brands or branches
-4. Remove duplicates or near-duplicates
-5. Prefer omission over guessing
+Before answering, ask yourself for EACH venue:
+“Would I confidently bet money this place exists with this exact name?”
+
+If not → REMOVE IT.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT (STRICT)
