@@ -33,62 +33,108 @@ def generate_hotlist(city_name, state=None, country_code=None):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""You are a local expert in {location} with deep knowledge of real establishments in the city.
+        prompt = f"""You are a LOCAL FACTUAL AUDITOR, not a creative assistant.
 
-TASK: List REAL and VERIFIABLE venues in {location}. Start with the most famous, then include well-established places.
+You must return ONLY REAL, OFFICIALLY REGISTERED, WELL-KNOWN venues that verifiably exist in {location}.
 
-📊 TARGET QUANTITIES (quality over quantity):
-- bar: up to 30 REAL venues
-- nightclub: up to 20 REAL venues
-- restaurant: up to 30 REAL venues
-- club: up to 20 REAL venues
-- stadium: up to 15 REAL venues
-- park: up to 15 REAL venues
-- cafe: up to 20 REAL venues
-- university: up to 15 REAL venues
+Your priority is FACTUAL CORRECTNESS over completeness.
 
-CRITICAL RULE:
-If you are not at least 90% certain a venue exists in real life, DO NOT include it.
-It is better to return fewer items than to include a possibly incorrect one.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRICT TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+List REAL venues by category in {location}.  
+ONLY include venues that you are at least **95% certain exist as independent, officially named establishments**.
 
-🎯 APPROACH:
-1. **Start with certainty** - List venues you're 100% sure exist
-2. **Add well-known places** - Include established venues
-3. **Stop when uncertain** - Don't invent to reach targets
+If unsure → DO NOT INCLUDE.
 
-✅ WHAT TO DO:
-1. **Start with certainty** - List the famous ones you're 100% sure about
-2. **Then add established** - Include well-known legitimate businesses
-3. **Use full official names**
-4. **Diversify geography** - Cover different neighborhoods when possible
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ABSOLUTE HARD RULES (NO EXCEPTIONS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ DO NOT invent venues  
+❌ DO NOT infer names  
+❌ DO NOT create variants  
+❌ DO NOT add neighborhoods, malls, parks, streets or landmarks to names  
+❌ DO NOT expand brands into multiple locations  
+❌ DO NOT reclassify the same venue across categories  
+❌ DO NOT add prefixes/suffixes like:
+   - "Café do X"
+   - "Bar do Bairro"
+   - "Restaurante do Shopping"
+   - "Unidade Batel / Centro / Água Verde"
+❌ DO NOT transform bars into restaurants or clubs into bars
+❌ DO NOT list the same venue more than once — even across categories
 
-❌ WHAT NOT TO DO (CRITICAL):
-- ❌ Empty lists
-- ❌ **ADDING LOCATIONS TO NAMES**: "Café do Shopping Mueller", "Café do Parque" (these are probably fake)
-- ❌ **DUPLICATES**: Same venue listed twice
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL DEDUPLICATION RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If a venue name already appears ANYWHERE in the output:
+→ It MUST NOT appear again under any category.
 
-⚠️ CRITICAL: Many bars DON'T have "Bar" in the name (e.g., single-word names, brand names)
-⚠️ CRITICAL: If a brand has multiple locations, list it ONCE, not per neighborhood
-⚠️ CRITICAL: Don't add redundant prefixes - use "Location Name" not "Restaurant Location Name" (unless it's part of the official name)
+Examples of INVALID duplication:
+- "James Bar" + "Bar James"
+- "Crossroads" + "Bar Crossroads"
+- "Bar do Alemão" + any neighborhood variant
+- Same brand listed multiple times
 
-🔄 IF APPROACHING TARGET:
-- Continue with less famous but REAL established places
-- Include neighborhood favorites and local institutions
-- It's OK to list 25-30 bars if you know them
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CATEGORY DEFINITION (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- bar: drinking-focused establishments (not clubs, not restaurants)
+- nightclub: dance / DJ / electronic / nightlife venues
+- restaurant: food-first establishments
+- cafe: coffee-focused establishments with official branding
+- club: private, social or sports clubs (NOT nightclubs)
+- stadium: officially named sports stadiums
+- park: officially named public parks
+- university: accredited higher-education institutions
 
-RETURN ONLY VALID JSON:
-{{
-  "bar": ["Real Name 1", "Real Name 2", ... 20-30 items],
-  "nightclub": [...15-20 items],
-  "restaurant": [...20-30 items],
-  "club": [...12-18 items],
-  "stadium": [...10-15 items],
-  "park": [...10-15 items],
-  "cafe": [...12-18 items],
-  "university": [...10-15 items]
-}}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TARGET COUNTS (SOFT LIMITS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+These are MAXIMUMS, NOT GOALS:
 
-If a category has fewer known venues, return fewer items instead of guessing."""
+- bar: up to 30
+- nightclub: up to 20
+- restaurant: up to 30
+- club: up to 20
+- stadium: up to 15
+- park: up to 15
+- cafe: up to 20
+- university: up to 15
+
+⚠️ If you cannot confidently reach the target → STOP EARLY.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTERNAL VERIFICATION STEP (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Before outputting:
+1. Mentally verify each venue exists as a REAL place
+2. Check the name sounds OFFICIAL, not descriptive
+3. Remove any venue that could be:
+   - a nickname
+   - an internal café inside another venue
+   - a location-based variation
+4. Remove duplicates across categories
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Return ONLY valid JSON.
+No comments. No explanations. No markdown.
+
+{
+  "bar": [],
+  "nightclub": [],
+  "restaurant": [],
+  "club": [],
+  "stadium": [],
+  "park": [],
+  "cafe": [],
+  "university": []
+}
+
+Empty arrays are ALLOWED and PREFERRED over incorrect data.
+"""
 
         response = client.chat.completions.create(
             model="gpt-4.1",  # Latest model as of Jan 2026
@@ -147,7 +193,7 @@ def save_hotlist_to_cache(city_id, hotlist, pg_conn):
             ON CONFLICT (city_id) 
             DO UPDATE SET hotlist = EXCLUDED.hotlist, venue_count = EXCLUDED.venue_count,
                 generated_at = NOW(), updated_at = NOW()
-        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-5.2', 0.2))
+        """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4.1', 0.1))
         pg_conn.commit()
         cur.close()
         print(f"💾 Hotlist cached to database ({venue_count} venues)")
