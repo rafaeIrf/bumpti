@@ -90,6 +90,7 @@ These are upper bounds, NOT expectations:
 - stadium: max 15
 - park: max 15
 - cafe: max 20
+- gym: max 20
 - university: max 15
 
 Returning 5–10 items is PERFECTLY ACCEPTABLE.
@@ -116,6 +117,7 @@ No comments. No explanations.
   "stadium": [],
   "park": [],
   "cafe": [],
+  "gym": [],
   "university": []
 }}
 """
