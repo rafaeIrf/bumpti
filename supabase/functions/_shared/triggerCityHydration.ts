@@ -57,16 +57,16 @@ export async function triggerCityHydrationIfNeeded(
 
     const city = cities && cities.length > 0 ? cities[0] : null;
 
-    // SQL now ALWAYS returns city (created 'discovering' record if not found)
-    // This should never happen unless RPC failed
+    // No city found - trigger discovery
     if (!city) {
-      console.error("❌ Unexpected: RPC returned empty result");
-      return { status: "error" };
+      console.log("🆕 New territory detected, dispatching discovery workflow");
+      await dispatchGitHubHydration(null, latitude, longitude, githubToken, false);
+      return { status: "hydrating" };
     }
 
-    console.log(`📍 City: ${city.city_name} (${city.id}, status: ${city.status})`);
+    console.log(`📍 Found city: ${city.city_name} (${city.id})`);
 
-    // Handle skip reasons (including already_processing for discovery)
+    // Handle skip reasons
     if (!city.should_hydrate) {
       return handleSkipReason(city);
     }

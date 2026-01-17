@@ -265,18 +265,15 @@ def upsert_city_to_registry(city_data: dict, pg_conn):
     
     pg_cur = pg_conn.cursor()
     
+    # ========================================================================
+    # ATOMIC IDENTITY LOCK: Prevent race condition for city discovery
+    # ========================================================================
+    # Only first worker to INSERT city gets the lock and continues hydration
+    # Other workers see None (ON CONFLICT DO NOTHING) and exit gracefully
     upsert_sql = """
     INSERT INTO cities_registry (city_name, country_code, geom, bbox, status, lat, lng)
     VALUES (%s, %s, ST_Multi(ST_GeomFromWKB(%s, 4326)), %s, 'processing', %s, %s)
-    ON CONFLICT (city_name, country_code) 
-    DO UPDATE SET
-        geom = EXCLUDED.geom,
-        bbox = EXCLUDED.bbox,
-        lat = EXCLUDED.lat,
-        lng = EXCLUDED.lng,
-        status = 'processing',
-        error_message = NULL,
-        updated_at = NOW()
+    ON CONFLICT (city_name, country_code) DO NOTHING
     RETURNING id
     """
     
@@ -284,12 +281,23 @@ def upsert_city_to_registry(city_data: dict, pg_conn):
         city_data['city_name'],
         city_data['country_code'],
         city_data['geom_wkb'],
-        city_data['bbox'],  # [xmin, ymin, xmax, ymax]
+        city_data['bbox'],
         city_data.get('lat'),
         city_data.get('lng')
     ))
     
-    city_id = pg_cur.fetchone()[0]
+    result = pg_cur.fetchone()
+    
+    # If result is None, another worker already created this city
+    if result is None:
+        print("⚠️  Célula de processamento duplicada detectada.")
+        print("⚠️  Outro worker já está processando esta cidade.")
+        print("✅ Encerrando worker para economizar recursos.")
+        pg_conn.commit()
+        pg_conn.close()
+        sys.exit(0)  # Graceful exit
+    
+    city_id = result[0]
     pg_conn.commit()
     pg_cur.close()
     
