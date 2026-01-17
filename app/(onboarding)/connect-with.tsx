@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   heading: {
-    ...typography.h2,
+    ...typography.heading,
     marginBottom: spacing.xs,
     textAlign: "center",
   },

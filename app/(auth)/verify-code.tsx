@@ -88,20 +88,17 @@ export default function VerifyCodeScreen() {
 
     try {
       // Verify code with Supabase
-      const authenticatedUser = await phoneAuthService.verifyCode(
-        verificationCode
-      );
+      await phoneAuthService.verifyCode(verificationCode);
 
-      // Fetch user profile to populate store and check existence
-      const profile = await fetchAndSetUserProfile();
+      // Fetch user profile - this populates Redux store
+      // SessionContext will update isReady once profile is loaded
+      // Guards will then automatically redirect to correct destination:
+      // - If profile exists: mainAppGuard becomes true, authGuard becomes false
+      // - If no profile: onboardingGuard becomes true, authGuard becomes false
+      await fetchAndSetUserProfile();
 
-      setTimeout(() => {
-        if (profile) {
-          router.replace("/(tabs)/(home)");
-        } else {
-          router.replace("/(onboarding)/user-name");
-        }
-      }, 500);
+      // Keep loading state visible - guards will navigate us away
+      // No manual router.replace() needed!
     } catch (error: any) {
       setIsLoading(false);
       Alert.alert("Erro", error.message || t("screens.onboarding.invalidCode"));

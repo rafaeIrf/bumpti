@@ -5,6 +5,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React, { ComponentType, ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ButtonConfig {
   text: string;
@@ -44,6 +45,7 @@ export function GenericConfirmationBottomSheet({
   onClose,
 }: GenericConfirmationBottomSheetProps) {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   const getButtonVariant = (variant: ButtonConfig["variant"] = "primary") => {
     switch (variant) {
@@ -58,7 +60,9 @@ export function GenericConfirmationBottomSheet({
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom + spacing.md }]}
+    >
       {/* Close Button */}
       {onClose && (
         <Pressable
@@ -136,7 +140,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
     position: "relative",
     alignItems: "center",
   },

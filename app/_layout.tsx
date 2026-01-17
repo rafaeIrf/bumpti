@@ -3,7 +3,6 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -14,7 +13,9 @@ import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { ReduxProvider } from "@/components/redux-provider";
+import { RootNavigator } from "@/components/root-navigator";
 import { VerificationListener } from "@/components/verification-listener";
+import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
@@ -113,42 +114,9 @@ export default function RootLayout() {
                 <DatabaseProvider>
                   <BottomSheetProvider>
                     <ChatRealtimeProvider>
-                      <Stack>
-                        <Stack.Screen
-                          name="index"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(auth)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(onboarding)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(tabs)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(profile)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="main"
-                          options={{
-                            headerShown: false,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="(modals)"
-                          options={{
-                            presentation: "modal",
-                            headerShown: false,
-                            animation: "slide_from_bottom",
-                          }}
-                        />
-                      </Stack>
+                      <SessionProvider>
+                        <RootNavigator />
+                      </SessionProvider>
                       <StatusBar style="auto" />
                     </ChatRealtimeProvider>
                   </BottomSheetProvider>

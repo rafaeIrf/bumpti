@@ -44,6 +44,7 @@ export default function FavoritePlacesScreen() {
   return (
     <BaseTemplateScreen
       hasStackHeader
+      useSafeArea={false}
       contentContainerStyle={{
         paddingBottom: spacing.xxl * 4,
       }}

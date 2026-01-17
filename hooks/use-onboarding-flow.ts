@@ -55,6 +55,7 @@ export function useOnboardingFlow() {
     let next = step;
 
     while (next) {
+      console.log('next',next)
       if (next === "location") {
         const granted = await hasLocationPermission();
         if (granted) {
@@ -94,7 +95,7 @@ export function useOnboardingFlow() {
       router.replace("/(tabs)/(home)");
     }
   };
-
+  
   return {
     currentStep,
     completedSteps,

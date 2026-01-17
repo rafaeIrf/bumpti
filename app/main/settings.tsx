@@ -76,7 +76,6 @@ export default function SettingsScreen() {
             onClose={() => bottomSheet?.close()}
           />
         ),
-        snapPoints: ["40%"],
       });
     }, 300);
   };
@@ -87,14 +86,12 @@ export default function SettingsScreen() {
     description,
     confirmText,
     confirmAction,
-    snapPoints = ["45%"],
   }: {
     icon: React.ComponentType<any>;
     title: string;
     description: string;
     confirmText: string;
     confirmAction: () => Promise<void>;
-    snapPoints?: string[];
   }) => {
     let isLoading = false;
 
@@ -123,7 +120,6 @@ export default function SettingsScreen() {
             onClose={() => bottomSheet?.close()}
           />
         ),
-        snapPoints,
       });
 
       try {
@@ -157,7 +153,6 @@ export default function SettingsScreen() {
           onClose={() => bottomSheet?.close()}
         />
       ),
-      snapPoints,
     });
   };
 
@@ -169,7 +164,6 @@ export default function SettingsScreen() {
       confirmText: t("screens.profile.settingsPage.session.logoutButton"),
       confirmAction: async () => {
         await phoneAuthService.signOut();
-        router.replace("/(auth)/welcome");
       },
     });
   };
@@ -186,10 +180,7 @@ export default function SettingsScreen() {
       ),
       confirmAction: async () => {
         await phoneAuthService.deleteAccount();
-        // Navigate directly to welcome screen - the auth service already cleared everything
-        router.replace("/(auth)/welcome");
       },
-      snapPoints: ["50%"],
     });
   };
 
