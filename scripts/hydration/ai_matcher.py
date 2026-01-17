@@ -59,15 +59,11 @@ It is better to return fewer items than to include a possibly incorrect one.
 ✅ WHAT TO DO:
 1. **Start with certainty** - List the famous ones you're 100% sure about
 2. **Then add established** - Include well-known legitimate businesses
-3. **Use full official names** - e.g., "Bar do Alemão" not just "Alemão"
+3. **Use full official names**
 4. **Diversify geography** - Cover different neighborhoods when possible
 
 ❌ WHAT NOT TO DO (CRITICAL):
 - ❌ Empty lists
-- ❌ Sequential numbers: "Club 100, 101, 102"
-- ❌ Invented variations: "Bar X, Bar X II, Bar X III"
-- ❌ Generic patterns: "Bar 1, Bar 2"
-- ❌ **GEOGRAPHIC VARIATIONS**: "Bar do Alemão Batel", "Bar do Alemão Água Verde" (just use "Bar do Alemão" once)
 - ❌ **ADDING LOCATIONS TO NAMES**: "Café do Shopping Mueller", "Café do Parque" (these are probably fake)
 - ❌ **DUPLICATES**: Same venue listed twice
 
