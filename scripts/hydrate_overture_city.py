@@ -667,13 +667,33 @@ def main():
                     continue
                 
                 # Validation
-                if not validate_category_name(name, internal_cat, overture_cat, config):
-                    debug_rejected['validate_name'] += 1
-                    continue
+                # DEBUG: Track Bossa Bar through validation
+                if 'bossa' in name.lower():
+                    print(f"\n🔍 DEBUG [Bossa Bar] - Validation check:")
+                    print(f"   Name: {name}, Internal cat: {internal_cat}, Overture cat: {overture_cat}")
+                    val_result = validate_category_name(name, internal_cat, overture_cat, config)
+                    print(f"   validate_category_name result: {val_result}")
+                    if not val_result:
+                        print(f"   ❌ REJECTED by validate_category_name")
+                        debug_rejected['validate_name'] += 1
+                        continue
+                else:
+                    if not validate_category_name(name, internal_cat, overture_cat, config):
+                        debug_rejected['validate_name'] += 1
+                        continue
                 
-                if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config):
-                    debug_rejected['taxonomy'] += 1
-                    continue
+                # DEBUG: Track Bossa Bar through taxonomy check
+                if 'bossa' in name.lower():
+                    tax_result = check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config)
+                    print(f"   check_taxonomy_hierarchy result: {tax_result}")
+                    if not tax_result:
+                        print(f"   ❌ REJECTED by taxonomy check")
+                        debug_rejected['taxonomy'] += 1
+                        continue
+                else:
+                    if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config):
+                        debug_rejected['taxonomy'] += 1
+                        continue
                 
                 if filter_osm_source_tags(row[POIColumn.SOURCE_RAW], config):  # Fixed: was row[10] (CONFIDENCE)
                     debug_rejected['osm_flags'] += 1
