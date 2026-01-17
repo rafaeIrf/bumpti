@@ -89,7 +89,7 @@ RETURN ONLY VALID JSON:
 }}"""
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": f"You are a knowledgeable local expert for {location}. Your goal is to provide comprehensive lists of REAL venues. Start with famous landmarks, then include well-established places, then local favorites. Aim for target quantities - it's expected to list 20-30 bars and restaurants if you know the city well. Only skip venues if you're uncertain they exist."},
                 {"role": "user", "content": prompt}
