@@ -122,18 +122,16 @@ OUTPUT FORMAT (STRICT)
 Return ONLY valid JSON.
 No comments. No explanations. No markdown.
 
-{
-  "bar": [],
-  "nightclub": [],
-  "restaurant": [],
-  "club": [],
-  "stadium": [],
-  "park": [],
-  "cafe": [],
-  "university": []
-}
-
-Empty arrays are ALLOWED and PREFERRED over incorrect data.
+{{
+  "bar": ["Real Name 1", "Real Name 2", ... 20-30 items],
+  "nightclub": [...15-20 items],
+  "restaurant": [...20-30 items],
+  "club": [...12-18 items],
+  "stadium": [...10-15 items],
+  "park": [...10-15 items],
+  "cafe": [...12-18 items],
+  "university": [...10-15 items]
+}}
 """
 
         response = client.chat.completions.create(
