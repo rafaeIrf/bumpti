@@ -62,13 +62,6 @@ It is better to return fewer items than to include a possibly incorrect one.
 3. **Use full official names** - e.g., "Bar do Alemão" not just "Alemão"
 4. **Diversify geography** - Cover different neighborhoods when possible
 
-📝 GOOD EXAMPLES (this is what we want!):
-bar: ["Bar do Alemão", "Boteco São Jorge", "Bar do Victor", "Bar Quermesse", "Bar CanaBenta", "Bar do Pachá", "Bar Stuart", "Bar do Dante", "Bar do Torto", "Bar do Pudim", ... continue to 20-30]
-
-nightclub: ["Vibe Club", "Verdant Club", "Shed Western Bar", "Danghai Club", "James Bar", "Crossroads", ... continue to 15-20]
-
-restaurant: ["Madalosso", "Barolo Trattoria", "Terra Madre Ristorante", "Restaurante Madero", "Durski", "Cantina do Délio", "Velho Madalosso", ... continue to 20-30]
-
 ❌ WHAT NOT TO DO:
 - ❌ Empty lists
 - ❌ Sequential numbers: "Club 100, 101, 102"
@@ -95,7 +88,7 @@ RETURN ONLY VALID JSON:
 If a category has fewer known venues, return fewer items instead of guessing."""
 
         response = client.chat.completions.create(
-            model="gpt-4.1",
+            model="gpt-4.1",  # Latest model as of Jan 2026
             messages=[
                 {"role": "system", "content": f"You are a knowledgeable local expert for {location}. Your goal is to provide comprehensive lists of REAL venues. Start with famous landmarks, then include well-established places, then local favorites. Aim for target quantities - it's expected to list 20-30 bars and restaurants if you know the city well. Only skip venues if you're uncertain they exist."},
                 {"role": "user", "content": prompt}
