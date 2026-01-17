@@ -42,11 +42,22 @@ To learn more about developing your project with Expo, look at the following res
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Project docs
+## Project Documentation
 
-- [City Hydration Flow](docs/city-hydration-flow.md)
-- [Places nearby sorting](docs/places-nearby-sorting.md)
-- [Discovery swipe flow](docs/discovery-swipe-flow.md)
+📝 **[Documentation Guidelines](docs/GUIDELINES.md)** - How to create and maintain project docs
+
+### Architecture & Flows
+
+- [City Hydration Flow](docs/city-hydration-flow.md) - Complete POI data pipeline from Overture to database
+- [Discovery Swipe Flow](docs/discovery-swipe-flow.md) - User discovery interaction flow
+- [Places Nearby Sorting](docs/places-nearby-sorting.md) - Algorithm for sorting nearby places
+
+### Features & Implementation
+
+- [Onboarding Progress Implementation](docs/onboarding-progress-implementation.md) - Onboarding flow and progress tracking
+- [Didit Verification Setup](docs/didit-verification-setup.md) - Identity verification integration
+
+> **Note:** When creating new documentation, always add a link here for easy discovery.
 
 ## Join the community
 
