@@ -47,6 +47,10 @@ TASK: List REAL and VERIFIABLE venues in {location}. Start with the most famous,
 - cafe: up to 20 REAL venues
 - university: up to 15 REAL venues
 
+CRITICAL RULE:
+If you are not at least 90% certain a venue exists in real life, DO NOT include it.
+It is better to return fewer items than to include a possibly incorrect one.
+
 🎯 APPROACH:
 1. **Start with certainty** - List venues you're 100% sure exist
 2. **Add well-known places** - Include established venues
@@ -86,7 +90,9 @@ RETURN ONLY VALID JSON:
   "park": [...10-15 items],
   "cafe": [...12-18 items],
   "university": [...10-15 items]
-}}"""
+}}
+
+If a category has fewer known venues, return fewer items instead of guessing."""
 
         response = client.chat.completions.create(
             model="gpt-4.1",
