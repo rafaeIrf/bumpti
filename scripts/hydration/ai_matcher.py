@@ -33,60 +33,80 @@ def generate_hotlist(city_name, state=None, country_code=None):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""You are a LOCAL FACTUAL AUDITOR, not a creative assistant.
-
-You must return ONLY REAL, OFFICIALLY REGISTERED, WELL-KNOWN venues that verifiably exist in {location}.
-
-Your priority is FACTUAL CORRECTNESS over completeness.
+        prompt = f"""You are a FACTUAL DATA EXTRACTION ENGINE.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STRICT TASK
+GEOGRAPHIC SCOPE RULE (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-List REAL venues by category in {location}.  
-ONLY include venues that you are at least **95% certain exist as independent, officially named establishments**.
+You must list venues that are PHYSICALLY LOCATED inside {location}.
 
-If unsure → DO NOT INCLUDE.
+❌ DO NOT include venues from:
+- other cities
+- metropolitan areas
+- nearby towns
+- neighboring regions
+- same brand in another city
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ABSOLUTE HARD RULES (NO EXCEPTIONS)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-❌ DO NOT invent venues  
-❌ DO NOT infer names  
-❌ DO NOT create variants  
-❌ DO NOT add neighborhoods, malls, parks, streets or landmarks to names  
-❌ DO NOT expand brands into multiple locations  
-❌ DO NOT reclassify the same venue across categories  
-❌ DO NOT add prefixes/suffixes like:
-   - "Café do X"
-   - "Bar do Bairro"
-   - "Restaurante do Shopping"
-   - "Unidade Batel / Centro / Água Verde"
-❌ DO NOT transform bars into restaurants or clubs into bars
-❌ DO NOT list the same venue more than once — even across categories
+If a venue is famous nationally but NOT located in {location} → DO NOT INCLUDE.
+
+If you are not certain the venue has a physical presence inside {location} → DO NOT INCLUDE.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CRITICAL DEDUPLICATION RULE
+LOCATION USAGE RULE (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-If a venue name already appears ANYWHERE in the output:
-→ It MUST NOT appear again under any category.
+{location} is used ONLY to FILTER geography.
 
-Examples of INVALID duplication:
-- "James Bar" + "Bar James"
-- "Crossroads" + "Bar Crossroads"
-- "Bar do Alemão" + any neighborhood variant
-- Same brand listed multiple times
+❌ NEVER:
+- Add {location}, neighborhoods, districts or landmarks to venue names
+- Use {location} to differentiate branches or units
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CATEGORY DEFINITION (STRICT)
+ABSOLUTE BRAND RULE (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- bar: drinking-focused establishments (not clubs, not restaurants)
-- nightclub: dance / DJ / electronic / nightlife venues
+If a venue is a BRAND with multiple locations:
+→ Include it ONLY IF it has a physical unit in {location}
+→ List the brand ONCE
+→ Use the OFFICIAL BRAND NAME ONLY
+→ NEVER list branches or neighborhoods
+
+Examples:
+✅ "Bar do Alemão" (exists in {location})
+❌ "Bar do Alemão São Paulo"
+❌ "Bar do Alemão Batel"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FORBIDDEN NAME PATTERNS (HARD BLOCK)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Remove any venue that matches these patterns:
+
+- "<Brand> <Neighborhood>"
+- "<Brand> - <Location>"
+- "<Brand> Unidade <X>"
+- "Café do <Place>"
+- "Bar do <Place>"
+- "Restaurante do <Place>"
+- Any name containing a neighborhood or landmark
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CATEGORY DEFINITIONS (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- bar: alcohol-focused establishments
+- nightclub: dance / DJ / nightlife venues
 - restaurant: food-first establishments
-- cafe: coffee-focused establishments with official branding
-- club: private, social or sports clubs (NOT nightclubs)
+- cafe: coffee-focused establishments
+- club: private or social clubs (NOT nightclubs)
 - stadium: officially named sports stadiums
 - park: officially named public parks
 - university: accredited higher-education institutions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEDUPLICATION RULE (GLOBAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A venue name may appear ONLY ONCE in the ENTIRE RESPONSE.
+
+If two names look like variants of the same place:
+→ KEEP the most official one
+→ REMOVE the rest
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TARGET COUNTS (SOFT LIMITS)
@@ -102,25 +122,23 @@ These are MAXIMUMS, NOT GOALS:
 - cafe: up to 20
 - university: up to 15
 
-⚠️ If you cannot confidently reach the target → STOP EARLY.
+Return FEWER items if necessary.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTERNAL VERIFICATION STEP (MANDATORY)
+FINAL SANITY CHECK (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Before outputting:
-1. Mentally verify each venue exists as a REAL place
-2. Check the name sounds OFFICIAL, not descriptive
-3. Remove any venue that could be:
-   - a nickname
-   - an internal café inside another venue
-   - a location-based variation
-4. Remove duplicates across categories
+1. Verify each venue exists physically in {location}
+2. Remove anything outside {location}
+3. Remove expanded brands or branches
+4. Remove duplicates or near-duplicates
+5. Prefer omission over guessing
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT (STRICT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Return ONLY valid JSON.
-No comments. No explanations. No markdown.
+No comments. No explanations.
 
 {{
   "bar": [],
@@ -132,8 +150,6 @@ No comments. No explanations. No markdown.
   "cafe": [],
   "university": []
 }}
-
-Empty arrays are ALLOWED and PREFERRED over incorrect data.
 """
 
         response = client.chat.completions.create(
