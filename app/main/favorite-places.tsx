@@ -8,6 +8,7 @@ import { LocationPermissionState } from "@/components/location-permission-state"
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
+import { spacing } from "@/constants/theme";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { t } from "@/modules/locales";
 import {
@@ -103,6 +104,9 @@ export default function EditFavoritePlacesScreen() {
 
   return (
     <BaseTemplateScreen
+      contentContainerStyle={{
+        paddingBottom: spacing.xxl * 4,
+      }}
       TopHeader={
         <ScreenToolbar
           title={t("screens.profile.profileEdit.interests.spots")}

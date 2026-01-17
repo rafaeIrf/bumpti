@@ -97,8 +97,8 @@ export default function UserAgeScreen() {
     }
   };
 
-  const isValid = birthDate !== null;
   const age = birthDate ? calculateAge(birthDate) : null;
+  const isValid = birthDate !== null && age !== null && age >= 18;
 
   // Get max date (today) and min date (120 years ago)
   const maxDate = new Date();
@@ -163,7 +163,7 @@ export default function UserAgeScreen() {
               />
             </View>
 
-            {/* Age Preview */}
+            {/* Age Preview - Valid */}
             {age !== null && age >= 18 && (
               <Animated.View
                 entering={FadeInUp.delay(100).duration(400)}
@@ -173,6 +173,20 @@ export default function UserAgeScreen() {
                   style={[styles.agePreviewText, { color: colors.accent }]}
                 >
                   {t("screens.onboarding.agePreview", { age })}
+                </ThemedText>
+              </Animated.View>
+            )}
+
+            {/* Age Error - Underage */}
+            {age !== null && age < 18 && (
+              <Animated.View
+                entering={FadeInUp.delay(100).duration(400)}
+                style={[styles.agePreview, { borderColor: colors.error }]}
+              >
+                <ThemedText
+                  style={[styles.agePreviewText, { color: colors.error }]}
+                >
+                  {t("screens.onboarding.ageError")}
                 </ThemedText>
               </Animated.View>
             )}

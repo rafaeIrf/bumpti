@@ -3,7 +3,6 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -14,11 +13,14 @@ import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { ReduxProvider } from "@/components/redux-provider";
+import { RootNavigator } from "@/components/root-navigator";
 import { VerificationListener } from "@/components/verification-listener";
+import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
+import { prefetchImage } from "@/utils/image-prefetch";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -29,6 +31,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import RNBootSplash from "react-native-bootsplash";
+import { WELCOME_BG_IMAGE } from "./(auth)/welcome";
 
 export const unstable_settings = {
   initialRouteName: "index",
@@ -61,6 +64,9 @@ export default function RootLayout() {
   // Following best practices from react-native-bootsplash documentation
   useEffect(() => {
     if (fontsLoaded && !splashReady) {
+      // Prefetch welcome screen background image
+      prefetchImage(WELCOME_BG_IMAGE);
+
       // Wait for multiple frames to ensure Stack is fully mounted and rendered
       // This is especially important in release builds where rendering can be slower
       requestAnimationFrame(() => {
@@ -108,42 +114,9 @@ export default function RootLayout() {
                 <DatabaseProvider>
                   <BottomSheetProvider>
                     <ChatRealtimeProvider>
-                      <Stack>
-                        <Stack.Screen
-                          name="index"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(auth)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(onboarding)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(tabs)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="(profile)"
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="main"
-                          options={{
-                            headerShown: false,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="(modals)"
-                          options={{
-                            presentation: "modal",
-                            headerShown: false,
-                            animation: "slide_from_bottom",
-                          }}
-                        />
-                      </Stack>
+                      <SessionProvider>
+                        <RootNavigator />
+                      </SessionProvider>
                       <StatusBar style="auto" />
                     </ChatRealtimeProvider>
                   </BottomSheetProvider>
@@ -154,7 +127,10 @@ export default function RootLayout() {
         </ThemeProvider>
         {showAnimatedSplash && (
           <View style={styles.splashOverlay} pointerEvents="none">
-            <AnimatedBootSplash ready={splashReady} onAnimationEnd={handleAnimationEnd} />
+            <AnimatedBootSplash
+              ready={splashReady}
+              onAnimationEnd={handleAnimationEnd}
+            />
           </View>
         )}
       </I18nProvider>

@@ -1,58 +1,28 @@
-import {
-  AppleIcon,
-  MapPinIcon,
-  SmartphoneIcon,
-  SparklesIcon,
-  UsersIcon,
-} from "@/assets/icons";
+import { SmartphoneIcon } from "@/assets/icons";
+import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
-import { spacing, typography } from "@/constants/theme";
+import { Colors, spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { openPrivacyPolicy, openTermsOfUse } from "@/utils";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+
+// Welcome screen background image - also prefetched in _layout.tsx
+export const WELCOME_BG_IMAGE =
+  "https://images.unsplash.com/photo-1562878952-7694a555ad20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm93ZGVkJTIwYmFyJTIwc29jaWFsJTIwZ2F0aGVyaW5nfGVufDF8fHx8MTc2ODY1NzQwMHww&ixlib=rb-4.1.0&q=80&w=1080";
 
 export default function WelcomeScreen() {
   const colors = useThemeColors();
 
-  // Floating animations for decorative icons
-  const mapPinY = useSharedValue(0);
-  const sparklesY = useSharedValue(0);
-
-  React.useEffect(() => {
-    mapPinY.value = withRepeat(withTiming(-10, { duration: 2000 }), -1, true);
-    sparklesY.value = withRepeat(withTiming(10, { duration: 2500 }), -1, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const mapPinStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: mapPinY.value }],
-  }));
-
-  const sparklesStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: sparklesY.value }],
-  }));
-
   const handlePhoneAuth = () => {
     router.push("/(auth)/phone-auth");
-  };
-
-  const handleAppleAuth = () => {
-    // TODO: Implement Apple auth flow
-    console.log("Apple auth");
   };
 
   const handleTermsPress = async () => {
@@ -64,204 +34,212 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <BaseTemplateScreen>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Illustration/Icon */}
-        <Animated.View
-          entering={FadeInUp.delay(200).duration(500)}
-          style={styles.illustrationContainer}
-        >
-          <View style={styles.illustration}>
-            {/* Center icon with gradient */}
-            <LinearGradient
-              colors={["#1D9BF0", "#1A8CD8"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.centerIcon}
-            >
-              <UsersIcon width={64} height={64} color="#FFFFFF" />
-            </LinearGradient>
+    <View style={styles.container}>
+      {/* Background Image - Fixed */}
+      <Image
+        source={{ uri: WELCOME_BG_IMAGE }}
+        style={styles.backgroundImage}
+        contentFit="cover"
+      />
 
-            {/* Floating MapPin icon */}
-            <Animated.View style={[styles.floatingIconTopRight, mapPinStyle]}>
-              <View style={styles.floatingIconCircle}>
-                <MapPinIcon width={32} height={32} color="#1D9BF0" />
-              </View>
-            </Animated.View>
+      {/* Gradient Overlays - Fixed */}
+      <LinearGradient
+        colors={[
+          "rgba(0, 0, 0, 0.85)",
+          "rgba(0, 0, 0, 0.70)",
+          "rgba(0, 0, 0, 0.95)",
+        ]}
+        locations={[0, 0.5, 1]}
+        style={styles.gradientOverlay}
+      />
+      <LinearGradient
+        colors={["rgba(0, 0, 0, 0.90)", "transparent", "transparent"]}
+        locations={[0, 0.3, 1]}
+        style={styles.gradientOverlayBottom}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 0, y: 0 }}
+      />
 
-            {/* Floating Sparkles icon */}
-            <Animated.View
-              style={[styles.floatingIconBottomLeft, sparklesStyle]}
-            >
-              <View style={styles.floatingIconCircle}>
-                <SparklesIcon width={32} height={32} color="#1D9BF0" />
-              </View>
-            </Animated.View>
+      {/* Content */}
+      <BaseTemplateScreen
+        containerStyle={{ backgroundColor: "transparent" }}
+        useSafeArea={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.contentWrapper}>
+          {/* Hero Content */}
+          <View style={styles.logoContainer}>
+            <BumptiWideLogo height={28} width={100} />
           </View>
-        </Animated.View>
 
-        {/* Title */}
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(500)}
-          style={styles.titleContainer}
-        >
-          <ThemedText style={styles.title}>
-            {t("screens.onboarding.title")}
-          </ThemedText>
-        </Animated.View>
-
-        {/* Terms and Privacy - Moved above buttons */}
-        <Animated.View
-          entering={FadeInDown.delay(600).duration(500)}
-          style={styles.termsTopContainer}
-        >
-          <ThemedText style={styles.termsTopText}>
-            {t("screens.onboarding.termsPrefix")}{" "}
-            <ThemedText onPress={handleTermsPress} style={styles.termsLink}>
-              {t("screens.onboarding.terms")}
-            </ThemedText>{" "}
-            {t("screens.onboarding.termsAnd")}{" "}
-            <ThemedText onPress={handlePrivacyPress} style={styles.termsLink}>
-              {t("screens.onboarding.privacy")}
+          <Animated.View
+            entering={FadeInUp.delay(200).duration(600)}
+            style={styles.heroContainer}
+          >
+            <ThemedText style={styles.heroTitle}>
+              {t("screens.onboarding.heroTitle1")}
+              {"\n"}
+              <ThemedText style={styles.heroTitleHighlight}>
+                {t("screens.onboarding.heroTitle2")}
+              </ThemedText>
             </ThemedText>
-          </ThemedText>
-        </Animated.View>
-
-        {/* Buttons */}
-        <Animated.View
-          entering={FadeInDown.delay(800).duration(500)}
-          style={styles.buttonsContainer}
-        >
-          {/* Primary Button - Phone Auth */}
-          <Button
-            onPress={handlePhoneAuth}
-            size="lg"
-            fullWidth
-            style={styles.primaryButton}
-            textStyle={styles.primaryButtonText}
-            leftIcon={<SmartphoneIcon width={20} height={20} color="#FFFFFF" />}
+          </Animated.View>
+          {/* Bottom Section - Auth Buttons */}
+          <Animated.View
+            entering={FadeInDown.delay(400).duration(600)}
+            style={styles.bottomContainer}
           >
-            {t("screens.onboarding.phoneAuth")}
-          </Button>
+            {/* Glass Card Container */}
 
-          {/* Secondary Button - Apple ID */}
-          <Button
-            onPress={handleAppleAuth}
-            variant="outline"
-            size="lg"
-            fullWidth
-            style={styles.secondaryButton}
-            textStyle={styles.secondaryButtonText}
-            leftIcon={<AppleIcon width={20} height={20} color="#E7E9EA" />}
-          >
-            {t("screens.onboarding.appleAuth")}
-          </Button>
-        </Animated.View>
-      </View>
-    </BaseTemplateScreen>
+            <ThemedText style={styles.heroSubtitle}>
+              {t("screens.onboarding.heroSubtitle")}
+            </ThemedText>
+            <View style={[styles.glassCard, { borderColor: colors.border }]}>
+              <Button
+                onPress={handlePhoneAuth}
+                size="lg"
+                fullWidth
+                style={styles.primaryButton}
+                textStyle={styles.primaryButtonText}
+                leftIcon={
+                  <SmartphoneIcon width={20} height={20} color="#FFFFFF" />
+                }
+              >
+                {t("screens.onboarding.phoneAuth")}
+              </Button>
+            </View>
+
+            {/* Terms and Privacy */}
+            <Animated.View
+              entering={FadeInUp.delay(600).duration(500)}
+              style={styles.termsContainer}
+            >
+              <ThemedText style={styles.termsText}>
+                {t("screens.onboarding.termsPrefix")}{" "}
+                <ThemedText onPress={handleTermsPress} style={styles.termsLink}>
+                  {t("screens.onboarding.terms")}
+                </ThemedText>{" "}
+                {t("screens.onboarding.termsAnd")}{" "}
+                <ThemedText
+                  onPress={handlePrivacyPress}
+                  style={styles.termsLink}
+                >
+                  {t("screens.onboarding.privacy")}
+                </ThemedText>
+              </ThemedText>
+            </Animated.View>
+          </Animated.View>
+        </View>
+      </BaseTemplateScreen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: spacing.xxl,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  illustrationContainer: {
-    marginBottom: spacing.xxl,
-  },
-  illustration: {
-    width: 200,
-    height: 200,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  centerIcon: {
-    width: 128,
-    height: 128,
-    borderRadius: 64,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#1D9BF0",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  floatingIconTopRight: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-  },
-  floatingIconBottomLeft: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-  },
-  floatingIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#16181C",
-    borderWidth: 2,
-    borderColor: "#1D9BF0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  titleContainer: {
-    marginBottom: spacing.xl,
-    alignItems: "center",
-  },
-  title: {
-    ...typography.heading,
-    textAlign: "center",
-  },
-  subtitleContainer: {
-    marginBottom: spacing.xxl,
-    maxWidth: 400,
-  },
-  subtitle: {
-    ...typography.body,
-    color: "#8B98A5",
-    textAlign: "center",
-  },
-  termsTopContainer: {
-    maxWidth: 400,
-    marginBottom: spacing.xl,
-  },
-  termsTopText: {
-    ...typography.body,
-    color: "#E7E9EA",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  buttonsContainer: {
     width: "100%",
-    gap: spacing.sm,
+    height: "100%",
+    backgroundColor: "#000",
+  },
+  logoContainer: {
+    alignItems: "center",
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  gradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  gradientOverlayBottom: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  scrollContent: {
+    paddingHorizontal: 0,
+    flexGrow: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xxl * 2,
+    width: "100%",
+    maxWidth: 600,
+    alignSelf: "center",
+  },
+  heroContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: spacing.xl,
+  },
+  heroTitle: {
+    ...typography.heading1,
+    fontSize: 28,
+    lineHeight: 40,
+    color: "#FFFFFF",
+    textAlign: "center",
+    letterSpacing: -0.5,
+    marginBottom: spacing.lg,
+  },
+  heroTitleHighlight: {
+    ...typography.heading1,
+    fontSize: 28,
+    lineHeight: 40,
+    color: Colors.dark.accent,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    ...typography.body,
+    fontSize: 16,
+    color: "#A8B3BF",
+    textAlign: "center",
+    lineHeight: 24,
+    maxWidth: 450,
+    marginBottom: spacing.md,
+  },
+  bottomContainer: {
+    width: "100%",
+    maxWidth: 448,
+    alignSelf: "center",
+  },
+  glassCard: {
+    backgroundColor: "rgba(22, 24, 28, 0.90)",
+    borderRadius: 28,
+    padding: spacing.lg,
+    borderWidth: 1,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 30,
+    elevation: 10,
   },
   primaryButton: {
     minHeight: 56,
+    borderRadius: 28,
+    backgroundColor: "#1D9BF0",
     shadowColor: "#1D9BF0",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  secondaryButton: {
-    minHeight: 56,
-    borderColor: "rgba(231, 233, 234, 0.2)",
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   primaryButtonText: {
-    ...typography.body,
+    ...typography.body1, // Includes Poppins-SemiBold
+    color: "#FFFFFF",
   },
-  secondaryButtonText: {
-    ...typography.body,
+  termsContainer: {
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  termsText: {
+    ...typography.caption,
+    color: "#71767B",
+    textAlign: "center",
   },
   termsLink: {
-    ...typography.body,
+    ...typography.caption,
     color: "#1D9BF0",
+    textDecorationLine: "underline",
+    textDecorationColor: "#1D9BF0",
   },
 });

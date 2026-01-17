@@ -1,6 +1,5 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
-import { GenderIdentityBottomSheet } from "@/components/gender-identity-bottom-sheet";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
@@ -74,25 +73,7 @@ export default function UserGenderScreen() {
   // Use logic as requested.
 
   const handleGenderSelect = (value: string) => {
-    if (value === "non-binary") {
-      bottomSheet?.expand({
-        content: () => (
-          <GenderIdentityBottomSheet
-            onSelect={(identity) => {
-              // logic from previous implementation
-              setGender("non-binary");
-              // If we need to save the specific identity, we might need a separate state or updated hook call
-              // The original code just set gender to "non-binary" and closed.
-              // It seems identity selection might be handled internally or we need to revisit if userData needs more info.
-              // Assuming simple gender selection for now based on original code.
-              bottomSheet.close();
-            }}
-            onClose={() => bottomSheet.close()}
-          />
-        ),
-        snapPoints: ["70%"],
-      });
-    } else if (value === "other") {
+    if (value === "other") {
       setGender("other");
     } else {
       setGender(value);

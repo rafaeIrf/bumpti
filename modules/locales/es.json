@@ -212,8 +212,16 @@
           "title": "SESIÓN",
           "logout": "Cerrar sesión",
           "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
+          "logoutTitle": "Cerrar sesión",
+          "logoutDescription": "Se cerrará tu sesión y necesitarás iniciar sesión nuevamente para acceder a tu cuenta.",
+          "logoutButton": "Cerrar sesión",
           "deleteAccount": "Eliminar cuenta",
-          "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
+          "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+          "deleteAccountTitle": "Eliminar cuenta",
+          "deleteAccountDescription": "Esta acción es permanente e irreversible. Todos tus datos, conversaciones y conexiones se perderán para siempre.",
+          "deleteAccountButton": "Eliminar permanentemente",
+          "errorTitle": "Error",
+          "errorDescription": "Ocurrió un error. Por favor, inténtalo de nuevo."
         }
       },
       "devSettings": {
@@ -573,8 +581,12 @@
           "description": "Lugares tranquilos para concentrarse."
         },
         "nearby": {
-          "title": "Qué hay cerca",
-          "description": "Mira los lugares a tu alrededor"
+          "title": "Lo que hay cerca",
+          "description": "Mira la actividad a tu alrededor"
+        },
+        "mostFrequent": {
+          "title": "Más frecuentados",
+          "description": "Lugares a los que la gente siempre vuelve."
         }
       }
     },
@@ -648,9 +660,12 @@
       "updatePlan": "Actualizar plan"
     },
     "onboarding": {
+      "heroTitle1": "Conoce personas reales,",
+      "heroTitle2": "en lugares reales",
+      "heroSubtitle": "Descubre y conéctate con quienes frecuentan los mismos lugares que tú. Haz amistades, conversa y expande tu red social",
       "title": "Conoce personas reales,\nen lugares reales",
       "subtitle": "Descubre y conéctate con quienes frecuentan los mismos lugares que tú. Haz amistades, conversa y expande tu red social",
-      "phoneAuth": "Usar número de teléfono",
+      "phoneAuth": "Iniciar sesión con teléfono",
       "appleAuth": "Continuar con Apple ID",
       "termsPrefix": "Al continuar, aceptas nuestros",
       "terms": "Términos de Uso",
@@ -676,12 +691,13 @@
       "newCodeSent": "Nuevo código enviado a {{phone}}",
       "codeNotReceived": "¿No recibiste el código? Verifica si el número es correcto o inténtalo de nuevo en unos momentos.",
       "nameTitle": "¿Cuál es tu nombre?",
-      "nameSubtitle": "Este nombre aparecerá en tu perfil",
-      "namePlaceholder": "Ingresa tu nombre",
+      "nameSubtitle": "Ingresa solo tu primer nombre",
+      "namePlaceholder": "Primer nombre",
       "continue": "Continuar",
       "ageTitle": "¿Cuándo naciste?",
       "ageSubtitle": "Necesitamos tu fecha de nacimiento para personalizar tu experiencia y confirmar que tienes más de 18 años.",
       "agePreview": "Tienes {{age}} años",
+      "ageError": "Debes tener al menos 18 años",
       "ageRequired": "Por favor, selecciona tu fecha de nacimiento",
       "ageMinimum": "Debes tener 18 años o más para usar esta app.",
       "selectDate": "Selecciona la fecha",

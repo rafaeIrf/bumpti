@@ -1,5 +1,11 @@
-import { ArrowLeftIcon } from "@/assets/icons";
+import {
+  ArrowLeftIcon,
+  ExclamationCircleIcon,
+  LogOutIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { SettingItem } from "@/components/setting-item";
 import { ThemedText } from "@/components/themed-text";
@@ -15,7 +21,7 @@ import { openEmail, openPrivacyPolicy, openTermsOfUse } from "@/utils/linking";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 interface SectionHeaderProps {
   title: string;
@@ -42,6 +48,7 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
   const { profile } = useProfile();
   const { isInvisible, toggleInvisibleMode, isPremium } = useInvisibleMode();
+  const bottomSheet = useCustomBottomSheet();
 
   const handleClose = () => {
     router.back();
@@ -53,60 +60,128 @@ export default function SettingsScreen() {
     router.push("/(modals)/verification-webview");
   };
 
+  const showErrorBottomSheet = () => {
+    setTimeout(() => {
+      bottomSheet?.expand({
+        content: () => (
+          <GenericConfirmationBottomSheet
+            title={t("screens.profile.settingsPage.session.errorTitle")}
+            description={t(
+              "screens.profile.settingsPage.session.errorDescription"
+            )}
+            primaryButton={{
+              text: t("common.ok"),
+              onClick: () => bottomSheet?.close(),
+            }}
+            onClose={() => bottomSheet?.close()}
+          />
+        ),
+      });
+    }, 300);
+  };
+
+  const showConfirmationBottomSheet = ({
+    icon,
+    title,
+    description,
+    confirmText,
+    confirmAction,
+  }: {
+    icon: React.ComponentType<any>;
+    title: string;
+    description: string;
+    confirmText: string;
+    confirmAction: () => Promise<void>;
+  }) => {
+    let isLoading = false;
+
+    const handleConfirm = async () => {
+      if (isLoading) return;
+      isLoading = true;
+
+      // Update bottom sheet to show loading
+      bottomSheet?.expand({
+        content: () => (
+          <GenericConfirmationBottomSheet
+            icon={icon}
+            title={title}
+            description={description}
+            primaryButton={{
+              text: confirmText,
+              variant: "danger",
+              loading: true,
+              onClick: () => {},
+            }}
+            secondaryButton={{
+              text: t("common.cancel"),
+              variant: "secondary",
+              onClick: () => bottomSheet?.close(),
+            }}
+            onClose={() => bottomSheet?.close()}
+          />
+        ),
+      });
+
+      try {
+        await confirmAction();
+        bottomSheet?.close();
+      } catch (error) {
+        logger.error("Error in confirmation action:", error);
+        isLoading = false;
+        bottomSheet?.close();
+        showErrorBottomSheet();
+      }
+    };
+
+    bottomSheet?.expand({
+      content: () => (
+        <GenericConfirmationBottomSheet
+          icon={icon}
+          title={title}
+          description={description}
+          primaryButton={{
+            text: confirmText,
+            variant: "danger",
+            loading: false,
+            onClick: handleConfirm,
+          }}
+          secondaryButton={{
+            text: t("common.cancel"),
+            variant: "secondary",
+            onClick: () => bottomSheet?.close(),
+          }}
+          onClose={() => bottomSheet?.close()}
+        />
+      ),
+    });
+  };
+
   const handleLogout = () => {
-    Alert.alert(
-      t("screens.profile.settingsPage.session.logout"),
-      t("screens.profile.settingsPage.session.logoutConfirm"), // You might need to add this key
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("screens.profile.settingsPage.session.logout"),
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await phoneAuthService.signOut();
-              router.replace("/(auth)/welcome");
-            } catch (error) {
-              logger.error("Error signing out:", error);
-              Alert.alert(t("errors.generic"));
-            }
-          },
-        },
-      ]
-    );
+    showConfirmationBottomSheet({
+      icon: LogOutIcon,
+      title: t("screens.profile.settingsPage.session.logoutTitle"),
+      description: t("screens.profile.settingsPage.session.logoutDescription"),
+      confirmText: t("screens.profile.settingsPage.session.logoutButton"),
+      confirmAction: async () => {
+        await phoneAuthService.signOut();
+      },
+    });
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      t("screens.profile.settingsPage.session.deleteAccount"),
-      t("screens.profile.settingsPage.session.deleteAccountConfirm"), // You might need to add this key
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await phoneAuthService.deleteAccount();
-              // Dismiss all modals/screens first, then replace to clear history
-              while (router.canGoBack()) {
-                router.back();
-              }
-              router.replace("/(auth)/welcome");
-            } catch (error) {
-              logger.error("Error deleting account:", error);
-              Alert.alert(t("errors.generic"));
-            }
-          },
-        },
-      ]
-    );
+    showConfirmationBottomSheet({
+      icon: ExclamationCircleIcon,
+      title: t("screens.profile.settingsPage.session.deleteAccountTitle"),
+      description: t(
+        "screens.profile.settingsPage.session.deleteAccountDescription"
+      ),
+      confirmText: t(
+        "screens.profile.settingsPage.session.deleteAccountButton"
+      ),
+      confirmAction: async () => {
+        await phoneAuthService.deleteAccount();
+      },
+    });
   };
 
   const TopHeader = (
@@ -136,8 +211,15 @@ export default function SettingsScreen() {
             rightContent={
               <View style={styles.invisibleToggleContainer}>
                 {!isPremium && (
-                  <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
-                    <ThemedText style={styles.premiumBadgeText}>Premium</ThemedText>
+                  <View
+                    style={[
+                      styles.premiumBadge,
+                      { backgroundColor: colors.accent },
+                    ]}
+                  >
+                    <ThemedText style={styles.premiumBadgeText}>
+                      Premium
+                    </ThemedText>
                   </View>
                 )}
                 <ToggleSwitch
@@ -180,7 +262,9 @@ export default function SettingsScreen() {
               title={t("screens.profile.settingsPage.account.verifyProfile")}
               description={
                 profile?.verification_status === "pending"
-                  ? t("screens.profile.settingsPage.account.verification.retryDescription")
+                  ? t(
+                      "screens.profile.settingsPage.account.verification.retryDescription"
+                    )
                   : undefined
               }
               onClick={handleVerifyProfile}
@@ -243,11 +327,15 @@ export default function SettingsScreen() {
 
         {__DEV__ && (
           <>
-            <SectionHeader title={t("screens.profile.settingsPage.dev.title")} />
+            <SectionHeader
+              title={t("screens.profile.settingsPage.dev.title")}
+            />
             <View style={styles.sectionGap}>
               <SettingItem
                 title={t("screens.profile.settingsPage.dev.itemTitle")}
-                description={t("screens.profile.settingsPage.dev.itemDescription")}
+                description={t(
+                  "screens.profile.settingsPage.dev.itemDescription"
+                )}
                 onClick={() => router.push("/main/dev-settings")}
               />
             </View>
@@ -270,11 +358,9 @@ export default function SettingsScreen() {
           <Button
             label={t("screens.profile.settingsPage.session.deleteAccount")}
             onPress={handleDeleteAccount}
-            variant="destructive"
+            variant="ghost"
             size="lg"
             fullWidth
-            style={styles.deleteAccountButton}
-            textStyle={{ color: "#EF4444" }}
           />
         </View>
 

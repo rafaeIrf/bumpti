@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   heading: {
-    ...typography.h2,
+    ...typography.heading,
     marginBottom: spacing.xs,
     textAlign: "center",
   },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   optionButton: {
     width: 140,
     height: 140,
-    borderRadius: spacing.md,
+    borderRadius: spacing.lg,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",

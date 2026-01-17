@@ -1,36 +1,69 @@
-import { ArrowRightIcon, NavigationIcon, UsersIcon } from "@/assets/icons";
-import { getPlaceIcon } from "@/components/place-card-utils";
 import { ThemedText } from "@/components/themed-text";
-import { spacing } from "@/constants/theme";
-import { t } from "@/modules/locales";
+import { spacing, typography } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 
-interface PlaceCardFeaturedProps {
-  place: {
-    id: string;
-    name: string;
-    type: string;
-    category: string;
-    distance: number;
-    activeUsers: number;
-  };
+export interface PlaceCardFeaturedProps {
+  title: string;
+  icon?: React.ComponentType<{ width: number; height: number; color: string }>;
   onClick: () => void;
-  index?: number;
+  containerStyle?: StyleProp<ViewStyle>;
+  color?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Helper to darken a hex color
+function darkenColor(hex: string, percent: number): string {
+  // Validate hex format
+  if (!/^#([0-9A-F]{3}){1,2}$/i.test(hex)) return hex;
+
+  let r = 0,
+    g = 0,
+    b = 0;
+  if (hex.length === 4) {
+    r = parseInt("0x" + hex[1] + hex[1]);
+    g = parseInt("0x" + hex[2] + hex[2]);
+    b = parseInt("0x" + hex[3] + hex[3]);
+  } else {
+    r = parseInt("0x" + hex[1] + hex[2]);
+    g = parseInt("0x" + hex[3] + hex[4]);
+    b = parseInt("0x" + hex[5] + hex[6]);
+  }
+
+  r = Math.max(0, Math.floor(r * (1 - percent)));
+  g = Math.max(0, Math.floor(g * (1 - percent)));
+  b = Math.max(0, Math.floor(b * (1 - percent)));
+
+  return (
+    "#" +
+    (r < 16 ? "0" : "") +
+    r.toString(16) +
+    (g < 16 ? "0" : "") +
+    g.toString(16) +
+    (b < 16 ? "0" : "") +
+    b.toString(16)
+  );
+}
+
 export function PlaceCardFeatured({
-  place,
+  title,
+  icon: Icon,
   onClick,
-  index = 0,
+  containerStyle,
+  color = "#2997FF",
 }: PlaceCardFeaturedProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -53,29 +86,18 @@ export function PlaceCardFeatured({
     opacity.value = withSpring(0);
   };
 
-  const Icon = getPlaceIcon(place.type);
-
-  const formatDistance = (km: number): string => {
-    if (km < 1) {
-      return `${Math.round(km * 1000)}m ${t("common.fromYou")}`;
-    }
-    return `${km.toFixed(1)} km ${t("common.fromYou")}`;
-  };
-
-  const formatActiveUsers = (count: number): string => {
-    if (count === 1) return t("common.onePerson");
-    return t("common.peopleNow", { count });
-  };
+  // Generate darker icon color (30% darker)
+  const iconColor = darkenColor(color, 0.3);
 
   return (
     <AnimatedPressable
       onPress={onClick}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.card, animatedStyle]}
+      style={[styles.card, animatedStyle, containerStyle]}
     >
       <LinearGradient
-        colors={["#141414", "#1E1E1E"]}
+        colors={[color, color]} // Use the pastel color as background
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientContainer}
@@ -83,7 +105,7 @@ export function PlaceCardFeatured({
         {/* Gradient Overlay on Hover/Press */}
         <Animated.View style={[styles.hoverOverlay, overlayStyle]}>
           <LinearGradient
-            colors={["rgba(41, 151, 255, 0.05)", "rgba(41, 151, 255, 0.1)"]}
+            colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.2)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -91,48 +113,23 @@ export function PlaceCardFeatured({
         </Animated.View>
 
         {/* Decorative Icon - Bottom Right */}
-        <View style={styles.decorativeIconContainer} pointerEvents="none">
-          <View style={{ opacity: 0.3 }}>
-            <Icon width={64} height={64} color="#FFFFFF" />
+        {Icon && (
+          <View style={styles.decorativeIconContainer} pointerEvents="none">
+            <View style={{ opacity: 0.5 }}>
+              <Icon width={64} height={64} color={iconColor} />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Content Container */}
         <View style={styles.contentContainer}>
-          {/* Top Section */}
-          <View>
-            <View style={styles.headerRow}>
-              {/* Place Name */}
-              <ThemedText
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.placeName}
-              >
-                {place.name}
-              </ThemedText>
-
-              {/* Arrow Icon */}
-              <View style={styles.arrowContainer}>
-                <ArrowRightIcon width={16} height={16} color="#2997FF" />
-              </View>
-            </View>
-
-            {/* Info - People and Distance */}
-            <View style={styles.infoContainer}>
-              <View style={styles.infoRow}>
-                <UsersIcon width={12} height={12} color="#B0B0B0" />
-                <ThemedText style={styles.infoText}>
-                  {formatActiveUsers(place.activeUsers)}
-                </ThemedText>
-              </View>
-              <View style={styles.infoRow}>
-                <NavigationIcon width={12} height={12} color="#8B98A5" />
-                <ThemedText style={styles.distanceText}>
-                  {formatDistance(place.distance)}
-                </ThemedText>
-              </View>
-            </View>
-          </View>
+          <ThemedText
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            style={[typography.body2, styles.title]}
+          >
+            {title}
+          </ThemedText>
         </View>
       </LinearGradient>
     </AnimatedPressable>
@@ -141,11 +138,8 @@ export function PlaceCardFeatured({
 
 const styles = StyleSheet.create({
   card: {
-    width: 220,
-    height: 130,
+    height: 90,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#2F3336",
     overflow: "hidden",
   },
   gradientContainer: {
@@ -158,52 +152,20 @@ const styles = StyleSheet.create({
   },
   decorativeIconContainer: {
     position: "absolute",
-    bottom: 12,
-    right: 12,
+    bottom: -10,
+    right: -10,
     zIndex: 2,
+    transform: [{ rotate: "-15deg" }],
   },
   contentContainer: {
     flex: 1,
     padding: spacing.md,
-    justifyContent: "space-between",
+    justifyContent: "flex-start", // Top alignment
     zIndex: 3,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: spacing.sm,
-  },
-  placeName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    paddingRight: spacing.sm,
-  },
-  arrowContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(41, 151, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  infoContainer: {
-    gap: 4,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 12,
-    color: "#B0B0B0",
-  },
-  distanceText: {
-    fontSize: 12,
-    color: "#8B98A5",
+  title: {
+    color: "#FFFFFF", // White text as requested
+    fontSize: 14,
+    maxWidth: "80%", // Prevent overlap with icon if it grows
   },
 });

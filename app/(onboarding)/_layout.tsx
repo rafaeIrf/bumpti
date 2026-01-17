@@ -1,53 +1,57 @@
 import { OnboardingProgressBar } from "@/components/onboarding-progress-bar";
 import { OnboardingProgressProvider } from "@/components/onboarding-progress-context";
 import { useOnboardingSteps } from "@/hooks/use-onboarding-steps";
-import { Stack, usePathname } from "expo-router";
+import { Stack, useSegments } from "expo-router";
 import React, { useMemo } from "react";
 
 export const unstable_settings = {
   initialRouteName: "user-name",
 };
 
-// Routes that should NOT show the progress bar
-const ROUTES_WITHOUT_PROGRESS = new Set(["/complete"]);
-
 const OnboardingHeader = React.memo(() => {
-  const pathname = usePathname();
+  const segments = useSegments();
   const { shouldShowLocation, shouldShowNotifications } = useOnboardingSteps();
 
   const steps = useMemo(() => {
     const base = [
-      "/user-name",
-      "/user-age",
-      "/user-gender",
-      "/connect-with",
-      "/intention",
-      "/user-photos",
-      "/favorite-places",
+      "user-name",
+      "user-age",
+      "user-gender",
+      "connect-with",
+      "intention",
+      "user-photos",
+      "favorite-places",
     ];
-    if (shouldShowLocation) base.push("/location");
-    if (shouldShowNotifications) base.push("/notifications");
+    if (shouldShowLocation) base.push("location");
+    if (shouldShowNotifications) base.push("notifications");
     return base;
   }, [shouldShowLocation, shouldShowNotifications]);
 
-  console.log("OnboardingHeader render:", { pathname, steps });
+  // Get current screen name from segments: ["(onboarding)", "user-name"]
+  const currentScreenName =
+    segments.length > 1 ? segments[segments.length - 1] : null;
 
-  // Don't show progress bar on welcome and complete screens
-  if (ROUTES_WITHOUT_PROGRESS.has(pathname)) {
-    console.log("Skipping progress bar for:", pathname);
+  // Don't show progress bar on complete screen
+  if (currentScreenName === "complete") {
     return null;
   }
 
-  const currentStep = steps.indexOf(pathname) + 1;
+  // Find current step
+  let currentStep = currentScreenName
+    ? steps.indexOf(currentScreenName) + 1
+    : 0;
+
+  // Fallback to step 1 when navigating to onboarding for the first time
+  if (!currentStep && (segments as string[]).includes("(onboarding)")) {
+    currentStep = 1;
+  }
+
   const totalSteps = steps.length;
 
-  // Don't show if we can't determine the step
   if (!currentStep) {
-    console.log("No step found for pathname:", pathname);
     return null;
   }
 
-  console.log("Rendering progress bar:", { currentStep, totalSteps });
   return (
     <OnboardingProgressBar currentStep={currentStep} totalSteps={totalSteps} />
   );

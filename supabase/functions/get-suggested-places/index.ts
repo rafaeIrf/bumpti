@@ -14,7 +14,7 @@ interface PlacesByCategory {
   }[];
 }
 
-const LIMIT_PLACES_PER_CATEGORY = 10;
+const LIMIT_PLACES_PER_CATEGORY = 15;
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

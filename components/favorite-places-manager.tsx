@@ -23,11 +23,11 @@ import {
 const CATEGORIES: PlaceCategory[] = [
   "bar",
   "nightclub",
+  "gym",
   "cafe",
   "restaurant",
-  "gym",
-  "university",
   "park",
+  "university",
 ];
 
 const MAX_SELECTIONS = 12;

@@ -213,8 +213,16 @@
           "title": "SESSÃO",
           "logout": "Sair",
           "logoutConfirm": "Tem certeza que deseja sair?",
+          "logoutTitle": "Sair da conta",
+          "logoutDescription": "Você será desconectado e precisará fazer login novamente para acessar sua conta.",
+          "logoutButton": "Sair",
           "deleteAccount": "Deletar conta",
-          "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+          "deleteAccountConfirm": "Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita.",
+          "deleteAccountTitle": "Deletar conta",
+          "deleteAccountDescription": "Esta ação é permanente e irreversível. Todos os seus dados, conversas e conexões serão perdidos para sempre.",
+          "deleteAccountButton": "Deletar permanentemente",
+          "errorTitle": "Erro",
+          "errorDescription": "Ocorreu um erro. Por favor, tente novamente."
         }
       },
       "devSettings": {
@@ -576,6 +584,10 @@
         "nearby": {
           "title": "O que está por perto",
           "description": "Veja o movimento ao redor"
+        },
+        "mostFrequent": {
+          "title": "Mais frequentados",
+          "description": "Lugares que a galera sempre vai."
         }
       }
     },
@@ -649,9 +661,12 @@
       "updatePlan": "Atualizar plano"
     },
     "onboarding": {
+      "heroTitle1": "Conheça pessoas reais,",
+      "heroTitle2": "em lugares reais",
+      "heroSubtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",
       "title": "Conheça pessoas reais,\nem lugares reais",
       "subtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",
-      "phoneAuth": "Usar número de celular",
+      "phoneAuth": "Entrar com celular",
       "appleAuth": "Continuar com Apple ID",
       "termsPrefix": "Ao continuar, você concorda com nossos",
       "terms": "Termos de Uso",
@@ -677,12 +692,13 @@
       "newCodeSent": "Novo código enviado para {{phone}}",
       "codeNotReceived": "Não recebeu o código? Verifique se o número está correto ou tente novamente em alguns instantes.",
       "nameTitle": "Qual é o seu nome?",
-      "nameSubtitle": "Esse nome aparecerá no seu perfil",
-      "namePlaceholder": "Digite seu nome",
+      "nameSubtitle": "Informe apenas seu primeiro nome",
+      "namePlaceholder": "Primeiro nome",
       "continue": "Continuar",
       "ageTitle": "Quando você nasceu?",
       "ageSubtitle": "Precisamos saber sua data de nascimento para personalizar sua experiência e confirmar que você tem mais de 18 anos.",
       "agePreview": "Você tem {{age}} anos",
+      "ageError": "Você precisa ter pelo menos 18 anos",
       "ageRequired": "Por favor, selecione sua data de nascimento",
       "ageMinimum": "Você precisa ter 18 anos ou mais para usar este app.",
       "selectDate": "Selecione a data",

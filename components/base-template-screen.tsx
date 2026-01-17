@@ -150,13 +150,15 @@ export function BaseTemplateScreen({
     <View
       style={[
         styles.wrapper,
-        containerStyle,
         { backgroundColor: colors.background },
+        containerStyle,
         // Only add paddingTop if there's no Stack header (Stack header already handles safe area)
         // and if useSafeArea is true
-        hasStackHeader || isModal || !useSafeArea
-          ? { paddingTop: useSafeArea ? (isIOS ? 16 : insets.top + 16) : 0 }
-          : { paddingTop: isIOS ? insets.top : insets.top + 16 },
+        hasStackHeader
+          ? {}
+          : isModal || !useSafeArea
+            ? { paddingTop: useSafeArea ? (isIOS ? 16 : insets.top + 16) : 0 }
+            : { paddingTop: isIOS ? insets.top : insets.top + 16 },
       ]}
     >
       {/* Always show a light status bar (our theme is dark) */}
@@ -172,7 +174,7 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingBottom: spacing.md }}>
         {scrollEnabled ? (
           <View style={{ flex: 1 }}>
             <Animated.ScrollView
@@ -236,5 +238,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10,
+    paddingBottom: spacing.md,
   },
 });
