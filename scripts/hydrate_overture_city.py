@@ -379,7 +379,7 @@ def main():
         config = load_curation_config()
         
         # Process in batches (10000k records per commit - balanced for performance/safety)
-        BATCH_SIZE = 10000
+        BATCH_SIZE = 5000
         pg_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
         pg_cur = pg_conn.cursor()
         
@@ -614,7 +614,7 @@ def main():
         # BATCH PROCESSING: Process deduplicated POIs in 10000-record batches
         # ====================================================================
         
-        BATCH_SIZE = 10000
+        BATCH_SIZE = 5000
         num_batches = (total_unique + BATCH_SIZE - 1) // BATCH_SIZE
         
         print(f"\n📦 Processing in {num_batches} batches of {BATCH_SIZE} records")
