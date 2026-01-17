@@ -3,10 +3,12 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { triggerCityHydration } from "@/modules/places/api";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
@@ -22,6 +24,7 @@ export default function LocationScreen() {
   const [isRequesting, setIsRequesting] = useState(false);
   const { completeCurrentStep } = useOnboardingFlow();
   const { request } = useLocationPermission();
+  const { location: cachedCoords } = useCachedLocation();
 
   const handleEnableLocation = async () => {
     setIsRequesting(true);
@@ -30,6 +33,11 @@ export default function LocationScreen() {
 
       if (result.status === "granted") {
         onboardingActions.setLocationPermission(true);
+
+        // Proactive city hydration - trigger in background (non-blocking)
+        if (cachedCoords) {
+          triggerCityHydration(cachedCoords.latitude, cachedCoords.longitude);
+        }
 
         // Aguardar um pouco para feedback visual
         setTimeout(() => {

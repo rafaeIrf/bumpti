@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,6 +30,8 @@ serve(async (req) => {
       });
     }
 
+    
+
     // Parse logic
     const limitParams = limit ? parseInt(limit) : 10;
     const latNum = lat ? parseFloat(lat) : undefined;
@@ -39,6 +42,16 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
+    // Even if results exist, trigger hydration if city is stale (>60 days)
+    if (latNum && lngNum) {
+      // Trigger in background (don't wait for result, don't block response)
+      triggerCityHydrationIfNeeded(
+        latNum.toString(),
+        lngNum.toString()
+      ).catch((err) => console.error("Hydration trigger failed:", err));
+    }
 
 
     const { data: localPlaces, error: rpcError } = await supabase.rpc("search_places_autocomplete", {
@@ -66,6 +79,7 @@ serve(async (req) => {
         } else if (p.street) {
             addressParts.push(p.street);
         }
+
 
         // Destructure to remove raw review fields from top-level response
         const { review_average, review_count, review_tags, ...placeData } = p;

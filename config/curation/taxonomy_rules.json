@@ -1,0 +1,87 @@
+{
+  "forbidden_hierarchy_terms": [
+    "adult",
+    "erotic",
+    "escort",
+    "residential_only",
+    "private_membership",
+    "massage_parlor",
+    "sex"
+  ],
+  "osm_red_flags": {
+    "amenity": ["brothel", "sex_shop", "swingerclub"],
+    "shop": ["sex", "erotic", "adult"],
+    "leisure": ["adult_gaming_centre", "swingerclub"],
+    "healthcare": ["massage"]
+  },
+  "taxonomy_weights": {
+    "cultural": {
+      "bonus": 30,
+      "categories": [
+        "museum",
+        "art_gallery",
+        "theatre",
+        "cinema",
+        "library",
+        "cultural_center",
+        "exhibition_centre",
+        "concert_hall",
+        "music_venue",
+        "event_venue",
+        "stadium",
+        "arena"
+      ]
+    },
+    "social": {
+      "bonus": 20,
+      "categories": [
+        "bar",
+        "nightclub",
+        "restaurant",
+        "cafe",
+        "pub",
+        "club",
+        "gym",
+        "sports_centre",
+        "park",
+        "beach"
+      ]
+    },
+    "educational": {
+      "bonus": 15,
+      "categories": ["university", "language_school", "community_centre"]
+    }
+  },
+  "cross_validation_rules": {
+    "university": {
+      "required_terms": [
+        "universidade",
+        "faculdade",
+        "campus",
+        "centro universitário",
+        "unip",
+        "puc",
+        "usp",
+        "federal",
+        "escola",
+        "university",
+        "college",
+        "instituto"
+      ]
+    },
+    "language_school": {
+      "required_terms": [
+        "universidade",
+        "faculdade",
+        "campus",
+        "escola",
+        "university",
+        "college",
+        "instituto"
+      ]
+    },
+    "park": {
+      "forbidden_terms": ["edifício", "condomínio", "residencial", "prédio"]
+    }
+  }
+}

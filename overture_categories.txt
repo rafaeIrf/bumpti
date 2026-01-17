@@ -1,0 +1,90 @@
+# ========== NIGHTLIFE (FOUND IN DATA) ==========
+bar:bar
+pub:bar
+dance_club:nightclub
+cocktail_bar:bar
+lounge:bar
+hookah_bar:bar
+beer_bar:bar
+beer_garden:bar
+wine_bar:bar
+tapas_bar:bar
+sports_bar:bar
+gastropub:bar
+
+# ========== FOOD & DRINK (FOUND IN DATA) ==========
+restaurant:restaurant
+bakery:cafe
+pizza_restaurant:restaurant
+fast_food_restaurant:restaurant
+burger_restaurant:restaurant
+coffee_shop:cafe
+cafe:cafe
+buffet_restaurant:restaurant
+brazilian_restaurant:restaurant
+hot_dog_restaurant:restaurant
+barbecue_restaurant:restaurant
+italian_restaurant:restaurant
+japanese_restaurant:restaurant
+sushi_restaurant:restaurant
+diner:restaurant
+chinese_restaurant:restaurant
+seafood_restaurant:restaurant
+middle_eastern_restaurant:restaurant
+chicken_restaurant:restaurant
+bar_and_grill_restaurant:restaurant
+mexican_restaurant:restaurant
+asian_restaurant:restaurant
+vegetarian_restaurant:restaurant
+health_food_restaurant:restaurant
+french_restaurant:restaurant
+breakfast_and_brunch_restaurant:restaurant
+portuguese_restaurant:restaurant
+indian_restaurant:restaurant
+american_restaurant:restaurant
+steakhouse:restaurant
+
+# ========== SPORTS & CLUBS (FOUND IN DATA) ==========
+gym:gym
+sports_club_and_league:club
+martial_arts_club:gym
+fitness_trainer:gym
+skate_park:park
+gymnastics_center:gym
+tennis_court:sports_centre
+sports_and_recreation_venue:club
+country_club:club
+social_club:club
+
+# ========== ARTS & ENTERTAINMENT (FOUND IN DATA) ==========
+stadium_arena:stadium
+theatre:theatre
+art_gallery:museum
+cinema:theatre
+museum:museum
+art_museum:museum
+history_museum:museum
+community_center:community_centre
+library:library
+
+# ========== OUTDOORS (FOUND IN DATA) ==========
+park:park
+public_plaza:park
+botanical_garden:park
+
+# ========== EDUCATION (FOUND IN DATA) ==========
+college_university:university
+language_school:language_school
+
+# ========== SHOPPING (ONLY MALLS FOUND) ==========
+shopping_center:shopping
+shopping_mall:shopping
+shopping_plaza:shopping
+
+# ========== EVENTS & VENUES (FOUND IN DATA) ==========
+event_planning:event_venue
+topic_concert_venue:event_venue
+music_venue:event_venue
+venue_and_event_space:event_venue
+party_and_event_planning:event_venue
+theaters_and_performance_venues:theatre
