@@ -26,20 +26,27 @@ def validate_category_name(name, category, original_category, config):
 
 
 def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categories, config):
-    """Check if the category is valid (not in forbidden list)."""
+    """Check if the PRIMARY category is valid (not in forbidden list).
+    
+    IMPORTANT: We only check the PRIMARY category, not alternates.
+    
+    Example: Bossa Bar
+    - Primary: dance_club ✅ (allowed)
+    - Alternates: ['bar', 'adult_entertainment']
+    
+    The alternate 'adult_entertainment' doesn't disqualify it because the PRIMARY
+    category is dance_club (a legitimate nightclub). Alternates may indicate
+    secondary characteristics (e.g., pole dancing) but don't define the venue type.
+    """
     # Get forbidden terms from taxonomy config
     taxonomy_config = config.get('taxonomy', {})
     forbidden_terms = taxonomy_config.get('forbidden_hierarchy_terms', [])
     
-    # Combine primary and alternate categories
-    all_cats = [overture_category] + (alternate_categories or [])
+    # ONLY check the primary category (not alternates!)
+    if overture_category and overture_category.lower() in forbidden_terms:
+        return False
     
-    # Reject if ANY category contains forbidden terms
-    for cat in all_cats:
-        if cat and cat.lower() in forbidden_terms:
-            return False
-    
-    # Accept by default (POIs are innocent until proven guilty)
+    # Accept - primary category is valid
     return True
 
 
