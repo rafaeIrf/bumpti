@@ -73,6 +73,7 @@ It is better to return fewer items than to include a possibly incorrect one.
 
 ⚠️ CRITICAL: Many bars DON'T have "Bar" in the name (e.g., "Quermesse", "BarBaran", "Shed Western")
 ⚠️ CRITICAL: If a brand has multiple locations, list it ONCE ("Bar do Alemão"), not per neighborhood
+⚠️ CRITICAL: Don't add redundant prefixes - use "Madalosso" not "Restaurante Madalosso", "Lucca" not "Café Lucca" (unless it's part of the official name)
 
 🔄 IF APPROACHING TARGET:
 - Continue with less famous but REAL established places
@@ -271,6 +272,39 @@ def ai_match_iconic_venues(hotlist, all_pois_by_category):
     validation_queue = []
     poi_id_to_name = {}  # Track poi_id -> poi_name for later lookup
     
+    # Enhanced deduplication of hotlist items
+    deduplicated_hotlist = {}
+    for category, venues in hotlist.items():
+        if isinstance(venues, list):
+            seen = set()
+            deduplicated = []
+            for venue in venues:
+                # Normalize for dedup: lowercase, remove location suffixes and prefixes
+                base_name = venue.lower().strip()
+                
+                # Remove category prefixes for comparison
+                for prefix in ['restaurante ', 'bar ', 'café ', 'clube ']:
+                    if base_name.startswith(prefix):
+                        base_name = base_name[len(prefix):].strip()
+                
+                # Remove common location patterns
+                for pattern in [' batel', ' água verde', ' centro', ' shopping', ' do shopping', ' do parque', ' do museu']:
+                    if base_name.endswith(pattern):
+                        base_name = base_name.replace(pattern, '').strip()
+                
+                if base_name not in seen:
+                    seen.add(base_name)
+                    deduplicated.append(venue)
+                else:
+                    print(f"   ⚠️ Deduped: '{venue}' (similar to existing in '{category}')")
+            
+            deduplicated_hotlist[category] = deduplicated
+        else:
+            deduplicated_hotlist[category] = venues # Keep non-list items as is
+    
+    # Use the deduplicated hotlist for further processing
+    hotlist = deduplicated_hotlist
+
     # STAGE 1: Build candidates for all iconic venues
     for category, iconic_names in hotlist.items():
         all_pois = all_pois_by_category.get(category, [])
