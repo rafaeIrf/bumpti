@@ -37,15 +37,15 @@ def generate_hotlist(city_name, state=None, country_code=None):
 
 TAREFA: Listar locais REAIS e VERIFICÁVEIS de {location}, priorizando dos mais famosos aos moderadamente conhecidos.
 
-📊 DISTRIBUIÇÃO OBRIGATÓRIA (mínimos por categoria):
-- bar: 30 locais mínimo
-- nightclub: 20 locais mínimo
-- restaurant: 30 locais mínimo
-- club: 15 locais mínimo
-- stadium: 15 locais mínimo
-- park: 15 locais mínimo
-- cafe: 15 locais mínimo
-- university: 15 locais mínimo
+📊 ALVOS POR CATEGORIA (qualidade sobre quantidade):
+- bar: até 30 locais REAIS
+- nightclub: até 20 locais REAIS
+- restaurant: até 30 locais REAIS
+- club: até 15 locais REAIS
+- stadium: até 15 locais REAIS
+- park: até 15 locais REAIS
+- cafe: até 15 locais REAIS
+- university: até 15 locais REAIS
 
 🎯 ESTRATÉGIA DE SELEÇÃO (ordem de prioridade):
 1. **Tier 1 - Icônicos** (30% da lista): Lugares extremamente famosos, marcos da cidade
@@ -64,9 +64,12 @@ TAREFA: Listar locais REAIS e VERIFICÁVEIS de {location}, priorizando dos mais 
 bar: ["Bar do Alemão", "Boteco São Jorge", "Bar e Mercearia Dona Rosa", ...]
 cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
 
-❌ EXEMPLOS DE RESPOSTA RUIM:
-bar: []  ← NUNCA FAÇA ISSO
-bar: ["Bar 1", "Bar 2"]  ← Nomes genéricos não aceitáveis
+❌ EXEMPLOS DE RESPOSTA RUIM (NUNCA FAÇA):
+bar: []  ← Arrays vazios
+bar: ["Bar 1", "Bar 2"]  ← Nomes genéricos
+bar: ["Club 100", "Club 101", "Club 102"]  ← Sequências numéricas inventadas
+nightclub: ["Vibe Club", "Paradise Club"]  ← Nomes genéricos inglês
+bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Variações inventadas
 
 🔄 SE VOCÊ NÃO CONHECER LUGARES SUFICIENTES:
 - Preencha com estabelecimentos menores mas reais da cidade
@@ -88,11 +91,11 @@ RETORNE APENAS JSON VÁLIDO no formato:
         response = client.chat.completions.create(
             model="gpt-4o",  # Changed from gpt-5.2 (doesn't exist) to gpt-4o
             messages=[
-                {"role": "system", "content": f"You are a comprehensive local expert for {location}. You MUST provide AT LEAST the minimum number of real venues for each category. NEVER return empty arrays. If you don't know enough famous places, include legitimate smaller establishments. Real places only - no generic or invented names."},
+                {"role": "system", "content": f"You are a strict quality-focused local expert for {location}. CRITICAL: Only return venues you are CERTAIN exist. It's better to return 5 real places than 30 fake ones. NEVER invent sequential names (Club 100, 101...) or generic variations (Bar X, Bar X II...). If uncertain, return FEWER venues."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.3  # Slightly higher for more creativity in smaller cities
+            temperature=0.1  # Very low - prioritize factual recall, not creativity
         )
         
         result = json.loads(response.choices[0].message.content)
