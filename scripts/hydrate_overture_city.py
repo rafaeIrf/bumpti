@@ -495,10 +495,7 @@ def main():
           AND confidence >= 0.5
           AND categories.primary IS NOT NULL
           AND (operating_status IS NULL OR operating_status = 'open')
-          AND NOT list_has_any(
-            list_append(categories.alternate, categories.primary),
-            [{blacklist_sql}]
-          )
+          AND categories.primary NOT IN ([{blacklist_sql}])
         LIMIT 400000
         """
         
