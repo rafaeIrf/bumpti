@@ -71,9 +71,9 @@ It is better to return fewer items than to include a possibly incorrect one.
 - ❌ **ADDING LOCATIONS TO NAMES**: "Café do Shopping Mueller", "Café do Parque" (these are probably fake)
 - ❌ **DUPLICATES**: Same venue listed twice
 
-⚠️ CRITICAL: Many bars DON'T have "Bar" in the name (e.g., "Quermesse", "BarBaran", "Shed Western")
-⚠️ CRITICAL: If a brand has multiple locations, list it ONCE ("Bar do Alemão"), not per neighborhood
-⚠️ CRITICAL: Don't add redundant prefixes - use "Madalosso" not "Restaurante Madalosso", "Lucca" not "Café Lucca" (unless it's part of the official name)
+⚠️ CRITICAL: Many bars DON'T have "Bar" in the name (e.g., single-word names, brand names)
+⚠️ CRITICAL: If a brand has multiple locations, list it ONCE, not per neighborhood
+⚠️ CRITICAL: Don't add redundant prefixes - use "Location Name" not "Restaurant Location Name" (unless it's part of the official name)
 
 🔄 IF APPROACHING TARGET:
 - Continue with less famous but REAL established places
