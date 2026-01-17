@@ -35,9 +35,11 @@ def sanitize_name(name, config):
         if cleaned.endswith(suffix):
             cleaned = cleaned[:-len(suffix)].strip()
     
-    # Capitalize only first letter (not every word)
-    # "cafe do lago" → "Cafe do lago" (not "Cafe Do Lago")
-    cleaned = cleaned.capitalize()
+    # Capitalize only the very first letter, preserve rest as-is
+    # "bossa bar" → "Bossa bar"
+    # "BOSSA BAR" → "BOSSA BAR" (preserves existing uppercase)
+    if cleaned:
+        cleaned = cleaned[0].upper() + cleaned[1:]
     
     return cleaned
 
