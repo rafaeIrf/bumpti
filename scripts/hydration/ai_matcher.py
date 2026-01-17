@@ -37,19 +37,19 @@ def generate_hotlist(city_name, state=None, country_code=None):
 
 TASK: List REAL and VERIFIABLE venues in {location}, prioritizing from most famous to moderately well-known.
 
-📊 TARGET QUANTITIES (prioritize quality, but aim for volume):
-- bar: 20-30 REAL venues
-- nightclub: 15-20 REAL venues  
-- restaurant: 20-30 REAL venues
-- club: 10-15 REAL venues
-- stadium: 10-15 REAL venues
-- park: 10-15 REAL venues
-- cafe: 10-15 REAL venues
-- university: 10-15 REAL venues
+📊 TARGET QUANTITIES (aim high, prioritize quality):
+- bar: 25-30 REAL venues
+- nightclub: 20-30 REAL venues  
+- restaurant: 25-30 REAL venues
+- club: 12-20 REAL venues
+- stadium: 12-20 REAL venues
+- park: 12-20 REAL venues
+- cafe: 12-20 REAL venues
+- university: 12-20 REAL venues
 
 MINIMUM VIABLE (if you know the city well):
-- At least 15 bars, 10 nightclubs, 15 restaurants
-- At least 8 for other categories
+- At least 20 bars, 15 nightclubs, 20 restaurants
+- At least 10 for other categories
 
 🎯 SELECTION STRATEGY (priority order):
 1. **Tier 1 - Iconic** (30% of list): Extremely famous places, city landmarks
@@ -69,13 +69,12 @@ cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
 
 ❌ BAD RESPONSE EXAMPLES (NEVER DO THIS):
 bar: []  ← Empty arrays
-bar: ["Bar 1", "Bar 2"]  ← Generic names
-bar: ["Club 100", "Club 101", "Club 102"]  ← Invented sequential numbers
-nightclub: ["Vibe Club", "Club Vibe", "Paradise Club"]  ← CRITICAL: Generic English names are FAKE
-nightclub: ["Verdant Club", "Danghai Club"]  ← CRITICAL: Generic/invented club names
-bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations
+bar: ["Bar 1", "Bar 2"]  ← Generic numbered names
+bar: ["Club 100", "Club 101", "Club 102"]  ← Sequential number patterns
+nightclub: ["The Club", "Night Club 1"]  ← Generic/numbered patterns
+bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations of same place
 
-⚠️ CRITICAL FOR NIGHTCLUBS: If you don't know real nightclub names, return FEWER items. Don't invent "Vibe", "Paradise", "Verdant" type names.
+⚠️ FOCUS ON PATTERNS: Avoid sequential numbers, generic "Club X" patterns, and invented variations.
 
 🔄 IF YOU DON'T KNOW ENOUGH VENUES:
 - Include smaller but REAL establishments from the city
@@ -102,10 +101,23 @@ RETURN ONLY VALID JSON in this format:
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.2  # Low but not too conservative
+            temperature=0.3  # Balanced - recall + some exploration
         )
         
         result = json.loads(response.choices[0].message.content)
+        
+        # Deduplicate venues (GPT sometimes returns duplicates)
+        for category in result:
+            if isinstance(result[category], list):
+                # Remove exact duplicates while preserving order
+                seen = set()
+                deduplicated = []
+                for venue in result[category]:
+                    venue_lower = venue.lower().strip()
+                    if venue_lower not in seen:
+                        seen.add(venue_lower)
+                        deduplicated.append(venue)
+                result[category] = deduplicated
         
         # Count total venues
         total_venues = sum(len(venues) for venues in result.values())
