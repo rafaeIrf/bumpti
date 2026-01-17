@@ -472,8 +472,8 @@ const styles = StyleSheet.create({
     paddingRight: 16, // Add padding to the end of the scroll
   },
   featuredItem: {
-    width: "47%",
-    maxWidth: "47%",
+    width: "48.5%",
+    maxWidth: "48.5%",
   },
   nearbyCard: {
     width: "100%",
@@ -483,6 +483,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 8,
   },
   categoryItem: {
