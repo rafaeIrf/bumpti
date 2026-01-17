@@ -35,63 +35,63 @@ def generate_hotlist(city_name, state=None, country_code=None):
         
         prompt = f"""You are a local expert in {location} with deep knowledge of real establishments in the city.
 
-TASK: List REAL and VERIFIABLE venues in {location}, prioritizing from most famous to moderately well-known.
+TASK: List REAL and VERIFIABLE venues in {location}. Start with the most famous, then include well-established places.
 
-📊 TARGETS PER CATEGORY (quality over quantity):
-- bar: up to 30 REAL venues
-- nightclub: up to 20 REAL venues
-- restaurant: up to 30 REAL venues
-- club: up to 20 REAL venues
-- stadium: up to 20 REAL venues
-- park: up to 20 REAL venues
-- cafe: up to 20 REAL venues
-- university: up to 20 REAL venues
+📊 TARGET QUANTITIES:
+- bar: 20-30 REAL venues
+- nightclub: 15-20 REAL venues
+- restaurant: 20-30 REAL venues
+- club: 12-18 REAL venues
+- stadium: 10-15 REAL venues
+- park: 10-15 REAL venues
+- cafe: 12-18 REAL venues
+- university: 10-15 REAL venues
 
-🎯 SELECTION STRATEGY (priority order):
-1. **Tier 1 - Iconic** (30% of list): Extremely famous places, city landmarks
-2. **Tier 2 - Popular** (40% of list): Well-known and frequently visited establishments
-3. **Tier 3 - Known** (30% of list): Legitimate and established places, even if less famous
+🎯 GRADUATED APPROACH (fill each tier before moving to next):
+1. **Famous/Iconic** (5-10 per category): Landmarks everyone knows
+2. **Well-Known** (next 5-10): Established, popular places
+3. **Legitimate/Local** (fill to target): Real established businesses
 
-✅ MANDATORY RULES:
-1. **ONLY return venues you are CERTAIN exist**
-2. **Use complete official names** - e.g., "Bar do Alemão", not "Alemão"
-3. **No permanently closed venues**
-4. **Diversify geographically** when possible
-5. **For small cities** - include smaller but legitimate establishments
+✅ WHAT TO DO:
+1. **Start with certainty** - List the famous ones you're 100% sure about
+2. **Then add established** - Include well-known legitimate businesses
+3. **Use full official names** - e.g., "Bar do Alemão" not just "Alemão"
+4. **Diversify geography** - Cover different neighborhoods when possible
 
-📝 GOOD RESPONSE EXAMPLES:
-bar: ["Bar do Alemão", "Boteco São Jorge", "Mercearía Dona Rosa", ...]
-cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
+📝 GOOD EXAMPLES (this is what we want!):
+bar: ["Bar do Alemão", "Boteco São Jorge", "Bar do Victor", "Bar Quermesse", "Bar CanaBenta", "Bar do Pachá", "Bar Stuart", "Bar do Dante", "Bar do Torto", "Bar do Pudim", ... continue to 20-30]
 
-❌ BAD RESPONSE EXAMPLES (NEVER DO THIS):
-bar: []  ← Empty arrays
-bar: ["Bar 1", "Bar 2"]  ← Generic names
-bar: ["Club 100", "Club 101", "Club 102"]  ← Invented sequential numbers
-nightclub: ["Vibe Club", "Paradise Club"]  ← Generic English names
-bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations
+nightclub: ["Vibe Club", "Verdant Club", "Shed Western Bar", "Danghai Club", "James Bar", "Crossroads", ... continue to 15-20]
 
-🔄 IF YOU DON'T KNOW ENOUGH VENUES:
-- Include smaller but REAL establishments from the city
-- For small cities, list ALL legitimate establishments in the category
-- Better to return fewer real venues than invent fake ones
-- It's OK to have some categories with fewer items
+restaurant: ["Madalosso", "Barolo Trattoria", "Terra Madre Ristorante", "Restaurante Madero", "Durski", "Cantina do Délio", "Velho Madalosso", ... continue to 20-30]
 
-RETURN ONLY VALID JSON in this format:
+❌ WHAT NOT TO DO:
+- ❌ Empty lists
+- ❌ Sequential numbers: "Club 100, 101, 102"
+- ❌ Invented variations: "Bar X, Bar X II, Bar X III"
+- ❌ Generic patterns: "Bar 1, Bar 2"
+
+🔄 IF APPROACHING TARGET:
+- Continue with less famous but REAL established places
+- Include neighborhood favorites and local institutions
+- It's OK to list 25-30 bars if you know them
+
+RETURN ONLY VALID JSON:
 {{
-  "bar": ["Real Specific Name 1", "Real Specific Name 2", ...],
-  "nightclub": [...],
-  "restaurant": [...],
-  "club": [...],
-  "stadium": [...],
-  "park": [...],
-  "cafe": [...],
-  "university": [...]
+  "bar": ["Real Name 1", "Real Name 2", ... 20-30 items],
+  "nightclub": [...15-20 items],
+  "restaurant": [...20-30 items],
+  "club": [...12-18 items],
+  "stadium": [...10-15 items],
+  "park": [...10-15 items],
+  "cafe": [...12-18 items],
+  "university": [...10-15 items]
 }}"""
 
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": f"You are a strict quality-focused local expert for {location}. CRITICAL: Only return venues you are CERTAIN exist. It's better to return 5 real places than 30 fake ones. NEVER invent sequential names (Club 100, 101...) or generic variations (Bar X, Bar X II...). If uncertain, return FEWER venues."},
+                {"role": "system", "content": f"You are a knowledgeable local expert for {location}. Your goal is to provide comprehensive lists of REAL venues. Start with famous landmarks, then include well-established places, then local favorites. Aim for target quantities - it's expected to list 20-30 bars and restaurants if you know the city well. Only skip venues if you're uncertain they exist."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
