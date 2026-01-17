@@ -62,13 +62,6 @@ It is better to return fewer items than to include a possibly incorrect one.
 3. **Use full official names** - e.g., "Bar do Alemão" not just "Alemão"
 4. **Diversify geography** - Cover different neighborhoods when possible
 
-📝 GOOD EXAMPLES (this is what we want!):
-bar: ["Bar do Alemão", "Boteco São Jorge", "Bar do Victor", "Bar Quermesse", "Bar CanaBenta", "Bar do Pachá", "Bar Stuart", "Bar do Dante", "Bar do Torto", "Bar do Pudim", ... continue to 20-30]
-
-nightclub: ["Vibe Club", "Verdant Club", "Shed Western Bar", "Danghai Club", "James Bar", "Crossroads", ... continue to 15-20]
-
-restaurant: ["Madalosso", "Barolo Trattoria", "Terra Madre Ristorante", "Restaurante Madero", "Durski", "Cantina do Délio", "Velho Madalosso", ... continue to 20-30]
-
 ❌ WHAT NOT TO DO:
 - ❌ Empty lists
 - ❌ Sequential numbers: "Club 100, 101, 102"
