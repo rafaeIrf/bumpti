@@ -4,6 +4,10 @@ on:
   repository_dispatch:
     types: [hydrate_city]
 
+concurrency:
+  group: city-hydration-${{ github.event.client_payload.city_id || format('{0}-{1}', github.event.client_payload.lat, github.event.client_payload.lng) }}
+  cancel-in-progress: false # Don't cancel running hydrations
+
 jobs:
   hydrate:
     runs-on: ubuntu-latest
