@@ -37,20 +37,20 @@ def generate_hotlist(city_name, state=None, country_code=None):
 
 TASK: List REAL and VERIFIABLE venues in {location}. Start with the most famous, then include well-established places.
 
-📊 TARGET QUANTITIES:
-- bar: 20-30 REAL venues
-- nightclub: 15-20 REAL venues
-- restaurant: 20-30 REAL venues
-- club: 12-18 REAL venues
-- stadium: 10-15 REAL venues
-- park: 10-15 REAL venues
-- cafe: 12-18 REAL venues
-- university: 10-15 REAL venues
+📊 TARGET QUANTITIES (quality over quantity):
+- bar: up to 30 REAL venues
+- nightclub: up to 20 REAL venues
+- restaurant: up to 30 REAL venues
+- club: up to 20 REAL venues
+- stadium: up to 15 REAL venues
+- park: up to 15 REAL venues
+- cafe: up to 20 REAL venues
+- university: up to 15 REAL venues
 
-🎯 GRADUATED APPROACH (fill each tier before moving to next):
-1. **Famous/Iconic** (5-10 per category): Landmarks everyone knows
-2. **Well-Known** (next 5-10): Established, popular places
-3. **Legitimate/Local** (fill to target): Real established businesses
+🎯 APPROACH:
+1. **Start with certainty** - List venues you're 100% sure exist
+2. **Add well-known places** - Include established venues
+3. **Stop when uncertain** - Don't invent to reach targets
 
 ✅ WHAT TO DO:
 1. **Start with certainty** - List the famous ones you're 100% sure about
