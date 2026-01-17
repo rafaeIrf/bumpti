@@ -62,11 +62,17 @@ It is better to return fewer items than to include a possibly incorrect one.
 3. **Use full official names** - e.g., "Bar do Alemão" not just "Alemão"
 4. **Diversify geography** - Cover different neighborhoods when possible
 
-❌ WHAT NOT TO DO:
+❌ WHAT NOT TO DO (CRITICAL):
 - ❌ Empty lists
 - ❌ Sequential numbers: "Club 100, 101, 102"
 - ❌ Invented variations: "Bar X, Bar X II, Bar X III"
 - ❌ Generic patterns: "Bar 1, Bar 2"
+- ❌ **GEOGRAPHIC VARIATIONS**: "Bar do Alemão Batel", "Bar do Alemão Água Verde" (just use "Bar do Alemão" once)
+- ❌ **ADDING LOCATIONS TO NAMES**: "Café do Shopping Mueller", "Café do Parque" (these are probably fake)
+- ❌ **DUPLICATES**: Same venue listed twice
+
+⚠️ CRITICAL: Many bars DON'T have "Bar" in the name (e.g., "Quermesse", "BarBaran", "Shed Western")
+⚠️ CRITICAL: If a brand has multiple locations, list it ONCE ("Bar do Alemão"), not per neighborhood
 
 🔄 IF APPROACHING TARGET:
 - Continue with less famous but REAL established places
