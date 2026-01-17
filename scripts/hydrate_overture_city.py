@@ -86,32 +86,6 @@ def apply_scoring_modifiers(relevance_score, internal_category, overture_categor
     return (modified_score, modifier)
 
 
-def check_taxonomy_hierarchy(source_raw, categories_primary, categories_alternate, config):
-    """Check if POI belongs to forbidden taxonomy branches."""
-    forbidden_terms = config['taxonomy']['forbidden_hierarchy_terms']
-    
-    all_categories = [categories_primary]
-    if categories_alternate:
-        all_categories.extend(categories_alternate)
-    
-    for cat in all_categories:
-        if cat:
-            cat_lower = cat.lower()
-            for term in forbidden_terms:
-                if term in cat_lower:
-                    return False
-    
-    if source_raw and isinstance(source_raw, dict):
-        tags = source_raw.get('tags', {})
-        if tags:
-            for key, value in tags.items():
-                combined = f"{key}:{value}".lower()
-                for term in forbidden_terms:
-                    if term in combined:
-                        return False
-    
-    return True
-
 
 def filter_osm_source_tags(source_raw, config):
     """
