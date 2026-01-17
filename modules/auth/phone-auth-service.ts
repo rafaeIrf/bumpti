@@ -1,9 +1,9 @@
 import { deactivateDeviceToken } from "@/modules/notifications";
 import { supabase } from "@/modules/supabase/client";
+import { clearPrefetchCache } from "@/utils/image-prefetch";
 import { AuthError, User } from "@supabase/supabase-js";
 import { resetDatabase } from "../database";
 import { resetGlobalStore } from "../store";
-import { clearPrefetchCache } from "@/utils/image-prefetch";
 
 /**
  * Phone authentication service using Supabase Auth
@@ -85,8 +85,13 @@ class PhoneAuthService {
    */
   async signOut(): Promise<void> {
     try {
-      // Deactivate FCM token before signing out
-      await deactivateDeviceToken();
+      // Deactivate FCM token before signing out (don't let this block logout)
+      try {
+        await deactivateDeviceToken();
+      } catch (fcmError) {
+        console.error("FCM deactivation failed (non-blocking):", fcmError);
+      }
+      
       await supabase.auth.signOut();
       
       // Clear local database
@@ -115,8 +120,8 @@ class PhoneAuthService {
         throw error;
       }
 
+      // signOut already calls resetGlobalStore, no need to call it again
       await this.signOut();
-      await resetGlobalStore();
     } catch (error) {
       console.error("Error deleting account:", error);
       throw error;

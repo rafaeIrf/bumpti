@@ -213,8 +213,16 @@
           "title": "SESSÃO",
           "logout": "Sair",
           "logoutConfirm": "Tem certeza que deseja sair?",
+          "logoutTitle": "Sair da conta",
+          "logoutDescription": "Você será desconectado e precisará fazer login novamente para acessar sua conta.",
+          "logoutButton": "Sair",
           "deleteAccount": "Deletar conta",
-          "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+          "deleteAccountConfirm": "Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita.",
+          "deleteAccountTitle": "Deletar conta",
+          "deleteAccountDescription": "Esta ação é permanente e irreversível. Todos os seus dados, conversas e conexões serão perdidos para sempre.",
+          "deleteAccountButton": "Deletar permanentemente",
+          "errorTitle": "Erro",
+          "errorDescription": "Ocorreu um erro. Por favor, tente novamente."
         }
       },
       "devSettings": {

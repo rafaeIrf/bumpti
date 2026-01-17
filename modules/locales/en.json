@@ -210,10 +210,18 @@
         },
         "session": {
           "title": "SESSION",
-          "logout": "Logout",
-          "logoutConfirm": "Are you sure you want to log out?",
+          "logout": "Sign out",
+          "logoutConfirm": "Are you sure you want to sign out?",
+          "logoutTitle": "Sign out",
+          "logoutDescription": "You will be signed out and will need to log in again to access your account.",
+          "logoutButton": "Sign out",
           "deleteAccount": "Delete account",
-          "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
+          "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
+          "deleteAccountTitle": "Delete account",
+          "deleteAccountDescription": "This action is permanent and irreversible. All your data, conversations, and connections will be lost forever.",
+          "deleteAccountButton": "Delete permanently",
+          "errorTitle": "Error",
+          "errorDescription": "An error occurred. Please try again."
         }
       },
       "devSettings": {

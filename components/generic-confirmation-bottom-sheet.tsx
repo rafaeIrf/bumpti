@@ -10,6 +10,7 @@ interface ButtonConfig {
   text: string;
   onClick: () => void;
   variant?: "primary" | "secondary" | "danger";
+  loading?: boolean;
 }
 
 interface GenericConfirmationBottomSheetProps {
@@ -111,6 +112,7 @@ export function GenericConfirmationBottomSheet({
           variant={getButtonVariant(primaryButton.variant)}
           size="lg"
           fullWidth
+          loading={primaryButton.loading}
           label={primaryButton.text}
         />
 
@@ -121,6 +123,7 @@ export function GenericConfirmationBottomSheet({
             variant={getButtonVariant(secondaryButton.variant)}
             size="lg"
             fullWidth
+            loading={secondaryButton.loading}
             label={secondaryButton.text}
           />
         )}
