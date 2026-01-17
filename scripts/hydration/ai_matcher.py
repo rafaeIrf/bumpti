@@ -21,8 +21,8 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}. 
-        Sua missão é listar locais icônicos e populares nessa cidade, que tenham grande fluxo de pessoas.
+        prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
+    Sua missão é listar locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
     
     DISTRIBUIÇÃO OBRIGATÓRIA:
     - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
@@ -35,11 +35,10 @@ def generate_hotlist(city_name):
     - university: 15 locais (Grandes universidades e faculdades principais)
 
     REGRAS RÍGIDAS:
-    - Priorize locais GRANDES e com FLUXO de pessoas.
-    - Use nomes OFICIAIS completos e reais.
+    - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
+    - Use nomes OFICIAIS completos.
     - Não retorne lugares que estão fechados permanentemente ou temporariamente.
-    - Não invente nomes genéricos. Qualidade acima de tudo.
-    - Não alucine e nem crie nomes por conta própria, os locais tem que ser reais.
+    - Não invente nomes genéricos. Qualidade acima de tudo, apenas lugares reais que existem na cidade.
     - Retorne estritamente o JSON categorizado: {{ "bar": [...], "nightclub": [...], ... }}"""
 
         response = client.chat.completions.create(
