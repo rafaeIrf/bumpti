@@ -205,30 +205,30 @@ def ai_validate_matches_batch(validation_batch, api_key):
         # Build batch prompt
         batch_data = json.dumps(validation_batch, ensure_ascii=False, indent=2)
         
-        prompt = f"""Você é um validador semântico de locais. Sua tarefa é identificar matches corretos entre locais icônicos e candidatos reais.
+        prompt = f"""You are a semantic validator for venues. Your task is to identify correct matches between iconic venues and real candidates.
 
-REGRAS:
-1. Um match é válido quando o candidato claramente se refere ao MESMO estabelecimento que o local icônico.
-2. Variações aceitáveis: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
-3. Aceite variações de sufixos: 'Shopping X', 'Unidade Y', etc.
-4. Se NENHUM candidato for um match óbvio, retorne null.
+RULES:
+1. A match is valid when the candidate clearly refers to the SAME establishment as the iconic venue.
+2. Acceptable variations: '+55' = '+55 Bar', 'Parque Barigui' = 'Parque Ecológico Barigui'
+3. Accept suffix variations: 'Shopping X', 'Unit Y', etc.
+4. If NO candidate is an obvious match, return null.
 
-LOCAIS E CANDIDATOS:
+VENUES AND CANDIDATES:
 {batch_data}
 
-FORMATO DE RETORNO OBRIGATÓRIO:
+MANDATORY RETURN FORMAT:
 {{
   "matches": {{
-    "nome_do_local_iconico": 123,
-    "outro_local": 456,
-    "sem_match": null
+    "iconic_venue_name": 123,
+    "another_venue": 456,
+    "no_match": null
   }}
 }}
 
-IMPORTANTE: 
-- Os valores devem ser NÚMEROS INTEIROS (candidate id), NÃO arrays
-- Use null (não lista vazia) quando não houver match
-- Retorne APENAS o JSON, sem texto adicional."""
+IMPORTANT: 
+- Values must be INTEGER NUMBERS (candidate id), NOT arrays
+- Use null (not empty list) when there's no match
+- Return ONLY JSON, no additional text."""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
