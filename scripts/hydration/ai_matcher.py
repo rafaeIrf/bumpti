@@ -21,34 +21,66 @@ def generate_hotlist(city_name):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um especialista em cultura urbana e geolocalização em {city_name}.
-    Sua missão é listar locais icônicos e populares, focados em ALTA DENSIDADE SOCIAL.
-    
-    DISTRIBUIÇÃO OBRIGATÓRIA:
-    - bar: 30 locais (Famosos, badalados e ideais para conhecer gente nova)
-    - nightclub: 20 locais (As baladas e casas noturnas mais icônicas)
-    - restaurant: 30 locais (Os maiores, mais populares e com alta rotatividade)
-    - club: 15 locais (Maiores clubes sociais e recreativos tradicionais)
-    - stadium: 15 locais (Grandes arenas e estádios principais)
-    - park: 15 locais (Os maiores e principais pontos de lazer ao ar livre)
-    - cafe: 15 locais (Os maiores e principais cafés)
-    - university: 15 locais (Grandes universidades e faculdades principais)
+        prompt = f"""Você é um especialista local em {city_name} com conhecimento profundo sobre estabelecimentos reais da cidade.
 
-    REGRAS RÍGIDAS:
-    - Priorize locais GRANDES e com MUITO FLUXO de pessoas.
-    - Use nomes OFICIAIS completos.
-    - Não retorne lugares que estão fechados permanentemente ou temporariamente.
-    - Não invente nomes genéricos. Qualidade acima de tudo, apenas lugares reais que existem na cidade.
-    - Retorne estritamente o JSON categorizado: {{ "bar": [...], "nightclub": [...], ... }}"""
+TAREFA: Listar locais REAIS e VERIFICÁVEIS de {city_name}, priorizando dos mais famosos aos moderadamente conhecidos.
+
+📊 DISTRIBUIÇÃO OBRIGATÓRIA (mínimos por categoria):
+- bar: 30 locais mínimo
+- nightclub: 20 locais mínimo
+- restaurant: 30 locais mínimo
+- club: 15 locais mínimo
+- stadium: 15 locais mínimo
+- park: 15 locais mínimo
+- cafe: 15 locais mínimo
+- university: 15 locais mínimo
+
+🎯 ESTRATÉGIA DE SELEÇÃO (ordem de prioridade):
+1. **Tier 1 - Icônicos** (30% da lista): Lugares extremamente famosos, marcos da cidade
+2. **Tier 2 - Populares** (40% da lista): Estabelecimentos bastante conhecidos e frequentados
+3. **Tier 3 - Conhecidos** (30% da lista): Lugares legítimos e estabelecidos, mesmo que menos famosos
+
+✅ REGRAS OBRIGATÓRIAS:
+1. **NUNCA retorne arrays vazios** - se não souber 30 bares icônicos, inclua os conhecidos
+2. **Use nomes oficiais completos** - ex: "Boteco da Esquina", não "Esquina"
+3. **Apenas lugares REAIS** - que existem ou existiram recentemente em {city_name}
+4. **Sem lugares fechados** - não inclua estabelecimentos permanentemente fechados
+5. **Diversifique geograficamente** - cubra diferentes bairros quando possível
+6. **Para cidades pequenas** - inclua estabelecimentos menores mas legítimos
+
+📝 EXEMPLOS DE BOA RESPOSTA:
+bar: ["Bar do Alemão", "Boteco São Jorge", "Bar e Mercearia Dona Rosa", ...]
+cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
+
+❌ EXEMPLOS DE RESPOSTA RUIM:
+bar: []  ← NUNCA FAÇA ISSO
+bar: ["Bar 1", "Bar 2"]  ← Nomes genéricos não aceitáveis
+
+🔄 SE VOCÊ NÃO CONHECER LUGARES SUFICIENTES:
+- Preencha com estabelecimentos menores mas reais da cidade
+- Para cidades pequenas, liste TODOS os estabelecimentos legítimos da categoria
+- Prefira incluir um local menos famoso (mas real) do que deixar vazio
+
+RETORNE APENAS JSON VÁLIDO no formato:
+{{
+  "bar": ["Nome Real 1", "Nome Real 2", ...],
+  "nightclub": [...],
+  "restaurant": [...],
+  "club": [...],
+  "stadium": [...],
+  "park": [...],
+  "cafe": [...],
+  "university": [...]
+}}"""
 
         response = client.chat.completions.create(
-            model="gpt-5.2",
+            model="gpt-4o",  # Changed from gpt-5.2 (doesn't exist) to gpt-4o
             messages=[
-                {"role": "system", "content": "You are an expert local guide who ONLY provides real, verified venue names. Never invent or use generic names."},
+                {"role": "system", "content": f"You are a comprehensive local expert for {city_name}. You MUST provide AT LEAST the minimum number of real venues for each category. NEVER return empty arrays. If you don't know enough famous places, include legitimate smaller establishments. Real places only - no generic or invented names."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={"type": "json_object"},
-            temperature=0.2
+            response_format={{"type": "json_object"}},
+            temperature=0.3  # Slightly higher for more creativity in smaller cities
         )
         
         result = json.loads(response.choices[0].message.content)
