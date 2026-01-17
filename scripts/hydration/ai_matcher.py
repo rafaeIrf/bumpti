@@ -38,9 +38,9 @@ def generate_hotlist(city_name, state=None, country_code=None):
 TASK: List REAL and VERIFIABLE venues in {location}, prioritizing from most famous to moderately well-known.
 
 📊 TARGET QUANTITIES (aim high, prioritize quality):
-- bar: 25-40 REAL venues
+- bar: 25-30 REAL venues
 - nightclub: 20-30 REAL venues  
-- restaurant: 25-40 REAL venues
+- restaurant: 25-30 REAL venues
 - club: 12-20 REAL venues
 - stadium: 12-20 REAL venues
 - park: 12-20 REAL venues
