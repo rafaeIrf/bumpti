@@ -33,52 +33,52 @@ def generate_hotlist(city_name, state=None, country_code=None):
     try:
         client = OpenAI(api_key=api_key)
         
-        prompt = f"""Você é um especialista local em {location} com conhecimento profundo sobre estabelecimentos reais da cidade.
+        prompt = f"""You are a local expert in {location} with deep knowledge of real establishments in the city.
 
-TAREFA: Listar locais REAIS e VERIFICÁVEIS de {location}, priorizando dos mais famosos aos moderadamente conhecidos.
+TASK: List REAL and VERIFIABLE venues in {location}, prioritizing from most famous to moderately well-known.
 
-📊 ALVOS POR CATEGORIA (qualidade sobre quantidade):
-- bar: até 30 locais REAIS
-- nightclub: até 20 locais REAIS
-- restaurant: até 30 locais REAIS
-- club: até 15 locais REAIS
-- stadium: até 15 locais REAIS
-- park: até 15 locais REAIS
-- cafe: até 15 locais REAIS
-- university: até 15 locais REAIS
+📊 TARGETS PER CATEGORY (quality over quantity):
+- bar: up to 30 REAL venues
+- nightclub: up to 20 REAL venues
+- restaurant: up to 30 REAL venues
+- club: up to 15 REAL venues
+- stadium: up to 15 REAL venues
+- park: up to 15 REAL venues
+- cafe: up to 15 REAL venues
+- university: up to 15 REAL venues
 
-🎯 ESTRATÉGIA DE SELEÇÃO (ordem de prioridade):
-1. **Tier 1 - Icônicos** (30% da lista): Lugares extremamente famosos, marcos da cidade
-2. **Tier 2 - Populares** (40% da lista): Estabelecimentos bastante conhecidos e frequentados
-3. **Tier 3 - Conhecidos** (30% da lista): Lugares legítimos e estabelecidos, mesmo que menos famosos
+🎯 SELECTION STRATEGY (priority order):
+1. **Tier 1 - Iconic** (30% of list): Extremely famous places, city landmarks
+2. **Tier 2 - Popular** (40% of list): Well-known and frequently visited establishments
+3. **Tier 3 - Known** (30% of list): Legitimate and established places, even if less famous
 
-✅ REGRAS OBRIGATÓRIAS:
-1. **NUNCA retorne arrays vazios** - se não souber 30 bares icônicos, inclua os conhecidos
-2. **Use nomes oficiais completos** - ex: "Boteco da Esquina", não "Esquina"
-3. **Apenas lugares REAIS** - que existem em {location}
-4. **Sem lugares fechados** - não inclua estabelecimentos permanentemente fechados
-5. **Diversifique geograficamente** - cubra diferentes bairros quando possível
-6. **Para cidades pequenas** - inclua estabelecimentos menores mas legítimos
+✅ MANDATORY RULES:
+1. **ONLY return venues you are CERTAIN exist**
+2. **Use complete official names** - e.g., "Bar do Alemão", not "Alemão"
+3. **No permanently closed venues**
+4. **Diversify geographically** when possible
+5. **For small cities** - include smaller but legitimate establishments
 
-📝 EXEMPLOS DE BOA RESPOSTA:
-bar: ["Bar do Alemão", "Boteco São Jorge", "Bar e Mercearia Dona Rosa", ...]
+📝 GOOD RESPONSE EXAMPLES:
+bar: ["Bar do Alemão", "Boteco São Jorge", "Mercearía Dona Rosa", ...]
 cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
 
-❌ EXEMPLOS DE RESPOSTA RUIM (NUNCA FAÇA):
-bar: []  ← Arrays vazios
-bar: ["Bar 1", "Bar 2"]  ← Nomes genéricos
-bar: ["Club 100", "Club 101", "Club 102"]  ← Sequências numéricas inventadas
-nightclub: ["Vibe Club", "Paradise Club"]  ← Nomes genéricos inglês
-bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Variações inventadas
+❌ BAD RESPONSE EXAMPLES (NEVER DO THIS):
+bar: []  ← Empty arrays
+bar: ["Bar 1", "Bar 2"]  ← Generic names
+bar: ["Club 100", "Club 101", "Club 102"]  ← Invented sequential numbers
+nightclub: ["Vibe Club", "Paradise Club"]  ← Generic English names
+bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations
 
-🔄 SE VOCÊ NÃO CONHECER LUGARES SUFICIENTES:
-- Preencha com estabelecimentos menores mas reais da cidade
-- Para cidades pequenas, liste TODOS os estabelecimentos legítimos da categoria
-- Prefira incluir um local menos famoso (mas real) do que deixar vazio
+🔄 IF YOU DON'T KNOW ENOUGH VENUES:
+- Include smaller but REAL establishments from the city
+- For small cities, list ALL legitimate establishments in the category
+- Better to return fewer real venues than invent fake ones
+- It's OK to have some categories with fewer items
 
-RETORNE APENAS JSON VÁLIDO no formato:
+RETURN ONLY VALID JSON in this format:
 {{
-  "bar": ["Nome Real 1", "Nome Real 2", ...],
+  "bar": ["Real Specific Name 1", "Real Specific Name 2", ...],
   "nightclub": [...],
   "restaurant": [...],
   "club": [...],
