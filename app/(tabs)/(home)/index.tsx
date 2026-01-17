@@ -8,7 +8,7 @@ import {
   SearchIcon,
   SlidersHorizontalIcon,
   StarIcon,
-  UtensilsCrossedIcon
+  UtensilsCrossedIcon,
 } from "@/assets/icons";
 import {
   Cocoa,
@@ -81,8 +81,12 @@ export default function HomeScreen() {
     if (!locationHandled) {
       showLocationSheet();
     } else if (!notificationHandled) {
-      // Once location is handled, show notification sheet if not yet handled
-      showNotificationSheet();
+      // Once location is handled, show notification sheet with a delay
+      // to ensure the location sheet animation has completed
+      const timer = setTimeout(() => {
+        showNotificationSheet();
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [
     locationHandled,
@@ -269,23 +273,23 @@ export default function HomeScreen() {
         ...(category.id === "favorites"
           ? { favorites: "true" }
           : category.id === "nearby"
-          ? {
-              nearby: "true",
-              categoryName: category.title,
-            }
-          : category.id === "community_favorites"
-          ? {
-              communityFavorites: "true",
-              categoryName: category.title,
-            }
-          : category.id === "highlighted"
-          ? {
-              trending: "true",
-              categoryName: category.title,
-            }
-          : {
-              category: category.category,
-            }),
+            ? {
+                nearby: "true",
+                categoryName: category.title,
+              }
+            : category.id === "community_favorites"
+              ? {
+                  communityFavorites: "true",
+                  categoryName: category.title,
+                }
+              : category.id === "highlighted"
+                ? {
+                    trending: "true",
+                    categoryName: category.title,
+                  }
+                : {
+                    category: category.category,
+                  }),
         isPremium: "false", // TODO: Get from user premium status
       },
     });
@@ -308,12 +312,12 @@ export default function HomeScreen() {
     <BaseTemplateScreen
       TopHeader={
         <ScreenToolbar
-        leftAction={{
-          icon: SlidersHorizontalIcon,
-          onClick: () => router.push("main/filters" as any),
-          ariaLabel: t("screens.home.toolbar.filters"),
-          color: colors.icon,
-        }}
+          leftAction={{
+            icon: SlidersHorizontalIcon,
+            onClick: () => router.push("main/filters" as any),
+            ariaLabel: t("screens.home.toolbar.filters"),
+            color: colors.icon,
+          }}
           customTitleView={<BumptiWideLogo height={28} width={100} />}
           titleIconColor={colors.accent}
           rightActions={[
