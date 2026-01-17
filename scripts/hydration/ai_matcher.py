@@ -55,7 +55,7 @@ TAREFA: Listar locais REAIS e VERIFICÁVEIS de {location}, priorizando dos mais 
 ✅ REGRAS OBRIGATÓRIAS:
 1. **NUNCA retorne arrays vazios** - se não souber 30 bares icônicos, inclua os conhecidos
 2. **Use nomes oficiais completos** - ex: "Boteco da Esquina", não "Esquina"
-3. **Apenas lugares REAIS** - que existem ou existiram recentemente em {location}
+3. **Apenas lugares REAIS** - que existem em {location}
 4. **Sem lugares fechados** - não inclua estabelecimentos permanentemente fechados
 5. **Diversifique geograficamente** - cubra diferentes bairros quando possível
 6. **Para cidades pequenas** - inclua estabelecimentos menores mas legítimos
