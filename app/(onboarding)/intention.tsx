@@ -33,11 +33,6 @@ const intentionIconMap: Record<
   friendship: UsersIcon,
 };
 
-function getIntentionLabel(key: IntentionOptionKey) {
-  const option = INTENTION_OPTIONS.find((opt) => opt.id === key);
-  return option ? t(option.labelKey) : key;
-}
-
 export default function IntentionScreen() {
   const colors = useThemeColors();
   // const { userData, completeCurrentStep } = useOnboardingFlow(); // Keeping this line from context but not replacing it if it's outside range

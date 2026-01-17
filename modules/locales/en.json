@@ -648,9 +648,12 @@
       "updatePlan": "Update plan"
     },
     "onboarding": {
+      "heroTitle1": "Meet real people,",
+      "heroTitle2": "in real places",
+      "heroSubtitle": "Discover and connect with people who frequent the same places as you. Make friends, chat and expand your social network",
       "title": "Meet real people,\nin real places",
       "subtitle": "Discover and connect with people who frequent the same places as you. Make friends, chat and expand your social network",
-      "phoneAuth": "Use phone number",
+      "phoneAuth": "Sign in with phone",
       "appleAuth": "Continue with Apple ID",
       "termsPrefix": "By continuing, you agree to our",
       "terms": "Terms of Use",

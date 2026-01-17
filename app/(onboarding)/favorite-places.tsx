@@ -5,6 +5,7 @@ import {
 } from "@/components/favorite-places-manager";
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
+import { spacing } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -43,6 +44,9 @@ export default function FavoritePlacesScreen() {
   return (
     <BaseTemplateScreen
       hasStackHeader
+      contentContainerStyle={{
+        paddingBottom: spacing.xxl * 4,
+      }}
       BottomBar={
         <ScreenBottomBar
           primaryLabel={t("common.continue")}

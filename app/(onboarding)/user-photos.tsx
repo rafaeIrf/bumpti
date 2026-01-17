@@ -27,6 +27,9 @@ export default function UserPhotosScreen() {
   return (
     <BaseTemplateScreen
       hasStackHeader
+      contentContainerStyle={{
+        paddingBottom: spacing.xxl * 3,
+      }}
       BottomBar={
         <ScreenBottomBar
           primaryLabel={t("screens.onboarding.continue")}

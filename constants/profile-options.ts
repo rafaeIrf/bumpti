@@ -89,10 +89,10 @@ export const RELATIONSHIP_OPTIONS = [
 ];
 
 export const INTENTION_OPTIONS = [
+  { id: "friendship", labelKey: "screens.onboarding.intentionFriends" },
   { id: "relationship", labelKey: "screens.onboarding.intentionDating" },
   { id: "casual", labelKey: "screens.onboarding.intentionCasual" },
   { id: "networking", labelKey: "screens.onboarding.intentionNetworking" },
-  { id: "friendship", labelKey: "screens.onboarding.intentionFriends" },
 ];
 
 export const CONNECT_WITH_OPTIONS = [

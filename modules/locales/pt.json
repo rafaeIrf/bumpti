@@ -649,9 +649,12 @@
       "updatePlan": "Atualizar plano"
     },
     "onboarding": {
+      "heroTitle1": "Conheça pessoas reais,",
+      "heroTitle2": "em lugares reais",
+      "heroSubtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",
       "title": "Conheça pessoas reais,\nem lugares reais",
       "subtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",
-      "phoneAuth": "Usar número de celular",
+      "phoneAuth": "Entrar com celular",
       "appleAuth": "Continuar com Apple ID",
       "termsPrefix": "Ao continuar, você concorda com nossos",
       "terms": "Termos de Uso",

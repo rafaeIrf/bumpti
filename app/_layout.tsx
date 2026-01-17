@@ -19,6 +19,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
+import { prefetchImage } from "@/utils/image-prefetch";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -29,6 +30,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import RNBootSplash from "react-native-bootsplash";
+import { WELCOME_BG_IMAGE } from "./(auth)/welcome";
 
 export const unstable_settings = {
   initialRouteName: "index",
@@ -61,6 +63,9 @@ export default function RootLayout() {
   // Following best practices from react-native-bootsplash documentation
   useEffect(() => {
     if (fontsLoaded && !splashReady) {
+      // Prefetch welcome screen background image
+      prefetchImage(WELCOME_BG_IMAGE);
+
       // Wait for multiple frames to ensure Stack is fully mounted and rendered
       // This is especially important in release builds where rendering can be slower
       requestAnimationFrame(() => {
@@ -154,7 +159,10 @@ export default function RootLayout() {
         </ThemeProvider>
         {showAnimatedSplash && (
           <View style={styles.splashOverlay} pointerEvents="none">
-            <AnimatedBootSplash ready={splashReady} onAnimationEnd={handleAnimationEnd} />
+            <AnimatedBootSplash
+              ready={splashReady}
+              onAnimationEnd={handleAnimationEnd}
+            />
           </View>
         )}
       </I18nProvider>
