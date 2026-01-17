@@ -122,7 +122,7 @@ OUTPUT FORMAT (STRICT)
 Return ONLY valid JSON.
 No comments. No explanations. No markdown.
 
-{
+{{
   "bar": [],
   "nightclub": [],
   "restaurant": [],
@@ -131,7 +131,7 @@ No comments. No explanations. No markdown.
   "park": [],
   "cafe": [],
   "university": []
-}
+}}
 
 Empty arrays are ALLOWED and PREFERRED over incorrect data.
 """
