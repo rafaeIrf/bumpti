@@ -69,13 +69,12 @@ cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
 
 ❌ BAD RESPONSE EXAMPLES (NEVER DO THIS):
 bar: []  ← Empty arrays
-bar: ["Bar 1", "Bar 2"]  ← Generic names
-bar: ["Club 100", "Club 101", "Club 102"]  ← Invented sequential numbers
-nightclub: ["Vibe Club", "Club Vibe", "Paradise Club"]  ← CRITICAL: Generic English names are FAKE
-nightclub: ["Verdant Club", "Danghai Club"]  ← CRITICAL: Generic/invented club names
-bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations
+bar: ["Bar 1", "Bar 2"]  ← Generic numbered names
+bar: ["Club 100", "Club 101", "Club 102"]  ← Sequential number patterns
+nightclub: ["The Club", "Night Club 1"]  ← Generic/numbered patterns
+bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations of same place
 
-⚠️ CRITICAL FOR NIGHTCLUBS: If you don't know real nightclub names, return FEWER items. Don't invent "Vibe", "Paradise", "Verdant" type names.
+⚠️ FOCUS ON PATTERNS: Avoid sequential numbers, generic "Club X" patterns, and invented variations.
 
 🔄 IF YOU DON'T KNOW ENOUGH VENUES:
 - Include smaller but REAL establishments from the city
