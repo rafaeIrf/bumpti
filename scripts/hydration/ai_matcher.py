@@ -37,15 +37,19 @@ def generate_hotlist(city_name, state=None, country_code=None):
 
 TASK: List REAL and VERIFIABLE venues in {location}, prioritizing from most famous to moderately well-known.
 
-📊 TARGETS PER CATEGORY (quality over quantity):
-- bar: up to 30 REAL venues
-- nightclub: up to 20 REAL venues
-- restaurant: up to 30 REAL venues
-- club: up to 15 REAL venues
-- stadium: up to 15 REAL venues
-- park: up to 15 REAL venues
-- cafe: up to 15 REAL venues
-- university: up to 15 REAL venues
+📊 TARGET QUANTITIES (prioritize quality, but aim for volume):
+- bar: 20-30 REAL venues
+- nightclub: 15-20 REAL venues  
+- restaurant: 20-30 REAL venues
+- club: 10-15 REAL venues
+- stadium: 10-15 REAL venues
+- park: 10-15 REAL venues
+- cafe: 10-15 REAL venues
+- university: 10-15 REAL venues
+
+MINIMUM VIABLE (if you know the city well):
+- At least 15 bars, 10 nightclubs, 15 restaurants
+- At least 8 for other categories
 
 🎯 SELECTION STRATEGY (priority order):
 1. **Tier 1 - Iconic** (30% of list): Extremely famous places, city landmarks
@@ -67,8 +71,11 @@ cafe: ["Café do Ponto", "Padaria Bella Vista", "Cafeteria Central", ...]
 bar: []  ← Empty arrays
 bar: ["Bar 1", "Bar 2"]  ← Generic names
 bar: ["Club 100", "Club 101", "Club 102"]  ← Invented sequential numbers
-nightclub: ["Vibe Club", "Paradise Club"]  ← Generic English names
+nightclub: ["Vibe Club", "Club Vibe", "Paradise Club"]  ← CRITICAL: Generic English names are FAKE
+nightclub: ["Verdant Club", "Danghai Club"]  ← CRITICAL: Generic/invented club names
 bar: ["Bar do Zito", "Bar do Zito II", "Bar do Zito III"]  ← Invented variations
+
+⚠️ CRITICAL FOR NIGHTCLUBS: If you don't know real nightclub names, return FEWER items. Don't invent "Vibe", "Paradise", "Verdant" type names.
 
 🔄 IF YOU DON'T KNOW ENOUGH VENUES:
 - Include smaller but REAL establishments from the city
@@ -91,11 +98,11 @@ RETURN ONLY VALID JSON in this format:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": f"You are a strict quality-focused local expert for {location}. CRITICAL: Only return venues you are CERTAIN exist. It's better to return 5 real places than 30 fake ones. NEVER invent sequential names (Club 100, 101...) or generic variations (Bar X, Bar X II...). If uncertain, return FEWER venues."},
+                {"role": "system", "content": f"You are a knowledgeable local expert for {location}. Return as many REAL venues as you know - aim for target quantities but NEVER invent names. CRITICAL: Generic English names like 'Vibe Club', 'Paradise Club' are FAKE - don't use them. If uncertain about a name, skip it."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.1  # Very low - prioritize factual recall, not creativity
+            temperature=0.2  # Low but not too conservative
         )
         
         result = json.loads(response.choices[0].message.content)
