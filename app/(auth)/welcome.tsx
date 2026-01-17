@@ -94,20 +94,20 @@ export default function WelcomeScreen() {
             <ThemedText style={styles.heroSubtitle}>
               {t("screens.onboarding.heroSubtitle")}
             </ThemedText>
-            <View style={[styles.glassCard, { borderColor: colors.border }]}>
-              <Button
-                onPress={handlePhoneAuth}
-                size="lg"
-                fullWidth
-                style={styles.primaryButton}
-                textStyle={styles.primaryButtonText}
-                leftIcon={
-                  <SmartphoneIcon width={20} height={20} color="#FFFFFF" />
-                }
-              >
-                {t("screens.onboarding.phoneAuth")}
-              </Button>
-            </View>
+            {/* <View style={[styles.glassCard, { borderColor: colors.border }]}> */}
+            <Button
+              onPress={handlePhoneAuth}
+              size="lg"
+              fullWidth
+              style={styles.primaryButton}
+              textStyle={styles.primaryButtonText}
+              leftIcon={
+                <SmartphoneIcon width={20} height={20} color="#FFFFFF" />
+              }
+            >
+              {t("screens.onboarding.phoneAuth")}
+            </Button>
+            {/* </View> */}
 
             {/* Terms and Privacy */}
             <Animated.View
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
   heroContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: spacing.xl,
   },
   heroTitle: {
     ...typography.heading1,
