@@ -71,6 +71,7 @@ export default function RatePlaceScreen() {
     <BaseTemplateScreen
       isModal
       statusBarStyle="light"
+      contentContainerStyle={{ paddingBottom: spacing.xxl * 3 }}
       containerStyle={{ backgroundColor: "#000000" }} // Pure black background per "Dark Social" spec
       TopHeader={
         <View style={[styles.header, { paddingTop: spacing.sm }]}>

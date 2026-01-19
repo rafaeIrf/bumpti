@@ -1,5 +1,6 @@
-import { ArrowRightIcon, HeartIcon, StarIcon, UsersIcon } from "@/assets/icons";
+import { HeartIcon, UsersIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
+import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -19,6 +20,7 @@ interface PlaceCardData {
   distance: number;
   activeUsers: number;
   tag?: string;
+  rank?: number; // Ranking position (1-based)
   review?: {
     average: number;
     count: number;
@@ -29,17 +31,26 @@ interface PlaceCardData {
 interface PlaceCardProps {
   place: PlaceCardData;
   onPress: () => void;
-  onInfoPress?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Medal colors for top 3
+const MEDAL_COLORS = {
+  1: "#FFD700", // Gold
+  2: "#C0C0C0", // Silver
+  3: "#CD7F32", // Bronze
+};
+
+const getRankBadgeColor = (rank: number): string => {
+  return MEDAL_COLORS[rank as keyof typeof MEDAL_COLORS] || "#6B7280"; // Gray for 4+
+};
+
 export function PlaceCard({
   place,
   onPress,
-  onInfoPress,
   isFavorite,
   onToggleFavorite,
 }: PlaceCardProps) {
@@ -65,6 +76,9 @@ export function PlaceCard({
     overlay.value = withSpring(0);
   };
 
+  const hasActiveUsers = place.activeUsers > 0;
+  const hasReview = place.review && place.review.average > 0;
+
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -76,41 +90,41 @@ export function PlaceCard({
         pointerEvents="none"
         style={[styles.hoverOverlay, overlayStyle]}
       />
-      <View style={styles.topSection}>
-        {/* Line 1: Name + Favorite + Arrow */}
+
+      {/* Rank Badge - Top Left Corner */}
+      {place.rank && place.rank <= 3 && (
+        <View
+          style={[
+            styles.rankBadge,
+            { backgroundColor: getRankBadgeColor(place.rank) },
+          ]}
+        >
+          <ThemedText style={styles.rankText}>#{place.rank}</ThemedText>
+        </View>
+      )}
+
+      <View
+        style={[
+          styles.content,
+          place.rank && place.rank <= 3 ? styles.contentWithRank : undefined,
+        ]}
+      >
+        {/* Header: Name + Favorite */}
         <View style={styles.headerRow}>
-          <View style={styles.nameAndFavorite}>
-            <ThemedText style={styles.placeTitle} numberOfLines={1}>
-              {place.name}
-            </ThemedText>
-            <Pressable onPress={() => onToggleFavorite?.()}>
-              <HeartIcon
-                width={16}
-                height={16}
-                color={isFavorite ? colors.accent : colors.textSecondary}
-                fill={isFavorite ? colors.accent : "none"}
-              />
-            </Pressable>
-          </View>
-          <ArrowRightIcon width={18} height={18} color={colors.text} />
-        </View>
-
-        {/* Line 2: Pessoas no local */}
-        <View style={styles.metaRow}>
-          <UsersIcon width={14} height={14} color={colors.textSecondary} />
-          <ThemedText style={styles.metaText}>
-            {t(
-              place.activeUsers === 0
-                ? "place.noConnections"
-                : place.activeUsers === 1
-                ? "place.onePersonConnecting"
-                : "place.manyPeopleConnecting",
-              { count: place.activeUsers }
-            )}
+          <ThemedText style={styles.placeTitle} numberOfLines={2}>
+            {place.name.toUpperCase()}
           </ThemedText>
+          <Pressable onPress={() => onToggleFavorite?.()} hitSlop={12}>
+            <HeartIcon
+              width={20}
+              height={20}
+              color={isFavorite ? colors.accent : colors.textSecondary}
+              fill={isFavorite ? colors.accent : "none"}
+            />
+          </Pressable>
         </View>
 
-        {/* Line 3: Category • Distance • Rating */}
+        {/* Meta: Category • Distance */}
         <View style={styles.metaRow}>
           {place.tag && (
             <>
@@ -123,80 +137,85 @@ export function PlaceCard({
           <ThemedText style={styles.metaText}>
             {formatDistance(place.distance)}
           </ThemedText>
-          {place.review && (
-            <>
-              <View style={styles.dot} />
-              <View style={styles.ratingContainer}>
-                <StarIcon
-                  width={12}
-                  height={12}
-                  fill={colors.accent}
-                  color={colors.accent}
-                />
-                <ThemedText style={styles.ratingText}>
-                  {place.review.average.toFixed(1)}
-                </ThemedText>
-              </View>
-            </>
+        </View>
+
+        {/* Footer: Live Status + Rating */}
+        <View style={styles.footerRow}>
+          {/* Live Status */}
+          <View
+            style={[
+              styles.liveContainer,
+              hasActiveUsers && { backgroundColor: "rgba(29, 155, 240, 0.1)" },
+            ]}
+          >
+            <UsersIcon
+              width={12}
+              height={12}
+              color={hasActiveUsers ? colors.accent : colors.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.liveText,
+                hasActiveUsers && { color: colors.accent },
+              ]}
+            >
+              {t(
+                place.activeUsers === 0
+                  ? "place.noConnections"
+                  : place.activeUsers === 1
+                    ? "place.onePersonConnecting"
+                    : "place.manyPeopleConnecting",
+                { count: place.activeUsers }
+              )}
+            </ThemedText>
+          </View>
+
+          {/* Rating */}
+          {hasReview && (
+            <RatingBadge rating={place.review!.average} variant="filled" />
           )}
         </View>
       </View>
-
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-      {/* Footer: Detalhes */}
-      <Pressable
-        style={styles.detailsFooter}
-        onPress={(e) => {
-          e.stopPropagation();
-          onInfoPress?.();
-        }}
-      >
-        <ThemedText style={[styles.detailsText, { color: colors.accent }]}>
-          {t("actions.details")}
-        </ThemedText>
-      </Pressable>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#0F0F0F",
+    borderWidth: 1,
   },
   hoverOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.05)",
     zIndex: 1,
-    borderRadius: 20,
   },
-  topSection: {
+  content: {
     padding: spacing.md,
-    gap: 8,
+    gap: spacing.xs,
+  },
+  contentWithRank: {
+    paddingTop: spacing.xl,
   },
   headerRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.sm,
-  },
-  nameAndFavorite: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: 4, // 4px distance from name
+    marginBottom: 4,
   },
   placeTitle: {
     ...typography.body1,
-    color: "#FFFFFF",
-    flexShrink: 1,
+    flex: 1,
+    letterSpacing: 0.5,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    marginBottom: 8,
   },
   metaText: {
     ...typography.caption,
@@ -204,35 +223,49 @@ const styles = StyleSheet.create({
   },
   tagText: {
     ...typography.caption,
-    color: "#A1A1AA",
+    color: "#E7E9EA",
   },
   dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
+    width: 2,
+    height: 2,
+    borderRadius: 1,
     backgroundColor: "#3F3F46",
     marginHorizontal: 2,
   },
-  ratingContainer: {
+  footerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "space-between",
+    marginTop: 2,
   },
-  ratingText: {
-    ...typography.caption,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  divider: {
-    height: 1,
-    width: "100%",
-  },
-  detailsFooter: {
-    paddingVertical: spacing.md,
+  liveContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.03)",
   },
-  detailsText: {
-    ...typography.captionBold,
+  liveText: {
+    ...typography.caption,
+    fontSize: 11,
+    color: "#A1A1AA",
+    fontWeight: "500",
+  },
+  rankBadge: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    borderBottomRightRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  rankText: {
+    ...typography.caption,
+    fontWeight: "800",
+    color: "#000000",
+    fontSize: 10,
   },
 });

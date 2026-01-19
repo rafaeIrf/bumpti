@@ -154,8 +154,8 @@ export default function HomeScreen() {
     {
       id: "most_frequent",
       icon: UsersIcon,
-      title: t("screens.home.categories.mostFrequent.title"),
-      description: t("screens.home.categories.mostFrequent.description"),
+      title: t("screens.home.categories.ranking.title"),
+      description: t("screens.home.categories.ranking.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelGreen,

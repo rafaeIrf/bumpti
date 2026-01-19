@@ -20,6 +20,7 @@ export type PlacesEmptyMode =
   | "trending"
   | "nearby"
   | "communityFavorites"
+  | "ranking"
   | "search"
   | "default";
 
@@ -42,6 +43,8 @@ export function PlacesEmptyState({ mode, onPress }: PlacesEmptyStateProps) {
         return <CompassIcon {...iconProps} />;
       case "communityFavorites":
         return <StarIcon {...iconProps} fill="none" />;
+      case "ranking":
+        return <FlameIcon {...iconProps} />;
       case "search":
         return <SearchIcon {...iconProps} />;
       case "default":

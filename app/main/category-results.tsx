@@ -5,7 +5,10 @@ import {
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
-import { CategoryFilterList } from "@/components/category-filter-list";
+import {
+  CategoryFilterList,
+  FilterChip,
+} from "@/components/category-filter-list";
 import { LocationPermissionState } from "@/components/location-permission-state";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
@@ -32,6 +35,7 @@ import {
   placesApi,
   useGetNearbyPlacesQuery,
   useGetPlacesByFavoritesQuery,
+  useGetRankedPlacesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
 import {
@@ -104,6 +108,7 @@ export default function CategoryResultsScreen() {
   const trendingMode = params.trending === "true";
   const nearbyMode = params.nearby === "true";
   const communityFavoritesMode = params.communityFavorites === "true";
+  const mostFrequentMode = params.mostFrequent === "true";
   const { handlePlaceClick } = usePlaceClick();
   const insets = useSafeAreaInsets();
   const {
@@ -118,6 +123,9 @@ export default function CategoryResultsScreen() {
   );
   const [sortBy, setSortBy] = useState<SortOption>("relevance");
   const [minRating, setMinRating] = useState<number | null>(null);
+  const [rankingFilter, setRankingFilter] = useState<"month" | "general">(
+    "month"
+  );
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [lastAvailableCategories, setLastAvailableCategories] = useState<
@@ -157,9 +165,14 @@ export default function CategoryResultsScreen() {
     !favoritesMode &&
     !trendingMode &&
     !communityFavoritesMode &&
+    !mostFrequentMode &&
     !!userLocation &&
     !!userLocation.city &&
     targetCategory.length > 0;
+
+  // Fetch for mostFrequent mode with ranking
+  const shouldFetchMostFrequent =
+    mostFrequentMode && !!userLocation && !!userLocation.city;
 
   const isPaginatedMode = shouldFetchNearby;
   const effectiveSortBy = getEffectiveSortBy(nearbyMode, sortBy);
@@ -243,6 +256,22 @@ export default function CategoryResultsScreen() {
         skip: !shouldFetchCommunityFavorites,
       }
     );
+
+  // Fetch for mostFrequent mode with ranking using dedicated RPC
+  const rankByOption = rankingFilter === "month" ? "monthly" : "total";
+  const rankedQueryArgs = useMemo(
+    () => ({
+      latitude: userLocation?.latitude ?? 0,
+      longitude: userLocation?.longitude ?? 0,
+      rankBy: rankByOption as "monthly" | "total",
+    }),
+    [userLocation?.latitude, userLocation?.longitude, rankByOption]
+  );
+
+  const { data: mostFrequentData, isFetching: mostFrequentFetching } =
+    useGetRankedPlacesQuery(rankedQueryArgs, {
+      skip: !shouldFetchMostFrequent,
+    });
 
   const paginatedPlaces = useMemo<Place[]>(
     () => nearbyPlacesData ?? [],
@@ -330,14 +359,19 @@ export default function CategoryResultsScreen() {
     if (communityFavoritesMode) {
       return communityFavoritesData || [];
     }
+    if (mostFrequentMode) {
+      return mostFrequentData || [];
+    }
     return paginatedPlaces;
   }, [
     trendingMode,
     favoritesMode,
     communityFavoritesMode,
+    mostFrequentMode,
     trendingData,
     favoritePlacesData,
     communityFavoritesData,
+    mostFrequentData,
     paginatedPlaces,
   ]);
 
@@ -383,7 +417,8 @@ export default function CategoryResultsScreen() {
       ? availableCategories
       : lastAvailableCategories;
 
-  const shouldShowFilters = nearbyMode;
+  const shouldShowFilters =
+    nearbyMode || favoritesMode || trendingMode || communityFavoritesMode;
 
   const handleApplyFilters = useCallback(
     (nextSortBy: SortOption, nextMinRating: number | null) => {
@@ -441,8 +476,15 @@ export default function CategoryResultsScreen() {
     if (trendingMode) return "trending";
     if (nearbyMode) return "nearby";
     if (communityFavoritesMode) return "communityFavorites";
+    if (mostFrequentMode) return "ranking";
     return "default";
-  }, [favoritesMode, trendingMode, nearbyMode, communityFavoritesMode]);
+  }, [
+    favoritesMode,
+    trendingMode,
+    nearbyMode,
+    communityFavoritesMode,
+    mostFrequentMode,
+  ]);
 
   const renderPlaceItem = useCallback(
     ({ item, index }: { item: Place; index: number }) => {
@@ -453,6 +495,7 @@ export default function CategoryResultsScreen() {
         distance: item.distance,
         activeUsers: (item as any).active_users || 0,
         tag: item.types?.[0] || undefined,
+        rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
       };
 
@@ -464,8 +507,7 @@ export default function CategoryResultsScreen() {
         >
           <PlaceCard
             place={placeData}
-            onPress={() => handlePlaceClick(item)}
-            onInfoPress={() => showPlaceDetails(item)}
+            onPress={() => showPlaceDetails(item)}
             isFavorite={favoriteIds.has(item.placeId)}
             onToggleFavorite={() =>
               handleToggle(item.placeId, {
@@ -477,7 +519,13 @@ export default function CategoryResultsScreen() {
         </Animated.View>
       );
     },
-    [handlePlaceClick, showPlaceDetails, favoriteIds, handleToggle]
+    [
+      handlePlaceClick,
+      showPlaceDetails,
+      favoriteIds,
+      handleToggle,
+      mostFrequentMode,
+    ]
   );
 
   const searchFooterComponent = useMemo(
@@ -520,6 +568,8 @@ export default function CategoryResultsScreen() {
     loadingState = favoritePlacesLoading;
   } else if (communityFavoritesMode) {
     loadingState = locationLoading || communityFavoritesLoading;
+  } else if (mostFrequentMode) {
+    loadingState = locationLoading || mostFrequentFetching;
   } else {
     loadingState = locationLoading || isPaginatedInitialLoading;
   }
@@ -539,7 +589,10 @@ export default function CategoryResultsScreen() {
             }}
             title={categoryName || ""}
             rightActions={
-              !favoritesMode && !trendingMode && !communityFavoritesMode
+              !favoritesMode &&
+              !trendingMode &&
+              !communityFavoritesMode &&
+              !mostFrequentMode
                 ? [
                     ...(nearbyMode
                       ? []
@@ -571,6 +624,25 @@ export default function CategoryResultsScreen() {
             selectedCategory={activeFilter}
             onSelect={setActiveFilter}
           />
+        )}
+        {/* Ranking filter pills for mostFrequent mode */}
+        {mostFrequentMode && (
+          <ThemedView style={styles.rankingPillsContainer}>
+            <FilterChip
+              label={t("screens.home.categories.ranking.filterMonth")}
+              isSelected={rankingFilter === "month"}
+              onPress={() => setRankingFilter("month")}
+              colors={colors}
+              style={styles.rankingPill}
+            />
+            <FilterChip
+              label={t("screens.home.categories.ranking.filterGeneral")}
+              isSelected={rankingFilter === "general"}
+              onPress={() => setRankingFilter("general")}
+              colors={colors}
+              style={styles.rankingPill}
+            />
+          </ThemedView>
         )}
         {(() => {
           if (!hasLocationPermission) {
@@ -652,5 +724,13 @@ const styles = StyleSheet.create({
   footerCopy: {
     textAlign: "center",
     ...typography.caption,
+  },
+  rankingPillsContainer: {
+    flexDirection: "row",
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  rankingPill: {
+    flex: 1,
   },
 });

@@ -2,7 +2,7 @@ import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { CityPrediction, Place, PlaceCategory } from "./types";
 
-type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating";
+type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating" | "trending";
 
 export async function searchCities(
   input: string
@@ -90,7 +90,7 @@ export async function getNearbyPlaces(
   }
 
   // Map RPC result to Place type
-  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, dist_meters
+  // RPC returns: id, name, category, lat, lng, street, house_number, city, state, country, total_score, active_users, dist_meters, monthly_checkins, rank_position
   return (data || []).map((p: any) => {
     return {
       placeId: p.id,
@@ -101,7 +101,54 @@ export async function getNearbyPlaces(
       longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
+      total_checkins: p.total_checkins,
+      monthly_checkins: p.monthly_checkins,
+      rank_position: p.rank_position,
       review: p.review
+    };
+  });
+}
+
+export type RankByOption = "monthly" | "total";
+
+// Fetch ranked places (for "Mais Frequentados" screen)
+export async function getRankedPlaces(
+  latitude: number,
+  longitude: number,
+  rankBy: RankByOption = "monthly",
+  maxResults: number = 20
+): Promise<Place[]> {
+  const { data, error } = await supabase.functions.invoke<any[]>("get-ranked-places", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+      rankBy,
+      maxResults,
+    },
+  });
+
+  if (error) {
+    logger.error("Ranked places (edge) error:", error);
+    return [];
+  }
+
+  // Map result to Place type
+  return (data || []).map((p: any) => {
+    return {
+      placeId: p.placeId,
+      name: p.name,
+      formattedAddress: p.formattedAddress,
+      distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
+      latitude: p.lat,
+      longitude: p.lng,
+      types: [p.category],
+      total_checkins: p.totalCheckins,
+      monthly_checkins: p.monthlyCheckins,
+      total_matches: p.totalMatches || 0,
+      monthly_matches: p.monthlyMatches || 0,
+      rank: p.rankPosition,
+      active_users: p.activeUsers || 0,
+      review: p.review,
     };
   });
 }

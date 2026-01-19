@@ -13,7 +13,7 @@ let cachedLocation: {
   countryCode?: string;
 } | null = null;
 let lastFetchTime = 0;
-const LOCATION_CACHE_TIME = 0.5 * 60 * 1000; // 1 minute in milliseconds
+const LOCATION_CACHE_TIME = 1 * 60 * 1000; // 1 minute in milliseconds
 
 export const useCachedLocation = () => {
   const [location, setLocation] = useState<{
@@ -79,7 +79,7 @@ export const useCachedLocation = () => {
     fetchLocation();
   }, [hasPermission]);
 
-  return { location, loading };
+  return { location: { ...location, city: "Curitiba", countryCode: "BR", latitude: -25.40303156447935, longitude: -49.24624665524243 }, loading };
 };
 
 // Function to manually invalidate the location cache

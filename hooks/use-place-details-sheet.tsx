@@ -8,10 +8,92 @@ import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { openMaps } from "@/utils/maps";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 
 interface UsePlaceDetailsSheetOptions {
   queryArg?: { lat?: number; lng?: number };
+}
+
+// Wrapper component defined at module level to avoid Hooks violations
+function PlaceDetailsWrapper({
+  place,
+  category,
+  favoriteIds,
+  onToggleFavorite,
+  onClose,
+  onRate,
+  onConnect,
+}: {
+  place: Place;
+  category: string;
+  favoriteIds: Set<string>;
+  onToggleFavorite: (
+    id: string,
+    opts?: {
+      optimisticOnly?: boolean;
+      sync?: boolean;
+      value?: boolean;
+      place?: Place;
+      details?: { name: string; emoji?: string };
+    }
+  ) => void;
+  onClose: () => void;
+  onRate: () => void;
+  onConnect: (placeData: {
+    placeId: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    distance: number;
+    active_users?: number;
+  }) => Promise<void>;
+}) {
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnect = async () => {
+    logger.log("[PlaceDetails] onConnect triggered", place.placeId);
+    setIsConnecting(true);
+
+    try {
+      await onConnect({
+        placeId: place.placeId,
+        name: place.name,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        distance: place.distance,
+        active_users: place.active_users,
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  return (
+    <PlaceDetailsBottomSheet
+      placeName={place.name}
+      placeId={place.placeId}
+      category={category}
+      address={place.formattedAddress || ""}
+      distance={formatDistance(place.distance)}
+      review={place.review}
+      activeUsers={place.active_users}
+      isFavorite={favoriteIds.has(place.placeId)}
+      onNavigate={() => {
+        openMaps(place.formattedAddress || place.name);
+      }}
+      onToggleFavorite={(id, opts) =>
+        onToggleFavorite(id, {
+          ...opts,
+          place: place,
+          details: { name: place.name, emoji: (place as any).emoji },
+        })
+      }
+      onConnect={handleConnect}
+      isLoading={isConnecting}
+      onClose={onClose}
+      onRate={onRate}
+    />
+  );
 }
 
 /**
@@ -36,36 +118,11 @@ export function usePlaceDetailsSheet(
 
       bottomSheet.expand({
         content: () => (
-          <PlaceDetailsBottomSheet
-            placeName={place.name}
-            placeId={place.placeId}
+          <PlaceDetailsWrapper
+            place={place}
             category={category}
-            address={place.formattedAddress || ""}
-            distance={formatDistance(place.distance)}
-            review={place.review}
-            activeUsers={place.active_users}
-            isFavorite={favoriteIds.has(place.placeId)}
-            onNavigate={() => {
-              openMaps(place.formattedAddress || place.name);
-            }}
-            onToggleFavorite={(id, opts) =>
-              handleToggle(id, {
-                ...opts,
-                place: place,
-                details: { name: place.name, emoji: (place as any).emoji },
-              })
-            }
-            onConnect={() => {
-              logger.log("[PlaceDetails] onConnect triggered", place.placeId);
-              handlePlaceClick({
-                placeId: place.placeId,
-                name: place.name,
-                latitude: place.latitude,
-                longitude: place.longitude,
-                distance: place.distance,
-                active_users: place.active_users,
-              });
-            }}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={handleToggle}
             onClose={() => bottomSheet.close()}
             onRate={() => {
               bottomSheet.close();
@@ -78,6 +135,7 @@ export function usePlaceDetailsSheet(
                 },
               });
             }}
+            onConnect={handlePlaceClick}
           />
         ),
         draggable: true,

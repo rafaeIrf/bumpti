@@ -199,6 +199,7 @@ export function usePlaceClick() {
         logger.log(
           "[PlaceClick] Entry successful (existing presence or close), navigating"
         );
+        bottomSheet?.close();
         navigateToPlacePeople(params.placeId, params.name, params.distance);
         return;
       }
