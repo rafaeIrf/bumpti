@@ -8,6 +8,7 @@ import {
 } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
+import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useOptimisticFavorite } from "@/hooks/use-optimistic-favorite";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -69,9 +70,6 @@ export function PlaceDetailsBottomSheet({
       onToggleFavorite,
     });
 
-  const formattedRating = review?.average
-    ? review.average.toFixed(1)
-    : undefined;
   const ratingCount = review?.count || 0;
 
   const vibeTagsDisplay = useMemo(() => {
@@ -136,19 +134,7 @@ export function PlaceDetailsBottomSheet({
                 <View
                   style={[styles.dot, { backgroundColor: colors.border }]}
                 />
-                <View style={styles.ratingHeaderMini}>
-                  <StarIcon
-                    width={12}
-                    height={12}
-                    color={colors.accent}
-                    fill={colors.accent}
-                  />
-                  <ThemedText
-                    style={[typography.captionBold, { color: colors.text }]}
-                  >
-                    {formattedRating}
-                  </ThemedText>
-                </View>
+                <RatingBadge rating={review.average!} variant="minimal" />
               </>
             )}
           </View>
@@ -357,11 +343,6 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 2,
     marginHorizontal: spacing.sm,
-  },
-  ratingHeaderMini: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
   },
   closeButton: {
     position: "absolute",
