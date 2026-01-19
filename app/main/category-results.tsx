@@ -507,8 +507,7 @@ export default function CategoryResultsScreen() {
         >
           <PlaceCard
             place={placeData}
-            onPress={() => handlePlaceClick(item)}
-            onInfoPress={() => showPlaceDetails(item)}
+            onPress={() => showPlaceDetails(item)}
             isFavorite={favoriteIds.has(item.placeId)}
             onToggleFavorite={() =>
               handleToggle(item.placeId, {

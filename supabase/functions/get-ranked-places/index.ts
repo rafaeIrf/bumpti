@@ -69,6 +69,9 @@ serve(async (req) => {
         addressParts.push(p.street);
       }
 
+      // Destructure to remove raw review fields from top-level response
+      const { review_average, review_count, review_tags, ...placeData } = p;
+
       return {
         placeId: p.id,
         name: p.name,
@@ -83,6 +86,11 @@ serve(async (req) => {
         monthlyCheckins: p.monthly_checkins,
         distance: p.dist_meters,
         rankPosition: p.rank_position,
+        review: p.review_count > 0 ? {
+          average: p.review_average,
+          count: p.review_count,
+          tags: p.review_tags
+        } : undefined,
       };
     });
 

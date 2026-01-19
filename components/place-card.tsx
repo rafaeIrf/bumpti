@@ -30,7 +30,6 @@ interface PlaceCardData {
 interface PlaceCardProps {
   place: PlaceCardData;
   onPress: () => void;
-  onInfoPress?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -51,7 +50,6 @@ const getRankBadgeColor = (rank: number): string => {
 export function PlaceCard({
   place,
   onPress,
-  onInfoPress,
   isFavorite,
   onToggleFavorite,
 }: PlaceCardProps) {
@@ -148,7 +146,7 @@ export function PlaceCard({
           <ThemedText style={styles.metaText}>
             {formatDistance(place.distance)}
           </ThemedText>
-          {place.review && (
+          {place.review && place.review.average > 0 && (
             <>
               <View style={styles.dot} />
               <View style={styles.ratingContainer}>
@@ -166,21 +164,6 @@ export function PlaceCard({
           )}
         </View>
       </View>
-
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-      {/* Footer: Detalhes */}
-      <Pressable
-        style={styles.detailsFooter}
-        onPress={(e) => {
-          e.stopPropagation();
-          onInfoPress?.();
-        }}
-      >
-        <ThemedText style={[styles.detailsText, { color: colors.accent }]}>
-          {t("actions.details")}
-        </ThemedText>
-      </Pressable>
     </AnimatedPressable>
   );
 }
@@ -251,14 +234,6 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     width: "100%",
-  },
-  detailsFooter: {
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  detailsText: {
-    ...typography.captionBold,
   },
   rankBadge: {
     position: "absolute",

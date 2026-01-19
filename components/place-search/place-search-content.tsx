@@ -11,7 +11,6 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
-import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -97,7 +96,6 @@ export function PlaceSearchContent({
     request: requestLocationPermission,
     openSettings,
   } = useLocationPermission();
-  const { handlePlaceClick } = usePlaceClick();
 
   const [searchQuery, setSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -180,16 +178,21 @@ export function PlaceSearchContent({
 
         onPlaceToggle?.(result.placeId, result.name);
       } else {
-        handlePlaceClick({
+        // Show details sheet instead of directly entering
+        showPlaceDetails({
           placeId: result.placeId,
           name: result.name,
+          formattedAddress: result.formattedAddress,
+          distance: result.distance ?? 0,
           latitude: result.lat,
           longitude: result.lng,
-          distance: result.distance ?? 0,
+          types: result.category ? [result.category] : [],
+          active_users: result.active_users,
+          review: result.review as any,
         });
       }
     },
-    [handlePlaceClick, multiSelectMode, onPlaceToggle, localSelectedIds]
+    [showPlaceDetails, multiSelectMode, onPlaceToggle, localSelectedIds]
   );
 
   const clearSearch = useCallback(() => {
@@ -260,19 +263,6 @@ export function PlaceSearchContent({
             review: item.review,
           }}
           onPress={() => handleResultPress(item)}
-          onInfoPress={() =>
-            showPlaceDetails({
-              placeId: item.placeId,
-              name: item.name,
-              formattedAddress: item.formattedAddress,
-              distance: item.distance ?? 0,
-              latitude: item.lat,
-              longitude: item.lng,
-              types: item.category ? [item.category] : [],
-              active_users: item.active_users,
-              review: item.review as any,
-            })
-          }
           isFavorite={favoriteIds.has(item.placeId)}
           onToggleFavorite={() =>
             handleToggle(item.placeId, {

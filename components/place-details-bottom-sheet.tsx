@@ -40,6 +40,7 @@ interface PlaceDetailsBottomSheetProps {
   onClose?: () => void;
   onRate?: () => void;
   onConnect?: () => void;
+  isLoading?: boolean;
 }
 
 export function PlaceDetailsBottomSheet({
@@ -56,6 +57,7 @@ export function PlaceDetailsBottomSheet({
   onClose,
   onRate,
   onConnect,
+  isLoading = false,
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -174,6 +176,8 @@ export function PlaceDetailsBottomSheet({
             fullWidth
             label={t("venue.connection.active.button")}
             onPress={onConnect || (() => {})}
+            loading={isLoading}
+            disabled={isLoading}
           />
 
           <View style={styles.secondaryRow}>

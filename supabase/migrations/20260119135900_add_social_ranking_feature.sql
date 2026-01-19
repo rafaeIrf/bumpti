@@ -91,27 +91,27 @@ SELECT
   p.total_checkins,
   p.monthly_checkins,
   p.original_category,
-  COALESCE(pr.avg_rating, 0) AS review_average,
-  COALESCE(pr.review_count, 0) AS review_count,
-  pr.top_tags AS review_tags
+  COALESCE(reviews.avg_stars, 0)::float as review_average,
+  COALESCE(reviews.total_reviews, 0)::bigint as review_count,
+  COALESCE(reviews.top_tags, ARRAY[]::text[]) as review_tags
 FROM places p
 LEFT JOIN LATERAL (
   SELECT
-    AVG(r.stars)::float AS avg_rating,
-    COUNT(*)::bigint AS review_count,
-    (SELECT array_agg(t.tag)
-     FROM (
-       SELECT unnest(r2.tags) AS tag
-       FROM place_reviews r2
-       WHERE r2.place_id = p.id
-       GROUP BY unnest(r2.tags)
-       ORDER BY COUNT(*) DESC
-       LIMIT 3
-     ) t
-    ) AS top_tags
-  FROM place_reviews r
-  WHERE r.place_id = p.id
-) pr ON true
+    AVG(psr.stars)::float as avg_stars,
+    COUNT(psr.id) as total_reviews,
+    ARRAY(
+      SELECT t.key
+      FROM place_review_tag_relations prtr
+      JOIN place_review_tags t ON t.id = prtr.tag_id
+      JOIN place_social_reviews psr2 ON psr2.id = prtr.review_id
+      WHERE psr2.place_id = p.id
+      GROUP BY t.key
+      ORDER BY COUNT(*) DESC
+      LIMIT 3
+    ) as top_tags
+  FROM place_social_reviews psr
+  WHERE psr.place_id = p.id
+) reviews ON true
 WHERE p.active = true;
 
 -- =============================================================================
@@ -139,6 +139,9 @@ RETURNS TABLE (
   country text,
   total_checkins int,
   monthly_checkins int,
+  review_average float,
+  review_count bigint,
+  review_tags text[],
   dist_meters float,
   rank_position bigint
 )
@@ -161,6 +164,9 @@ BEGIN
       p.country_code as country,
       p.total_checkins,
       p.monthly_checkins,
+      p.review_average,
+      p.review_count,
+      p.review_tags,
       st_distance(
         st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
         st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
@@ -177,7 +183,7 @@ BEGIN
             st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
           ) ASC)
       END as rank_position
-    FROM places p
+    FROM places_view p
     WHERE
       st_dwithin(
         st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
@@ -203,6 +209,9 @@ BEGIN
     r.country,
     r.total_checkins,
     r.monthly_checkins,
+    r.review_average,
+    r.review_count,
+    r.review_tags,
     r.dist_meters,
     r.rank_position
   FROM ranked r

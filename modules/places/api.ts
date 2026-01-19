@@ -145,6 +145,7 @@ export async function getRankedPlaces(
       total_checkins: p.totalCheckins,
       monthly_checkins: p.monthlyCheckins,
       rank: p.rankPosition,
+      review: p.review,
     };
   });
 }
