@@ -43,6 +43,7 @@ export type Place = {
   favorites_count?: number; // Optional: number of favorites for the place
   total_checkins?: number; // Total check-ins all time
   monthly_checkins?: number; // Check-ins this month (resets on 1st)
+  total_matches?: number; // Total matches generated at this place
   rank?: number; // Ranking position (1-based, only for popularity/trending sorts)
   review?: PlaceReview;
 };

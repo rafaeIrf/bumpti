@@ -94,6 +94,7 @@ serve(async (req) => {
         country: p.country,
         totalCheckins: p.total_checkins,
         monthlyCheckins: p.monthly_checkins,
+        totalMatches: p.total_matches || 0,
         distance: p.dist_meters,
         rankPosition: p.rank_position,
         activeUsers: p.active_users || 0,

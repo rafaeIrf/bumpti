@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     const placeIds = topPlaces.map((pc: { place_id: string }) => pc.place_id);
     const { data: placesData, error: placesError } = await serviceSupabase
       .from("places_view")
-      .select("id, name, category, lat, lng, street, city, review_average, review_count, review_tags")
+      .select("id, name, category, lat, lng, street, house_number, city, review_average, review_count, review_tags")
       .in("id", placeIds);
 
     if (placesError) {
