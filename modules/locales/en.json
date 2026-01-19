@@ -584,9 +584,11 @@
           "title": "What's nearby",
           "description": "See activity around you"
         },
-        "mostFrequent": {
-          "title": "Most frequent",
-          "description": "Places people keep coming back to."
+        "ranking": {
+          "title": "+Frequented",
+          "description": "Places people keep coming back to.",
+          "filterMonth": "This month",
+          "filterGeneral": "General"
         }
       }
     },
@@ -808,6 +810,11 @@
           "title": "No places found",
           "description": "We couldn't find anything with that name. Try simplifying or searching by category.",
           "button": "Clear search"
+        },
+        "ranking": {
+          "title": "No popular places yet",
+          "description": "Nobody has checked in to places near you yet. Be the first!",
+          "button": "Explore places"
         }
       },
       "tryAnother": "Try another category 👇",

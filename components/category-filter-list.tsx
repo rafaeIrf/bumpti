@@ -1,10 +1,10 @@
-import { ThemedText } from "@/components/themed-text";
+import Button from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { PlaceCategory } from "@/modules/places/types";
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 interface CategoryFilterListProps {
@@ -53,38 +53,37 @@ export function CategoryFilterList({
   );
 }
 
-function FilterChip({
+export interface FilterChipProps {
+  label: string;
+  isSelected: boolean;
+  onPress: () => void;
+  colors: ReturnType<typeof useThemeColors>;
+  style?: import("react-native").ViewStyle;
+}
+
+export function FilterChip({
   label,
   isSelected,
   onPress,
   colors,
-}: {
-  label: string;
-  isSelected: boolean;
-  onPress: () => void;
-  colors: any;
-}) {
+  style,
+}: FilterChipProps) {
   return (
-    <Pressable
+    <Button
       onPress={onPress}
+      variant={isSelected ? "default" : "outline"}
+      size="sm"
+      label={label}
       style={[
         styles.chip,
-        {
-          backgroundColor: isSelected ? colors.text : colors.surface,
-          borderColor: isSelected ? colors.text : colors.border,
+        !isSelected && {
+          backgroundColor: colors.surfaceHover,
+          borderColor: colors.border,
         },
+        style,
       ]}
-    >
-      <ThemedText
-        variant="caption"
-        style={{
-          color: isSelected ? colors.background : colors.text,
-          fontWeight: isSelected ? "600" : "400",
-        }}
-      >
-        {label}
-      </ThemedText>
-    </Pressable>
+      textStyle={!isSelected ? { color: colors.text } : undefined}
+    />
   );
 }
 
@@ -97,12 +96,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: 999,
-    borderWidth: 1,
-    minHeight: 32,
-    alignItems: "center",
-    justifyContent: "center",
+    minWidth: 60,
   },
 });

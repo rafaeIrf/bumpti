@@ -4,12 +4,14 @@ import {
   getFavoritePlaces as getFavoritePlacesApi,
   getNearbyPlaces as getNearbyPlacesApi,
   getPlacesByFavorites as getPlacesByFavoritesApi,
+  getRankedPlaces as getRankedPlacesApi,
   getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
   getTrendingPlaces as getTrendingPlacesApi,
   type PlacesByCategory,
+  type RankByOption,
   saveSocialReview,
   searchPlacesByText as searchPlacesByTextApi,
-  toggleFavoritePlace as toggleFavoritePlaceApi,
+  toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { setFavoritePlaces } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -33,6 +35,7 @@ const CACHE_TIME = {
   SEARCH_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
   SUGGESTED_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
   DETECTED_PLACE: __DEV__ ? DEV_CACHE_TTL : 60,
+  RANKED_PLACES: __DEV__ ? DEV_CACHE_TTL : 60,
 };
 
 export const placesApi = createApi({
@@ -45,6 +48,7 @@ export const placesApi = createApi({
     "FavoritePlaces",
     "DetectedPlace",
     "SuggestedPlaces",
+    "RankedPlaces",
   ],
   endpoints: (builder) => ({
     getSuggestedPlaces: builder.query<
@@ -107,7 +111,7 @@ export const placesApi = createApi({
         category: string[]; // General category name (bars, cafes, etc.)
         page?: number;
         pageSize?: number;
-        sortBy?: "relevance" | "distance" | "popularity" | "rating";
+        sortBy?: "relevance" | "distance" | "popularity" | "rating" | "trending";
         minRating?: number | null;
       }
     >({
@@ -242,6 +246,24 @@ export const placesApi = createApi({
       },
       providesTags: [{ type: "TrendingPlaces", id: "list" }],
       keepUnusedDataFor: CACHE_TIME.TRENDING_PLACES,
+    }),
+
+    getRankedPlaces: builder.query<
+      Place[],
+      { latitude: number; longitude: number; rankBy: RankByOption }
+    >({
+      queryFn: async ({ latitude, longitude, rankBy }) => {
+        try {
+          const places = await getRankedPlacesApi(latitude, longitude, rankBy);
+          return { data: places };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, { rankBy }) => [
+        { type: "RankedPlaces", id: rankBy },
+      ],
+      keepUnusedDataFor: CACHE_TIME.RANKED_PLACES,
     }),
 
     getFavoritePlaces: builder.query<
@@ -495,6 +517,7 @@ export const {
   useDetectPlaceQuery,
   useGetNearbyPlacesQuery,
   useGetPlacesByFavoritesQuery,
+  useGetRankedPlacesQuery,
   useSearchPlacesByTextQuery,
   useGetTrendingPlacesQuery,
   useGetFavoritePlacesQuery,

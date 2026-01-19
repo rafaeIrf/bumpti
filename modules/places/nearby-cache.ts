@@ -1,6 +1,6 @@
 import { Place } from "@/modules/places/types";
 
-export type NearbySortOption = "relevance" | "distance" | "popularity" | "rating";
+export type NearbySortOption = "relevance" | "distance" | "popularity" | "rating" | "trending";
 
 export type NearbyPlacesQueryArgs = {
   latitude: number;

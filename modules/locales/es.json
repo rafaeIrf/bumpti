@@ -584,9 +584,11 @@
           "title": "Lo que hay cerca",
           "description": "Mira la actividad a tu alrededor"
         },
-        "mostFrequent": {
-          "title": "Más frecuentados",
-          "description": "Lugares a los que la gente siempre vuelve."
+        "ranking": {
+          "title": "+Frecuentados",
+          "description": "Lugares a los que la gente siempre vuelve.",
+          "filterMonth": "Este mes",
+          "filterGeneral": "General"
         }
       }
     },
@@ -807,6 +809,11 @@
           "title": "No se encontraron lugares",
           "description": "No pudimos encontrar nada con ese nombre. Intenta simplificar o buscar por una categoría.",
           "button": "Limpiar búsqueda"
+        },
+        "ranking": {
+          "title": "Aún sin lugares populares",
+          "description": "Nadie ha hecho check-in en lugares cerca de ti todavía. ¡Sé el primero!",
+          "button": "Explorar lugares"
         }
       },
       "tryAnother": "Prueba otra categoría 👇",

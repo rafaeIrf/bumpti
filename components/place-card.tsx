@@ -19,6 +19,7 @@ interface PlaceCardData {
   distance: number;
   activeUsers: number;
   tag?: string;
+  rank?: number; // Ranking position (1-based)
   review?: {
     average: number;
     count: number;
@@ -35,6 +36,17 @@ interface PlaceCardProps {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Medal colors for top 3
+const MEDAL_COLORS = {
+  1: "#FFD700", // Gold
+  2: "#C0C0C0", // Silver
+  3: "#CD7F32", // Bronze
+};
+
+const getRankBadgeColor = (rank: number): string => {
+  return MEDAL_COLORS[rank as keyof typeof MEDAL_COLORS] || "#6B7280"; // Gray for 4+
+};
 
 export function PlaceCard({
   place,
@@ -76,6 +88,19 @@ export function PlaceCard({
         pointerEvents="none"
         style={[styles.hoverOverlay, overlayStyle]}
       />
+
+      {/* Rank Badge - Only show for top 3 */}
+      {place.rank && place.rank <= 3 && (
+        <View
+          style={[
+            styles.rankBadge,
+            { backgroundColor: getRankBadgeColor(place.rank) },
+          ]}
+        >
+          <ThemedText style={styles.rankText}>#{place.rank}</ThemedText>
+        </View>
+      )}
+
       <View style={styles.topSection}>
         {/* Line 1: Name + Favorite + Arrow */}
         <View style={styles.headerRow}>
@@ -103,8 +128,8 @@ export function PlaceCard({
               place.activeUsers === 0
                 ? "place.noConnections"
                 : place.activeUsers === 1
-                ? "place.onePersonConnecting"
-                : "place.manyPeopleConnecting",
+                  ? "place.onePersonConnecting"
+                  : "place.manyPeopleConnecting",
               { count: place.activeUsers }
             )}
           </ThemedText>
@@ -234,5 +259,20 @@ const styles = StyleSheet.create({
   },
   detailsText: {
     ...typography.captionBold,
+  },
+  rankBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    right: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 10,
+    zIndex: 2,
+  },
+  rankText: {
+    ...typography.caption,
+    fontWeight: "700",
+    color: "#000000",
+    fontSize: 11,
   },
 });

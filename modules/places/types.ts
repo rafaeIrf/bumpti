@@ -41,6 +41,9 @@ export type Place = {
   types?: string[]; // Para autocomplete - raw Foursquare category names
   active_users?: number; // Optional: number of active users currently at the place
   favorites_count?: number; // Optional: number of favorites for the place
+  total_checkins?: number; // Total check-ins all time
+  monthly_checkins?: number; // Check-ins this month (resets on 1st)
+  rank?: number; // Ranking position (1-based, only for popularity/trending sorts)
   review?: PlaceReview;
 };
 
