@@ -491,6 +491,15 @@ export const placesApi = createApi({
               );
             }
 
+            // Update getRankedPlaces cache (+Frequentados)
+            if (cacheKey.startsWith("getRankedPlaces(")) {
+              dispatch(
+                placesApi.util.updateQueryData("getRankedPlaces", entry.originalArgs, (draft) => {
+                  updatePlaceReview(draft);
+                })
+              );
+            }
+
             // Update getSuggestedPlaces caches
             if (cacheKey.startsWith("getSuggestedPlaces(")) {
               dispatch(
