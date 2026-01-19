@@ -145,6 +145,7 @@ export async function getRankedPlaces(
       total_checkins: p.totalCheckins,
       monthly_checkins: p.monthlyCheckins,
       total_matches: p.totalMatches || 0,
+      monthly_matches: p.monthlyMatches || 0,
       rank: p.rankPosition,
       active_users: p.activeUsers || 0,
       review: p.review,
