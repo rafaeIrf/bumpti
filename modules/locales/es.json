@@ -29,11 +29,9 @@
   "discover": "Descubrir",
   "place": {
     "reviews": {
-      "count": "Basado en {{count}} experiencias"
+      "count": "{{count}} evaluaciones",
+      "count_singular": "1 evaluación"
     },
-    "new": "Nuevo en Bumpti",
-    "beFirst": "Sé el primero en calificar la vibra",
-    "vibeDiscovery": "La vibra aún se está descubriendo",
     "vibes": {
       "easy_to_connect": "Fácil conectar",
       "hard_to_connect": "Difícil conectar",

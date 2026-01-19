@@ -8,7 +8,6 @@ import {
 } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
-import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useOptimisticFavorite } from "@/hooks/use-optimistic-favorite";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -19,6 +18,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionButton } from "./ui/action-button";
 import { BrandIcon } from "./ui/brand-icon";
+import { RatingBadge } from "./ui/rating-badge";
 
 interface PlaceDetailsBottomSheetProps {
   placeName: string;
@@ -71,6 +71,10 @@ export function PlaceDetailsBottomSheet({
     });
 
   const ratingCount = review?.count || 0;
+
+  const formattedRating = review?.average
+    ? review.average.toFixed(1)
+    : undefined;
 
   const vibeTagsDisplay = useMemo(() => {
     if (!review?.tags || review.tags.length === 0) return [];
@@ -129,12 +133,23 @@ export function PlaceDetailsBottomSheet({
             >
               {distance}
             </ThemedText>
+
             {hasRating && (
               <>
                 <View
                   style={[styles.dot, { backgroundColor: colors.border }]}
                 />
-                <RatingBadge rating={review.average!} variant="minimal" />
+                <View style={styles.ratingSummary}>
+                  <RatingBadge rating={review.average!} variant="minimal" />
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {`(${ratingCount})`}
+                  </ThemedText>
+                </View>
               </>
             )}
           </View>
@@ -153,6 +168,55 @@ export function PlaceDetailsBottomSheet({
             {address}
           </ThemedText>
         </View>
+
+        {/* Community & Insights Section (Moved Up & Redesigned) */}
+        {(hasRating || activeUsers > 0 || vibeTagsDisplay.length > 0) && (
+          <View style={styles.communitySection}>
+            {/* Vibe Cloud - Centered & Premium */}
+            {vibeTagsDisplay.length > 0 && (
+              <View style={styles.vibeCloud}>
+                {vibeTagsDisplay.slice(0, 5).map((tag, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.vibeTag,
+                      {
+                        backgroundColor: colors.surfaceHover,
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      style={[styles.vibeText, { color: colors.text }]}
+                    >
+                      {t(`place.vibes.${tag}`)}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Social Proof Row: Active Users Only */}
+            {activeUsers > 0 && (
+              <View
+                style={[
+                  styles.socialProofRow,
+                  { flexDirection: "row", justifyContent: "center" },
+                ]}
+              >
+                <View style={styles.socialBadge}>
+                  <UsersIcon width={12} height={12} color={colors.accent} />
+                  <ThemedText
+                    style={[styles.socialText, { color: colors.accent }]}
+                  >
+                    {activeUsers === 1
+                      ? t("place.onePersonConnecting")
+                      : t("place.manyPeopleConnecting", { count: activeUsers })}
+                  </ThemedText>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Actions Section - Command Center Layout */}
         <View style={styles.actionsContainer}>
@@ -227,77 +291,6 @@ export function PlaceDetailsBottomSheet({
           </View>
         </View>
       </View>
-      {/* Community & Insights Section (Distinct Background) */}
-      {(hasRating || activeUsers > 0 || vibeTagsDisplay.length > 0) && (
-        <View
-          style={[
-            styles.communitySection,
-            {
-              backgroundColor: colors.surface,
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-            },
-          ]}
-        >
-          {activeUsers > 0 && (
-            <View
-              style={[
-                styles.socialBanner,
-                { backgroundColor: colors.accentBlueLighter },
-              ]}
-            >
-              <UsersIcon width={14} height={14} color={colors.accent} />
-              <ThemedText
-                style={[typography.captionBold, { color: colors.accent }]}
-              >
-                {t("place.manyPeopleConnecting", { count: activeUsers })}
-              </ThemedText>
-            </View>
-          )}
-
-          <View style={styles.ratingScale}>
-            {hasRating ? (
-              <ThemedText
-                style={[typography.caption, { color: colors.textSecondary }]}
-              >
-                {t("place.reviews.count", { count: ratingCount })}
-              </ThemedText>
-            ) : (
-              <ThemedText
-                style={[typography.caption, { color: colors.textSecondary }]}
-              >
-                {t("place.new")} • {t("place.beFirst")}
-              </ThemedText>
-            )}
-          </View>
-
-          {vibeTagsDisplay.length > 0 && (
-            <View style={styles.tagsContainer}>
-              {vibeTagsDisplay.slice(0, 5).map((tag, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.vibeTag,
-                    {
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    style={[
-                      typography.caption,
-                      { color: colors.textSecondary, fontSize: 10 },
-                    ]}
-                  >
-                    {t(`place.vibes.${tag}`)}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 }
@@ -372,31 +365,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   communitySection: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    alignItems: "center",
     gap: spacing.md,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.sm,
   },
-  socialBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: 12,
-  },
-  ratingScale: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  tagsContainer: {
+  vibeCloud: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 4,
-    width: "100%",
+    justifyContent: "center",
+    gap: 8,
   },
   vibeTag: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
+    borderRadius: 12,
+  },
+  vibeText: {
+    ...typography.captionBold,
+    fontSize: 12,
+  },
+  socialProofRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  socialBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  socialText: {
+    ...typography.caption,
+    fontSize: 13,
+  },
+  ratingSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
 });

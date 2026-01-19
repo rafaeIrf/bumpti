@@ -44,12 +44,22 @@ serve(async (req) => {
     const rankByValue = rankBy === "total" ? "total" : "monthly";
     const maxResultsNum = Number.isFinite(Number(maxResults)) ? Number(maxResults) : 20;
 
+    // Get user ID from auth token for filtering
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
+    }
+
     const { data: places, error } = await supabase.rpc("get_ranked_places", {
       user_lat: latNum,
       user_lng: lngNum,
       radius_meters: 50000, // 50km radius
       rank_by: rankByValue,
       max_results: maxResultsNum,
+      requesting_user_id: userId,
     });
 
     if (error) {
@@ -86,6 +96,7 @@ serve(async (req) => {
         monthlyCheckins: p.monthly_checkins,
         distance: p.dist_meters,
         rankPosition: p.rank_position,
+        activeUsers: p.active_users || 0,
         review: p.review_count > 0 ? {
           average: p.review_average,
           count: p.review_count,

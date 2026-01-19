@@ -29,11 +29,9 @@
   "discover": "Descubra",
   "place": {
     "reviews": {
-      "count": "Baseado em {{count}} experiências"
+      "count": "{{count}} avaliações",
+      "count_singular": "1 avaliação"
     },
-    "new": "Novo no Bumpti",
-    "beFirst": "Seja o primeiro a avaliar a vibe",
-    "vibeDiscovery": "A vibe ainda está sendo descoberta",
     "vibes": {
       "easy_to_connect": "Conexão flui fácil",
       "hard_to_connect": "Difícil se conectar",
