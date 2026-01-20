@@ -800,7 +800,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingVertical: spacing.sm,
     gap: spacing.sm,
-    paddingHorizontal: spacing.md, // Add horizontal padding to match list
   },
   rankingPill: {
     flex: 1,
