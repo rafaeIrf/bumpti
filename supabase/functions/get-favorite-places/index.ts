@@ -6,156 +6,128 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Content-Type": "application/json",
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-if (!supabaseUrl || !serviceKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
+interface FavoritePlace {
+  id: string;
+  name: string;
+  category: string;
+  lat: number;
+  lng: number;
+  street: string | null;
+  house_number: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  review_average: number;
+  review_count: number;
+  review_tags: string[];
+  dist_meters: number;
+  active_users: number;
 }
-
-const supabase = createClient(supabaseUrl, serviceKey);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
   if (req.method !== "GET" && req.method !== "POST") {
-    return new Response("Method Not Allowed", {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
       status: 405,
       headers: corsHeaders,
     });
   }
 
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) {
-    return new Response(
-      JSON.stringify({ error: "unauthorized", message: "Missing access token" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
   try {
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "unauthorized", message: "Missing access token" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return new Response(JSON.stringify({ error: "config_missing" }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser(token);
 
-    if (userError || !user?.id) {
-      throw new Error(userError?.message ?? "User not found");
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "unauthorized", message: userError?.message ?? "User not found" }),
+        { status: 401, headers: corsHeaders }
+      );
     }
 
-    let requestBody: { lat?: number; lng?: number } = {};
-    if (req.method === "POST") {
-      try {
-        requestBody = (await req.json()) ?? {};
-      } catch {
-        // ignore body parse errors for GET-compat
-      }
-    }
-
+    const requestBody =
+      req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const userLat = requestBody.lat ?? 0;
     const userLng = requestBody.lng ?? 0;
 
-    // Fetch favorite places with details from database using places_view (includes review data)
-    const { data: favoritePlaces, error } = await supabase
-      .from("profile_favorite_places")
-      .select(`
-        place_id,
-        places:places_view(
-          id,
-          name,
-          category,
-          lat,
-          lng,
-          street,
-          city,
-          review_average,
-          review_count,
-          review_tags
-        )
-      `)
-      .eq("user_id", user.id);
-
-    if (error) throw error;
-
-    if (!favoritePlaces || favoritePlaces.length === 0) {
-      return new Response(JSON.stringify({ places: [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Extract place IDs for RPC call
-    const placeIds = favoritePlaces.map((row: any) => row.place_id).filter(Boolean);
-
-    // Get active user counts for these places using RPC
-    const { data: placeCounts, error: rpcError } = await supabase
-      .rpc("get_available_people_count", {
-        place_ids: placeIds,
-        viewer_id: user.id,
-      });
-
-    // Create a map for quick lookup
-    const countMap = new Map(
-      (placeCounts || []).map((pc: { place_id: string; people_count: number }) => [pc.place_id, pc.people_count])
+    // Single RPC call - replaces 3 DB queries
+    const { data: places, error } = await supabase.rpc(
+      "get_user_favorite_places",
+      {
+        user_lat: userLat,
+        user_lng: userLng,
+        requesting_user_id: user.id,
+      }
     );
 
-    // Calculate distance and map places with active users count
-    const placesWithActiveUsers = favoritePlaces
-      .map((row: any) => {
-        const place = row.places;
-        if (!place) return null;
+    if (error) {
+      console.error("RPC error:", error);
+      return new Response(
+        JSON.stringify({ error: "fetch_favorites_failed", message: error.message }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
-        // Calculate distance using Haversine formula (in meters)
-        const R = 6371000; // Earth's radius in meters
-        const lat1 = userLat * Math.PI / 180;
-        const lat2 = place.lat * Math.PI / 180;
-        const deltaLat = (place.lat - userLat) * Math.PI / 180;
-        const deltaLng = (place.lng - userLng) * Math.PI / 180;
+    const results = (places || []).map((p: FavoritePlace) => ({
+      placeId: p.id,
+      name: p.name,
+      types: p.category ? [p.category] : [],
+      latitude: p.lat,
+      longitude: p.lng,
+      formattedAddress: [p.street, p.house_number].filter(Boolean).join(", "),
+      distance: Math.round(p.dist_meters),
+      active_users: p.active_users,
+      review:
+        p.review_count > 0
+          ? {
+              average: p.review_average,
+              count: p.review_count,
+              tags: p.review_tags,
+            }
+          : undefined,
+    }));
 
-        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-                  Math.cos(lat1) * Math.cos(lat2) *
-                  Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
-
-        const formattedAddress = [place.street, place.house_number].filter(Boolean).join(", ");
-
-        return {
-          placeId: place.id,
-          name: place.name,
-          distance: Math.round(distance),
-          formattedAddress: formattedAddress || "",
-          types: place.category ? [place.category] : [],
-          latitude: place.lat,
-          longitude: place.lng,
-          active_users: countMap.get(place.id) || 0,
-          review: place.review_count > 0 ? {
-            average: place.review_average,
-            count: place.review_count,
-            tags: place.review_tags
-          } : undefined,
-        };
-      })
-      .filter((place): place is NonNullable<typeof place> => place !== null);
-
-    // Sort by distance (ascending - closest first)
-    placesWithActiveUsers.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-
-    return new Response(JSON.stringify({ places: placesWithActiveUsers }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ places: results }), {
+      status: 200,
+      headers: corsHeaders,
     });
-  } catch (error) {
-    console.error("get-favorite-places error:", error);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to fetch favorites.";
+    console.error("get-favorite-places error:", err);
     return new Response(
-      JSON.stringify({
-        error: "fetch_favorites_failed",
-        message: error?.message ?? "Unable to fetch favorites.",
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "fetch_favorites_failed", message }),
+      { status: 500, headers: corsHeaders }
     );
   }
 });
