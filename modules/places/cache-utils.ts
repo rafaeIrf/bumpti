@@ -9,10 +9,31 @@ type DecrementActiveUsersParams = {
   dispatch: AppDispatch;
   getState: () => RootState;
   placeId: string;
+  userId?: string; // Optional: user_id to remove from preview_avatars
 };
 
 /**
+ * Helper to decrement active_users and optionally remove avatar by user_id
+ */
+function updatePlace(place: any, userId?: string): void {
+  if (!place) return;
+  
+  // Decrement active_users count
+  if ((place as any).active_users > 0) {
+    (place as any).active_users -= 1;
+  }
+  
+  // Remove avatar by user_id if provided
+  if (userId && place.preview_avatars && Array.isArray(place.preview_avatars)) {
+    place.preview_avatars = place.preview_avatars.filter(
+      (avatar: any) => avatar?.user_id !== userId
+    );
+  }
+}
+
+/**
  * Decrements the active_users count for a place across all caches.
+ * If userId is provided, also removes the user's avatar from preview_avatars.
  * This provides optimistic UI updates when a user interacts with someone,
  * since that person becomes ineligible for further interactions.
  */
@@ -20,6 +41,7 @@ export function decrementActiveUsersInCaches({
   dispatch,
   getState,
   placeId,
+  userId,
 }: DecrementActiveUsersParams): void {
   const state = getState() as any;
   const placesCache = state?.placesApi?.queries || {};
@@ -39,9 +61,7 @@ export function decrementActiveUsersInCaches({
               const place = draft?.find(
                 (p: any) => (p.placeId || p.place_id || p.id) === placeId
               );
-              if (place && (place as any).active_users > 0) {
-                (place as any).active_users -= 1;
-              }
+              updatePlace(place, userId);
             }
           )
         );
@@ -58,9 +78,7 @@ export function decrementActiveUsersInCaches({
                 const place = draft.places.find(
                   (p: any) => (p.placeId || p.place_id || p.id) === placeId
                 );
-                if (place && place.active_users > 0) {
-                  place.active_users -= 1;
-                }
+                updatePlace(place, userId);
               }
             }
           )
@@ -78,9 +96,7 @@ export function decrementActiveUsersInCaches({
                 const place = draft.places.find(
                   (p: any) => (p.placeId || p.place_id || p.id) === placeId
                 );
-                if (place && (place as any).active_users > 0) {
-                  (place as any).active_users -= 1;
-                }
+                updatePlace(place, userId);
               }
             }
           )
@@ -97,9 +113,7 @@ export function decrementActiveUsersInCaches({
               const place = draft?.find(
                 (p: any) => (p.placeId || p.place_id || p.id) === placeId
               );
-              if (place && (place as any).active_users > 0) {
-                (place as any).active_users -= 1;
-              }
+              updatePlace(place, userId);
             }
           )
         );
@@ -116,9 +130,7 @@ export function decrementActiveUsersInCaches({
                 const place = draft.places.find(
                   (p: any) => (p.placeId || p.place_id || p.id) === placeId
                 );
-                if (place && (place as any).active_users > 0) {
-                  (place as any).active_users -= 1;
-                }
+                updatePlace(place, userId);
               }
             }
           )
@@ -135,9 +147,7 @@ export function decrementActiveUsersInCaches({
               const place = draft?.find(
                 (p: any) => (p.placeId || p.place_id || p.id) === placeId
               );
-              if (place && (place as any).active_users > 0) {
-                (place as any).active_users -= 1;
-              }
+              updatePlace(place, userId);
             }
           )
         );
@@ -147,3 +157,4 @@ export function decrementActiveUsersInCaches({
     }
   });
 }
+

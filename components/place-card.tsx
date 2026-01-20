@@ -1,9 +1,10 @@
 import { HeartIcon, UsersIcon } from "@/assets/icons";
+import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
-import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import type { UserAvatar } from "@/modules/places/types";
 import { formatDistance } from "@/utils/distance";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -12,6 +13,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { RatingBadge } from "./ui/rating-badge";
 
 interface PlaceCardData {
   id: string;
@@ -19,6 +21,7 @@ interface PlaceCardData {
   address: string;
   distance: number;
   activeUsers: number;
+  activeUserAvatars?: UserAvatar[]; // Avatars with user_id for real-time removal
   tag?: string;
   rank?: number; // Ranking position (1-based)
   review?: {
@@ -77,6 +80,8 @@ export function PlaceCard({
   };
 
   const hasActiveUsers = place.activeUsers > 0;
+  const hasAvatars =
+    place.activeUserAvatars && place.activeUserAvatars.length > 0;
   const hasReview = place.review && place.review.average > 0;
 
   return (
@@ -137,42 +142,54 @@ export function PlaceCard({
           <ThemedText style={styles.metaText}>
             {formatDistance(place.distance)}
           </ThemedText>
-        </View>
-
-        {/* Footer: Live Status + Rating */}
-        <View style={styles.footerRow}>
-          {/* Live Status */}
-          <View
-            style={[
-              styles.liveContainer,
-              hasActiveUsers && { backgroundColor: "rgba(29, 155, 240, 0.1)" },
-            ]}
-          >
-            <UsersIcon
-              width={12}
-              height={12}
-              color={hasActiveUsers ? colors.accent : colors.textSecondary}
-            />
-            <ThemedText
-              style={[
-                styles.liveText,
-                hasActiveUsers && { color: colors.accent },
-              ]}
-            >
-              {t(
-                place.activeUsers === 0
-                  ? "place.noConnections"
-                  : place.activeUsers === 1
-                    ? "place.onePersonConnecting"
-                    : "place.manyPeopleConnecting",
-                { count: place.activeUsers }
-              )}
-            </ThemedText>
-          </View>
-
           {/* Rating */}
           {hasReview && (
-            <RatingBadge rating={place.review!.average} variant="filled" />
+            <>
+              <View style={styles.dot} />
+              <RatingBadge rating={place.review!.average} variant="minimal" />
+            </>
+          )}
+        </View>
+
+        {/* Footer: Live Status */}
+        <View style={styles.footerRow}>
+          {hasAvatars ? (
+            <StackedAvatars
+              avatars={place.activeUserAvatars!}
+              totalCount={place.activeUsers}
+              maxVisible={4}
+              size={36}
+            />
+          ) : (
+            <View
+              style={[
+                styles.liveContainer,
+                hasActiveUsers && {
+                  backgroundColor: "rgba(29, 155, 240, 0.1)",
+                },
+              ]}
+            >
+              <UsersIcon
+                width={12}
+                height={12}
+                color={hasActiveUsers ? colors.accent : colors.textSecondary}
+              />
+              <ThemedText
+                style={[
+                  styles.liveText,
+                  hasActiveUsers && { color: colors.accent },
+                ]}
+              >
+                {t(
+                  place.activeUsers === 0
+                    ? "place.noConnections"
+                    : place.activeUsers === 1
+                      ? "place.onePersonConnecting"
+                      : "place.manyPeopleConnecting",
+                  { count: place.activeUsers }
+                )}
+              </ThemedText>
+            </View>
           )}
         </View>
       </View>
@@ -229,7 +246,7 @@ const styles = StyleSheet.create({
     width: 2,
     height: 2,
     borderRadius: 1,
-    backgroundColor: "#3F3F46",
+    backgroundColor: "#8B98A5",
     marginHorizontal: 2,
   },
   footerRow: {

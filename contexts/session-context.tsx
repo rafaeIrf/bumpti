@@ -110,8 +110,23 @@ export function SessionProvider({ children }: PropsWithChildren) {
       const fetchProfile = async () => {
         try {
           await fetchAndSetUserProfile();
-        } catch (error) {
+        } catch (error: any) {
           logger.error("[SessionProvider] Failed to fetch profile:", error);
+
+          // Detect auth errors that indicate session is invalid
+          const status = error?.status || error?.context?.status;
+          const isAuthError =
+            status === 401 ||
+            status === 403 ||
+            error?.message?.toLowerCase()?.includes("jwt") ||
+            error?.message?.toLowerCase()?.includes("unauthorized");
+
+          if (isAuthError) {
+            logger.warn(
+              "[SessionProvider] Auth error on profile fetch, signing out"
+            );
+            await phoneAuthService.signOut();
+          }
         } finally {
           setProfileFetched(true);
         }

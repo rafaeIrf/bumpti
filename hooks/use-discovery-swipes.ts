@@ -118,11 +118,12 @@ export function useDiscoverySwipes(
         removeProfileId: targetUserId,
       });
 
-      // Optimistic UI: decrement active_users in all places caches
+      // Optimistic UI: decrement active_users and remove avatar from all places caches
       decrementActiveUsersInCaches({
         dispatch: store.dispatch,
         getState: store.getState,
         placeId: resolvedPlaceId,
+        userId: targetUserId,
       });
 
 

@@ -31,6 +31,12 @@ export type PlaceReview = {
   tags?: PlaceVibe[];
 };
 
+// Avatar with user_id for real-time updates
+export type UserAvatar = {
+  user_id: string;
+  url: string;
+};
+
 export type Place = {
   placeId: string;
   name: string;
@@ -40,6 +46,7 @@ export type Place = {
   longitude: number;
   types?: string[]; // Para autocomplete - raw Foursquare category names
   active_users?: number; // Optional: number of active users currently at the place
+  preview_avatars?: UserAvatar[]; // Optional: active user avatars with user_id for real-time removal
   favorites_count?: number; // Optional: number of favorites for the place
   total_checkins?: number; // Total check-ins all time
   monthly_checkins?: number; // Check-ins this month (resets on 1st)

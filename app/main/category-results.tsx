@@ -54,7 +54,15 @@ import React, {
   useState,
 } from "react";
 import { FlatList, StyleSheet } from "react-native";
-import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
+import Animated, {
+  Extrapolation,
+  FadeInDown,
+  FadeOut,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const allCategories: PlaceCategory[] = [
@@ -494,6 +502,7 @@ export default function CategoryResultsScreen() {
         address: item.formattedAddress ?? "",
         distance: item.distance,
         activeUsers: (item as any).active_users || 0,
+        activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
@@ -576,6 +585,45 @@ export default function CategoryResultsScreen() {
 
   const isLoadingState = useMemo(() => loadingState, [loadingState]);
 
+  const [filterHeight, setFilterHeight] = useState(0);
+  const translateY = useSharedValue(0);
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, context: { prevY?: number }) => {
+      const y = event.contentOffset.y;
+      scrollY.value = y;
+
+      if (y < 0) {
+        translateY.value = 0;
+        context.prevY = y;
+        return;
+      }
+
+      const diff = y - (context.prevY ?? 0);
+      const nextValue = translateY.value - diff;
+
+      // Clamp between -filterHeight and 0
+      translateY.value = Math.max(-filterHeight, Math.min(0, nextValue));
+      context.prevY = y;
+    },
+    onBeginDrag: (event, context: { prevY?: number }) => {
+      context.prevY = event.contentOffset.y;
+    },
+  });
+
+  const filterAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: interpolate(
+        translateY.value,
+        [-filterHeight, 0],
+        [0, 1],
+        Extrapolation.CLAMP
+      ),
+    };
+  });
+
   return (
     <BaseTemplateScreen
       scrollEnabled={false}
@@ -617,33 +665,46 @@ export default function CategoryResultsScreen() {
         </ThemedView>
       }
     >
-      <ThemedView>
-        {shouldShowFilters && (
-          <CategoryFilterList
-            categories={visibleCategories}
-            selectedCategory={activeFilter}
-            onSelect={setActiveFilter}
-          />
-        )}
-        {/* Ranking filter pills for mostFrequent mode */}
-        {mostFrequentMode && (
-          <ThemedView style={styles.rankingPillsContainer}>
-            <FilterChip
-              label={t("screens.home.categories.ranking.filterMonth")}
-              isSelected={rankingFilter === "month"}
-              onPress={() => setRankingFilter("month")}
-              colors={colors}
-              style={styles.rankingPill}
+      <ThemedView style={{ flex: 1 }}>
+        {/* Collapsible Filter Header */}
+        <Animated.View
+          style={[
+            styles.filterHeaderContainer,
+            filterAnimatedStyle,
+            { backgroundColor: colors.background },
+          ]}
+          onLayout={(event) => {
+            setFilterHeight(event.nativeEvent.layout.height);
+          }}
+        >
+          {shouldShowFilters && (
+            <CategoryFilterList
+              categories={visibleCategories}
+              selectedCategory={activeFilter}
+              onSelect={setActiveFilter}
             />
-            <FilterChip
-              label={t("screens.home.categories.ranking.filterGeneral")}
-              isSelected={rankingFilter === "general"}
-              onPress={() => setRankingFilter("general")}
-              colors={colors}
-              style={styles.rankingPill}
-            />
-          </ThemedView>
-        )}
+          )}
+          {/* Ranking filter pills for mostFrequent mode */}
+          {mostFrequentMode && (
+            <ThemedView style={styles.rankingPillsContainer}>
+              <FilterChip
+                label={t("screens.home.categories.ranking.filterMonth")}
+                isSelected={rankingFilter === "month"}
+                onPress={() => setRankingFilter("month")}
+                colors={colors}
+                style={styles.rankingPill}
+              />
+              <FilterChip
+                label={t("screens.home.categories.ranking.filterGeneral")}
+                isSelected={rankingFilter === "general"}
+                onPress={() => setRankingFilter("general")}
+                colors={colors}
+                style={styles.rankingPill}
+              />
+            </ThemedView>
+          )}
+        </Animated.View>
+
         {(() => {
           if (!hasLocationPermission) {
             return (
@@ -656,48 +717,57 @@ export default function CategoryResultsScreen() {
           }
 
           if (isLoadingState || permissionLoading) {
-            return <PlaceLoadingSkeleton count={6} />;
+            return (
+              <ThemedView style={{ paddingTop: filterHeight }}>
+                <PlaceLoadingSkeleton count={6} />
+              </ThemedView>
+            );
           }
 
           if (places.length === 0) {
             return (
-              <PlacesEmptyState
-                mode={emptyMode}
-                onPress={() => router.back()}
-              />
+              <ThemedView style={{ paddingTop: filterHeight }}>
+                <PlacesEmptyState
+                  mode={emptyMode}
+                  onPress={() => router.back()}
+                />
+              </ThemedView>
             );
           }
 
           return (
-            <>
-              <FlatList
-                ref={listRef}
-                data={filteredPlaces}
-                keyExtractor={(item) => item.placeId}
-                renderItem={renderPlaceItem}
-                contentContainerStyle={[
-                  styles.listContainer,
-                  { paddingBottom: spacing.xl + insets.bottom },
-                ]}
-                showsVerticalScrollIndicator={false}
-                ListFooterComponent={listFooterComponent}
-                onEndReached={handleEndReached}
-                onEndReachedThreshold={0.4}
-                onMomentumScrollBegin={() => {
-                  endReachedDuringMomentumRef.current = false;
-                }}
-                onScrollBeginDrag={() => {
-                  endReachedDuringMomentumRef.current = false;
-                  hasUserScrolledSinceChangeRef.current = true;
-                }}
-                initialNumToRender={8}
-                maxToRenderPerBatch={8}
-                windowSize={7}
-                removeClippedSubviews
-                updateCellsBatchingPeriod={50}
-                keyboardShouldPersistTaps="handled"
-              />
-            </>
+            <Animated.FlatList
+              ref={listRef}
+              data={filteredPlaces}
+              keyExtractor={(item) => item.placeId}
+              renderItem={renderPlaceItem}
+              contentContainerStyle={[
+                styles.listContainer,
+                {
+                  paddingBottom: spacing.xl + insets.bottom,
+                  paddingTop: filterHeight + spacing.sm, // Add padding for the absolute header
+                },
+              ]}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              ListFooterComponent={listFooterComponent}
+              onEndReached={handleEndReached}
+              onEndReachedThreshold={0.4}
+              onMomentumScrollBegin={() => {
+                endReachedDuringMomentumRef.current = false;
+              }}
+              onScrollBeginDrag={(e) => {
+                endReachedDuringMomentumRef.current = false;
+                hasUserScrolledSinceChangeRef.current = true;
+              }}
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={7}
+              removeClippedSubviews
+              updateCellsBatchingPeriod={50}
+              keyboardShouldPersistTaps="handled"
+            />
           );
         })()}
       </ThemedView>
@@ -720,6 +790,8 @@ const styles = StyleSheet.create({
     borderRadius: spacing.lg,
     alignItems: "center",
     gap: spacing.md,
+    // Add extra padding at bottom to account for potential absolute positioning issues
+    paddingBottom: spacing.xl,
   },
   footerCopy: {
     textAlign: "center",
@@ -732,5 +804,13 @@ const styles = StyleSheet.create({
   },
   rankingPill: {
     flex: 1,
+  },
+  filterHeaderContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    // backgroundColor: "transparent", // Or theme background if needed to cover list
   },
 });
