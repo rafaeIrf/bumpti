@@ -1,6 +1,5 @@
 import { HeartIcon, UsersIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
-import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -12,6 +11,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { RatingBadge } from "./ui/rating-badge";
 
 interface PlaceCardData {
   id: string;
@@ -137,6 +137,13 @@ export function PlaceCard({
           <ThemedText style={styles.metaText}>
             {formatDistance(place.distance)}
           </ThemedText>
+          {/* Rating */}
+          {hasReview && (
+            <>
+              <View style={styles.dot} />
+              <RatingBadge rating={place.review!.average} variant="minimal" />
+            </>
+          )}
         </View>
 
         {/* Footer: Live Status + Rating */}
@@ -169,11 +176,6 @@ export function PlaceCard({
               )}
             </ThemedText>
           </View>
-
-          {/* Rating */}
-          {hasReview && (
-            <RatingBadge rating={place.review!.average} variant="filled" />
-          )}
         </View>
       </View>
     </AnimatedPressable>
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
     width: 2,
     height: 2,
     borderRadius: 1,
-    backgroundColor: "#3F3F46",
+    backgroundColor: "#8B98A5",
     marginHorizontal: 2,
   },
   footerRow: {

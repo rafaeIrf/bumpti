@@ -528,15 +528,15 @@
       "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
       "categories": {
         "highlighted": {
-          "title": "Movimentados agora",
+          "title": "Live",
           "description": "Lugares cheios e com gente se conectando."
         },
         "favorites": {
-          "title": "Locais favoritos",
+          "title": "Favoritos",
           "description": "Seus lugares para conectar."
         },
         "communityFavorites": {
-          "title": "Favoritos da comunidade",
+          "title": "Picks",
           "description": "Veja o que os outros amam."
         },
         "nightlife": {
@@ -584,7 +584,7 @@
           "description": "Veja o movimento ao redor"
         },
         "ranking": {
-          "title": "+Frequentados",
+          "title": "Hotspots",
           "description": "Lugares que a galera sempre vai.",
           "filterMonth": "Esse mês",
           "filterGeneral": "Geral"

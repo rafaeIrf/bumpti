@@ -132,14 +132,14 @@ export default function HomeScreen() {
       illustration: Passion,
     },
     {
-      id: "community_favorites",
-      icon: StarIcon,
-      title: t("screens.home.categories.communityFavorites.title"),
-      description: t("screens.home.categories.communityFavorites.description"),
+      id: "most_frequent",
+      icon: UsersIcon,
+      title: t("screens.home.categories.ranking.title"),
+      description: t("screens.home.categories.ranking.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelPink,
-      illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
+      color: colors.pastelGreen,
+      illustration: Passion,
     },
     {
       id: "favorites",
@@ -152,14 +152,14 @@ export default function HomeScreen() {
       illustration: Heart,
     },
     {
-      id: "most_frequent",
-      icon: UsersIcon,
-      title: t("screens.home.categories.ranking.title"),
-      description: t("screens.home.categories.ranking.description"),
+      id: "community_favorites",
+      icon: StarIcon,
+      title: t("screens.home.categories.communityFavorites.title"),
+      description: t("screens.home.categories.communityFavorites.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelGreen,
-      illustration: Passion,
+      color: colors.pastelPink,
+      illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
     },
     {
       id: "bars",

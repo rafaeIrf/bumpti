@@ -527,15 +527,15 @@
       "infoDescription": "Choose a category and see nearby spots where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "Trending now",
+          "title": "Live",
           "description": "Busy spots full of people connecting."
         },
         "favorites": {
-          "title": "Favorite places",
+          "title": "Favorites",
           "description": "Your go-to spots to connect."
         },
         "communityFavorites": {
-          "title": "Community Favorites",
+          "title": "Picks",
           "description": "See what others love."
         },
         "nightlife": {
@@ -583,7 +583,7 @@
           "description": "See activity around you"
         },
         "ranking": {
-          "title": "+Frequented",
+          "title": "Hotspots",
           "description": "Places people keep coming back to.",
           "filterMonth": "This month",
           "filterGeneral": "General"
