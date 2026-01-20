@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
       const MAX_DISTANCE_METERS = 60;
 
-      if (false) {
+      if (distanceInMeters > MAX_DISTANCE_METERS) {
       } else {
         console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
       }
