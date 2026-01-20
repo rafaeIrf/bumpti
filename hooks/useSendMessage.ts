@@ -4,7 +4,7 @@ import type Match from "@/modules/database/models/Match";
 import type Message from "@/modules/database/models/Message";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import { Q } from "@nozbe/watermelondb";
+import * as Crypto from 'expo-crypto';
 import { useCallback, useState } from "react";
 
 /**
@@ -13,7 +13,18 @@ import { useCallback, useState } from "react";
 export type MessageStatus = "pending" | "sent" | "delivered" | "failed";
 
 /**
+ * Generate a proper UUID v4 for message ID
+ */
+function generateMessageId(): string {
+  return Crypto.randomUUID();
+}
+
+/**
  * Hook para enviar mensagens com optimistic updates
+ * 
+ * IMPORTANTE: Usa UUID gerado no cliente para evitar duplicação.
+ * O backend usa esse ID diretamente, então não há necessidade de
+ * substituir IDs depois do sync.
  */
 export function useSendMessage(chatId: string, currentUserId: string) {
   const database = useDatabase();
@@ -25,10 +36,12 @@ export function useSendMessage(chatId: string, currentUserId: string) {
       if (!content.trim()) return;
 
       setPendingCount((count) => count + 1);
-      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Generate UUID that will be used both locally AND on the server
+      const messageId = generateMessageId();
 
       try {
-        // 1. Create optimistic message
+        // 1. Create optimistic message with the FINAL ID
         await database.write(async () => {
           const messagesCollection = database.collections.get<Message>("messages");
           const chatsCollection = database.collections.get<Chat>("chats");
@@ -41,7 +54,7 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           // Use batch for atomic operations
           const batch: any[] = [
             messagesCollection.prepareCreate((message: any) => {
-              message.tempId = tempId;
+              message._raw.id = messageId; // Use our generated UUID directly
               message.chatId = chatId;
               message.senderId = currentUserId;
               message.content = content.trim();
@@ -72,7 +85,7 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           await database.batch(...batch);
         });
 
-        logger.log("✅ Optimistic message created:", tempId);
+        logger.log("✅ Optimistic message created with ID:", messageId);
 
         // 2. Send to backend via push-changes
         const { data, error } = await supabase.functions.invoke("push-changes", {
@@ -80,7 +93,7 @@ export function useSendMessage(chatId: string, currentUserId: string) {
             messages: {
               created: [
                 {
-                  temp_id: tempId,
+                  id: messageId, // Send the ID we generated
                   chat_id: chatId,
                   content: content.trim(),
                 },
@@ -92,43 +105,37 @@ export function useSendMessage(chatId: string, currentUserId: string) {
         if (error) throw error;
         if (!data) throw new Error("No data returned from backend");
 
-        // 3. Update with real ID and status
-        const realId = data?.messages?.created?.[0]?.id;
-        const timestamp = data?.messages?.created?.[0]?.created_at;
+        // 3. Mark as sent (no ID replacement needed!)
+        const serverTimestamp = data?.messages?.created?.[0]?.created_at;
 
-        if (realId) {
-          await database.write(async () => {
-            const messagesCollection = database.collections.get<Message>("messages");
-            const tempMessages = await messagesCollection
-              .query(Q.where("temp_id", tempId))
-              .fetch();
-
-            if (tempMessages.length > 0) {
-              const tempMessage = tempMessages[0];
-              const serverDate = timestamp ? new Date(timestamp) : null;
-              const finalDate =
-                serverDate && serverDate > tempMessage.createdAt
-                  ? serverDate
-                  : tempMessage.createdAt;
-              await tempMessage.replaceTempId(realId, finalDate);
-              logger.log("✅ Message updated with server ID:", realId);
-            }
-          });
-        }
+        await database.write(async () => {
+          const messagesCollection = database.collections.get<Message>("messages");
+          try {
+            const message = await messagesCollection.find(messageId);
+            await message.update((m: any) => {
+              m.status = "sent";
+              if (serverTimestamp) {
+                m.createdAt = new Date(serverTimestamp);
+              }
+            });
+            logger.log("✅ Message marked as sent:", messageId);
+          } catch {
+            logger.warn("Message already processed or not found:", messageId);
+          }
+        });
       } catch (error) {
         logger.error("❌ Failed to send message:", error);
 
         // Mark as failed
         await database.write(async () => {
           const messagesCollection = database.collections.get<Message>("messages");
-          const messages = await messagesCollection
-            .query(Q.where("temp_id", tempId))
-            .fetch();
-
-          if (messages.length > 0) {
-            await messages[0].update((m: any) => {
+          try {
+            const message = await messagesCollection.find(messageId);
+            await message.update((m: any) => {
               m.status = "failed";
             });
+          } catch {
+            logger.warn("Could not mark message as failed:", messageId);
           }
         });
       } finally {
@@ -140,3 +147,4 @@ export function useSendMessage(chatId: string, currentUserId: string) {
 
   return { sendMessage, isSending };
 }
+

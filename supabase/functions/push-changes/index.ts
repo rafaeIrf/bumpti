@@ -136,16 +136,23 @@ Deno.serve(async (req) => {
           
           const { ciphertext, iv, tag } = encrypted;
 
-          // Insert message
+          // Insert message - use client ID if provided, otherwise let Postgres generate
+          const insertData: any = {
+            chat_id: msg.chat_id,
+            sender_id: user.id,
+            content_enc: ciphertext,
+            content_iv: iv,
+            content_tag: tag,
+          };
+          
+          // Use client-provided UUID if available (prevents duplication on sync)
+          if (msg.id) {
+            insertData.id = msg.id;
+          }
+
           const { data: newMessage, error: insertError } = await supabase
             .from("messages")
-            .insert({
-              chat_id: msg.chat_id,
-              sender_id: user.id,
-              content_enc: ciphertext,
-              content_iv: iv,
-              content_tag: tag,
-            })
+            .insert(insertData)
             .select("id, created_at")
             .single();
 
@@ -153,6 +160,7 @@ Deno.serve(async (req) => {
             console.error("Failed to insert message:", insertError);
             response.errors.push({
               temp_id: msg.temp_id,
+              id: msg.id,
               error: "insert_failed",
             });
             continue;
