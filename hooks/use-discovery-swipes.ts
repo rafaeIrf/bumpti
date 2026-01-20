@@ -1,14 +1,18 @@
 import { useDatabase } from "@/components/DatabaseProvider";
+import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
+import { hasLikerId, removeLikerId } from "@/modules/discovery/liker-ids-service";
+import { flushSwipeQueueNow } from "@/modules/discovery/swipe-queue-orchestrator";
 import {
   enqueueSwipe,
   type SwipeBatchResult,
 } from "@/modules/discovery/swipe-queue-service";
-import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
-import { hasLikerId, removeLikerId } from "@/modules/discovery/liker-ids-service";
-import { flushSwipeQueueNow } from "@/modules/discovery/swipe-queue-orchestrator";
+import { decrementActiveUsersInCaches } from "@/modules/places/cache-utils";
+import { store } from "@/modules/store";
 import { logger } from "@/utils/logger";
-import { AppState } from "react-native";
 import { useCallback, useEffect, useRef } from "react";
+import { AppState } from "react-native";
+
+
 
 const FLUSH_DELAY_MS = 2000;
 const BACKOFF_BASE_MS = 2000;
@@ -113,6 +117,14 @@ export function useDiscoverySwipes(
         placeId: resolvedPlaceId,
         removeProfileId: targetUserId,
       });
+
+      // Optimistic UI: decrement active_users in all places caches
+      decrementActiveUsersInCaches({
+        dispatch: store.dispatch,
+        getState: store.getState,
+        placeId: resolvedPlaceId,
+      });
+
 
       if (isInstantMatch) {
         void flushNow();
