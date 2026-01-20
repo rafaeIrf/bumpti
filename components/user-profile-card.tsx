@@ -238,15 +238,32 @@ export function UserProfileCard({
               />
             </View>
             <View style={styles.badgesContainer}>
+              {/* Entry type badge: physical = "Aqui agora", checkin_plus = "Planejando ir" */}
               <View
                 style={[
                   styles.hereNowBadge,
-                  { backgroundColor: colors.accent },
+                  {
+                    backgroundColor:
+                      profile.entry_type === "checkin_plus"
+                        ? colors.surface
+                        : colors.accent,
+                  },
                 ]}
               >
-                <View style={styles.pulseIndicator} />
-                <Text style={styles.hereNowText}>
-                  {t("userProfile.hereNow")}
+                {profile.entry_type !== "checkin_plus" && (
+                  <View style={styles.pulseIndicator} />
+                )}
+                <Text
+                  style={[
+                    styles.hereNowText,
+                    profile.entry_type === "checkin_plus" && {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {profile.entry_type === "checkin_plus"
+                    ? t("userProfile.planningToGo")
+                    : t("userProfile.hereNow")}
                 </Text>
               </View>
 

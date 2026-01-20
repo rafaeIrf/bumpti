@@ -212,6 +212,7 @@ Deno.serve(async (req) => {
             entered_at: row.entered_at,
             expires_at: row.expires_at,
             zodiac_sign: row.zodiac_sign,
+            entry_type: row.entry_type || 'physical',
           };
         })
       ) ?? [];

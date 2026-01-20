@@ -938,6 +938,7 @@
   },
   "userProfile": {
     "hereNow": "Here now",
+    "planningToGo": "Planning to go",
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",
