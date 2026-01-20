@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
 
   // --- Content Body ---
   contentBody: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
     gap: 24, // Generous vertical gap between sections
