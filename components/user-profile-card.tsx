@@ -243,24 +243,12 @@ export function UserProfileCard({
                 style={[
                   styles.hereNowBadge,
                   {
-                    backgroundColor:
-                      profile.entry_type === "checkin_plus"
-                        ? colors.surface
-                        : colors.accent,
+                    backgroundColor: colors.accent,
                   },
                 ]}
               >
-                {profile.entry_type !== "checkin_plus" && (
-                  <View style={styles.pulseIndicator} />
-                )}
-                <Text
-                  style={[
-                    styles.hereNowText,
-                    profile.entry_type === "checkin_plus" && {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
+                <View style={styles.pulseIndicator} />
+                <Text style={[styles.hereNowText]}>
                   {profile.entry_type === "checkin_plus"
                     ? t("userProfile.planningToGo")
                     : t("userProfile.hereNow")}
