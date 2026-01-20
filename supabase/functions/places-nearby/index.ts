@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
@@ -102,7 +103,8 @@ serve(async (req) => {
       });
     }
 
-    const results = (places || []).map((p: any) => {
+    // Sign avatar URLs with 24h expiration
+    const results = await Promise.all((places || []).map(async (p: any) => {
         // Build address parts in proper order
         const addressParts = [];
         
@@ -113,19 +115,23 @@ serve(async (req) => {
             addressParts.push(p.street);
         }
 
+        // Sign preview avatar URLs (now returns UserAvatar[] with user_id preserved)
+        const signedAvatars = await signUserAvatars(supabase, p.preview_avatars);
+
         // Destructure to remove raw review fields from top-level response
-        const { review_average, review_count, review_tags, ...placeData } = p;
+        const { review_average, review_count, review_tags, preview_avatars, ...placeData } = p;
         
         return {
             ...placeData,
             formatted_address: addressParts.join(", "),
+            preview_avatars: signedAvatars,
             review: p.review_count > 0 ? {
                 average: p.review_average,
                 count: p.review_count,
                 tags: p.review_tags
             } : undefined
         };
-    });
+    }));
 
     return new Response(JSON.stringify(results), {
       status: 200,

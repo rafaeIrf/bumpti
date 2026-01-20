@@ -27,6 +27,7 @@ export function useFavoritePlacesList(enabled: boolean) {
         latitude: place.latitude,
         longitude: place.longitude,
         active_users: place.active_users || 0,
+        preview_avatars: place.preview_avatars,
         review: place.review,
       })) || [],
     [data?.places]

@@ -1,0 +1,779 @@
+-- Add user_avatar composite type and update get_active_users_with_avatars to return user_id with each avatar
+-- This enables real-time avatar removal when users leave a place
+
+-- Drop existing composite type (CASCADE will drop dependent functions)
+DROP TYPE IF EXISTS active_users_info CASCADE;
+DROP TYPE IF EXISTS user_avatar CASCADE;
+
+-- Create new composite type for individual avatar with user_id
+CREATE TYPE user_avatar AS (
+  user_id uuid,
+  url text
+);
+
+-- Create new composite return type using the new avatar type
+CREATE TYPE active_users_info AS (
+  count bigint,
+  avatars user_avatar[]
+);
+
+-- Recreate unified function that returns both count and avatars with user_id
+CREATE OR REPLACE FUNCTION get_active_users_with_avatars(
+  target_place_id uuid,
+  requesting_user_id uuid DEFAULT NULL,
+  max_avatars integer DEFAULT 5
+)
+RETURNS active_users_info
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result active_users_info;
+  avatar_data user_avatar[];
+BEGIN
+  -- Get the count of eligible active users
+  SELECT COUNT(*) INTO result.count
+  FROM user_presences up
+  WHERE up.place_id = target_place_id
+    AND up.active = true
+    AND up.ended_at IS NULL
+    AND up.expires_at > NOW()
+    -- Exclude self
+    AND (requesting_user_id IS NULL OR up.user_id != requesting_user_id)
+    -- Exclude blocked users (bidirectional)
+    AND (requesting_user_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM user_blocks b 
+      WHERE (b.blocker_id = requesting_user_id AND b.blocked_id = up.user_id) 
+         OR (b.blocker_id = up.user_id AND b.blocked_id = requesting_user_id)
+    ))
+    -- Exclude disliked users (bidirectional)
+    AND (requesting_user_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM user_interactions ui 
+      WHERE ui.action = 'dislike'
+        AND (
+          (ui.from_user_id = requesting_user_id AND ui.to_user_id = up.user_id) 
+          OR 
+          (ui.from_user_id = up.user_id AND ui.to_user_id = requesting_user_id)
+        )
+    ))
+    -- Exclude users with pending likes
+    AND (requesting_user_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM user_interactions ui 
+      WHERE ui.action = 'like'
+        AND ui.from_user_id = requesting_user_id 
+        AND ui.to_user_id = up.user_id
+    ))
+    -- Exclude active matched users (bidirectional)
+    AND (requesting_user_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM user_matches um
+      WHERE um.status = 'active'
+        AND (
+          (um.user_a = requesting_user_id AND um.user_b = up.user_id)
+          OR 
+          (um.user_a = up.user_id AND um.user_b = requesting_user_id)
+        )
+    ))
+    -- Require matching gender preference
+    AND (requesting_user_id IS NULL OR EXISTS (
+      SELECT 1 FROM profile_connect_with pcw
+      INNER JOIN profiles rp ON rp.id = requesting_user_id
+      WHERE pcw.user_id = up.user_id
+        AND pcw.gender_id = rp.gender_id
+    ));
+
+  -- Get avatar URLs with user_id for up to max_avatars eligible users
+  SELECT ARRAY(
+    SELECT ROW(up.user_id, pp.url)::user_avatar
+    FROM user_presences up
+    INNER JOIN profile_photos pp ON pp.user_id = up.user_id AND pp.position = 0
+    WHERE up.place_id = target_place_id
+      AND up.active = true
+      AND up.ended_at IS NULL
+      AND up.expires_at > NOW()
+      AND pp.url IS NOT NULL
+      -- Same eligibility filters
+      AND (requesting_user_id IS NULL OR up.user_id != requesting_user_id)
+      AND (requesting_user_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_blocks b 
+        WHERE (b.blocker_id = requesting_user_id AND b.blocked_id = up.user_id) 
+           OR (b.blocker_id = up.user_id AND b.blocked_id = requesting_user_id)
+      ))
+      AND (requesting_user_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_interactions ui 
+        WHERE ui.action = 'dislike'
+          AND (
+            (ui.from_user_id = requesting_user_id AND ui.to_user_id = up.user_id) 
+            OR 
+            (ui.from_user_id = up.user_id AND ui.to_user_id = requesting_user_id)
+          )
+      ))
+      AND (requesting_user_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_interactions ui 
+        WHERE ui.action = 'like'
+          AND ui.from_user_id = requesting_user_id 
+          AND ui.to_user_id = up.user_id
+      ))
+      AND (requesting_user_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_matches um
+        WHERE um.status = 'active'
+          AND (
+            (um.user_a = requesting_user_id AND um.user_b = up.user_id)
+            OR 
+            (um.user_a = up.user_id AND um.user_b = requesting_user_id)
+          )
+      ))
+      AND (requesting_user_id IS NULL OR EXISTS (
+        SELECT 1 FROM profile_connect_with pcw
+        INNER JOIN profiles rp ON rp.id = requesting_user_id
+        WHERE pcw.user_id = up.user_id
+          AND pcw.gender_id = rp.gender_id
+      ))
+    ORDER BY up.entered_at DESC
+    LIMIT max_avatars
+  ) INTO avatar_data;
+
+  result.avatars := avatar_data;
+  
+  RETURN result;
+END;
+$$;
+
+-- Now recreate all RPCs that depend on get_active_users_with_avatars
+-- They need to handle the new user_avatar[] type
+-- IMPORTANT: Must drop functions first because return type is changing (preview_avatars: text[] -> jsonb)
+
+DROP FUNCTION IF EXISTS public.search_places_nearby(double precision, double precision, double precision, text[], integer, uuid, text, double precision, integer, integer);
+DROP FUNCTION IF EXISTS public.get_trending_places(double precision, double precision, double precision, integer, uuid);
+DROP FUNCTION IF EXISTS public.get_user_favorite_places(double precision, double precision, uuid);
+DROP FUNCTION IF EXISTS public.search_places_by_favorites(double precision, double precision, double precision, text[], integer, uuid);
+DROP FUNCTION IF EXISTS public.search_places_autocomplete(text, double precision, double precision, double precision, integer, uuid);
+DROP FUNCTION IF EXISTS public.get_ranked_places(float, float, float, text, int, uuid);
+
+-- search_places_nearby
+CREATE OR REPLACE FUNCTION public.search_places_nearby(
+  user_lat double precision, 
+  user_lng double precision, 
+  radius_meters double precision, 
+  filter_categories text[] DEFAULT NULL::text[], 
+  max_results integer DEFAULT 60, 
+  requesting_user_id uuid DEFAULT NULL::uuid, 
+  sort_by text DEFAULT 'relevance'::text, 
+  min_rating double precision DEFAULT NULL::double precision, 
+  page_offset integer DEFAULT 0, 
+  page_size integer DEFAULT 20
+)
+RETURNS TABLE(
+  id uuid, 
+  name text, 
+  category text, 
+  lat double precision, 
+  lng double precision, 
+  street text, 
+  house_number text, 
+  city text, 
+  state text, 
+  country text, 
+  relevance_score integer, 
+  confidence double precision, 
+  socials jsonb, 
+  review_average double precision, 
+  review_count bigint, 
+  review_tags text[], 
+  total_checkins integer, 
+  last_activity_at timestamp with time zone, 
+  active_users bigint, 
+  preview_avatars jsonb,
+  dist_meters double precision
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  safe_offset int := GREATEST(page_offset, 0);
+  safe_page_size int := GREATEST(page_size, 1);
+  max_limit int := GREATEST(max_results, 0);
+  remaining int := max_limit - safe_offset;
+  limit_amount int := LEAST(safe_page_size, GREATEST(remaining, 0));
+BEGIN
+  RETURN QUERY
+  WITH place_data AS (
+    SELECT
+      pv.id,
+      pv.name,
+      pv.category,
+      pv.lat,
+      pv.lng,
+      pv.street,
+      pv.house_number,
+      pv.city,
+      pv.state,
+      pv.country_code as country,
+      pv.relevance_score,
+      pv.confidence,
+      pv.socials,
+      pv.review_average,
+      pv.review_count,
+      pv.review_tags,
+      pv.total_checkins,
+      pv.last_activity_at,
+      get_active_users_with_avatars(pv.id, requesting_user_id, 5) as users_info,
+      st_distance(
+        st_setsrid(st_makepoint(pv.lng, pv.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+      ) AS dist_meters
+    FROM places_view pv
+    WHERE
+      st_dwithin(
+        st_setsrid(st_makepoint(pv.lng, pv.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+        radius_meters
+      )
+      AND (filter_categories IS NULL OR lower(pv.category) = ANY(SELECT lower(c) FROM unnest(filter_categories) c))
+      AND (min_rating IS NULL OR pv.review_average >= min_rating)
+  )
+  SELECT
+    pd.id,
+    pd.name,
+    pd.category,
+    pd.lat,
+    pd.lng,
+    pd.street,
+    pd.house_number,
+    pd.city,
+    pd.state,
+    pd.country,
+    pd.relevance_score,
+    pd.confidence,
+    pd.socials,
+    pd.review_average,
+    pd.review_count,
+    pd.review_tags,
+    pd.total_checkins,
+    pd.last_activity_at,
+    (pd.users_info).count as active_users,
+    (SELECT jsonb_agg(jsonb_build_object('user_id', (a).user_id, 'url', (a).url)) 
+     FROM unnest((pd.users_info).avatars) a) as preview_avatars,
+    pd.dist_meters
+  FROM place_data pd
+  ORDER BY
+    CASE WHEN sort_by = 'distance' THEN pd.dist_meters END ASC,
+    CASE WHEN sort_by = 'rating' THEN pd.review_average END DESC,
+    CASE WHEN sort_by = 'rating' THEN pd.review_count END DESC,
+    CASE WHEN sort_by = 'popularity' THEN pd.total_checkins END DESC,
+    CASE WHEN sort_by = 'popularity' THEN pd.last_activity_at END DESC,
+    CASE WHEN sort_by = 'relevance' THEN (pd.users_info).count END DESC,
+    CASE WHEN sort_by = 'relevance' THEN pd.last_activity_at END DESC,
+    CASE WHEN sort_by = 'relevance' THEN pd.relevance_score END DESC,
+    CASE WHEN sort_by = 'relevance' THEN pd.confidence END DESC,
+    pd.dist_meters ASC,
+    pd.relevance_score DESC
+  LIMIT limit_amount
+  OFFSET safe_offset;
+END;
+$function$;
+
+-- get_trending_places
+CREATE OR REPLACE FUNCTION public.get_trending_places(
+  user_lat double precision, 
+  user_lng double precision, 
+  radius_meters double precision DEFAULT 50000, 
+  max_results integer DEFAULT 10, 
+  requesting_user_id uuid DEFAULT NULL::uuid
+)
+RETURNS TABLE(
+  id uuid, 
+  name text, 
+  category text, 
+  lat double precision, 
+  lng double precision, 
+  street text, 
+  house_number text, 
+  city text, 
+  state text, 
+  country text, 
+  review_average double precision, 
+  review_count bigint, 
+  review_tags text[], 
+  dist_meters double precision, 
+  active_users bigint,
+  preview_avatars jsonb
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+BEGIN
+  RETURN QUERY
+  WITH place_data AS (
+    SELECT
+      pv.id,
+      pv.name,
+      pv.category,
+      pv.lat,
+      pv.lng,
+      pv.street,
+      pv.house_number,
+      pv.city,
+      pv.state,
+      pv.country_code as country,
+      pv.review_average,
+      pv.review_count,
+      pv.review_tags,
+      st_distance(
+        st_setsrid(st_makepoint(pv.lng, pv.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+      ) AS dist_meters,
+      get_active_users_with_avatars(pv.id, requesting_user_id, 5) as users_info
+    FROM places_view pv
+    WHERE
+      st_dwithin(
+        st_setsrid(st_makepoint(pv.lng, pv.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+        radius_meters
+      )
+  )
+  SELECT
+    pd.id,
+    pd.name,
+    pd.category,
+    pd.lat,
+    pd.lng,
+    pd.street,
+    pd.house_number,
+    pd.city,
+    pd.state,
+    pd.country,
+    pd.review_average,
+    pd.review_count,
+    pd.review_tags,
+    pd.dist_meters,
+    (pd.users_info).count as active_users,
+    (SELECT jsonb_agg(jsonb_build_object('user_id', (a).user_id, 'url', (a).url)) 
+     FROM unnest((pd.users_info).avatars) a) as preview_avatars
+  FROM place_data pd
+  WHERE (pd.users_info).count > 0
+  ORDER BY active_users DESC, pd.dist_meters ASC
+  LIMIT max_results;
+END;
+$function$;
+
+-- get_user_favorite_places
+CREATE OR REPLACE FUNCTION public.get_user_favorite_places(
+  user_lat double precision, 
+  user_lng double precision, 
+  requesting_user_id uuid
+)
+RETURNS TABLE(
+  id uuid, 
+  name text, 
+  category text, 
+  lat double precision, 
+  lng double precision, 
+  street text, 
+  house_number text, 
+  city text, 
+  state text, 
+  country text, 
+  review_average double precision, 
+  review_count bigint, 
+  review_tags text[], 
+  dist_meters double precision, 
+  active_users bigint,
+  preview_avatars jsonb
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+BEGIN
+  RETURN QUERY
+  WITH place_data AS (
+    SELECT
+      pv.id,
+      pv.name,
+      pv.category,
+      pv.lat,
+      pv.lng,
+      pv.street,
+      pv.house_number,
+      pv.city,
+      pv.state,
+      pv.country_code as country,
+      pv.review_average,
+      pv.review_count,
+      pv.review_tags,
+      st_distance(
+        st_setsrid(st_makepoint(pv.lng, pv.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+      ) AS dist_meters,
+      get_active_users_with_avatars(pv.id, requesting_user_id, 5) as users_info
+    FROM places_view pv
+    INNER JOIN profile_favorite_places pfp ON pfp.place_id = pv.id
+    WHERE pfp.user_id = requesting_user_id
+  )
+  SELECT
+    pd.id,
+    pd.name,
+    pd.category,
+    pd.lat,
+    pd.lng,
+    pd.street,
+    pd.house_number,
+    pd.city,
+    pd.state,
+    pd.country,
+    pd.review_average,
+    pd.review_count,
+    pd.review_tags,
+    pd.dist_meters,
+    (pd.users_info).count as active_users,
+    (SELECT jsonb_agg(jsonb_build_object('user_id', (a).user_id, 'url', (a).url)) 
+     FROM unnest((pd.users_info).avatars) a) as preview_avatars
+  FROM place_data pd
+  ORDER BY pd.dist_meters ASC;
+END;
+$function$;
+
+-- search_places_by_favorites
+CREATE OR REPLACE FUNCTION public.search_places_by_favorites(
+  user_lat double precision, 
+  user_lng double precision, 
+  radius_meters double precision, 
+  filter_categories text[] DEFAULT NULL::text[], 
+  max_results integer DEFAULT 50, 
+  requesting_user_id uuid DEFAULT NULL::uuid
+)
+RETURNS TABLE(
+  id uuid, 
+  name text, 
+  category text, 
+  lat double precision, 
+  lng double precision, 
+  street text, 
+  house_number text, 
+  city text, 
+  state text, 
+  country text, 
+  total_score integer, 
+  active_users bigint, 
+  preview_avatars jsonb,
+  favorites_count bigint, 
+  dist_meters double precision, 
+  review_average double precision, 
+  review_count bigint, 
+  review_tags text[]
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+BEGIN
+  RETURN QUERY
+  WITH place_data AS (
+    SELECT
+      p.id,
+      p.name,
+      p.category,
+      p.lat,
+      p.lng,
+      p.street,
+      p.house_number,
+      p.city,
+      p.state,
+      p.country_code as country,
+      p.total_score,
+      get_active_users_with_avatars(p.id, requesting_user_id, 5) as users_info,
+      (
+          SELECT count(*)
+          FROM profile_favorite_places f
+          WHERE f.place_id = p.id
+            AND (requesting_user_id IS NULL OR f.user_id != requesting_user_id)
+      ) AS favorites_count,
+      st_distance(
+        st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+      ) AS dist_meters,
+      COALESCE(reviews.avg_stars, 0) as review_average,
+      COALESCE(reviews.total_reviews, 0) as review_count,
+      COALESCE(reviews.top_tags, ARRAY[]::text[]) as review_tags
+    FROM places p
+    LEFT JOIN LATERAL (
+      SELECT 
+          AVG(psr.stars)::float as avg_stars,
+          COUNT(psr.id) as total_reviews,
+          ARRAY(
+              SELECT t.key
+              FROM place_review_tag_relations prtr
+              JOIN place_review_tags t ON t.id = prtr.tag_id
+              JOIN place_social_reviews psr2 ON psr2.id = prtr.review_id
+              WHERE psr2.place_id = p.id
+              GROUP BY t.key
+              ORDER BY COUNT(*) DESC
+              LIMIT 3
+          ) as top_tags
+      FROM place_social_reviews psr
+      WHERE psr.place_id = p.id
+    ) reviews ON true
+    WHERE st_dwithin(
+          st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+          st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+          radius_meters
+        )
+      AND (filter_categories IS NULL OR lower(p.category) = ANY(SELECT lower(c) FROM unnest(filter_categories) AS c))
+      AND EXISTS (
+        SELECT 1 FROM profile_favorite_places f 
+        WHERE f.place_id = p.id 
+          AND (requesting_user_id IS NULL OR f.user_id != requesting_user_id)
+      )
+  )
+  SELECT
+    pd.id,
+    pd.name,
+    pd.category,
+    pd.lat,
+    pd.lng,
+    pd.street,
+    pd.house_number,
+    pd.city,
+    pd.state,
+    pd.country,
+    pd.total_score,
+    (pd.users_info).count as active_users,
+    (SELECT jsonb_agg(jsonb_build_object('user_id', (a).user_id, 'url', (a).url)) 
+     FROM unnest((pd.users_info).avatars) a) as preview_avatars,
+    pd.favorites_count,
+    pd.dist_meters,
+    pd.review_average,
+    pd.review_count,
+    pd.review_tags
+  FROM place_data pd
+  ORDER BY pd.favorites_count DESC, pd.dist_meters ASC
+  LIMIT max_results;
+END;
+$function$;
+
+-- search_places_autocomplete (keep minimal - no avatars for performance)
+CREATE OR REPLACE FUNCTION public.search_places_autocomplete(
+  query_text text, 
+  user_lat double precision DEFAULT NULL::double precision, 
+  user_lng double precision DEFAULT NULL::double precision, 
+  radius_meters double precision DEFAULT 50000, 
+  max_results integer DEFAULT 10, 
+  requesting_user_id uuid DEFAULT NULL::uuid
+)
+RETURNS TABLE(
+  id uuid, 
+  name text, 
+  category text, 
+  lat double precision, 
+  lng double precision, 
+  street text, 
+  house_number text, 
+  city text, 
+  state text, 
+  country text, 
+  active_users integer, 
+  preview_avatars jsonb,
+  dist_meters double precision, 
+  relevance_score double precision
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  normalized_query text;
+BEGIN
+  normalized_query := immutable_unaccent(query_text);
+  
+  RETURN QUERY
+  WITH matched_places AS (
+    SELECT
+      p.id,
+      p.name,
+      p.category,
+      p.lat,
+      p.lng,
+      p.street,
+      p.house_number,
+      p.city,
+      p.state,
+      p.country_code as country,
+      get_eligible_active_users_count(p.id, requesting_user_id)::integer as active_users,
+      NULL::jsonb as preview_avatars,
+      CASE
+        WHEN user_lat IS NOT NULL AND user_lng IS NOT NULL THEN
+          st_distance(
+            st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+            st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+          )
+        ELSE NULL
+      END AS dist_meters,
+      (1.0 - (normalized_query <<-> immutable_unaccent(p.name))) * 100.0 as relevance_score
+    FROM places p
+    WHERE 
+      p.active = true
+      AND normalized_query <% immutable_unaccent(p.name)
+      AND (
+        user_lat IS NULL 
+        OR user_lng IS NULL 
+        OR st_dwithin(
+          st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+          st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+          radius_meters
+        )
+      )
+  )
+  SELECT * FROM matched_places mp
+  ORDER BY 
+    mp.relevance_score DESC,
+    mp.active_users DESC
+  LIMIT max_results;
+END;
+$function$;
+
+-- get_ranked_places
+CREATE OR REPLACE FUNCTION get_ranked_places(
+  user_lat float,
+  user_lng float,
+  radius_meters float,
+  rank_by text DEFAULT 'total',
+  max_results int DEFAULT 20,
+  requesting_user_id uuid DEFAULT NULL
+)
+RETURNS TABLE (
+  id uuid,
+  name text,
+  category text,
+  lat float,
+  lng float,
+  street text,
+  house_number text,
+  city text,
+  state text,
+  country text,
+  total_checkins integer,
+  monthly_checkins integer,
+  total_matches integer,
+  monthly_matches integer,
+  review_average double precision,
+  review_count bigint,
+  review_tags text[],
+  dist_meters float,
+  rank_position integer,
+  active_users bigint,
+  preview_avatars jsonb
+)
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  max_matches_val float;
+  max_checkins_val float;
+  use_monthly_data boolean;
+BEGIN
+  use_monthly_data := (rank_by = 'monthly');
+
+  IF use_monthly_data THEN
+    SELECT 
+      GREATEST(MAX(p.monthly_matches), 1)::float,
+      GREATEST(MAX(p.monthly_checkins), 1)::float
+    INTO max_matches_val, max_checkins_val
+    FROM places_view p
+    WHERE st_dwithin(
+      st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+      st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+      radius_meters
+    )
+    AND (p.monthly_matches > 0 OR p.monthly_checkins > 0);
+  ELSE
+    SELECT 
+      GREATEST(MAX(p.total_matches), 1)::float,
+      GREATEST(MAX(p.total_checkins), 1)::float
+    INTO max_matches_val, max_checkins_val
+    FROM places_view p
+    WHERE st_dwithin(
+      st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+      st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+      radius_meters
+    )
+    AND (p.total_matches > 0 OR p.total_checkins > 0);
+  END IF;
+
+  RETURN QUERY
+  WITH ranked AS (
+    SELECT
+      p.id,
+      p.name,
+      p.category,
+      p.lat,
+      p.lng,
+      p.street,
+      p.house_number,
+      p.city,
+      p.state,
+      p.country_code as country,
+      p.total_checkins,
+      p.monthly_checkins,
+      p.total_matches,
+      p.monthly_matches,
+      p.review_average,
+      p.review_count,
+      p.review_tags,
+      st_distance(
+        st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
+      ) AS dist_meters,
+      CASE 
+        WHEN use_monthly_data THEN
+          CASE
+            WHEN rank_by = 'matches' THEN p.monthly_matches::float
+            WHEN rank_by = 'checkins' THEN p.monthly_checkins::float
+            ELSE 
+              (0.6 * (p.monthly_matches::float / max_matches_val)) + 
+              (0.4 * (p.monthly_checkins::float / max_checkins_val))
+          END
+        ELSE
+          CASE
+            WHEN rank_by = 'matches' THEN p.total_matches::float
+            WHEN rank_by = 'checkins' THEN p.total_checkins::float
+            ELSE 
+              (0.6 * (p.total_matches::float / max_matches_val)) + 
+              (0.4 * (p.total_checkins::float / max_checkins_val))
+          END
+      END as composite_score,
+      get_active_users_with_avatars(p.id, requesting_user_id, 3) as users_info
+    FROM places_view p
+    WHERE
+      st_dwithin(
+        st_setsrid(st_makepoint(p.lng, p.lat), 4326)::geography,
+        st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,
+        radius_meters
+      )
+      AND (
+        (use_monthly_data AND (p.monthly_matches > 0 OR p.monthly_checkins > 0))
+        OR (NOT use_monthly_data AND (p.total_matches > 0 OR p.total_checkins > 0))
+      )
+  )
+  SELECT
+    r.id,
+    r.name,
+    r.category,
+    r.lat,
+    r.lng,
+    r.street,
+    r.house_number,
+    r.city,
+    r.state,
+    r.country,
+    r.total_checkins,
+    r.monthly_checkins,
+    r.total_matches,
+    r.monthly_matches,
+    r.review_average,
+    r.review_count,
+    r.review_tags,
+    r.dist_meters,
+    DENSE_RANK() OVER (ORDER BY r.composite_score DESC, r.dist_meters ASC)::integer as rank_position,
+    (r.users_info).count as active_users,
+    (SELECT jsonb_agg(jsonb_build_object('user_id', (a).user_id, 'url', (a).url)) 
+     FROM unnest((r.users_info).avatars) a) as preview_avatars
+  FROM ranked r
+  ORDER BY r.composite_score DESC, r.dist_meters ASC
+  LIMIT max_results;
+END;
+$$;

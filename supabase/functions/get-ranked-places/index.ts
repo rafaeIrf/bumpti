@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 serve(async (req) => {
@@ -70,7 +71,7 @@ serve(async (req) => {
       });
     }
 
-    const results = (places || []).map((p: any) => {
+    const results = await Promise.all((places || []).map(async (p: any) => {
       // Build address parts
       const addressParts = [];
       if (p.street && p.house_number) {
@@ -79,8 +80,11 @@ serve(async (req) => {
         addressParts.push(p.street);
       }
 
+      // Sign preview avatar URLs (UserAvatar[] with user_id)
+      const signedAvatars = await signUserAvatars(supabase, p.preview_avatars);
+
       // Destructure to remove raw review fields from top-level response
-      const { review_average, review_count, review_tags, ...placeData } = p;
+      const { review_average, review_count, review_tags, preview_avatars, ...placeData } = p;
 
       return {
         placeId: p.id,
@@ -99,13 +103,14 @@ serve(async (req) => {
         distance: p.dist_meters,
         rankPosition: p.rank_position,
         activeUsers: p.active_users || 0,
+        preview_avatars: signedAvatars.length > 0 ? signedAvatars : undefined,
         review: p.review_count > 0 ? {
           average: p.review_average,
           count: p.review_count,
           tags: p.review_tags
         } : undefined,
       };
-    });
+    }));
 
     return new Response(JSON.stringify(results), {
       status: 200,

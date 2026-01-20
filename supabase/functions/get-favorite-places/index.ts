@@ -1,5 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +27,7 @@ interface FavoritePlace {
   review_tags: string[];
   dist_meters: number;
   active_users: number;
+  preview_avatars: { user_id: string; url: string }[] | null;
 }
 
 Deno.serve(async (req) => {
@@ -99,23 +102,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    const results = (places || []).map((p: FavoritePlace) => ({
-      placeId: p.id,
-      name: p.name,
-      types: p.category ? [p.category] : [],
-      latitude: p.lat,
-      longitude: p.lng,
-      formattedAddress: [p.street, p.house_number].filter(Boolean).join(", "),
-      distance: Math.round(p.dist_meters),
-      active_users: p.active_users,
-      review:
-        p.review_count > 0
-          ? {
-              average: p.review_average,
-              count: p.review_count,
-              tags: p.review_tags,
-            }
-          : undefined,
+    // Use admin client to sign avatar URLs
+    const adminSupabase = createAdminClient();
+
+    const results = await Promise.all((places || []).map(async (p: FavoritePlace) => {
+      const signedAvatars = await signUserAvatars(adminSupabase, p.preview_avatars);
+      return {
+        placeId: p.id,
+        name: p.name,
+        types: p.category ? [p.category] : [],
+        latitude: p.lat,
+        longitude: p.lng,
+        formattedAddress: [p.street, p.house_number].filter(Boolean).join(", "),
+        distance: Math.round(p.dist_meters),
+        active_users: p.active_users,
+        preview_avatars: signedAvatars.length > 0 ? signedAvatars : undefined,
+        review:
+          p.review_count > 0
+            ? {
+                average: p.review_average,
+                count: p.review_count,
+                tags: p.review_tags,
+              }
+            : undefined,
+      };
     }));
 
     return new Response(JSON.stringify({ places: results }), {

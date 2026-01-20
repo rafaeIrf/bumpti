@@ -54,6 +54,7 @@ export async function searchPlacesByText(
       longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
+      preview_avatars: p.preview_avatars,
       review: p.review
     };
   }) || [];
@@ -101,6 +102,7 @@ export async function getNearbyPlaces(
       longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
+      preview_avatars: p.preview_avatars,
       total_checkins: p.total_checkins,
       monthly_checkins: p.monthly_checkins,
       rank_position: p.rank_position,
@@ -148,6 +150,7 @@ export async function getRankedPlaces(
       monthly_matches: p.monthlyMatches || 0,
       rank: p.rankPosition,
       active_users: p.activeUsers || 0,
+      preview_avatars: p.preview_avatars,
       review: p.review,
     };
   });
@@ -185,6 +188,7 @@ export async function getPlacesByFavorites(
       longitude: p.longitude ?? p.lng,
       types: [p.category], // put category in types
       active_users: p.active_users,
+      preview_avatars: p.preview_avatars,
       favorites_count: p.favorites_count,
       rating: p.rating || p.total_score,
       review: p.review
@@ -222,6 +226,7 @@ export async function getTrendingPlaces(
       longitude: p.longitude ?? p.lng,
       types: p.types,
       active_users: p.active_users,
+      preview_avatars: p.preview_avatars,
       review: p.review,
     })),
   };

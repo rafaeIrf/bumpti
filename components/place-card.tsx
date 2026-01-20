@@ -1,8 +1,10 @@
 import { HeartIcon, UsersIcon } from "@/assets/icons";
+import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import type { UserAvatar } from "@/modules/places/types";
 import { formatDistance } from "@/utils/distance";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -19,6 +21,7 @@ interface PlaceCardData {
   address: string;
   distance: number;
   activeUsers: number;
+  activeUserAvatars?: UserAvatar[]; // Avatars with user_id for real-time removal
   tag?: string;
   rank?: number; // Ranking position (1-based)
   review?: {
@@ -77,6 +80,8 @@ export function PlaceCard({
   };
 
   const hasActiveUsers = place.activeUsers > 0;
+  const hasAvatars =
+    place.activeUserAvatars && place.activeUserAvatars.length > 0;
   const hasReview = place.review && place.review.average > 0;
 
   return (
@@ -146,36 +151,46 @@ export function PlaceCard({
           )}
         </View>
 
-        {/* Footer: Live Status + Rating */}
+        {/* Footer: Live Status */}
         <View style={styles.footerRow}>
-          {/* Live Status */}
-          <View
-            style={[
-              styles.liveContainer,
-              hasActiveUsers && { backgroundColor: "rgba(29, 155, 240, 0.1)" },
-            ]}
-          >
-            <UsersIcon
-              width={12}
-              height={12}
-              color={hasActiveUsers ? colors.accent : colors.textSecondary}
+          {hasAvatars ? (
+            <StackedAvatars
+              avatars={place.activeUserAvatars!}
+              totalCount={place.activeUsers}
+              maxVisible={4}
+              size={36}
             />
-            <ThemedText
+          ) : (
+            <View
               style={[
-                styles.liveText,
-                hasActiveUsers && { color: colors.accent },
+                styles.liveContainer,
+                hasActiveUsers && {
+                  backgroundColor: "rgba(29, 155, 240, 0.1)",
+                },
               ]}
             >
-              {t(
-                place.activeUsers === 0
-                  ? "place.noConnections"
-                  : place.activeUsers === 1
-                    ? "place.onePersonConnecting"
-                    : "place.manyPeopleConnecting",
-                { count: place.activeUsers }
-              )}
-            </ThemedText>
-          </View>
+              <UsersIcon
+                width={12}
+                height={12}
+                color={hasActiveUsers ? colors.accent : colors.textSecondary}
+              />
+              <ThemedText
+                style={[
+                  styles.liveText,
+                  hasActiveUsers && { color: colors.accent },
+                ]}
+              >
+                {t(
+                  place.activeUsers === 0
+                    ? "place.noConnections"
+                    : place.activeUsers === 1
+                      ? "place.onePersonConnecting"
+                      : "place.manyPeopleConnecting",
+                  { count: place.activeUsers }
+                )}
+              </ThemedText>
+            </View>
+          )}
         </View>
       </View>
     </AnimatedPressable>

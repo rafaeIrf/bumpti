@@ -502,6 +502,7 @@ export default function CategoryResultsScreen() {
         address: item.formattedAddress ?? "",
         distance: item.distance,
         activeUsers: (item as any).active_users || 0,
+        activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,

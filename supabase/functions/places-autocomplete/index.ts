@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
@@ -71,6 +72,13 @@ serve(async (req) => {
         });
     }
 
+    // Use admin client to sign avatar URLs
+    const adminSupabase = createAdminClient();
+
+    // NOTE: Skipping avatar fetch in autocomplete for performance
+    // Avatars will be fetched when user selects a place
+    const avatarsMap = new Map<string, { count: number; avatars: string[] }>();
+
     const results = (localPlaces || []).map((p: any) => {
         const addressParts = [];
         
@@ -80,13 +88,14 @@ serve(async (req) => {
             addressParts.push(p.street);
         }
 
-
-        // Destructure to remove raw review fields from top-level response
-        const { review_average, review_count, review_tags, ...placeData } = p;
+        // Destructure to remove raw fields from top-level response
+        const { review_average, review_count, review_tags, preview_avatars, ...placeData } = p;
         
         return {
             ...placeData,
             formatted_address: addressParts.join(", "),
+            // active_users already comes from RPC
+            preview_avatars: undefined, // No avatars in autocomplete for performance
             review: p.review_count > 0 ? {
                 average: p.review_average,
                 count: p.review_count,
