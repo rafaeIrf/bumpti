@@ -10,6 +10,7 @@ export type PresenceRecord = {
   active: boolean;
   lat: number | null;
   lng: number | null;
+  entry_type: 'physical' | 'checkin_plus';
 };
 
 export async function refreshPresenceForPlace(

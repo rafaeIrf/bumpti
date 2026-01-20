@@ -38,6 +38,7 @@ export type ActiveUserAtPlace = {
   place_id?: string | null;
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
+  entry_type?: "physical" | "checkin_plus"; // NEW: How user entered the place
 };
 
 export type ActiveUsersResponse = {

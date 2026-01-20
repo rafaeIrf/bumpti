@@ -11,6 +11,8 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
+const MAX_DISTANCE_METERS = 60;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -75,7 +77,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // FIRST: Check for existing active presence - bypass all validations if exists
+    // Calculate distance if coordinates available
+    let isPhysicallyClose = false;
+    let distanceInMeters: number | null = null;
+    
+    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
+      distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000;
+      isPhysicallyClose = distanceInMeters <= MAX_DISTANCE_METERS;
+      console.log(`Distance: ${distanceInMeters.toFixed(0)}m, isPhysicallyClose: ${isPhysicallyClose}`);
+    }
+
+    // FIRST: Check for existing active presence
     const existingPresence = await refreshPresenceForPlace(
       serviceClient,
       user.id,
@@ -83,6 +95,26 @@ Deno.serve(async (req) => {
     );
 
     if (existingPresence) {
+      // If user was using checkin_plus but is now physically close, upgrade to physical
+      if (existingPresence.entry_type === 'checkin_plus' && isPhysicallyClose) {
+        console.log(`Upgrading user ${user.id} from checkin_plus to physical at ${place_id}`);
+        const { data: upgraded, error: upgradeError } = await serviceClient
+          .from("user_presences")
+          .update({ entry_type: 'physical', lat: userLat, lng: userLng })
+          .eq("id", existingPresence.id)
+          .select()
+          .single();
+        
+        if (upgradeError) {
+          console.error("Error upgrading entry_type:", upgradeError);
+        } else {
+          return new Response(JSON.stringify({ presence: upgraded }), {
+            status: 200,
+            headers: corsHeaders,
+          });
+        }
+      }
+      
       console.log(`User ${user.id} has existing presence at ${place_id}, refreshing`);
       return new Response(JSON.stringify({ presence: existingPresence }), {
         status: 200,
@@ -91,20 +123,26 @@ Deno.serve(async (req) => {
     }
 
     // SECOND: Validate distance for NEW entries only
-    // Skip distance validation if is_checkin_plus is true AND user has credits
     let usedCheckinPlus = false;
     
-    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
-      const distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000; // Convert km to meters
-      const MAX_DISTANCE_METERS = 60;
-
-      if (false) {
+    if (!isPhysicallyClose) {
+      if (is_checkin_plus) {
+        // User is far but using Check-in+ - allow entry
+        usedCheckinPlus = true;
+        console.log(`User ${user.id} entering via Check-in+ (distance: ${distanceInMeters?.toFixed(0) ?? 'unknown'}m)`);
       } else {
-        console.log(`Distance validation passed: ${distanceInMeters.toFixed(0)}m`);
+        // User is far and NOT using Check-in+ - reject
+        return new Response(JSON.stringify({ error: "too_far" }), {
+          status: 400,
+          headers: corsHeaders,
+        });
       }
     } else {
-      console.warn("Distance validation skipped - missing coordinates");
+      console.log(`Distance validation passed: ${distanceInMeters?.toFixed(0)}m`);
     }
+
+    // Determine entry_type based on how user is entering
+    const entryType = usedCheckinPlus ? 'checkin_plus' : 'physical';
 
     const { data, error } = await serviceClient
       .from("user_presences")
@@ -114,11 +152,14 @@ Deno.serve(async (req) => {
         lat: userLat,
         lng: userLng,
         active: true,
+        entry_type: entryType,
       })
       .select()
       .single();
 
     if (error) throw error;
+
+    console.log(`Created presence for user ${user.id} at ${place_id} with entry_type: ${entryType}`);
 
     // Consume check-in credit if used
     let remainingCredits: number | undefined;
@@ -130,12 +171,9 @@ Deno.serve(async (req) => {
       
       if (decrementError) {
         console.error("Error decrementing check-in credit:", decrementError);
-        // Note: We don't throw here because the entry was successful
-        // The credit will be manually adjusted if needed
       } else {
         console.log(`Check-in credit consumed for user ${user.id}`);
         
-        // Fetch updated credits to return in response
         const { data: updatedCredits } = await serviceClient
           .from("user_checkin_credits")
           .select("credits")
@@ -148,7 +186,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       presence: data,
-      remaining_credits: remainingCredits, // Only included when check-in+ was used
+      remaining_credits: remainingCredits,
     }), {
       status: 201,
       headers: corsHeaders,
