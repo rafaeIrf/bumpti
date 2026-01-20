@@ -1,16 +1,16 @@
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  CoffeeIcon,
-  FlagIcon,
+  BriefcaseIcon,
+  CigarreteIcon,
+  GlobeIcon,
   GraduationCapIcon,
   HeartIcon,
   MapIcon,
   MapPinIcon,
-  ShoppingBagIcon,
-  SlidersHorizontalIcon,
+  PersonStandingIcon,
+  RulerIcon,
   SparklesIcon,
-  UserRoundIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -266,7 +266,7 @@ export default function ProfileEditScreen() {
             subtitle={t("screens.profile.profileEdit.personalInfo.subtitle")}
           />
           <EditRow
-            icon={UserRoundIcon}
+            icon={PersonStandingIcon}
             label={t("screens.profile.profileEdit.personalInfo.gender")}
             value={getTranslatedValue("gender", profile?.gender)}
             onPress={() => handleFieldPress("gender")}
@@ -283,7 +283,7 @@ export default function ProfileEditScreen() {
             onPress={() => handleFieldPress("relationshipStatus")}
           />
           <EditRow
-            icon={SlidersHorizontalIcon}
+            icon={RulerIcon}
             label={t("screens.profile.profileEdit.personalInfo.height")}
             value={profile?.height_cm ? `${profile.height_cm} cm` : ""}
             onPress={() => handleFieldPress("height")}
@@ -297,13 +297,13 @@ export default function ProfileEditScreen() {
             subtitle={t("screens.profile.profileEdit.lifestyle.subtitle")}
           />
           <EditRow
-            icon={ShoppingBagIcon}
+            icon={BriefcaseIcon}
             label={t("screens.profile.profileEdit.lifestyle.profession")}
             value={professionValue}
             onPress={() => handleFieldPress("profession")}
           />
           <EditRow
-            icon={CoffeeIcon}
+            icon={CigarreteIcon}
             label={t("screens.profile.profileEdit.lifestyle.smoking")}
             value={getTranslatedValue("smoking", profile?.smoking_key)}
             onPress={() => handleFieldPress("smoking")}
@@ -347,7 +347,7 @@ export default function ProfileEditScreen() {
             onPress={() => handleFieldPress("location")}
           />
           <EditRow
-            icon={FlagIcon}
+            icon={GlobeIcon}
             label={t("screens.profile.profileEdit.more.languages")}
             value={languageNames}
             onPress={() => handleFieldPress("languages")}

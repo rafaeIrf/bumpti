@@ -1,19 +1,27 @@
-import { NavigationIcon, StarIcon } from "@/assets/icons";
+import {
+  BriefcaseIcon,
+  CigarreteIcon,
+  GlobeIcon,
+  GraduationCapIcon,
+  MapPinIcon,
+  RulerIcon,
+  SparklesIcon,
+  StarIcon,
+} from "@/assets/icons";
 import { ConfirmationModal } from "@/components/confirmation-modal";
-import Button from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
 import {
   EDUCATION_OPTIONS,
   INTENTION_OPTIONS,
-  RELATIONSHIP_OPTIONS,
   SMOKING_OPTIONS,
   ZODIAC_OPTIONS,
 } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useUserActions } from "@/hooks/use-user-actions";
-import { t } from "@/modules/locales";
+import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
 import { prefetchImages } from "@/utils/image-prefetch";
@@ -21,7 +29,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { Divider } from "./ui/divider";
 
 export interface UserProfile {
   id: string;
@@ -49,18 +56,23 @@ interface UserProfileCardProps {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_PADDING = spacing.lg;
-const IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2;
-const IMAGE_HEIGHT = IMAGE_WIDTH * (4 / 3); // Aspect ratio 3:4
+// Use nearly full screen width for "Hero" feel, slightly padded if needed or full width
+const CARD_PADDING = 0;
+const IMAGE_WIDTH = SCREEN_WIDTH;
+const IMAGE_HEIGHT = IMAGE_WIDTH * 1.4; // Taller hero aspect ratio
 
 export function UserProfileCard({
   profile,
   currentPlaceId,
   onBlockSuccess,
+  places,
 }: UserProfileCardProps) {
   const colors = useThemeColors();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Fetch current user full profile for intersections
+  const { profile: currentUserProfile } = useProfile({ enabled: true });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -83,54 +95,81 @@ export function UserProfileCard({
 
   const isOwnProfile = currentUserId === profile.user_id;
 
+  // Helpers for labels
+  const getOptionLabel = (options: any[], value: any) => {
+    if (!value) return null;
+    const option = options.find((opt) => opt.id === value);
+    return option ? t(option.labelKey) : value;
+  };
+
   const professionText = [profile.job_title, profile.company_name]
     .filter(Boolean)
     .join(" • ");
+
+  const educationText = getOptionLabel(
+    EDUCATION_OPTIONS,
+    profile.education_level
+  );
   const heightText =
     typeof profile.height_cm === "number"
-      ? `${profile.height_cm} cm`
-      : undefined;
-  const smokingLabel = React.useMemo(() => {
-    if (!profile.smoking_habit) return null;
-    const option = SMOKING_OPTIONS.find(
-      (opt) => opt.id === profile.smoking_habit
-    );
-    return option ? t(option.labelKey) : profile.smoking_habit;
-  }, [profile.smoking_habit]);
-  const relationshipLabel = React.useMemo(() => {
-    if (!profile.relationship_status) return null;
-    const option = RELATIONSHIP_OPTIONS.find(
-      (opt) => opt.id === profile.relationship_status
-    );
-    return option ? t(option.labelKey) : profile.relationship_status;
-  }, [profile.relationship_status]);
-  const educationLabel = React.useMemo(() => {
-    if (!profile.education_level) return null;
-    const option = EDUCATION_OPTIONS.find(
-      (opt) => opt.id === profile.education_level
-    );
-    return option ? t(option.labelKey) : profile.education_level;
-  }, [profile.education_level]);
-  const zodiacLabel = useMemo(() => {
-    if (!profile.zodiac_sign) return null;
-    const option = ZODIAC_OPTIONS.find((opt) => opt.id === profile.zodiac_sign);
-    return option ? t(option.labelKey) : profile.zodiac_sign;
-  }, [profile.zodiac_sign]);
-  const languageLabels =
-    profile.languages && profile.languages.length > 0
-      ? profile.languages.map((code) => {
-          const key = `languages.${code}`;
-          const translated = t(key);
-          return translated && translated !== key ? translated : code;
-        })
-      : [];
+      ? getCurrentLanguage() === "en" || getCurrentLanguage() === "en-US"
+        ? `${Math.floor(profile.height_cm / 30.48)} ft ${Math.round(
+            (profile.height_cm % 30.48) / 2.54
+          )} pol.`
+        : `${(profile.height_cm / 100).toFixed(2)}m`
+      : null;
+  const zodiacText = getOptionLabel(ZODIAC_OPTIONS, profile.zodiac_sign);
+  const smokingText = getOptionLabel(SMOKING_OPTIONS, profile.smoking_habit);
 
-  // Reset photo index when profile changes
+  const hasBasicInfo =
+    !!profile.location ||
+    !!heightText ||
+    (profile.languages && profile.languages.length > 0);
+  const hasLifestyle = !!zodiacText || !!smokingText;
+
+  // --- Logic for Common Connections ---
+  const commonIntentions = useMemo(() => {
+    // Defensive checks for types
+    const myIntentions = currentUserProfile?.intentions as string[] | undefined;
+    const theirIntentions = profile.intentions as string[] | undefined;
+
+    if (!myIntentions || !theirIntentions) return [];
+
+    // Ensure accurate string comparison
+    return theirIntentions.filter((i) => myIntentions.includes(i));
+  }, [currentUserProfile, profile.intentions]);
+
+  const commonPlaces = useMemo(() => {
+    // Logic to compare place IDs
+    // profile.favorite_places can be strings or objects
+
+    // FIX: currentUserProfile uses favoritePlaces (camelCase)
+    const myPlaces =
+      (currentUserProfile as any)?.favoritePlaces?.map((p: any) =>
+        typeof p === "string" ? p : p.id
+      ) ?? [];
+
+    if (myPlaces.length === 0 || !profile.favorite_places) return [];
+
+    return profile.favorite_places.filter((p) => {
+      const pId = typeof p === "string" ? p : p.id;
+      return myPlaces.includes(pId);
+    });
+  }, [currentUserProfile, profile.favorite_places]);
+
+  // Check match (allow own profile to see matches for preview purposes)
+  const isMatchIntention = (i: string) =>
+    !isOwnProfile && commonIntentions.includes(i);
+
+  const isMatchPlace = (pId: string) =>
+    !isOwnProfile &&
+    commonPlaces.some((cp) => (typeof cp === "string" ? cp : cp.id) === pId);
+
+  // --- Photo Navigation ---
   useEffect(() => {
     setCurrentPhotoIndex(0);
   }, [profile.user_id]);
 
-  // Prefetch photos for smoother swaps
   useEffect(() => {
     if (profile.photos.length > 0) {
       prefetchImages(profile.photos);
@@ -147,30 +186,70 @@ export function UserProfileCard({
     );
   };
 
-  const getVisitCount = () => {
-    if (!currentPlaceId || !profile.visited_places_count) return 0;
-    return profile.visited_places_count || 0;
+  // --- Render Helpers ---
+
+  // Section Component
+  const Section = ({
+    title,
+    children,
+    style,
+  }: {
+    title: string;
+    children: React.ReactNode;
+    style?: any;
+  }) => (
+    <View style={[styles.sectionContainer, style]}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+
+  // Info Row Component (Label -> Icon + Value)
+  const InfoRow = ({
+    label,
+    icon,
+    value,
+  }: {
+    label: string;
+    icon: React.ReactNode;
+    value: string | null | undefined;
+  }) => {
+    if (!value) return null;
+    return (
+      <View style={styles.infoRowContainer}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <View style={styles.infoValueRow}>
+          {icon}
+          <Text style={styles.infoValueText}>{value}</Text>
+        </View>
+        <View style={styles.separator} />
+      </View>
+    );
   };
 
-  const isFavoritePlace = () => {
-    if (!currentPlaceId || !profile.favorite_places) return false;
-    return profile.favorite_places.some((place) => {
-      const placeId = typeof place === "string" ? place : place.id;
-      return placeId === currentPlaceId;
-    });
-  };
-
-  return (
+  const renderTag = (label: string, icon?: React.ReactNode, blue?: boolean) => (
     <View
+      key={label}
       style={[
-        styles.card,
+        styles.tag,
         {
-          backgroundColor: colors.background,
-          borderColor: colors.border,
+          backgroundColor: blue
+            ? "rgba(41, 151, 255, 0.15)"
+            : "rgba(255, 255, 255, 0.1)",
         },
+        blue && { borderColor: "rgba(41, 151, 255, 0.3)", borderWidth: 1 },
       ]}
     >
-      {/* Photo carousel */}
+      {icon}
+      <Text style={[styles.tagText, { color: blue ? "#2997FF" : "#E7E9EA" }]}>
+        {label}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={[styles.card, { backgroundColor: "#000000" }]}>
+      {/* --- HERO PHOTO SECTION --- */}
       <View style={styles.carouselContainer}>
         <Animated.View
           key={currentPhotoIndex}
@@ -185,260 +264,246 @@ export function UserProfileCard({
           />
         </Animated.View>
 
-        {/* Photo navigation - invisible pressable areas */}
+        {/* Indicators at TOP */}
+        <View style={styles.indicatorsContainer}>
+          {profile.photos.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.indicator,
+                {
+                  backgroundColor:
+                    index === currentPhotoIndex
+                      ? "#FFFFFF"
+                      : "rgba(255, 255, 255, 0.4)",
+                },
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Navigation Areas */}
         {profile.photos.length > 1 && (
           <>
-            <Pressable
-              onPress={prevPhoto}
-              style={styles.navAreaLeft}
-              hitSlop={8}
-            />
-            <Pressable
-              onPress={nextPhoto}
-              style={styles.navAreaRight}
-              hitSlop={8}
-            />
-
-            {/* Photo indicators */}
-            <View style={styles.indicatorsContainer}>
-              {profile.photos.map((photo, index) => (
-                <View
-                  key={`photo-${photo}-${index}`}
-                  style={[
-                    styles.indicator,
-                    {
-                      backgroundColor:
-                        index === currentPhotoIndex
-                          ? "#FFFFFF"
-                          : "rgba(255, 255, 255, 0.3)",
-                    },
-                  ]}
-                />
-              ))}
-            </View>
+            <Pressable onPress={prevPhoto} style={styles.navAreaLeft} />
+            <Pressable onPress={nextPhoto} style={styles.navAreaRight} />
           </>
         )}
 
-        {/* Overlay with gradient, name/age, badges */}
-        <View style={styles.overlayContainer} pointerEvents="box-none">
-          <LinearGradient
-            colors={["transparent", colors.background]}
-            locations={[0, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.overlayContent}>
-            <View style={styles.nameAgeContainer}>
-              <Text style={[styles.nameAge, { color: colors.text }]}>
-                {profile.name}
-                {profile.age ? `, ${profile.age}` : ""}
-              </Text>
+        {/* Overlay with Name/Age - Internal Bottom */}
+        <LinearGradient
+          colors={[
+            "transparent",
+            "rgba(0,0,0,0.3)",
+            "rgba(0,0,0,0.9)",
+            "#000000",
+          ]}
+          locations={[0.4, 0.6, 0.9, 1]}
+          style={styles.overlayGradient}
+          pointerEvents="none"
+        />
+
+        <View style={styles.overlayContent} pointerEvents="none">
+          <View style={styles.nameRow}>
+            <Text style={styles.nameText}>
+              {profile.name}
+              <Text style={styles.ageText}> {profile.age}</Text>
+            </Text>
+            {/* Verification Badge - BLUE */}
+            {profile.verification_status === "verified" && (
               <VerificationBadge
                 verification_status={profile.verification_status}
-                size={20}
+                size={24}
+                color="#2997FF"
               />
-            </View>
-            <View style={styles.badgesContainer}>
-              {profile.entry_type && (
-                <View
-                  style={[
-                    styles.hereNowBadge,
-                    {
-                      backgroundColor: colors.accent,
-                    },
-                  ]}
-                >
-                  <View style={styles.pulseIndicator} />
-                  <Text style={[styles.hereNowText]}>
-                    {profile.entry_type === "checkin_plus"
-                      ? t("userProfile.planningToGo")
-                      : t("userProfile.hereNow")}
-                  </Text>
-                </View>
-              )}
-              {isFavoritePlace() && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: "rgba(22, 24, 28, 0.9)",
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <StarIcon
-                    width={14}
-                    height={14}
-                    color={colors.accent}
-                    fill={colors.accent}
-                  />
-                  <Text style={[styles.badgeText, { color: colors.text }]}>
-                    {t("userProfile.favorite")}
-                  </Text>
-                </View>
-              )}
+            )}
+          </View>
 
-              {getVisitCount() > 0 && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: "rgba(22, 24, 28, 0.9)",
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <NavigationIcon
-                    width={14}
-                    height={14}
-                    color={colors.accent}
-                  />
-                  <Text style={[styles.badgeText, { color: colors.text }]}>
-                    {t("userProfile.visitCount", { count: getVisitCount() })}
+          {/* Job & Education - In Overlay now */}
+          {(professionText || educationText) && (
+            <View style={styles.subtitleRow}>
+              {!!professionText && (
+                <View style={styles.subtitleItem}>
+                  <BriefcaseIcon width={14} height={14} color="#E7E9EA" />
+                  <Text style={styles.subtitleText} numberOfLines={1}>
+                    {professionText}
+                  </Text>
+                </View>
+              )}
+              {!!educationText && (
+                <View style={styles.subtitleItem}>
+                  <GraduationCapIcon width={14} height={14} color="#E7E9EA" />
+                  <Text style={styles.subtitleText} numberOfLines={1}>
+                    {educationText}
                   </Text>
                 </View>
               )}
             </View>
+          )}
+
+          {/* Quick status/location */}
+          <View style={styles.quickStatusRow}>
+            {/* Contextual Tags */}
+            {profile.entry_type === "checkin_plus"
+              ? renderTag(
+                  t("userProfile.planningToGo"),
+                  <SparklesIcon width={12} height={12} color="#2997FF" />,
+                  true
+                )
+              : // Assume here now if found in list
+                profile.entry_type === "physical" &&
+                renderTag(
+                  t("userProfile.hereNow"),
+                  <View style={styles.onlineDot} />,
+                  true
+                )}
           </View>
         </View>
       </View>
 
-      {/* Info section */}
-      <View style={styles.infoSection}>
-        {/* Bio */}
-        {Boolean(profile.bio) && (
-          <View style={styles.bioSection}>
-            <Text style={[styles.bioText, { color: colors.text }]}>
-              {profile.bio}
-            </Text>
-          </View>
+      {/* --- SCROLLABLE DETAILS CONTENT --- */}
+      <View style={styles.contentBody}>
+        {/* BIO */}
+        {!!profile.bio && (
+          <Section title={t("userProfile.sections.about")}>
+            <Text style={styles.bioText}>{profile.bio}</Text>
+          </Section>
         )}
 
-        {/* Details */}
-        {[
-          { key: "work", value: professionText },
-          { key: "location", value: profile.location },
-          { key: "height", value: heightText },
-          { key: "relationship", value: relationshipLabel },
-          { key: "smoking", value: smokingLabel },
-          { key: "education", value: educationLabel },
-          { key: "zodiac", value: zodiacLabel },
-        ].map(
-          (item) =>
-            item.value && (
-              <View key={item.key} style={styles.detailBlock}>
-                <Text
-                  style={[styles.sectionTitle, { color: colors.textSecondary }]}
-                >
-                  {t(`userProfile.${item.key}`).toUpperCase()}
-                </Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {item.value}
-                </Text>
-              </View>
-            )
-        )}
-        {languageLabels.length > 0 && (
-          <View style={styles.detailBlock}>
-            <Text
-              style={[styles.sectionTitle, { color: colors.textSecondary }]}
-            >
-              {t("userProfile.languages").toUpperCase()}
-            </Text>
-            <View style={styles.languagesContainer}>
-              {languageLabels.map((label) => (
-                <Button
-                  key={label}
-                  variant="outline"
-                  size="sm"
-                  label={label}
-                  style={styles.languageChip}
-                />
-              ))}
+        {/* INTERESTS */}
+        {profile.intentions && profile.intentions.length > 0 && (
+          <Section title={t("userProfile.sections.interests")}>
+            <View style={styles.chipsWrap}>
+              {profile.intentions.map((i) =>
+                renderTag(
+                  getOptionLabel(INTENTION_OPTIONS, i),
+                  isMatchIntention(i) ? (
+                    <SparklesIcon width={12} height={12} color="#2997FF" />
+                  ) : null,
+                  isMatchIntention(i) // Blue if match
+                )
+              )}
+
+              {/* Show fallback if empty? No, checking length above */}
             </View>
-          </View>
+          </Section>
         )}
 
-        {/* Looking for */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            {t("userProfile.interest")}
-          </Text>
-          <View style={styles.intentionsContainer}>
-            {profile.intentions?.map((intention) => {
-              const intentionId = String(intention);
-              const option = INTENTION_OPTIONS.find(
-                (opt) => opt.id === intentionId
-              );
-              const label = option ? t(option.labelKey) : intentionId;
+        {/* BASIC INFO */}
+        {hasBasicInfo && (
+          <Section title={t("userProfile.sections.basicInfo")}>
+            {/* Job/School moved to overlay, but we can repeat specialized details here if beneficial, or just keep secondary stats */}
+            <InfoRow
+              label={t("userProfile.location")}
+              value={
+                profile.location
+                  ? t("userProfile.nearLocation", {
+                      location: profile.location,
+                    })
+                  : null
+              }
+              icon={<MapPinIcon width={18} height={18} color="#8B98A5" />}
+            />
+            <InfoRow
+              label={t("userProfile.height")}
+              value={heightText}
+              icon={<RulerIcon width={18} height={18} color="#8B98A5" />}
+            />
+            {/* Education hidden if covered in overlay or handled elsewhere */}
+            <InfoRow
+              label={t("userProfile.education")}
+              value={!educationText ? profile.education_level : null}
+              icon={
+                <GraduationCapIcon width={18} height={18} color="#8B98A5" />
+              }
+            />
+            <InfoRow
+              label={t("userProfile.languages")}
+              value={profile.languages
+                ?.map((l) => t(`languages.${l}`))
+                .join(", ")}
+              icon={<GlobeIcon width={18} height={18} color="#8B98A5" />}
+            />
+          </Section>
+        )}
 
-              return (
-                <Button
-                  key={String(intention)}
-                  variant="outline"
-                  size="sm"
-                  label={label}
-                  style={styles.intentButton}
-                />
-              );
-            })}
-          </View>
-        </View>
+        {/* LIFESTYLE */}
+        {hasLifestyle && (
+          <Section title={t("userProfile.sections.lifestyle")}>
+            <InfoRow
+              label={t("userProfile.zodiac")}
+              value={zodiacText}
+              icon={<SparklesIcon width={18} height={18} color="#8B98A5" />}
+            />
+            <InfoRow
+              label={t("userProfile.smoking")}
+              value={smokingText}
+              icon={<CigarreteIcon width={18} height={18} color="#8B98A5" />}
+            />
+            {/* Work info is null/hidden currently */}
+          </Section>
+        )}
 
-        {/* Favorite places */}
+        {/* FAVORITE PLACES */}
         {profile.favorite_places && profile.favorite_places.length > 0 && (
-          <View style={styles.section}>
-            <Text
-              style={[styles.sectionTitle, { color: colors.textSecondary }]}
-            >
-              {t("userProfile.favoritePlaces")}
-            </Text>
-            <View style={styles.placesContainer}>
+          <Section title={t("userProfile.favoritePlaces")}>
+            <View style={styles.chipsWrap}>
               {profile.favorite_places.map((place) => {
                 const placeId = typeof place === "string" ? place : place.id;
                 const placeName =
-                  typeof place === "string" ? placeId : place.name || placeId;
+                  typeof place !== "string" && place.name
+                    ? place.name
+                    : (places?.[placeId]?.name ?? placeId);
+                const isMatch = isMatchPlace(placeId);
 
-                const label = `${placeName || placeId}`;
-
-                return (
-                  <Button
-                    key={placeId}
-                    variant="outline"
-                    size="sm"
-                    label={label}
-                    style={styles.placeButton}
-                  />
+                return renderTag(
+                  placeName,
+                  isMatch ? (
+                    <StarIcon
+                      width={12}
+                      height={12}
+                      fill="#2997FF"
+                      color="#2997FF"
+                    />
+                  ) : (
+                    <StarIcon
+                      width={12}
+                      height={12}
+                      fill="#E7E9EA"
+                      color="#E7E9EA"
+                    />
+                  ),
+                  isMatch
                 );
               })}
             </View>
-          </View>
+          </Section>
         )}
       </View>
 
-      {/* Actions (Report / Block) - Only for other users */}
+      {/* ACTIONS */}
       {!isOwnProfile && (
         <View style={styles.actionsSection}>
-          <Divider />
-          <View style={styles.actionButtons}>
-            <Button
-              label={t("actions.report")}
-              onPress={handleReport}
-              variant="secondary"
-              size="default"
-              fullWidth
-              // style={styles.actionButton}
-              textStyle={{ color: colors.textSecondary }}
-            />
-            <Button
-              label={t("actions.block")}
-              onPress={handleBlock}
-              variant="secondary"
-              size="default"
-              fullWidth
-              style={styles.actionButton}
-              textStyle={{ color: colors.error }}
-            />
-          </View>
+          <Pressable
+            onPress={handleReport}
+            style={({ pressed }) => [
+              styles.actionButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Text style={styles.actionText}>{t("actions.report")}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setShowBlockModal(true)}
+            style={({ pressed }) => [
+              styles.actionButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Text style={[styles.actionText, { color: colors.error }]}>
+              {t("actions.block")}
+            </Text>
+          </Pressable>
         </View>
       )}
 
@@ -473,19 +538,20 @@ export function UserProfileCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
+    flex: 1,
     overflow: "hidden",
-  },
-  carouselContainer: {
-    position: "relative",
-    width: "100%",
-    height: IMAGE_HEIGHT,
+    // No border radius effectively implies full screen modal style if placed in one,
+    // or we can add it if it's a card in a stack.
     backgroundColor: "#000000",
   },
-  imageContainer: {
+  carouselContainer: {
     width: "100%",
-    height: "100%",
+    height: IMAGE_HEIGHT,
+    backgroundColor: "#16181C",
+    position: "relative",
+  },
+  imageContainer: {
+    ...StyleSheet.absoluteFillObject,
   },
   image: {
     width: "100%",
@@ -496,7 +562,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: "40%",
+    width: "30%",
     zIndex: 10,
   },
   navAreaRight: {
@@ -504,156 +570,200 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    width: "40%",
+    width: "30%",
     zIndex: 10,
   },
   indicatorsContainer: {
     position: "absolute",
-    top: spacing.md,
-    left: spacing.md,
-    right: spacing.md,
+    top: 6, // Very close to top edge
+    left: spacing.sm,
+    right: spacing.sm,
     flexDirection: "row",
-    gap: 6,
-    zIndex: 5,
+    gap: 4,
+    zIndex: 20,
+    height: 4,
   },
   indicator: {
-    height: 4,
     flex: 1,
-    borderRadius: 2,
+    height: 2,
+    borderRadius: 1,
   },
-  overlayContainer: {
+  overlayGradient: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
-    padding: spacing.md,
-    paddingTop: spacing.xl,
-    gap: spacing.sm,
+    bottom: 0,
+    height: "45%", // Slightly taller for more text
   },
   overlayContent: {
-    gap: spacing.sm,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: spacing.md,
+    gap: 6,
+    zIndex: 15,
   },
-  badgesContainer: {
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  nameText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 30, // Large Hero Text
+    color: "#FFFFFF",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  ageText: {
+    fontFamily: "Poppins-Regular",
+    fontSize: 24,
+    color: "#E7E9EA",
+  },
+
+  // New Styles for Overlay Job/School
+  subtitleRow: {
+    flexDirection: "column",
+    gap: 2,
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  subtitleItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  subtitleText: {
+    ...typography.caption,
+    fontSize: 14,
+    color: "#E7E9EA",
+    fontWeight: "500",
+  },
+
+  quickStatusRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
+    gap: 8,
+    alignItems: "center",
   },
-  hereNowBadge: {
+  locationTag: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: spacing.xs,
-  },
-  pulseIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FFFFFF",
-  },
-  hereNowText: {
-    ...typography.caption,
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 6,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  infoSection: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  headerInfo: {
-    gap: spacing.xs,
-  },
-  nameAgeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-  },
-  nameAge: {
-    ...typography.heading,
-    fontSize: 24,
-    fontWeight: "600",
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   locationText: {
-    ...typography.body,
-    fontSize: 14,
+    ...typography.caption,
+    fontSize: 13,
+    color: "#E7E9EA",
   },
-  bioSection: {
-    marginTop: spacing.xs,
+  onlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#2997FF",
+  },
+
+  // --- Content Body ---
+  contentBody: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+    gap: 24, // Generous vertical gap between sections
+  },
+  sectionContainer: {
+    gap: 12,
+  },
+  sectionTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 16,
+    color: "#E7E9EA",
+    marginBottom: 4,
   },
   bioText: {
     ...typography.body,
+    fontSize: 15,
+    color: "#B0B3B8",
     lineHeight: 22,
   },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    ...typography.captionBold,
-  },
-  interestContainer: {
+  chipsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
+    gap: 10,
   },
-  intentionsContainer: {
+  chip: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  intentButton: {
-    alignSelf: "flex-start",
-  },
-  placesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  languagesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  languageChip: {
-    alignSelf: "flex-start",
-  },
-  placeButton: {
-    alignSelf: "flex-start",
-  },
-  detailBlock: {
-    gap: spacing.xs,
-  },
-  detailValue: {
-    ...typography.body,
-  },
-  actionsSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-  },
-  actionButtons: {
     alignItems: "center",
-    gap: spacing.sm,
+    backgroundColor: "#16181C", // Dark chip
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#2F3336",
+  },
+  chipText: {
+    ...typography.captionBold,
+    color: "#E7E9EA",
+    fontSize: 13,
+  },
+
+  // Tag Style Refined (shared)
+  tag: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#2F3336",
+  },
+  tagText: {
+    ...typography.captionBold,
+    fontSize: 13,
+  },
+
+  // Info Rows
+  infoRowContainer: {
+    gap: 4,
+    marginBottom: 8,
+  },
+  infoLabel: {
+    ...typography.caption,
+    color: "#8B98A5", // Gray label
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  infoValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 4,
+  },
+  infoValueText: {
+    ...typography.body,
+    color: "#FFFFFF",
+    fontSize: 15,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#2F3336",
+    marginTop: 8,
+    opacity: 0.5,
+  },
+
+  // Actions
+  actionsSection: {
+    padding: spacing.lg,
+    alignItems: "center",
   },
   actionButton: {
-    paddingHorizontal: spacing.md,
+    padding: 12,
+  },
+  actionText: {
+    color: "#5B6671",
+    fontWeight: "600",
   },
 });

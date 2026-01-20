@@ -2,9 +2,9 @@
   "permissions": {
     "location": {
       "title": "Ubicación necesaria",
-      "subtitle": "Para encontrar los mejores lugares y personas a tu alrededor, necesitamos acceso a tu ubicación.",
+      "subtitle": "Para encontrar los mejores lugares y personas a tu alrededor, necesitamos saber tu ubicación.",
       "button": "Activar ubicación",
-      "buttonSettings": "Abrir Ajustes",
+      "buttonSettings": "Abrir Configuración",
       "requesting": "Solicitando...",
       "skip": "Ahora no"
     }
@@ -15,22 +15,22 @@
     "delete": "Eliminar",
     "confirm": "Confirmar",
     "navigate": "Navegar",
-    "save_rating": "Enviar evaluación",
+    "save_rating": "Enviar calificación",
     "rate": "Calificar",
     "details": "Detalles",
-    "favorite": "Favoritar",
-    "saved": "Favorito",
+    "favorite": "Favorito",
+    "saved": "Guardado",
     "restore": "Restaurar",
-    "openSettings": "Abrir Ajustes",
+    "openSettings": "Abrir Configuración",
     "skip": "Omitir"
   },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",
-  "discover": "Descubrir",
+  "discover": "Descubre",
   "place": {
     "reviews": {
-      "count": "{{count}} evaluaciones",
-      "count_singular": "1 evaluación"
+      "count": "{{count}} reseñas",
+      "count_singular": "1 reseña"
     },
     "vibes": {
       "easy_to_connect": "Fácil conectar",
@@ -38,7 +38,7 @@
       "open_crowd": "Gente abierta",
       "reserved_crowd": "Gente reservada",
       "meet_new_people": "Bueno para conocer gente",
-      "closed_groups": "Predominan grupos cerrados",
+      "closed_groups": "Grupos cerrados predominan",
       "community_vibe": "Ambiente de comunidad",
       "solo_friendly": "Bueno para ir solo",
       "better_with_company": "Mejor acompañado",
@@ -53,12 +53,12 @@
     "categories": {
       "bar": "Bar",
       "nightclub": "Discoteca",
-      "cafe": "Cafetería",
+      "cafe": "Café",
       "restaurant": "Restaurante",
       "gym": "Gimnasio",
       "fitness_centre": "Centro Fitness",
       "university": "Universidad",
-      "college": "Universidad",
+      "college": "Facultad",
       "park": "Parque",
       "museum": "Museo",
       "stadium": "Estadio",
@@ -72,7 +72,7 @@
       "dance_club": "Danza",
       "theatre": "Teatro",
       "casino": "Casino",
-      "shopping": "Centro comercial"
+      "shopping": "Centro Comercial"
     },
     "activeUsersLabel": "personas aquí",
     "noConnections": "Inicia la conexión",
@@ -82,7 +82,7 @@
   "matches": "Chat",
   "profile": "Perfil",
   "common": {
-    "retry": "Intentar de nuevo",
+    "retry": "Reintentar",
     "resend": "Reenviar",
     "subscribe": "Suscribirse",
     "delete": "Eliminar",
@@ -107,8 +107,8 @@
     "save": "Guardar",
     "refresh": "Actualizar",
     "buy": "Comprar",
-    "skip": "Saltar",
-    "select": "Seleccione",
+    "skip": "Omitir",
+    "select": "Seleccionar",
     "loading": "Cargando...",
     "of": "de",
     "placeCategories": {
@@ -119,7 +119,7 @@
       "gym": "Gimnasios",
       "fitness_centre": "Centros Deportivos",
       "university": "Universidades",
-      "college": "Colegios",
+      "college": "Facultades",
       "park": "Parques",
       "museum": "Museos",
       "stadium": "Estadios",
@@ -130,14 +130,14 @@
       "event_venue": "Lugares de Eventos",
       "language_school": "Escuelas de Idiomas",
       "club": "Clubes",
-      "dance_club": "Estudios de Danza",
+      "dance_club": "Escuelas de Danza",
       "theatre": "Teatros",
       "casino": "Casinos",
-      "shopping": "Centros comerciales"
+      "shopping": "Centros Comerciales"
     }
   },
   "errors": {
-    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
     "profileUnavailable": "Perfil no disponible"
   },
   "screens": {
@@ -160,13 +160,13 @@
         "presence": {
           "title": "PREFERENCIAS DE PRESENCIA",
           "invisible": "Modo invisible",
-          "invisibleDescription": "Hace tu presencia invisible para otros usuarios."
+          "invisibleDescription": "Oculta tu presencia para otros usuarios."
         },
         "notifications": {
           "title": "Notificaciones",
           "push": "Notificaciones Push",
           "devicePermission": "Permitir notificaciones",
-          "devicePermissionDescription": "Autoriza notificaciones en tu dispositivo",
+          "devicePermissionDescription": "Autoriza notificaciones en el dispositivo",
           "matches": "Matches",
           "messages": "Mensajes",
           "nearbyActivity": "Actividad cercana",
@@ -178,15 +178,14 @@
           "blockListDescription": "Administra a quién has bloqueado.",
           "verifyProfile": "Verificar perfil",
           "verification": {
-            "pending": "Verificación en curso",
-            "pendingDescription": "Tu verificación está siendo revisada.",
-            "retryDescription": "Toca para continuar o iniciar una nueva verificación.",
-            "pendingTitle": "Verificación en curso",
-            "pendingMessage": "Tu verificación ya está en curso. Por favor, espera.",
+            "pending": "Verificación en revisión",
+            "pendingDescription": "Tu verificación está siendo analizada.",
+            "retryDescription": "Toca para continuar o iniciar nueva verificación.",
+            "pendingTitle": "Verificación en revisión",
+            "pendingMessage": "Tu verificación ya está en proceso. Por favor, espera.",
             "alreadyVerified": "¡Tu perfil ya está verificado!"
           }
         },
-
         "security": {
           "title": "SEGURIDAD Y PRIVACIDAD",
           "privacyPolicy": "Política de Privacidad",
@@ -204,17 +203,17 @@
         "dev": {
           "title": "DESARROLLADOR",
           "itemTitle": "Configuración dev",
-          "itemDescription": "Herramientas y diagnósticos de la base local."
+          "itemDescription": "Herramientas y diagnósticos de la BD local."
         },
         "session": {
           "title": "SESIÓN",
           "logout": "Cerrar sesión",
-          "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
+          "logoutConfirm": "¿Estás seguro de que deseas cerrar sesión?",
           "logoutTitle": "Cerrar sesión",
-          "logoutDescription": "Se cerrará tu sesión y necesitarás iniciar sesión nuevamente para acceder a tu cuenta.",
+          "logoutDescription": "Serás desconectado y necesitarás iniciar sesión nuevamente.",
           "logoutButton": "Cerrar sesión",
           "deleteAccount": "Eliminar cuenta",
-          "deleteAccountConfirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+          "deleteAccountConfirm": "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
           "deleteAccountTitle": "Eliminar cuenta",
           "deleteAccountDescription": "Esta acción es permanente e irreversible. Todos tus datos, conversaciones y conexiones se perderán para siempre.",
           "deleteAccountButton": "Eliminar permanentemente",
@@ -231,45 +230,44 @@
           "status": "Estado: {{value}}",
           "otherUser": "Otro usuario: {{value}}",
           "place": "Lugar: {{value}}",
-          "placeId": "ID del lugar: {{value}}",
+          "placeId": "ID de lugar: {{value}}",
           "userId": "ID de usuario: {{value}}",
           "name": "Nombre: {{value}}",
-          "matchedAt": "Match: {{value}}",
-          "unmatchedAt": "Unmatch: {{value}}",
+          "matchedAt": "Match en: {{value}}",
+          "unmatchedAt": "Unmatch en: {{value}}",
           "chatId": "Chat ID: {{value}}",
-          "firstMessageAt": "Primer mensaje: {{value}}",
+          "firstMessageAt": "Primera mensaje: {{value}}",
           "lastMessageAt": "Último mensaje: {{value}}",
           "unreadCount": "No leídos: {{value}}",
           "lastFetchedAt": "Última actualización: {{value}}",
-          "createdAt": "Creado: {{value}}",
+          "createdAt": "Creado en: {{value}}",
           "targetUserId": "ID objetivo: {{value}}",
           "action": "Acción: {{value}}"
         },
         "database": {
-          "title": "Base local",
+          "title": "Base de datos local",
           "matchesTitle": "Matches",
-          "matchesEmpty": "No se encontraron matches.",
+          "matchesEmpty": "Ningún match encontrado.",
           "matchesItem": "Match: {{id}} • Estado: {{status}} • Usuario: {{otherUserId}}",
           "chatsTitle": "Chats",
-          "chatsEmpty": "No se encontraron chats.",
+          "chatsEmpty": "Ningún chat encontrado.",
           "chatsItem": "Chat: {{id}} • Match: {{matchId}} • Usuario: {{otherUserId}}",
           "messagesTitle": "Mensajes",
-          "messagesEmpty": "No se encontraron mensajes.",
+          "messagesEmpty": "Ningún mensaje encontrado.",
           "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
           "discoveryTitle": "Perfiles de discovery",
-          "discoveryEmpty": "No se encontraron perfiles de discovery.",
+          "discoveryEmpty": "Ningún perfil de discovery encontrado.",
           "swipesTitle": "Cola de swipes",
-          "swipesEmpty": "No hay swipes pendientes.",
-          "profilesTitle": "Cache de perfiles",
-          "profilesEmpty": "No hay perfiles en caché."
+          "swipesEmpty": "Ningún swipe pendiente.",
+          "profilesTitle": "Caché de perfiles",
+          "profilesEmpty": "Ningún perfil en caché."
         },
         "likerIds": {
           "title": "Liker IDs",
           "count": "Total: {{count}}",
-          "empty": "No se encontraron liker IDs."
+          "empty": "Ningún liker ID encontrado."
         }
       },
-
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -282,19 +280,19 @@
       "edit": {
         "languages": {
           "title": "Idiomas que hablo",
-          "subtitle": "Selecciona hasta 5 idiomas que hablas para incluir en tu perfil"
+          "subtitle": "Selecciona hasta 5 idiomas que hablas para incluirlos en tu perfil"
         }
       },
       "yearsOld": "{{age}} años",
       "options": {
         "education": {
           "preferNotToSay": "Prefiero no decir",
-          "highSchool": "Escuela secundaria",
-          "highSchoolDesc": "Diploma de escuela secundaria",
+          "highSchool": "Secundaria",
+          "highSchoolDesc": "Educación secundaria completa",
           "technical": "Técnico",
           "technicalDesc": "Curso técnico profesional",
-          "undergraduate": "Licenciatura",
-          "undergraduateDesc": "Estudiando o completado",
+          "undergraduate": "Grado",
+          "undergraduateDesc": "Cursando o completo",
           "postgraduate": "Posgrado",
           "postgraduateDesc": "Especialización o MBA",
           "masters": "Maestría",
@@ -318,14 +316,14 @@
           "pisces": "Piscis"
         },
         "smoking": {
-          "social": "Socialmente",
-          "socialDesc": "Solo en eventos u ocasiones especiales",
+          "social": "Fumo socialmente",
+          "socialDesc": "Solo en eventos o ocasiones especiales",
           "no": "No fumo",
-          "noDesc": "No fumador",
+          "noDesc": "No soy fumador",
           "yes": "Fumo",
           "yesDesc": "Fumador regular",
-          "quitting": "Intentando dejarlo",
-          "quittingDesc": "En proceso de dejarlo"
+          "quitting": "Intentando dejar de fumar",
+          "quittingDesc": "En proceso de dejar"
         },
         "gender": {
           "female": "Mujer",
@@ -333,9 +331,9 @@
           "nonbinary": "No binario"
         },
         "relationship": {
-          "single": "Soltero(a)",
-          "dating": "Saliendo",
-          "married": "Casado(a)",
+          "single": "Soltero/a",
+          "dating": "Saliendo con alguien",
+          "married": "Casado/a",
           "open": "Relación abierta",
           "complicated": "Es complicado"
         }
@@ -351,7 +349,7 @@
       "earlyCheckin": {
         "title": "Check-in+",
         "subtitle": "Conecta antes de llegar",
-        "description": "Entra en lugares desde lejos"
+        "description": "Entra en lugares incluso de lejos"
       },
       "profileEdit": {
         "title": "Editar perfil",
@@ -363,13 +361,13 @@
           "title": "Tu perfil",
           "subtitle": "Cuéntale a la gente quién eres",
           "bio": "Biografía",
-          "bioPlaceholder": "Añade una biografía"
+          "bioPlaceholder": "Añade una bio"
         },
         "personalInfo": {
           "title": "Información personal",
           "subtitle": "Detalles sobre ti",
           "gender": "Género",
-          "relationshipStatus": "Estado civil",
+          "relationshipStatus": "Estado sentimental",
           "height": "Altura"
         },
         "lifestyle": {
@@ -378,13 +376,13 @@
           "profession": "Profesión",
           "jobTitle": "Cargo",
           "company": "Empresa",
-          "smoking": "Fumar"
+          "smoking": "Hábito de fumar"
         },
         "interests": {
           "title": "Intereses",
           "subtitle": "Lugares que te gusta frecuentar",
-          "spots": "Lugares favoritos",
-          "spotsPlaceholder": "Añadir lugares"
+          "spots": "Spots favoritos",
+          "spotsPlaceholder": "Añadir spots"
         },
         "more": {
           "title": "Más sobre ti",
@@ -397,25 +395,25 @@
         "add": "Añadir"
       },
       "premium": {
-        "title": "Hazte Premium",
-        "description": "Accede a funciones exclusivas y desbloquea todo el potencial de la app.",
-        "cta": "Ver planes",
+        "title": "Sé Premium",
+        "description": "Accede a recursos exclusivos y desbloquea todo el potencial de la app.",
+        "cta": "Conocer planes",
         "active": {
           "title": "Bumpti Premium",
-          "description": "Ya has desbloqueado funciones exclusivas",
+          "description": "Ya has desbloqueado recursos exclusivos",
           "cta": "Ver mis beneficios"
         }
       },
       "benefits": {
-        "title": "Comparar planes",
+        "title": "Compara planes",
         "free": "Gratis",
         "premium": "Premium",
-        "unlimitedLikes": "Me gusta ilimitados",
-        "seeWhoLiked": "Quién te dio me gusta",
-        "priorityLikes": "Me gusta prioritarios",
-        "unlimitedRewind": "Rebobinar ilimitado",
+        "unlimitedLikes": "Likes ilimitados",
+        "seeWhoLiked": "Quién te dio like",
+        "priorityLikes": "Likes prioritarios",
+        "unlimitedRewind": "Rewind ilimitado",
         "visibilityControl": "Control de visibilidad",
-        "seeWhoViewedYou": "Ve quién te vio en el lugar",
+        "seeWhoViewedYou": "Mira quién te vio en el lugar",
         "turboWeekly": "Connect+ (5/semana)",
         "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/semana)"
@@ -424,9 +422,9 @@
         "earlyCheckin": {
           "title": "Check-in+",
           "subtitle": "Haz early check-in antes de llegar al lugar.",
-          "premiumHint": "Obtén créditos de check-in gratis con Premium.",
+          "premiumHint": "Gana créditos de check-in gratis con Premium.",
           "purchaseCta": "Comprar {{quantity}} Check-in+",
-          "upgradeCta": "Suscribirse a Premium",
+          "upgradeCta": "Suscribir Premium",
           "close": "Cerrar",
           "optionLabel": "{{quantity}} Check-in+",
           "options": {
@@ -449,10 +447,10 @@
         },
         "pings": {
           "title": "Pings",
-          "subtitle": "Envía señales prioritarias y destaca al instante.",
-          "premiumHint": "Obtén créditos de check-in gratis con Premium.",
+          "subtitle": "Envía señales prioritarias y llama la atención al instante.",
+          "premiumHint": "Gana créditos de check-in gratis con Premium.",
           "purchaseCta": "Comprar {{quantity}} Pings",
-          "upgradeCta": "Suscribirse a Premium",
+          "upgradeCta": "Suscribir Premium",
           "close": "Cerrar",
           "optionLabel": "{{quantity}} Pings",
           "options": {
@@ -475,10 +473,10 @@
         },
         "turbo": {
           "title": "Connect+",
-          "subtitle": "Impulsa tu perfil a lo más alto del lugar.",
-          "premiumHint": "Obtén créditos de check-in gratis con Premium.",
+          "subtitle": "Impulsa tu perfil a la cima del lugar.",
+          "premiumHint": "Gana créditos de check-in gratis con Premium.",
           "purchaseCta": "Comprar {{quantity}} Connect+",
-          "upgradeCta": "Suscribirse a Premium",
+          "upgradeCta": "Suscribir Premium",
           "close": "Cerrar",
           "optionLabel": "{{quantity}} Connect+",
           "options": {
@@ -513,7 +511,7 @@
     "home": {
       "heroTitle": "Qué bueno verte por aquí.",
       "heroSubtitle": "",
-      "intermediateTitle": "Es mejor cuando la vibra coincide.",
+      "intermediateTitle": "El plan se pone mejor con la vibra correcta.",
       "intermediateSubtitle": "Encuentra lugares y personas en la misma sintonía.",
       "placeDetected": {
         "title": "Lugar detectado",
@@ -524,43 +522,43 @@
         "search": "Buscar"
       },
       "infoTitle": "¿Cómo funciona?",
-      "infoDescription": "Elige una categoría y mira los lugares cercanos donde puedes conectar con otras personas.",
+      "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",
       "categories": {
         "highlighted": {
           "title": "Live",
-          "description": "Lugares llenos y con mucha gente conectando."
+          "description": "Lugares llenos y con gente conectando."
         },
         "favorites": {
           "title": "Favoritos",
-          "description": "Tus sitios para conectar."
+          "description": "Tus lugares para conectar."
         },
         "communityFavorites": {
           "title": "Picks",
-          "description": "Mira lo que aman otros."
+          "description": "Mira lo que otros aman."
         },
         "nightlife": {
-          "title": "Bares y vida nocturna",
+          "title": "Bares y discotecas",
           "description": "Para salir y conocer gente nueva."
         },
         "cafes": {
-          "title": "Cafés y charlas",
-          "description": "Espacios acogedores para conversar y relajarse."
+          "title": "Cafés y charla",
+          "description": "Lugares para conversar y relajarse."
         },
         "university": {
           "title": "Vida universitaria",
-          "description": "Donde ocurren los encuentros del día a día."
+          "description": "Donde los encuentros suceden en la rutina."
         },
         "fitness": {
           "title": "Bienestar y movimiento",
-          "description": "Conexiones que comienzan en el entrenamiento."
+          "description": "Conexiones que empiezan en el entrenamiento."
         },
         "parks": {
           "title": "Parques y aire libre",
-          "description": "Encuentros al aire libre en la naturaleza."
+          "description": "Encuentros al aire libre y en la naturaleza."
         },
         "restaurants": {
           "title": "Restaurantes",
-          "description": "Conexiones que comienzan en la mesa."
+          "description": "Conexiones que empiezan en la mesa."
         },
         "museum": {
           "title": "Museos y Cultura",
@@ -568,23 +566,23 @@
         },
         "stadium": {
           "title": "Estadios y Eventos",
-          "description": "Grandes juegos, grandes multitudes."
+          "description": "Grandes partidos, grandes multitudes."
         },
         "club": {
           "title": "Clubes Sociales",
           "description": "Clubes deportivos y recreativos."
         },
         "library": {
-          "title": "Bibliotecas y Estudio",
-          "description": "Lugares tranquilos para concentrarse."
+          "title": "Bibliotecas y Estudios",
+          "description": "Lugares tranquilos para enfocarse y trabajar."
         },
         "nearby": {
           "title": "Lo que hay cerca",
-          "description": "Mira la actividad a tu alrededor"
+          "description": "Mira el movimiento alrededor"
         },
         "ranking": {
           "title": "Hotspots",
-          "description": "Lugares a los que la gente siempre vuelve.",
+          "description": "Lugares a los que la gente siempre va.",
           "filterMonth": "Este mes",
           "filterGeneral": "General"
         }
@@ -608,32 +606,32 @@
       },
       "benefits": {
         "unlimitedLikes": {
-          "title": "Da me gusta sin límites",
-          "subtitle": "Dale me gusta a todas las personas que quieras y aumenta tus chances de conexión."
+          "title": "Da like sin límites",
+          "subtitle": "Dale like a cuantas personas quieras y aumenta tus posibilidades de conexión."
         },
         "seeWhoLiked": {
-          "title": "Ve quién te dio me gusta",
+          "title": "Mira quién te dio like",
           "subtitle": "Descubre quién ya mostró interés y salta directo a los matches."
         },
         "priorityLikes": {
-          "title": "Me gusta prioritarios",
-          "subtitle": "Tus me gusta se destacan y aparecen primero para otras personas."
+          "title": "Likes prioritarios",
+          "subtitle": "Tus likes se destacan y aparecen primero para otras personas."
         },
         "unlimitedRewind": {
-          "title": "Rebobinar ilimitado",
-          "subtitle": "Vuelve a perfiles cuando quieras y nunca pierdas una oportunidad."
+          "title": "Rewind ilimitado",
+          "subtitle": "Vuelve perfiles siempre que quieras y nunca pierdas una oportunidad."
         },
         "visibilityControl": {
           "title": "Control de visibilidad",
           "subtitle": "Decide quién puede verte y mantén tu presencia más privada."
         },
-        "seeWhoViewed": {
-          "title": "Ve quién te vio en el lugar",
+        "seeWhoViewedYou": {
+          "title": "Mira quién te vio en el lugar",
           "subtitle": "Descubre quién se cruzó contigo en bares, cafés, fiestas y otros lugares."
         },
         "turboIncluded": {
           "title": "Connect+ incluido (5 por semana)",
-          "subtitle": "Destaca más en el lugar y gana visibilidad instantánea cuando la necesites."
+          "subtitle": "Aparece más en el lugar y gana visibilidad instantánea cuando lo necesites."
         },
         "earlyCheckin": {
           "title": "Check-in+ (5 por semana)",
@@ -643,13 +641,13 @@
           "year": "12 Check-ins"
         },
         "pings": {
-          "title": "Pings desbloqueados (5 por semana)",
+          "title": "Pings liberados (5 por semana)",
           "subtitle": "Envía señales sociales especiales para llamar la atención de alguien."
         }
       },
-      "terms": "Tu suscripción se renovará automáticamente al mismo precio y duración a menos que se cancele en los ajustes de {{store}}. Al confirmar tu suscripción, aceptas nuestros",
+      "terms": "La renovación de tu suscripción es automática por el mismo valor y período, a menos que se cancele en la configuración de {{store}}. Al confirmar la suscripción, aceptas nuestros",
       "termsLink": "Términos de Uso",
-      "subscribe": "Suscribirse a Bumpti Premium",
+      "subscribe": "Suscribir Bumpti Premium",
       "close": "Cerrar"
     },
     "manageSubscription": {
@@ -660,57 +658,57 @@
       "updatePlan": "Actualizar plan"
     },
     "onboarding": {
-      "heroTitle1": "Conoce personas reales,",
+      "heroTitle1": "Conoce gente real,",
       "heroTitle2": "en lugares reales",
-      "heroSubtitle": "Descubre y conéctate con quienes frecuentan los mismos lugares que tú. Haz amistades, conversa y expande tu red social",
-      "title": "Conoce personas reales,\nen lugares reales",
-      "subtitle": "Descubre y conéctate con quienes frecuentan los mismos lugares que tú. Haz amistades, conversa y expande tu red social",
-      "phoneAuth": "Iniciar sesión con teléfono",
+      "heroSubtitle": "Descubre y conecta con quienes frecuentan los mismos lugares que tú. Haz amigos, charla y expande tu red social",
+      "title": "Conoce gente real,\nen lugares reales",
+      "subtitle": "Descubre y conecta con quienes frecuentan los mismos lugares que tú. Haz amigos, charla y expande tu red social",
+      "phoneAuth": "Entrar con celular",
       "appleAuth": "Continuar con Apple ID",
       "termsPrefix": "Al continuar, aceptas nuestros",
       "terms": "Términos de Uso",
       "termsAnd": "y",
       "privacy": "Política de Privacidad",
-      "phoneAuthTitle": "Inicia sesión con tu número de teléfono",
-      "phoneAuthSubtitle": "Te enviaremos un código de verificación por SMS",
+      "phoneAuthTitle": "Entrar con tu número de celular",
+      "phoneAuthSubtitle": "Enviaremos un código de verificación vía SMS",
       "phonePlaceholder": "(DDD) 99999-9999",
       "sendCode": "Enviar código de verificación",
       "sending": "Enviando...",
       "phoneInfo": "Al continuar, recibirás un SMS con el código de verificación. Pueden aplicarse tarifas de mensajes y datos.",
       "invalidPhone": "Por favor, ingresa un número de teléfono válido",
-      "codeSentSuccess": "Código enviado exitosamente a {{phone}}",
+      "codeSentSuccess": "Código enviado con éxito a {{phone}}",
       "verifyCodeTitle": "Ingresa el código que enviamos",
       "verifyCodeSubtitle": "Enviamos un código de 6 dígitos a",
       "verify": "Verificar",
       "verifying": "Verificando...",
       "resendCode": "Reenviar código",
       "resendCodeIn": "Reenviar código en {{seconds}}s",
-      "codeVerifiedSuccess": "¡Código verificado exitosamente!",
+      "codeVerifiedSuccess": "¡Código verificado con éxito!",
       "invalidCode": "Código incorrecto. Inténtalo de nuevo.",
       "enterCompleteCode": "Por favor, ingresa el código completo",
       "newCodeSent": "Nuevo código enviado a {{phone}}",
-      "codeNotReceived": "¿No recibiste el código? Verifica si el número es correcto o inténtalo de nuevo en unos momentos.",
+      "codeNotReceived": "¿No recibiste el código? Verifica si el número es correcto o inténtalo de nuevo en unos instantes.",
       "nameTitle": "¿Cuál es tu nombre?",
-      "nameSubtitle": "Ingresa solo tu primer nombre",
+      "nameSubtitle": "Informa solo tu primer nombre",
       "namePlaceholder": "Primer nombre",
       "continue": "Continuar",
       "ageTitle": "¿Cuándo naciste?",
-      "ageSubtitle": "Necesitamos tu fecha de nacimiento para personalizar tu experiencia y confirmar que tienes más de 18 años.",
+      "ageSubtitle": "Necesitamos saber tu fecha de nacimiento para personalizar tu experiencia y confirmar que tienes más de 18 años.",
       "agePreview": "Tienes {{age}} años",
-      "ageError": "Debes tener al menos 18 años",
+      "ageError": "Necesitas tener al menos 18 años",
       "ageRequired": "Por favor, selecciona tu fecha de nacimiento",
       "ageMinimum": "Debes tener 18 años o más para usar esta app.",
-      "selectDate": "Selecciona la fecha",
+      "selectDate": "Seleccionar fecha",
       "genderTitle": "¿Cómo te identificas?",
-      "genderSubtitle": "Elige el género que mejor te representa. Esto ayuda a crear conexiones más genuinas y respetuosas.",
+      "genderSubtitle": "Elige el género que más te represente. Esto ayuda a crear conexiones más reales y respetuosas.",
       "genderWoman": "Mujer",
       "genderMan": "Hombre",
       "genderNonBinary": "No binario",
       "genderIdentitySelected": "Identidad seleccionada: {{identity}}",
-      "genderUpdateInfo": "Puedes actualizar esta información en cualquier momento en configuración.",
+      "genderUpdateInfo": "Puedes actualizar esta información en cualquier momento en la configuración.",
       "genderSelectIdentity": "Selecciona cómo te identificas",
-      "genderCustomPrompt": "¿Quieres contarnos más sobre ti? Estamos escuchando 💬",
-      "genderCustomPlaceholder": "Cuéntanos más sobre tu género",
+      "genderCustomPrompt": "¿Quieres contar más sobre ti? Estamos escuchando 💬",
+      "genderCustomPlaceholder": "Cuenta más sobre tu género",
       "confirm": "Confirmar",
       "genderNotFound": "¿No encontraste tu identidad? Toca aquí para avisarnos.",
       "genderSuggestTitle": "Sugerir nueva identidad",
@@ -718,37 +716,37 @@
       "genderSuggestPlaceholder": "Escribe tu sugerencia (opcional)",
       "cancel": "Cancelar",
       "sendSuggestion": "Enviar sugerencia",
-      "genderSuggestionSuccess": "¡Gracias por la sugerencia! La revisaremos y consideraremos incluirla pronto.",
+      "genderSuggestionSuccess": "¡Gracias por la sugerencia! La analizaremos y consideraremos incluirla pronto.",
       "connectWithTitle": "¿Con quién te gustaría conectar?",
       "connectWithSubtitle": "Elige una o más opciones.",
       "connectWithInfo": "Esta información no se mostrará públicamente.",
       "connectWithFemale": "Mujeres",
       "connectWithMale": "Hombres",
-      "connectWithNonBinary": "No binarias",
+      "connectWithNonBinary": "No binarios",
       "connectWithAll": "Todos",
-      "connectWithPrivacy": "Esta información solo se usa para mostrar personas con quienes quieres conectar.",
+      "connectWithPrivacy": "Esta información se usa solo para mostrar personas con las que quieres conectar.",
       "connectWithFooter": "Podrás cambiar esto después en la configuración.",
-      "intentionTitle": "¿Qué quieres encontrar por aquí?",
-      "intentionSubtitle": "Usamos esto para mostrarte personas con los mismos objetivos que tú",
-      "intentionFriends": "Hacer nuevas amistades",
+      "intentionTitle": "¿Qué buscas encontrar aquí?",
+      "intentionSubtitle": "Usamos esto para mostrar personas con los mismos objetivos que tú",
+      "intentionFriends": "Hacer nuevos amigos",
       "intentionCasual": "Conexiones casuales",
       "intentionNetworking": "Networking profesional",
       "intentionDating": "Encontrar a alguien especial",
       "intentionSelectedOne": "1 objetivo seleccionado",
       "intentionSelectedMany": "{{count}} objetivos seleccionados",
-      "photosTitle": "Agrega tus fotos",
-      "photosSubtitle": "Selecciona de 3 a 9 fotos a la vez. ¡Los perfiles con más fotos generan más conexiones!",
+      "photosTitle": "Añade tus fotos",
+      "photosSubtitle": "Selecciona de 3 a 9 fotos de una vez. ¡Los perfiles con más fotos generan más conexiones!",
       "photosMainLabel": "Principal",
       "photosCount": "{{count}} de 9 fotos",
-      "photosMinimum": "Mínimo de 3 requeridas",
-      "photosAddMore": "Agrega al menos {{count}} foto",
-      "photosAddMorePlural": "Agrega al menos {{count}} fotos",
+      "photosMinimum": "Mínimo de 3 necesarias",
+      "photosAddMore": "Añade al menos {{count}} foto",
+      "photosAddMorePlural": "Añade al menos {{count}} fotos",
       "favoritePlaces": {
-        "title": "¿Cuáles son tus spots favoritos?",
+        "title": "¿Cuáles son tus spots preferidos?",
         "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecciona al menos 1 spot",
-        "locationNeeded": "Para sugerirte lugares cercanos, necesitamos tu ubicación."
+        "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación."
       },
       "locationTitle": "Permitir ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
@@ -768,43 +766,43 @@
       "notificationsDeniedMessage": "Has denegado el permiso de notificaciones. Puedes activarlo después en la configuración de la app.",
       "notificationsError": "Error al solicitar permiso de notificaciones. Inténtalo de nuevo.",
       "completeTitle": "¡Todo listo para empezar a conectar!",
-      "completeSubtitle": "Entra en un lugar y ve quién también comparte los mismos gustos.",
-      "completeExplore": "Explorar lugares",
+      "completeSubtitle": "Entra en un lugar y mira quién comparte tus mismos gustos.",
+      "completeExplore": "Explorar locales",
       "completeFindPlaces": "Encuentra\nlugares",
-      "completeConnectPeople": "Conéctate\ncon personas"
+      "completeConnectPeople": "Conecta\ncon personas"
     },
     "categoryResults": {
-      "subtitle": "Vea los lugares más populares de la región",
+      "subtitle": "Mira los lugares más populares de la región",
       "mostPopular": "Más populares cerca de ti",
       "placesCount": "{{count}} lugares",
       "emptyStates": {
         "favorites": {
           "title": "Tus lugares favoritos están tranquilos",
-          "description": "Guarda los sitios que más te gustan para saber exactamente cuándo empieza el movimiento.",
+          "description": "Guarda los lugares que más te gustan para saber exactamente cuándo empieza el movimiento.",
           "button": "Descubrir nuevos sitios"
         },
         "trending": {
-          "title": "El ambiente se está calentando",
-          "description": "Aún no detectamos un pico de movimiento, pero las mejores conexiones suelen ocurrir por sorpresa.",
+          "title": "La vibra se está calentando",
+          "description": "Aún no detectamos un pico de movimiento ahora, pero las mejores conexiones suelen suceder por sorpresa.",
           "button": "Explorar otras vibras"
         },
         "nearby": {
           "title": "¿Explorando nuevos horizontes?",
-          "description": "No encontramos lugares por aquí. ¿Qué tal probar con otra categoría?",
+          "description": "No encontramos lugares por aquí. ¿Qué tal intentar otra categoría?",
           "button": "Probar otra categoría"
         },
         "communityFavorites": {
           "title": "¿Dónde se encuentra todo el mundo?",
-          "description": "La comunidad aún está descubriendo los mejores secretos de esta zona. ¡Sé el primero en marcar un lugar como favorito!",
+          "description": "La comunidad aún está descubriendo los secretos de esta región. ¡Sé el primero en marcar un lugar como favorito!",
           "button": "Explorar alrededores"
         },
         "default": {
-          "title": "No hay lugares de esta categoría por aquí",
-          "description": "Todavía no hay lugares de esta categoría por aquí. ¿Qué tal explorar otra vibra? 👀",
+          "title": "Ningún lugar de esta categoría por aquí",
+          "description": "Aún no hay lugares de esta categoría por aquí. ¿Qué tal explorar otra vibra? 👀",
           "button": "Probar otra categoría"
         },
         "search": {
-          "title": "No se encontraron lugares",
+          "title": "Ningún lugar encontrado",
           "description": "No pudimos encontrar nada con ese nombre. Intenta simplificar o buscar por una categoría.",
           "button": "Limpiar búsqueda"
         },
@@ -815,12 +813,12 @@
         }
       },
       "tryAnother": "Prueba otra categoría 👇",
-      "infoText": "Los lugares están ordenados por popularidad. Toca una tarjeta para ver más detalles y conectarte con las personas que están allí.",
+      "infoText": "Los lugares están ordenados por popularidad. Toca una tarjeta para ver más detalles y conectar con las personas que están allí.",
       "searchFallback": "¿No encontraste lo que buscabas?",
       "searchCta": "Buscar lugares"
     },
     "placeSearch": {
-      "placeholderPremium": "Busca en cualquier ciudad...",
+      "placeholderPremium": "Buscar en cualquier ciudad...",
       "placeholderDefault": "Buscar lugares...",
       "emptyTitle": "Buscar lugares",
       "emptyDescription": "Escribe el nombre de un lugar o elige una sugerencia.",
@@ -828,26 +826,26 @@
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Café",
-        "club": "Club",
+        "club": "Discoteca",
         "restaurant": "Restaurante"
       },
-      "noResultsTitle": "No se encontraron lugares",
-      "noResultsDescription": "Intenta buscar con otro nombre o revisa la ortografía.",
+      "noResultsTitle": "Ningún lugar encontrado",
+      "noResultsDescription": "Intenta buscar con otro nombre o verifica la ortografía.",
       "clearButton": "Limpiar búsqueda",
       "addressFallback": "Dirección no disponible"
     },
     "chat": {
-      "title": "Chat",
+      "title": "Conexiones",
       "messages": "Mensajes",
       "messagePlaceholder": "Escribe un mensaje...",
-      "emptyTitle": "Aún no hay conversaciones",
-      "emptySubtitle": "Empieza a conectar con personas cercanas para comenzar a chatear.",
+      "emptyTitle": "Ninguna conversación aún",
+      "emptySubtitle": "Empieza conectando con personas cercanas para iniciar una charla.",
       "potentialConnections": {
         "title": "Conexiones Potenciales",
-        "cta": "Ve quién quiere conectar"
+        "cta": "Mira quién quiere conectar"
       },
       "conversationsSection": "Conversaciones",
-      "noMessages": "Sin mensajes todavía",
+      "noMessages": "Sin mensajes aún",
       "time": {
         "now": "Ahora",
         "minutes": "{{count}} min",
@@ -857,60 +855,60 @@
     },
     "chatMessages": {
       "online": "En línea",
-      "connectedHere": "Se conectaron aquí",
+      "connectedHere": "Os conectasteis aquí",
       "moreActions": "Más acciones",
       "notSent": "No enviado",
       "messageNotSent": "Mensaje no enviado",
-      "scrollToLatest": "Ir a los mensajes recientes"
+      "scrollToLatest": "Ir a mensajes recientes"
     },
     "report": {
-      "title": "Enviar reporte",
-      "description": "Nuestro equipo revisará tu reporte. El usuario no sabrá que lo reportaste.",
+      "title": "Enviar denuncia",
+      "description": "El equipo de Bumpti analizará tu denuncia. El usuario no sabrá que lo reportaste.",
       "detailsLabel": "Detalles (opcional, pero recomendado)",
-      "placeholder": "Describe lo que pasó...",
-      "submit": "Enviar reporte",
+      "placeholder": "Describe lo que sucedió...",
+      "submit": "Enviar denuncia",
       "counter": "{{count}}/500",
-      "successTitle": "Reporte enviado",
-      "successMessage": "Gracias por avisarnos. Revisaremos esto pronto.",
+      "successTitle": "Denuncia enviada",
+      "successMessage": "Gracias por avisar. Revisaremos pronto.",
       "submitErrorTitle": "No se pudo enviar",
-      "submitError": "Intenta nuevamente en unos instantes.",
-      "detailsRequired": "Agrega detalles antes de enviar.",
-      "detailsHelper": "Agrega una breve descripción para enviar."
+      "submitError": "Intenta de nuevo en unos instantes.",
+      "detailsRequired": "Añade detalles antes de enviar.",
+      "detailsHelper": "Añade una breve descripción para enviar."
     },
     "chatBlock": {
       "blockSuccessTitle": "Usuario bloqueado",
       "blockSuccessMessage": "No recibirás mensajes de este usuario.",
-      "blockErrorTitle": "No se pudo bloquear al usuario",
-      "blockError": "Intenta nuevamente en unos instantes."
+      "blockErrorTitle": "No se pudo bloquear",
+      "blockError": "Intenta de nuevo en unos instantes."
     },
     "chatUnmatch": {
       "unmatchErrorTitle": "No se pudo deshacer el match",
-      "unmatchError": "Intenta nuevamente en unos instantes."
+      "unmatchError": "Intenta de nuevo en unos instantes."
     }
   },
   "venue": {
     "connection": {
       "active": {
-        "subtitle": "¡Hay gente conectada aquí ahora!",
-        "supportText": "Conéctate y mira quién está allí.",
+        "subtitle": "¡El ambiente está genial!",
+        "supportText": "Hay gente increíble conectada ahora. Entra para ver quién está cerca y conversar.",
         "button": "Conectar ahora",
-        "microcopy": "Podrás ver y chatear con personas que están en este lugar ahora."
+        "microcopy": "Podrás ver y conversar con personas que están en este lugar ahora."
       },
       "quiet": {
         "subtitle": "Rompe el hielo",
-        "supportText": "Todo está tranquilo por ahora. Indica tu presencia aquí y te avisaremos en cuanto empiece el movimiento.",
+        "supportText": "Todo tranquilo por ahora. Marca tu presencia aquí y te avisaremos cuando empiece el movimiento.",
         "button": "Iniciar conexiones",
         "buttonSecondary": "Seguir explorando"
       },
       "premium": {
         "subtitle": "Te estás adelantando. ⚡",
-        "supportText": "Los miembros Premium pueden conectarse antes de llegar al lugar.",
+        "supportText": "Los miembros Premium pueden conectar antes de llegar al lugar.",
         "button": "Conectar anticipadamente",
-        "microcopy": "Cuando te acerques, la app te notificará automáticamente."
+        "microcopy": "Cuando llegues cerca, la app te notificará automáticamente."
       },
       "locked": {
-        "subtitle": "¡Vaya! Estás un poco lejos.",
-        "supportText": "Para asegurar interacciones reales, solo puedes conectarte cuando estés en el lugar. Si quieres entrar ahora desde cualquier lugar, usa Early Check-in con Check-in+.",
+        "subtitle": "¡Ups! Estás un poco lejos.",
+        "supportText": "Para garantizar interacciones reales, solo puedes conectar cuando estés en el lugar. Si quieres entrar ahora desde donde estés, usa el Check-in+.",
         "button": "Seguir explorando",
         "buttonPremium": "Entrar con Check-in+"
       },
@@ -919,7 +917,7 @@
         "supportText": "¿Quieres salir de allí y entrar aquí?",
         "button": "Entrar aquí",
         "buttonCancel": "Cancelar",
-        "microcopy": "Solo puedes estar conectado en un lugar a la vez — para mantener todo real y auténtico."
+        "microcopy": "Solo puedes estar conectado en un lugar a la vez, para mantener todo real y auténtico."
       },
       "default": {
         "subtitle": "Conectar en este lugar",
@@ -931,7 +929,7 @@
     "label": "Conectado en",
     "leaveConfirmation": {
       "title": "¿Desconectar del lugar?",
-      "description": "Al salir, dejarás de aparecer para quienes están en este lugar.",
+      "description": "Al salir, dejas de aparecer para quien está en este lugar.",
       "disconnect": "Desconectar",
       "cancel": "Cancelar"
     }
@@ -948,33 +946,40 @@
     "languages": "Idiomas",
     "relationship": "Relación",
     "smoking": "Hábito de fumar",
-    "education": "Educación",
+    "education": "Escolaridad",
     "zodiac": "Signo",
     "interest": "INTERÉS",
-    "favoritePlaces": "LUGARES FAVORITOS",
+    "favoritePlaces": "Lugares favoritos",
     "lookingFor": {
-      "friendship": "Hacer nuevas amistades",
+      "friendship": "Hacer nuevos amigos",
       "networking": "Networking profesional",
-      "casual": "Conocer gente nueva",
-      "relationship": "Encontrar a alguien especial"
+      "casual": "Encontrar gente nueva",
+      "relationship": "Encontrar alguien especial"
+    },
+    "sections": {
+      "basicInfo": "Información básica",
+      "lifestyle": "Estilo de vida",
+      "moreInfo": "Más información",
+      "interests": "Intereses",
+      "about": "Sobre"
     }
   },
   "profileSwiper": {
     "emptyStateTitle": "Has visto todos los perfiles",
-    "emptyStateDescription": "¡Vuelve más tarde para ver gente nueva!"
+    "emptyStateDescription": "¡Vuelve más tarde para ver nuevas personas!"
   },
   "placePeople": {
-    "premiumRequired": "Premium requerido",
-    "premiumDescription": "¡Los suscriptores Premium pueden ver y conectarse con personas en cualquier lugar, incluso sin estar físicamente presentes!",
+    "premiumRequired": "Premium necesario",
+    "premiumDescription": "¡Suscriptores Premium pueden ver y conectar con personas en cualquier lugar, incluso sin estar físicamente presentes!",
     "benefit1": "Ve personas en cualquier lugar",
-    "benefit2": "Conéctate antes de ir al lugar",
+    "benefit2": "Conecta antes de ir al lugar",
     "benefit3": "Explora lugares en otras ciudades",
-    "subscribePremium": "Suscribirse a Premium",
+    "subscribePremium": "Suscribir Premium",
     "backToPlaces": "Volver a los lugares",
     "howItWorks": "Cómo funciona",
     "emptyState": {
-      "title": "Nadie por aquí todavía",
-      "description": "¡Eres el primero! Cuando aparezcan otras personas aquí, te avisaremos."
+      "title": "Nadie por aquí aún",
+      "description": "¡Eres el primero! Cuando aparezcan otras personas, te avisaremos."
     },
     "rewindBlockedTitle": "Rewind no disponible",
     "rewindBlockedDescription": "No puedes deshacer un match."
@@ -982,7 +987,7 @@
   "filters": {
     "title": "Filtros",
     "apply": "Aplicar",
-    "clear": "Borrar",
+    "clear": "Limpiar",
     "sortBy": {
       "title": "Ordenar por",
       "relevance": "Relevancia",
@@ -1000,18 +1005,18 @@
       "selectAtLeastOne": "Selecciona al menos una opción",
       "female": "Mujeres",
       "male": "Hombres",
-      "non-binary": "No binarias"
+      "non-binary": "No binarios"
     },
     "age": {
       "title": "Edad",
-      "description": "Selecciona el rango de edad de las personas con quienes quieres conectar.",
-      "range": "{{min}} a {{max}} años",
-      "rangeMax": "{{min}} a {{max}}+ años",
+      "description": "Selecciona el rango de edad de las personas con las que quieres conectar.",
+      "range": "{{min}} años hasta {{max}} años",
+      "rangeMax": "{{min}} años hasta {{max}}+",
       "hint": "Arrastra los controles para ajustar el rango de edad"
     },
     "connectionType": {
       "title": "Tipo de conexión",
-      "description": "Elige una o más intenciones para coincidir con personas con los mismos objetivos.",
+      "description": "Elige una o más intenciones para encontrar personas con los mismos objetivos.",
       "friendship": "Amistades",
       "relationship": "Relación seria",
       "networking": "Networking",
@@ -1025,16 +1030,17 @@
   "bottomSheets": {
     "chatActions": {
       "unmatchTitle": "Deshacer conexión",
-      "unmatchDescription": "Elimina el match. Ya no podrán enviarse mensajes.",
+      "unmatchDescription": "Elimina el match. Dejaréis de poder intercambiar mensajes.",
       "blockTitle": "Bloquear a {{name}}",
-      "blockDescription": "La persona bloqueada ya no podrá ver tu perfil ni enviar mensajes.",
-      "reportTitle": "Reportar a {{name}}",
-      "reportDescription": "Usa esta opción para reportar comportamiento inapropiado o sospechoso."
+      "blockDescription": "La persona bloqueada no podrá ver tu perfil ni enviarte mensajes.",
+      "reportTitle": "Denunciar a {{name}}",
+      "reportDescription": "Usa esta opción para reportar comportamiento inadecuado o sospechoso."
     },
     "report": {
-      "subtitle": "Selecciona el motivo del reporte",
+      "title": "¿Por qué quieres denunciar a {{name}}?",
+      "subtitle": "Selecciona el motivo de la denuncia",
       "reasons": {
-        "inappropriate": "Comportamiento inapropiado",
+        "inappropriate": "Comportamiento inadecuado",
         "harassment": "Acoso o lenguaje ofensivo",
         "fake": "Cuenta falsa",
         "inappropriate_content": "Contenido inapropiado",
@@ -1045,24 +1051,24 @@
   "modals": {
     "chatActions": {
       "unmatchTitle": "¿Deshacer conexión?",
-      "unmatchDescription": "Si deshaces la conexión, perderán el match y ya no podrán enviar mensajes.",
+      "unmatchDescription": "Si deshaces la conexión, perderéis el match y no podréis intercambiar más mensajes.",
       "unmatchConfirm": "Deshacer conexión",
       "blockTitle": "¿Bloquear a {{name}}?",
-      "blockDescription": "{{name}} ya no podrá ver tu perfil, enviar mensajes ni interactuar contigo en Bumpti.",
+      "blockDescription": "{{name}} no podrá ver más tu perfil, enviarte mensajes o interactuar contigo en Bumpti.",
       "blockConfirm": "Bloquear a {{name}}"
     },
     "match": {
-      "title": "¡Es match!",
-      "subtitle": "Tú y {{name}} se dieron like."
+      "title": "¡Es un match!",
+      "subtitle": "Tú y {{name}} os habéis gustado."
     }
   },
   "components": {
     "userPhotoGrid": {
       "removeTitle": "Eliminar foto",
-      "removeMessage": "¿Desea eliminar esta foto?",
+      "removeMessage": "¿Deseas eliminar esta foto?",
       "removeAction": "Eliminar",
       "permissionDenied": "Necesitamos permiso para acceder a tus fotos",
-      "addPhotoError": "No se pudo agregar la foto"
+      "addPhotoError": "No se pudo añadir la foto"
     },
     "photoActions": {
       "title": "¿Reemplazar o eliminar?",
@@ -1077,15 +1083,15 @@
     "am": "amárico",
     "ar": "árabe",
     "hy": "armenio",
-    "asl": "lengua de señas estadounidense",
+    "asl": "lengua de signos americana",
     "as": "asamés",
     "ay": "aimara",
-    "az": "azerbaiyano",
+    "az": "azerí",
     "bm": "bambara",
     "eu": "euskera",
     "be": "bielorruso",
     "bn": "bengalí",
-    "bho": "bhoyapurí",
+    "bho": "bhojpuri",
     "bs": "bosnio",
     "br": "bretón",
     "bg": "búlgaro",
@@ -1093,7 +1099,7 @@
     "yue": "cantonés",
     "ca": "catalán",
     "ceb": "cebuano",
-    "ny": "nyanja",
+    "ny": "chichewa",
     "co": "corso",
     "hr": "croata",
     "cs": "checo",
@@ -1106,16 +1112,16 @@
     "et": "estonio",
     "ee": "ewé",
     "fil": "filipino",
-    "fi": "finés",
+    "fi": "finlandés",
     "fr": "francés",
-    "fy": "frisón occidental",
+    "fy": "frisio occidental",
     "gl": "gallego",
     "ka": "georgiano",
     "de": "alemán",
     "el": "griego",
     "gn": "guaraní",
-    "gu": "guyaratí",
-    "ht": "criollo haitiano",
+    "gu": "gujarati",
+    "ht": "haitiano",
     "ha": "hausa",
     "haw": "hawaiano",
     "he": "hebreo",
@@ -1130,53 +1136,53 @@
     "it": "italiano",
     "ja": "japonés",
     "jv": "javanés",
-    "kn": "canarés",
+    "kn": "kanarés",
     "kk": "kazajo",
     "km": "jemer",
     "rw": "kinyarwanda",
-    "gom": "konkaní",
+    "gom": "konkani",
     "ko": "coreano",
     "kri": "kri",
     "ku": "kurdo",
     "ky": "kirguís",
-    "lo": "lao",
+    "lo": "laosiano",
     "la": "latín",
     "lv": "letón",
     "ln": "lingala",
     "lt": "lituano",
-    "lg": "ganda",
+    "lg": "luganda",
     "lb": "luxemburgués",
     "mk": "macedonio",
     "mai": "maithili",
     "mg": "malgache",
     "ms": "malayo",
-    "ml": "malayálam",
+    "ml": "malayalam",
     "mt": "maltés",
     "mn": "mongol",
-    "mni": "manipurí",
+    "mni": "manipuri",
     "mi": "maorí",
     "mr": "maratí",
     "lus": "mizo",
     "ne": "nepalí",
     "no": "noruego",
-    "or": "oriya",
+    "or": "odiya",
     "om": "oromo",
     "ps": "pastún",
     "fa": "persa",
     "pl": "polaco",
     "pt": "portugués",
-    "pa": "punyabí",
+    "pa": "panyabí",
     "qu": "quechua",
     "ro": "rumano",
     "ru": "ruso",
     "sm": "samoano",
     "sa": "sánscrito",
     "gd": "gaélico escocés",
-    "nso": "sotho septentrional",
+    "nso": "sotho del norte",
     "sr": "serbio",
-    "st": "sotho meridional",
+    "st": "sotho del sur",
     "sn": "shona",
-    "sd": "sindi",
+    "sd": "sindhi",
     "si": "cingalés",
     "sk": "eslovaco",
     "sl": "esloveno",
@@ -1202,7 +1208,7 @@
     "vi": "vietnamita",
     "cy": "galés",
     "xh": "xhosa",
-    "yi": "yidis",
+    "yi": "yídish",
     "yo": "yoruba",
     "zu": "zulú"
   }

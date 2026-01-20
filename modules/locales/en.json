@@ -1,8 +1,8 @@
 {
   "permissions": {
     "location": {
-      "title": "Location needed",
-      "subtitle": "To find the best places and people around you, we need access to your location.",
+      "title": "Location required",
+      "subtitle": "To find the best places and people around you, we need to know your location.",
       "button": "Enable location",
       "buttonSettings": "Open Settings",
       "requesting": "Requesting...",
@@ -15,11 +15,11 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "navigate": "Navigate",
-    "save_rating": "Submit rating",
+    "save_rating": "Save",
     "rate": "Rate",
     "details": "Details",
     "favorite": "Favorite",
-    "saved": "Favorited",
+    "saved": "Saved",
     "restore": "Restore",
     "openSettings": "Open Settings",
     "skip": "Skip"
@@ -38,17 +38,17 @@
       "open_crowd": "Open crowd",
       "reserved_crowd": "Reserved crowd",
       "meet_new_people": "Good for meeting new people",
-      "closed_groups": "Closed groups predominate",
+      "closed_groups": "Closed groups prevail",
       "community_vibe": "Community vibe",
       "solo_friendly": "Good for solo",
       "better_with_company": "Better with company",
       "easy_to_join_groups": "Easy to join groups",
-      "socially_active": "Socially active",
+      "socially_active": "Frequent social interaction",
       "low_social_interaction": "Low social interaction",
       "conversation_focused": "Conversation focused",
       "activity_focused": "Activity focused",
-      "works_better_daytime": "Better during the day",
-      "works_better_nighttime": "Better at night"
+      "works_better_daytime": "Works better daytime",
+      "works_better_nighttime": "Works better nighttime"
     },
     "categories": {
       "bar": "Bar",
@@ -69,7 +69,7 @@
       "event_venue": "Event Venue",
       "language_school": "Language School",
       "club": "Club",
-      "dance_club": "Dance Club",
+      "dance_club": "Dance",
       "theatre": "Theatre",
       "casino": "Casino",
       "shopping": "Shopping"
@@ -82,9 +82,10 @@
   "matches": "Chat",
   "profile": "Profile",
   "common": {
-    "retry": "Try again",
+    "retry": "Retry",
     "resend": "Resend",
     "subscribe": "Subscribe",
+    "delete": "Delete",
     "cancel": "Cancel",
     "all": "All",
     "close": "Close",
@@ -96,8 +97,8 @@
     "onePerson": "1 person now",
     "peopleNow": "{{count}} people now",
     "error": "Error",
-    "min": "minimum",
-    "max": "maximum",
+    "min": "min",
+    "max": "max",
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
@@ -116,7 +117,7 @@
       "cafe": "Cafes",
       "restaurant": "Restaurants",
       "gym": "Gyms",
-      "fitness_centre": "Fitness Centers",
+      "fitness_centre": "Sports Centers",
       "university": "Universities",
       "college": "Colleges",
       "park": "Parks",
@@ -129,7 +130,7 @@
       "event_venue": "Event Venues",
       "language_school": "Language Schools",
       "club": "Clubs",
-      "dance_club": "Dance Clubs",
+      "dance_club": "Dance Schools",
       "theatre": "Theatres",
       "casino": "Casinos",
       "shopping": "Shopping Centers"
@@ -142,7 +143,7 @@
   "screens": {
     "ratePlace": {
       "header": {
-        "helper": "Help others understand the vibe of this place"
+        "helper": "Help other people understand the vibe of this place"
       },
       "rating": {
         "question": "How was the social experience here?"
@@ -158,15 +159,14 @@
         "title": "Settings",
         "presence": {
           "title": "PRESENCE PREFERENCES",
-
           "invisible": "Invisible mode",
-          "invisibleDescription": "Makes your presence invisible to other users."
+          "invisibleDescription": "Hides your presence from other users."
         },
         "notifications": {
           "title": "Notifications",
           "push": "Push Notifications",
-          "devicePermission": "Allow notifications",
-          "devicePermissionDescription": "Authorize notifications on your device",
+          "devicePermission": "Enable notifications",
+          "devicePermissionDescription": "Authorize device notifications",
           "matches": "Matches",
           "messages": "Messages",
           "nearbyActivity": "Nearby activity",
@@ -175,18 +175,17 @@
         "account": {
           "title": "ACCOUNT",
           "blockList": "Blocked list",
-          "blockListDescription": "Manage who you have blocked.",
+          "blockListDescription": "Manage who you've blocked.",
           "verifyProfile": "Verify profile",
           "verification": {
-            "pending": "Verification in progress",
-            "pendingDescription": "Your verification is being reviewed.",
-            "retryDescription": "Tap to continue or start a new verification.",
-            "pendingTitle": "Verification in progress",
-            "pendingMessage": "Your verification is already underway. Please wait.",
+            "pending": "Verification pending",
+            "pendingDescription": "Your verification is being analyzed.",
+            "retryDescription": "Tap to continue or start new verification.",
+            "pendingTitle": "Verification Under Review",
+            "pendingMessage": "Your verification is already in progress. Please wait.",
             "alreadyVerified": "Your profile is already verified!"
           }
         },
-
         "security": {
           "title": "SECURITY AND PRIVACY",
           "privacyPolicy": "Privacy Policy",
@@ -204,19 +203,19 @@
         "dev": {
           "title": "DEVELOPER",
           "itemTitle": "Dev settings",
-          "itemDescription": "Local database tools and diagnostics."
+          "itemDescription": "Tools and diagnostics for local DB."
         },
         "session": {
           "title": "SESSION",
-          "logout": "Sign out",
-          "logoutConfirm": "Are you sure you want to sign out?",
+          "logout": "Log out",
+          "logoutConfirm": "Are you sure you want to log out?",
           "logoutTitle": "Sign out",
-          "logoutDescription": "You will be signed out and will need to log in again to access your account.",
+          "logoutDescription": "You will be disconnected and will need to log in again to access your account.",
           "logoutButton": "Sign out",
           "deleteAccount": "Delete account",
           "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
           "deleteAccountTitle": "Delete account",
-          "deleteAccountDescription": "This action is permanent and irreversible. All your data, conversations, and connections will be lost forever.",
+          "deleteAccountDescription": "This action is permanent and irreversible. All your data, conversations and connections will be lost forever.",
           "deleteAccountButton": "Delete permanently",
           "errorTitle": "Error",
           "errorDescription": "An error occurred. Please try again."
@@ -227,9 +226,9 @@
         "fields": {
           "id": "ID: {{value}}",
           "matchId": "Match ID: {{value}}",
-          "otherUserId": "Other user ID: {{value}}",
+          "otherUserId": "Other User ID: {{value}}",
           "status": "Status: {{value}}",
-          "otherUser": "Other user: {{value}}",
+          "otherUser": "Other User: {{value}}",
           "place": "Place: {{value}}",
           "placeId": "Place ID: {{value}}",
           "userId": "User ID: {{value}}",
@@ -237,16 +236,16 @@
           "matchedAt": "Matched at: {{value}}",
           "unmatchedAt": "Unmatched at: {{value}}",
           "chatId": "Chat ID: {{value}}",
-          "firstMessageAt": "First message at: {{value}}",
-          "lastMessageAt": "Last message at: {{value}}",
-          "unreadCount": "Unread count: {{value}}",
-          "lastFetchedAt": "Last fetched at: {{value}}",
+          "firstMessageAt": "First Message: {{value}}",
+          "lastMessageAt": "Last Message: {{value}}",
+          "unreadCount": "Unread: {{value}}",
+          "lastFetchedAt": "Last Fetched: {{value}}",
           "createdAt": "Created at: {{value}}",
-          "targetUserId": "Target user ID: {{value}}",
+          "targetUserId": "Target ID: {{value}}",
           "action": "Action: {{value}}"
         },
         "database": {
-          "title": "Local database",
+          "title": "Local Database",
           "matchesTitle": "Matches",
           "matchesEmpty": "No matches found.",
           "matchesItem": "Match: {{id}} • Status: {{status}} • User: {{otherUserId}}",
@@ -256,12 +255,12 @@
           "messagesTitle": "Messages",
           "messagesEmpty": "No messages found.",
           "messagesItem": "{{id}} • {{chatId}} • {{senderId}}",
-          "discoveryTitle": "Discovery profiles",
+          "discoveryTitle": "Discovery Profiles",
           "discoveryEmpty": "No discovery profiles found.",
-          "swipesTitle": "Swipe queue",
-          "swipesEmpty": "No swipes queued.",
-          "profilesTitle": "Profiles cache",
-          "profilesEmpty": "No cached profiles found."
+          "swipesTitle": "Swipes Queue",
+          "swipesEmpty": "No pending swipes.",
+          "profilesTitle": "Profile Cache",
+          "profilesEmpty": "No profiles in cache."
         },
         "likerIds": {
           "title": "Liker IDs",
@@ -269,13 +268,12 @@
           "empty": "No liker IDs found."
         }
       },
-
       "completeProfile": "Complete profile",
       "editProfile": "Edit profile",
       "preview": {
         "title": "My profile"
       },
-      "work": "Work",
+      "work": "Profession",
       "location": "Location",
       "height": "Height",
       "languages": "Languages",
@@ -292,15 +290,15 @@
           "highSchool": "High School",
           "highSchoolDesc": "High school diploma",
           "technical": "Technical",
-          "technicalDesc": "Professional technical course",
+          "technicalDesc": "Technical or vocational training",
           "undergraduate": "Undergraduate",
-          "undergraduateDesc": "Studying or completed",
+          "undergraduateDesc": "Bachelor's degree or equivalent",
           "postgraduate": "Postgraduate",
-          "postgraduateDesc": "Specialization or MBA",
-          "masters": "Masters",
-          "mastersDesc": "Academic masters",
+          "postgraduateDesc": "Master's degree or MBA",
+          "masters": "Master's",
+          "mastersDesc": "Academic Master's degree",
           "doctorate": "Doctorate",
-          "doctorateDesc": "Doctorate or PhD"
+          "doctorateDesc": "PhD or equivalent"
         },
         "zodiac": {
           "preferNotToSay": "Prefer not to say",
@@ -318,7 +316,7 @@
           "pisces": "Pisces"
         },
         "smoking": {
-          "social": "Socially",
+          "social": "I smoke socially",
           "socialDesc": "Only at events or special occasions",
           "no": "I don't smoke",
           "noDesc": "Non-smoker",
@@ -342,7 +340,7 @@
       },
       "turbo": {
         "title": "Connect+",
-        "subtitle": "Highlight your profile"
+        "subtitle": "Boost your profile"
       },
       "pings": {
         "title": "Pings",
@@ -350,47 +348,47 @@
       },
       "earlyCheckin": {
         "title": "Check-in+",
-        "subtitle": "Connect before you arrive",
-        "description": "Enter places from afar"
+        "subtitle": "Connect before arriving",
+        "description": "Enter places even from afar"
       },
       "profileEdit": {
-        "title": "Edit Profile",
+        "title": "Edit profile",
         "photos": {
           "title": "Photos",
           "subtitle": "Add photos that show your personality"
         },
         "profile": {
-          "title": "Your Profile",
+          "title": "Your profile",
           "subtitle": "Tell people who you are",
-          "bio": "Bio",
+          "bio": "Biography",
           "bioPlaceholder": "Add a bio"
         },
         "personalInfo": {
-          "title": "Personal Info",
+          "title": "Personal info",
           "subtitle": "Details about you",
           "gender": "Gender",
-          "relationshipStatus": "Relationship Status",
+          "relationshipStatus": "Relationship status",
           "height": "Height"
         },
         "lifestyle": {
           "title": "Lifestyle",
-          "subtitle": "How you live your daily life",
+          "subtitle": "How you live your day",
           "profession": "Profession",
           "jobTitle": "Job Title",
           "company": "Company",
-          "smoking": "Smoking"
+          "smoking": "Smoking habit"
         },
         "interests": {
           "title": "Interests",
           "subtitle": "Places you like to go",
-          "spots": "Favorite Spots",
+          "spots": "Favorite spots",
           "spotsPlaceholder": "Add spots"
         },
         "more": {
-          "title": "More About You",
-          "subtitle": "Additional info (optional)",
+          "title": "More about you",
+          "subtitle": "Additional information (optional)",
           "education": "Education",
-          "location": "Current Location",
+          "location": "Current location",
           "languages": "Languages",
           "zodiac": "Zodiac"
         },
@@ -399,23 +397,23 @@
       "premium": {
         "title": "Go Premium",
         "description": "Access exclusive features and unlock the full potential of the app.",
-        "cta": "View plans",
+        "cta": "See plans",
         "active": {
           "title": "Bumpti Premium",
-          "description": "You have already unlocked exclusive features",
-          "cta": "View my benefits"
+          "description": "You have unlocked exclusive features",
+          "cta": "See my benefits"
         }
       },
       "benefits": {
         "title": "Compare plans",
         "free": "Free",
         "premium": "Premium",
-        "unlimitedLikes": "Unlimited likes",
-        "seeWhoLiked": "Who liked you",
-        "priorityLikes": "Priority likes",
-        "unlimitedRewind": "Unlimited rewind",
-        "visibilityControl": "Visibility control",
-        "seeWhoViewedYou": "See who viewed you at venue",
+        "unlimitedLikes": "Unlimited Likes",
+        "seeWhoLiked": "See who liked you",
+        "priorityLikes": "Priority Likes",
+        "unlimitedRewind": "Unlimited Rewind",
+        "visibilityControl": "Visibility Control",
+        "seeWhoViewedYou": "See who viewed you",
         "turboWeekly": "Connect+ (5/week)",
         "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/week)"
@@ -423,24 +421,24 @@
       "powerUps": {
         "earlyCheckin": {
           "title": "Check-in+",
-          "subtitle": "Do early check-in before arriving at the venue.",
+          "subtitle": "Early check-in before arriving at the place.",
           "premiumHint": "Get free check-in credits with Premium.",
           "purchaseCta": "Buy {{quantity}} Check-in+",
-          "upgradeCta": "Subscribe to Premium",
+          "upgradeCta": "Subscribe Premium",
           "close": "Close",
           "optionLabel": "{{quantity}} Check-in+",
           "options": {
             "single": {
-              "price": "R$ 9.90",
+              "price": "R$ 9,90",
               "subtitle": "Single use"
             },
             "bundle": {
-              "price": "R$ 39.90",
+              "price": "R$ 39,90",
               "subtitle": "Save 20%"
             },
             "max": {
-              "price": "R$ 69.90",
-              "subtitle": "Best cost per use"
+              "price": "R$ 69,90",
+              "subtitle": "Best value"
             }
           },
           "badges": {
@@ -449,24 +447,24 @@
         },
         "pings": {
           "title": "Pings",
-          "subtitle": "Send priority signals to get noticed instantly.",
+          "subtitle": "Send priority signals and get attention instantly.",
           "premiumHint": "Get free check-in credits with Premium.",
           "purchaseCta": "Buy {{quantity}} Pings",
-          "upgradeCta": "Subscribe to Premium",
+          "upgradeCta": "Subscribe Premium",
           "close": "Close",
           "optionLabel": "{{quantity}} Pings",
           "options": {
             "single": {
-              "price": "R$ 6.90",
+              "price": "R$ 6,90",
               "subtitle": "Single boost"
             },
             "bundle": {
-              "price": "R$ 24.90",
+              "price": "R$ 24,90",
               "subtitle": "Save 25%"
             },
             "max": {
-              "price": "R$ 44.90",
-              "subtitle": "Best value pack"
+              "price": "R$ 44,90",
+              "subtitle": "Best value"
             }
           },
           "badges": {
@@ -475,24 +473,24 @@
         },
         "turbo": {
           "title": "Connect+",
-          "subtitle": "Boost your profile to the top of the venue.",
+          "subtitle": "Boost your profile to the top of the place.",
           "premiumHint": "Get free check-in credits with Premium.",
           "purchaseCta": "Buy {{quantity}} Connect+",
-          "upgradeCta": "Subscribe to Premium",
+          "upgradeCta": "Subscribe Premium",
           "close": "Close",
           "optionLabel": "{{quantity}} Connect+",
           "options": {
             "single": {
-              "price": "R$ 14.90",
+              "price": "R$ 14,90",
               "subtitle": "Instant boost"
             },
             "bundle": {
-              "price": "R$ 39.90",
+              "price": "R$ 39,90",
               "subtitle": "Save 30%"
             },
             "max": {
-              "price": "R$ 64.90",
-              "subtitle": "Best exposure"
+              "price": "R$ 64,90",
+              "subtitle": "Highest exposure"
             }
           },
           "badges": {
@@ -502,9 +500,9 @@
       }
     },
     "blockedList": {
-      "title": "Blocked list",
+      "title": "Blocked List",
       "unblockConfirmTitle": "Unblock user?",
-      "unblockConfirmMessage": "Unblocking this user will allow them to see your profile and contact you again.",
+      "unblockConfirmMessage": "By unblocking, this user will be able to see your profile and contact you again.",
       "unblock": "Unblock",
       "unblockSuccess": "User unblocked successfully.",
       "unblockError": "Could not unblock user.",
@@ -513,50 +511,50 @@
     "home": {
       "heroTitle": "Good to see you here.",
       "heroSubtitle": "",
-      "intermediateTitle": "It's better when the vibe matches.",
+      "intermediateTitle": "The vibe is better when it matches yours.",
       "intermediateSubtitle": "Find places and people on the same wavelength.",
       "placeDetected": {
-        "title": "Place detected",
+        "title": "Location detected",
         "message": "Are you at {{placeName}}?"
       },
       "toolbar": {
         "filters": "Filters",
         "search": "Search"
       },
-      "infoTitle": "How it works",
-      "infoDescription": "Choose a category and see nearby spots where you can connect with others.",
+      "infoTitle": "How it works?",
+      "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
           "title": "Live",
-          "description": "Busy spots full of people connecting."
+          "description": "Crowded places with people connecting."
         },
         "favorites": {
           "title": "Favorites",
-          "description": "Your go-to spots to connect."
+          "description": "Your places to connect."
         },
         "communityFavorites": {
           "title": "Picks",
           "description": "See what others love."
         },
         "nightlife": {
-          "title": "Bars & nightlife",
-          "description": "Go out and meet new people."
+          "title": "Nightlife",
+          "description": "To go out and meet new people."
         },
         "cafes": {
-          "title": "Cafés & hangouts",
-          "description": "Cozy spots to chat and relax."
+          "title": "Cafes & Chat",
+          "description": "Places to talk and relax."
         },
         "university": {
-          "title": "Campus life",
-          "description": "Where everyday meetups happen."
+          "title": "University Life",
+          "description": "Where meetings happen in the routine."
         },
         "fitness": {
-          "title": "Wellness & movement",
-          "description": "Connections that start during workouts."
+          "title": "Fitness & Wellness",
+          "description": "Connections that start at the workout."
         },
         "parks": {
-          "title": "Parks & outdoors",
-          "description": "Outdoor meetings in nature."
+          "title": "Parks & Outdoors",
+          "description": "Outdoor meetings and nature."
         },
         "restaurants": {
           "title": "Restaurants",
@@ -571,28 +569,28 @@
           "description": "Big games, big crowds."
         },
         "club": {
-          "title": "Clubs & Social",
-          "description": "Exclusive spots and social clubs."
+          "title": "Social Clubs",
+          "description": "Sports and recreational clubs."
         },
         "library": {
           "title": "Libraries & Study",
-          "description": "Quiet spots to focus and work."
+          "description": "Quiet places to focus and work."
         },
         "nearby": {
-          "title": "What's nearby",
-          "description": "See activity around you"
+          "title": "Nearby",
+          "description": "See what's happening around"
         },
         "ranking": {
           "title": "Hotspots",
-          "description": "Places people keep coming back to.",
+          "description": "Places people always go to.",
           "filterMonth": "This month",
-          "filterGeneral": "General"
+          "filterGeneral": "All time"
         }
       }
     },
     "premiumPaywall": {
       "badge": "BUMPTI PREMIUM",
-      "title": "Your upgrade to real encounters",
+      "title": "Your upgrade for real encounters",
       "subtitle": "More visibility. More connections. More live moments.",
       "plans": {
         "week": "1 week",
@@ -608,36 +606,36 @@
       },
       "benefits": {
         "unlimitedLikes": {
-          "title": "Like without limits",
-          "subtitle": "Like as many people as you want and increase your connection chances."
+          "title": "Unlimited Likes",
+          "subtitle": "Like as many people as you want and increase your chances of connection."
         },
         "seeWhoLiked": {
           "title": "See who liked you",
-          "subtitle": "Discover who's already shown interest and skip straight to matches."
+          "subtitle": "Discover who has already shown interest and jump straight to matches."
         },
         "priorityLikes": {
-          "title": "Priority likes",
-          "subtitle": "Your likes get highlighted and appear first to other people."
+          "title": "Priority Likes",
+          "subtitle": "Your likes are highlighted and appear first for other people."
         },
         "unlimitedRewind": {
-          "title": "Unlimited rewind",
+          "title": "Unlimited Rewind",
           "subtitle": "Go back to profiles whenever you want and never miss an opportunity."
         },
         "visibilityControl": {
-          "title": "Visibility control",
+          "title": "Visibility Control",
           "subtitle": "Decide who can see you and keep your presence more private."
         },
-        "seeWhoViewed": {
-          "title": "See who viewed you at venue",
-          "subtitle": "Discover who crossed paths with you at bars, cafes, parties and other places."
+        "seeWhoViewedYou": {
+          "title": "See who viewed you",
+          "subtitle": "Discover who crossed paths with you at bars, cafes, parties, and other places."
         },
         "turboIncluded": {
           "title": "Connect+ included (5 per week)",
-          "subtitle": "Stand out more at the venue and gain instant visibility when you need it."
+          "subtitle": "Appear more at the place and gain instant visibility when you need it."
         },
         "earlyCheckin": {
           "title": "Check-in+ (5 per week)",
-          "subtitle": "Show up at the venue before you arrive and increase your chances of being discovered.",
+          "subtitle": "Appear at the place before arriving and increase your chances of being discovered.",
           "month": "1 Check-in",
           "quarter": "5 Check-ins",
           "year": "12 Check-ins"
@@ -647,14 +645,14 @@
           "subtitle": "Send special social signals to get someone's attention."
         }
       },
-      "terms": "Your subscription automatically renews for the same price and duration unless canceled in your {{store}} settings. By confirming your purchase, you agree to our",
+      "terms": "Your subscription renews automatically for the same price and period unless cancelled in your {{store}} settings. By confirming the subscription, you agree to our",
       "termsLink": "Terms of Use",
       "subscribe": "Subscribe to Bumpti Premium",
       "close": "Close"
     },
     "manageSubscription": {
       "title": "You have Bumpti Premium",
-      "subtitle": "View your benefits and change your plan whenever you want.",
+      "subtitle": "View your benefits and change your plan anytime.",
       "currentPlan": "Your current plan",
       "manage": "Manage subscription",
       "updatePlan": "Update plan"
@@ -662,18 +660,18 @@
     "onboarding": {
       "heroTitle1": "Meet real people,",
       "heroTitle2": "in real places",
-      "heroSubtitle": "Discover and connect with people who frequent the same places as you. Make friends, chat and expand your social network",
+      "heroSubtitle": "Discover and connect with those who frequent the same places as you. Make friends, chat, and expand your social network",
       "title": "Meet real people,\nin real places",
-      "subtitle": "Discover and connect with people who frequent the same places as you. Make friends, chat and expand your social network",
-      "phoneAuth": "Sign in with phone",
+      "subtitle": "Discover and connect with those who frequent the same places as you. Make friends, chat, and expand your social network",
+      "phoneAuth": "Log in with phone",
       "appleAuth": "Continue with Apple ID",
       "termsPrefix": "By continuing, you agree to our",
       "terms": "Terms of Use",
       "termsAnd": "and",
       "privacy": "Privacy Policy",
-      "phoneAuthTitle": "Sign in with your phone number",
-      "phoneAuthSubtitle": "We'll send you a verification code via SMS",
-      "phonePlaceholder": "(DDD) 99999-9999",
+      "phoneAuthTitle": "Log in with your phone number",
+      "phoneAuthSubtitle": "We will send a verification code via SMS",
+      "phonePlaceholder": "(555) 555-5555",
       "sendCode": "Send verification code",
       "sending": "Sending...",
       "phoneInfo": "By continuing, you will receive an SMS with the verification code. Message and data rates may apply.",
@@ -686,39 +684,39 @@
       "resendCode": "Resend code",
       "resendCodeIn": "Resend code in {{seconds}}s",
       "codeVerifiedSuccess": "Code verified successfully!",
-      "invalidCode": "Invalid code. Please try again.",
+      "invalidCode": "Incorrect code. Please try again.",
       "enterCompleteCode": "Please enter the complete code",
       "newCodeSent": "New code sent to {{phone}}",
       "codeNotReceived": "Didn't receive the code? Check if the number is correct or try again in a few moments.",
       "nameTitle": "What's your name?",
-      "nameSubtitle": "Enter your first name only",
+      "nameSubtitle": "Enter only your first name",
       "namePlaceholder": "First name",
       "continue": "Continue",
       "ageTitle": "When were you born?",
-      "ageSubtitle": "We need your date of birth to personalize your experience and confirm that you are over 18 years old.",
+      "ageSubtitle": "We need your birth date to personalize your experience and confirm you are over 18.",
       "agePreview": "You are {{age}} years old",
       "ageError": "You must be at least 18 years old",
-      "ageRequired": "Please select your date of birth",
-      "ageMinimum": "You must be 18 years or older to use this app.",
+      "ageRequired": "Please select your birth date",
+      "ageMinimum": "You must be 18 or older to use this app.",
       "selectDate": "Select date",
       "genderTitle": "How do you identify?",
-      "genderSubtitle": "Choose the gender that best suits you. This helps create more genuine and respectful connections.",
+      "genderSubtitle": "Choose the gender that best represents you. This helps create more real and respectful connections.",
       "genderWoman": "Woman",
       "genderMan": "Man",
       "genderNonBinary": "Non-binary",
-      "genderIdentitySelected": "Identity selected: {{identity}}",
-      "genderUpdateInfo": "You can update this information anytime in settings.",
+      "genderIdentitySelected": "Selected identity: {{identity}}",
+      "genderUpdateInfo": "You can update this information at any time in settings.",
       "genderSelectIdentity": "Select how you identify",
-      "genderCustomPrompt": "Want to tell us more about you? We're listening 💬",
-      "genderCustomPlaceholder": "Tell us more about your gender",
+      "genderCustomPrompt": "Want to tell more about yourself? We're listening 💬",
+      "genderCustomPlaceholder": "Tell more about your gender",
       "confirm": "Confirm",
       "genderNotFound": "Didn't find your identity? Tap here to let us know.",
       "genderSuggestTitle": "Suggest new identity",
-      "genderSuggestDescription": "Help us be more inclusive! Share your suggestion and we'll consider including it.",
+      "genderSuggestDescription": "Help us be more inclusive! Share your suggestion and we'll consider adding it.",
       "genderSuggestPlaceholder": "Type your suggestion (optional)",
       "cancel": "Cancel",
       "sendSuggestion": "Send suggestion",
-      "genderSuggestionSuccess": "Thank you for the suggestion! We'll review and consider including it soon.",
+      "genderSuggestionSuccess": "Thanks for the suggestion! We'll review and consider adding it soon.",
       "connectWithTitle": "Who would you like to connect with?",
       "connectWithSubtitle": "Choose one or more options.",
       "connectWithInfo": "This information will not be displayed publicly.",
@@ -728,7 +726,7 @@
       "connectWithAll": "Everyone",
       "connectWithPrivacy": "This information is only used to show people you want to connect with.",
       "connectWithFooter": "You can change this later in settings.",
-      "intentionTitle": "What do you want to find here?",
+      "intentionTitle": "What are you looking for here?",
       "intentionSubtitle": "We use this to show people with the same goals as you",
       "intentionFriends": "Make new friends",
       "intentionCasual": "Casual connections",
@@ -737,7 +735,7 @@
       "intentionSelectedOne": "1 goal selected",
       "intentionSelectedMany": "{{count}} goals selected",
       "photosTitle": "Add your photos",
-      "photosSubtitle": "Select 3 to 9 photos at once. Profiles with more photos get more connections!",
+      "photosSubtitle": "Select 3 to 9 photos at once. Profiles with more photos generate more connections!",
       "photosMainLabel": "Main",
       "photosCount": "{{count}} of 9 photos",
       "photosMinimum": "Minimum of 3 required",
@@ -750,58 +748,57 @@
         "selectAtLeastOne": "Select at least 1 spot",
         "locationNeeded": "To suggest places near you, we need your location."
       },
-      "locationTitle": "Allow location",
-      "locationSubtitle": "To find people and places near you, we need your location. You can turn this off anytime",
-      "locationEnable": "Allow location",
+      "locationTitle": "Enable location",
+      "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
+      "locationEnable": "Enable location",
       "locationSkip": "Not now",
       "locationPrivacy": "Your location data is private and secure",
       "locationRequesting": "Requesting permission...",
       "locationDeniedTitle": "Permission denied",
-      "locationDeniedMessage": "You denied location permission. You can enable it later in the app settings.",
+      "locationDeniedMessage": "You denied location permission. You can enable it later in app settings.",
       "locationError": "Error requesting location permission. Please try again.",
       "notificationsTitle": "Enable notifications?",
-      "notificationsSubtitle": "We use notifications to notify you about important news in the app.",
-      "notificationsEnable": "Allow notifications",
+      "notificationsSubtitle": "We use notifications to alert you about important updates in the app.",
+      "notificationsEnable": "Enable notifications",
       "notificationsSkip": "Not now",
       "notificationsRequesting": "Requesting permission...",
       "notificationsDeniedTitle": "Permission denied",
-      "notificationsDeniedMessage": "You denied notification permission. You can enable it later in the app settings.",
+      "notificationsDeniedMessage": "You denied notification permission. You can enable it later in app settings.",
       "notificationsError": "Error requesting notification permission. Please try again.",
-      "completeTitle": "You're all set to start connecting!",
-      "completeSubtitle": "Enter a place and see who also shares the same interests.",
+      "completeTitle": "All set to start connecting!",
+      "completeSubtitle": "Enter a place and see who shares your tastes.",
       "completeExplore": "Explore places",
-      "completeConnectPeople": "Connect\nwith people",
-      "report": "Report",
-      "block": "Block"
+      "completeFindPlaces": "Find\nplaces",
+      "completeConnectPeople": "Connect\nwith people"
     },
     "categoryResults": {
-      "subtitle": "See the most popular places in the area",
+      "subtitle": "See the most popular places in the region",
       "mostPopular": "Most popular near you",
       "placesCount": "{{count}} places",
       "emptyStates": {
         "favorites": {
-          "title": "Your favorite spots are quiet",
-          "description": "Save the places you love most to know exactly when the vibe starts picking up.",
+          "title": "Your favorite places are quiet",
+          "description": "Save the places you like most to know exactly when the buzz starts.",
           "button": "Discover new spots"
         },
         "trending": {
-          "title": "The vibe is just warming up",
-          "description": "We haven't detected a peak in activity just yet, but the best connections often happen when you least expect them.",
+          "title": "The vibe is warming up",
+          "description": "We haven't detected a buzz peak yet, but the best connections usually happen by surprise.",
           "button": "Explore other vibes"
         },
         "nearby": {
           "title": "Exploring new horizons?",
-          "description": "We couldn't find any places around here. How about trying another category?",
+          "description": "We didn't find places around here. How about trying another category?",
           "button": "Try another category"
         },
         "communityFavorites": {
-          "title": "Where does everyone meet?",
-          "description": "The community is still discovering the best secrets in this area. Why not be the first to favorite a spot?",
+          "title": "Where is everyone meeting?",
+          "description": "The community is still discovering the secrets of this region. Be the first to favorite a place!",
           "button": "Explore surroundings"
         },
         "default": {
-          "title": "No places of this category around here",
-          "description": "There are no places of this category around here yet. How about exploring another vibe? 👀",
+          "title": "No places in this category here",
+          "description": "There are no places in this category here yet. How about exploring another vibe? 👀",
           "button": "Try another category"
         },
         "search": {
@@ -810,38 +807,39 @@
           "button": "Clear search"
         },
         "ranking": {
-          "title": "No popular places yet",
-          "description": "Nobody has checked in to places near you yet. Be the first!",
+          "title": "Still no popular places",
+          "description": "No one has checked in to places near you yet. Be the first!",
           "button": "Explore places"
         }
       },
       "tryAnother": "Try another category 👇",
-      "searchFallback": "Didn't find what you're looking for?",
+      "infoText": "Places are ordered by popularity. Tap a card to see more details and connect with people there.",
+      "searchFallback": "Didn't find what you were looking for?",
       "searchCta": "Search places"
     },
     "placeSearch": {
       "placeholderPremium": "Search in any city...",
       "placeholderDefault": "Search places...",
       "emptyTitle": "Search places",
-      "emptyDescription": "Type the name of a place or pick a suggestion.",
+      "emptyDescription": "Type the name of a place or choose a suggestion.",
       "suggestionsLabel": "Search suggestions",
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Cafe",
-        "club": "Club",
+        "club": "Nightclub",
         "restaurant": "Restaurant"
       },
       "noResultsTitle": "No places found",
-      "noResultsDescription": "Try searching with another name or check the spelling.",
+      "noResultsDescription": "Try searching with another name or check spelling.",
       "clearButton": "Clear search",
       "addressFallback": "Address unavailable"
     },
     "chat": {
-      "title": "Chat",
+      "title": "Connections",
       "messages": "Messages",
       "messagePlaceholder": "Type a message...",
       "emptyTitle": "No conversations yet",
-      "emptySubtitle": "Start connecting with people nearby to begin chatting.",
+      "emptySubtitle": "Start connecting with people nearby to start a chat.",
       "potentialConnections": {
         "title": "Potential Connections",
         "cta": "See who wants to connect"
@@ -861,68 +859,68 @@
       "moreActions": "More actions",
       "notSent": "Not sent",
       "messageNotSent": "Message not sent",
-      "scrollToLatest": "Scroll to latest messages"
+      "scrollToLatest": "Go to recent messages"
     },
     "report": {
       "title": "Submit report",
-      "description": "Our team will review your report. The user will not know you reported them.",
+      "description": "The Bumpti team will review your report. The user will not know you reported them.",
       "detailsLabel": "Details (optional, but recommended)",
       "placeholder": "Describe what happened...",
       "submit": "Submit report",
       "counter": "{{count}}/500",
       "successTitle": "Report submitted",
-      "successMessage": "Thanks for letting us know. We'll review this shortly.",
-      "submitErrorTitle": "Could not submit report",
+      "successMessage": "Thanks for letting us know. We will review shortly.",
+      "submitErrorTitle": "Could not submit",
       "submitError": "Please try again in a moment.",
-      "detailsRequired": "Please add details before submitting.",
-      "detailsHelper": "Add a short description to submit."
+      "detailsRequired": "Add details before submitting.",
+      "detailsHelper": "Add a brief description to submit."
     },
     "chatBlock": {
       "blockSuccessTitle": "User blocked",
-      "blockSuccessMessage": "You won't receive messages from this user.",
+      "blockSuccessMessage": "You will no longer receive messages from this user.",
       "blockErrorTitle": "Could not block",
-      "blockError": "Try again in a moment."
+      "blockError": "Please try again in a moment."
     },
     "chatUnmatch": {
       "unmatchErrorTitle": "Could not unmatch",
-      "unmatchError": "Try again in a moment."
+      "unmatchError": "Please try again in a moment."
     }
   },
   "venue": {
     "connection": {
       "active": {
-        "subtitle": "People are connected here right now!",
-        "supportText": "Connect and see who's there.",
+        "subtitle": " The vibe is great!",
+        "supportText": "There are amazing people connected right now. Enter to see who is nearby and chat.",
         "button": "Connect now",
-        "microcopy": "You'll be able to see and chat with people at this place right now."
+        "microcopy": "You will be able to see and chat with people who are at this place right now."
       },
       "quiet": {
         "subtitle": "Break the ice",
-        "supportText": "It's quiet for now. Signal you're here and we'll let you know once the crowd starts growing.",
-        "button": "Start connecting",
+        "supportText": "It's quiet for now. Mark your presence here and we'll let you know when the buzz starts.",
+        "button": "Start connections",
         "buttonSecondary": "Keep exploring"
       },
       "premium": {
-        "subtitle": "You're getting ahead of the game. ⚡",
+        "subtitle": "You're getting ahead. ⚡",
         "supportText": "Premium members can connect before arriving at the place.",
-        "button": "Connect in advance",
+        "button": "Connect early",
         "microcopy": "When you get close, the app will notify you automatically."
       },
       "locked": {
-        "subtitle": "Oops! You're a bit far away.",
-        "supportText": "To ensure real interactions, you can only connect when you're at the location. If you want to enter now from anywhere, use Early Check-in with Check-in+.",
+        "subtitle": "Oops! You are a bit far.",
+        "supportText": "To ensure real interactions, you can only connect when you are at the place. If you want to enter now from wherever you are, use Early Check-in with Check-in+.",
         "button": "Keep exploring",
         "buttonPremium": "Enter with Check-in+"
       },
       "alreadyConnected": {
-        "subtitle": "You're already connected at {{currentVenue}}!",
-        "supportText": "Want to leave there and enter here?",
+        "subtitle": "You are already connected at {{currentVenue}}!",
+        "supportText": "Do you want to leave there and enter here?",
         "button": "Enter here",
         "buttonCancel": "Cancel",
-        "microcopy": "You can only be connected at one place at a time — to keep everything real and authentic."
+        "microcopy": "You can only be connected in one place at a time — to keep everything real and authentic."
       },
       "default": {
-        "subtitle": "Connect at this location",
+        "subtitle": "Connect at this place",
         "button": "Connect"
       }
     }
@@ -930,8 +928,8 @@
   "connectedBar": {
     "label": "Connected at",
     "leaveConfirmation": {
-      "title": "Disconnect from location?",
-      "description": "When you leave, you'll stop appearing to people at this place.",
+      "title": "Disconnect from place?",
+      "description": "By leaving, you stop appearing to those at this place.",
       "disconnect": "Disconnect",
       "cancel": "Cancel"
     }
@@ -942,7 +940,7 @@
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",
-    "work": "Work",
+    "work": "Profession",
     "location": "Location",
     "height": "Height",
     "languages": "Languages",
@@ -951,17 +949,24 @@
     "education": "Education",
     "zodiac": "Zodiac",
     "interest": "INTEREST",
-    "favoritePlaces": "FAVORITE PLACES",
+    "favoritePlaces": "Favorite Places",
     "lookingFor": {
-      "friendship": "Making new friends",
+      "friendship": "Make new friends",
       "networking": "Professional networking",
-      "casual": "Meeting new people",
+      "casual": "Meet new people",
       "relationship": "Find someone special"
+    },
+    "sections": {
+      "basicInfo": "Basic Info",
+      "lifestyle": "Lifestyle",
+      "moreInfo": "More Info",
+      "interests": "Interests",
+      "about": "About"
     }
   },
   "profileSwiper": {
     "emptyStateTitle": "You've seen all profiles",
-    "emptyStateDescription": "Come back later to see new people!"
+    "emptyStateDescription": "Check back later to see new people!"
   },
   "placePeople": {
     "premiumRequired": "Premium required",
@@ -972,12 +977,12 @@
     "subscribePremium": "Subscribe Premium",
     "backToPlaces": "Back to places",
     "howItWorks": "How it works",
-    "rewindBlockedTitle": "Rewind unavailable",
-    "rewindBlockedDescription": "You can’t rewind a match.",
     "emptyState": {
       "title": "No one here yet",
-      "description": "You are the first! When other people appear here, we will notify you."
-    }
+      "description": "You are the first! When other people show up, we'll let you know."
+    },
+    "rewindBlockedTitle": "Rewind unavailable",
+    "rewindBlockedDescription": "You cannot undo a match."
   },
   "filters": {
     "title": "Filters",
@@ -991,29 +996,29 @@
       "rating": "Rating"
     },
     "minRating": {
-      "title": "Minimum rating"
+      "title": "Min rating"
     },
     "gender": {
       "title": "Gender",
       "all": "All genders",
       "description": "Choose who you want to see and connect with. This only affects your feed.",
       "selectAtLeastOne": "Select at least one option",
-      "male": "Men",
       "female": "Women",
+      "male": "Men",
       "non-binary": "Non-binary"
     },
     "age": {
       "title": "Age",
-      "description": "Select the age range of people you want to meet.",
-      "range": "{{min}} to {{max}} years old",
-      "rangeMax": "{{min}} to {{max}}+ years old",
-      "hint": "Drag the controls to adjust the age range"
+      "description": "Select the age range of people you want to connect with.",
+      "range": "{{min}} years to {{max}} years",
+      "rangeMax": "{{min}} years to {{max}}+",
+      "hint": "Drag handles to adjust age range"
     },
     "connectionType": {
       "title": "Connection type",
-      "description": "Pick one or more intentions to match with people looking for the same.",
+      "description": "Choose one or more intentions to find people with the same goals.",
       "friendship": "Friendship",
-      "relationship": "Relationship",
+      "relationship": "Serious relationship",
       "networking": "Networking",
       "casual": "Casual"
     },
@@ -1025,15 +1030,15 @@
   "bottomSheets": {
     "chatActions": {
       "unmatchTitle": "Unmatch",
-      "unmatchDescription": "Remove the match. You will no longer be able to message.",
+      "unmatchDescription": "Remove the match. You will no longer be able to message each other.",
       "blockTitle": "Block {{name}}",
-      "blockDescription": "The blocked person will no longer see your profile or send messages.",
+      "blockDescription": "Blocked person will no longer be able to see your profile or message you.",
       "reportTitle": "Report {{name}}",
       "reportDescription": "Use this option to report inappropriate or suspicious behavior."
     },
     "report": {
       "title": "Why do you want to report {{name}}?",
-      "subtitle": "Select the reason for your report",
+      "subtitle": "Select the reason for reporting",
       "reasons": {
         "inappropriate": "Inappropriate behavior",
         "harassment": "Harassment or offensive language",
@@ -1046,10 +1051,10 @@
   "modals": {
     "chatActions": {
       "unmatchTitle": "Unmatch?",
-      "unmatchDescription": "If you unmatch, you will lose the match and won’t be able to message anymore.",
+      "unmatchDescription": "If you unmatch, you will lose the connection and won't be able to message each other anymore.",
       "unmatchConfirm": "Unmatch",
       "blockTitle": "Block {{name}}?",
-      "blockDescription": "{{name}} will no longer see your profile, send messages, or interact with you on Bumpti.",
+      "blockDescription": "{{name}} will no longer be able to see your profile, message you, or interact with you on Bumpti.",
       "blockConfirm": "Block {{name}}"
     },
     "match": {
@@ -1073,19 +1078,19 @@
     }
   },
   "languages": {
-    "asl": "American Sign Language",
     "af": "Afrikaans",
     "sq": "Albanian",
     "am": "Amharic",
     "ar": "Arabic",
     "hy": "Armenian",
+    "asl": "American Sign Language",
     "as": "Assamese",
     "ay": "Aymara",
     "az": "Azerbaijani",
     "bm": "Bambara",
     "eu": "Basque",
     "be": "Belarusian",
-    "bn": "Bangla",
+    "bn": "Bengali",
     "bho": "Bhojpuri",
     "bs": "Bosnian",
     "br": "Breton",
@@ -1094,7 +1099,7 @@
     "yue": "Cantonese",
     "ca": "Catalan",
     "ceb": "Cebuano",
-    "ny": "Nyanja",
+    "ny": "Chewa",
     "co": "Corsican",
     "hr": "Croatian",
     "cs": "Czech",
@@ -1125,7 +1130,7 @@
     "hu": "Hungarian",
     "is": "Icelandic",
     "ig": "Igbo",
-    "ilo": "Iloko",
+    "ilo": "Ilocano",
     "id": "Indonesian",
     "ga": "Irish",
     "it": "Italian",
@@ -1145,7 +1150,7 @@
     "lv": "Latvian",
     "ln": "Lingala",
     "lt": "Lithuanian",
-    "lg": "Ganda",
+    "lg": "Luganda",
     "lb": "Luxembourgish",
     "mk": "Macedonian",
     "mai": "Maithili",
@@ -1154,13 +1159,13 @@
     "ml": "Malayalam",
     "mt": "Maltese",
     "mn": "Mongolian",
-    "mni": "Manipuri",
-    "mi": "Māori",
+    "mni": "Meiteilon (Manipuri)",
+    "mi": "Maori",
     "mr": "Marathi",
     "lus": "Mizo",
     "ne": "Nepali",
     "no": "Norwegian",
-    "or": "Odia",
+    "or": "Odia (Oriya)",
     "om": "Oromo",
     "ps": "Pashto",
     "fa": "Persian",
@@ -1172,10 +1177,10 @@
     "ru": "Russian",
     "sm": "Samoan",
     "sa": "Sanskrit",
-    "gd": "Scottish Gaelic",
-    "nso": "Northern Sotho",
+    "gd": "Scots Gaelic",
+    "nso": "Sepedi",
     "sr": "Serbian",
-    "st": "Southern Sotho",
+    "st": "Sesotho",
     "sn": "Shona",
     "sd": "Sindhi",
     "si": "Sinhala",
@@ -1195,7 +1200,7 @@
     "ts": "Tsonga",
     "tr": "Turkish",
     "tk": "Turkmen",
-    "ak": "Akan",
+    "ak": "Twi",
     "uk": "Ukrainian",
     "ur": "Urdu",
     "ug": "Uyghur",
