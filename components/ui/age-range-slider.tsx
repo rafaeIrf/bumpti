@@ -12,6 +12,7 @@ interface AgeRangeSliderProps {
   readonly max: number;
   readonly value: [number, number];
   readonly onValueChange: (value: [number, number]) => void;
+  readonly onSlidingComplete?: (value: [number, number]) => void;
 }
 
 export function AgeRangeSlider({
@@ -19,6 +20,7 @@ export function AgeRangeSlider({
   max,
   value,
   onValueChange,
+  onSlidingComplete,
 }: AgeRangeSliderProps) {
   const colors = useThemeColors();
 
@@ -32,6 +34,13 @@ export function AgeRangeSlider({
   }) => {
     const { minValue, maxValue } = event.nativeEvent;
     onValueChange([minValue, maxValue]);
+  };
+
+  const handleSlidingComplete = (event: {
+    nativeEvent: OnValueChangeEventPayload;
+  }) => {
+    const { minValue, maxValue } = event.nativeEvent;
+    onSlidingComplete?.([minValue, maxValue]);
   };
 
   return (
@@ -49,6 +58,7 @@ export function AgeRangeSlider({
         upperValue={value[1]}
         accentColor={colors.accent}
         onValueChange={handleValueChange}
+        onSlidingComplete={handleSlidingComplete}
         style={styles.slider}
       />
 

@@ -5,6 +5,7 @@ import UIKit
 class RangeSliderView: ExpoView {
   // Events
   let onValueChange = EventDispatcher()
+  let onSlidingComplete = EventDispatcher()
   
   // Private properties
   private var minValue: Float = 0
@@ -174,7 +175,8 @@ class RangeSliderView: ExpoView {
     parentScrollView?.isScrollEnabled = true
     parentScrollView = nil
     
-    onValueChange([
+    // Fire sliding complete event when user releases
+    onSlidingComplete([
       "minValue": Int(lowerValue.rounded()),
       "maxValue": Int(upperValue.rounded())
     ])

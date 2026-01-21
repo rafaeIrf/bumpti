@@ -7,7 +7,7 @@ class RangeSliderModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("RangeSlider")
 
-    Events("onValueChange")
+    Events("onValueChange", "onSlidingComplete")
 
     View(RangeSliderView::class) {
       Prop("minValue") { view: RangeSliderView, value: Float ->
@@ -30,7 +30,7 @@ class RangeSliderModule : Module() {
         view.setAccent(color)
       }
 
-      Events("onValueChange")
+      Events("onValueChange", "onSlidingComplete")
     }
   }
 }

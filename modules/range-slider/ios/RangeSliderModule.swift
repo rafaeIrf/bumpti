@@ -5,7 +5,7 @@ public class RangeSliderModule: Module {
     Name("RangeSlider")
 
     // Defines event names that the module can send to JavaScript
-    Events("onValueChange")
+    Events("onValueChange", "onSlidingComplete")
 
     // Native view component
     View(RangeSliderView.self) {
@@ -31,7 +31,7 @@ public class RangeSliderModule: Module {
       }
 
       // Events
-      Events("onValueChange")
+      Events("onValueChange", "onSlidingComplete")
     }
   }
 }

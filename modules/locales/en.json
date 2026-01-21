@@ -525,7 +525,7 @@
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "Live",
+          "title": "Active Now",
           "description": "Crowded places with people connecting."
         },
         "favorites": {
@@ -533,7 +533,7 @@
           "description": "Your places to connect."
         },
         "communityFavorites": {
-          "title": "Picks",
+          "title": "Popular",
           "description": "See what others love."
         },
         "nightlife": {
