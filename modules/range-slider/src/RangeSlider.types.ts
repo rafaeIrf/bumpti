@@ -7,6 +7,7 @@ export type OnValueChangeEventPayload = {
 
 export type RangeSliderModuleEvents = {
   onValueChange: (params: OnValueChangeEventPayload) => void;
+  onSlidingComplete: (params: OnValueChangeEventPayload) => void;
 };
 
 export type RangeSliderViewProps = {
@@ -16,5 +17,6 @@ export type RangeSliderViewProps = {
   upperValue?: number;
   accentColor?: string;
   onValueChange?: (event: { nativeEvent: OnValueChangeEventPayload }) => void;
+  onSlidingComplete?: (event: { nativeEvent: OnValueChangeEventPayload }) => void;
   style?: StyleProp<ViewStyle>;
 };

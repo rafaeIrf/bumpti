@@ -536,3 +536,20 @@ export const {
   useGetSuggestedPlacesQuery,
   useSaveReviewMutation,
 } = placesApi;
+
+/**
+ * Invalidates all places caches that depend on user preferences.
+ * Call this when user changes filters (gender, age range, intentions).
+ */
+export const invalidatePlacesCache = () => {
+  // Import store dynamically to avoid circular dependencies
+  const { store } = require("@/modules/store");
+  store.dispatch(
+    placesApi.util.invalidateTags([
+      "NearbyPlaces",
+      "TrendingPlaces",
+      "RankedPlaces",
+      "FavoritePlaces",
+    ])
+  );
+};

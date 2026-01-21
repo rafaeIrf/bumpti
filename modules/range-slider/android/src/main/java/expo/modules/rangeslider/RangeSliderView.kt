@@ -3,6 +3,7 @@ package expo.modules.rangeslider
 import android.content.Context
 import android.graphics.Color
 import android.view.ContextThemeWrapper
+import android.view.MotionEvent
 import android.widget.LinearLayout
 import com.google.android.material.slider.RangeSlider
 import expo.modules.kotlin.AppContext
@@ -11,6 +12,7 @@ import expo.modules.kotlin.views.ExpoView
 
 class RangeSliderView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   private val onValueChange by EventDispatcher()
+  private val onSlidingComplete by EventDispatcher()
 
   private var minValue = 0f
   private var maxValue = 100f
@@ -51,6 +53,19 @@ class RangeSliderView(context: Context, appContext: AppContext) : ExpoView(conte
         "maxValue" to values[1].toInt()
       ))
     }
+    
+    // Fire onSlidingComplete when user releases the slider
+    addOnSliderTouchListener(object : RangeSlider.OnSliderTouchListener {
+      override fun onStartTrackingTouch(slider: RangeSlider) {}
+      
+      override fun onStopTrackingTouch(slider: RangeSlider) {
+        val values = slider.values
+        onSlidingComplete(mapOf(
+          "minValue" to values[0].toInt(),
+          "maxValue" to values[1].toInt()
+        ))
+      }
+    })
   }
 
   init {

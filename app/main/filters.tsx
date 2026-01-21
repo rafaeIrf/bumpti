@@ -14,8 +14,10 @@ import { spacing, typography } from "@/constants/theme";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { invalidatePlacesCache } from "@/modules/places/placesApi";
 import { updateProfile } from "@/modules/profile/api";
 import { setProfile } from "@/modules/store/slices/profileActions";
+import { logger } from "@/utils/logger";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -24,7 +26,6 @@ export default function FiltersScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
   const { profile, isLoading: profileLoading } = useProfile();
-  console.log(profile);
 
   const [localFilters, setLocalFilters] = useState<{
     connectWith: string[];
@@ -42,6 +43,8 @@ export default function FiltersScreen() {
   const hasProfileSeeded = useRef(false);
   const skipNextSave = useRef(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track if we should skip age range from useEffect (will be saved via onSlidingComplete)
+  const skipAgeFromEffect = useRef(false);
 
   const genderOptions = useMemo(() => {
     return CONNECT_WITH_OPTIONS.filter((o) => o.id !== "all").map((opt) => ({
@@ -105,30 +108,26 @@ export default function FiltersScreen() {
     });
   };
 
-  const scheduleSave = (nextFilters: typeof localFilters) => {
-    if (saveTimeout.current) {
-      clearTimeout(saveTimeout.current);
+  const scheduleSave = async (nextFilters: typeof localFilters) => {
+    try {
+      await updateProfile({
+        connectWith: nextFilters.connectWith,
+        intentions: nextFilters.intentions,
+        ageRangeMin: nextFilters.ageRangeMin,
+        ageRangeMax: nextFilters.ageRangeMax,
+      });
+      setProfile({
+        ...profile,
+        connectWith: nextFilters.connectWith,
+        intentions: nextFilters.intentions,
+        age_range_min: nextFilters.ageRangeMin,
+        age_range_max: nextFilters.ageRangeMax,
+      });
+      // Invalidate places cache to refresh user previews with new filters
+      invalidatePlacesCache();
+    } catch (error) {
+      logger.error("Auto-save filters failed", error);
     }
-    saveTimeout.current = setTimeout(async () => {
-      try {
-        await updateProfile({
-          connectWith: nextFilters.connectWith,
-          intentions: nextFilters.intentions,
-          ageRangeMin: nextFilters.ageRangeMin,
-          ageRangeMax: nextFilters.ageRangeMax,
-        });
-        setProfile({
-          ...profile,
-          connectWith: nextFilters.connectWith,
-          intentions: nextFilters.intentions,
-          age_range_min: nextFilters.ageRangeMin,
-          age_range_max: nextFilters.ageRangeMax,
-        });
-      } catch (error) {
-        console.error("Auto-save filters failed", error);
-      } finally {
-      }
-    }, 600); // debounce auto-save to reduce chatter
   };
 
   useEffect(() => {
@@ -141,11 +140,33 @@ export default function FiltersScreen() {
       skipNextSave.current = false;
       return;
     }
-    scheduleSave(localFilters);
+    // Skip if only age changed (will be saved via onSlidingComplete)
+    if (skipAgeFromEffect.current) {
+      skipAgeFromEffect.current = false;
+      return;
+    }
+
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+    }
+    saveTimeout.current = setTimeout(() => scheduleSave(localFilters), 600);
+
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
     };
   }, [localFilters, profileLoading]);
+
+  // Handler for when age slider is released
+  const handleAgeSlidingComplete = ([min, max]: [number, number]) => {
+    const newFilters = {
+      ...localFilters,
+      ageRangeMin: min,
+      ageRangeMax: max,
+    };
+    setLocalFilters(newFilters);
+    skipAgeFromEffect.current = true; // Don't re-trigger useEffect
+    scheduleSave(newFilters);
+  };
 
   return (
     <BaseTemplateScreen
@@ -220,6 +241,7 @@ export default function FiltersScreen() {
                   ageRangeMax: max,
                 }))
               }
+              onSlidingComplete={handleAgeSlidingComplete}
             />
           </View>
         </View>
@@ -253,9 +275,7 @@ export default function FiltersScreen() {
                   style={[
                     styles.chipText,
                     {
-                      color: localFilters.intentions.includes(type.id)
-                        ? "#000"
-                        : colors.text,
+                      color: colors.text,
                     },
                   ]}
                 >
