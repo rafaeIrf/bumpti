@@ -749,7 +749,7 @@ export default function CategoryResultsScreen() {
               contentContainerStyle={[
                 styles.listContainer,
                 {
-                  paddingBottom: spacing.xl + insets.bottom,
+                  paddingBottom: spacing.xxl * 2 + insets.bottom,
                   paddingTop: filterHeight + spacing.sm, // Add padding for the absolute header
                 },
               ]}
