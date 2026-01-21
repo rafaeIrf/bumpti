@@ -525,7 +525,7 @@
       "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",
       "categories": {
         "highlighted": {
-          "title": "Live",
+          "title": "Activo ahora",
           "description": "Lugares llenos y con gente conectando."
         },
         "favorites": {
@@ -533,7 +533,7 @@
           "description": "Tus lugares para conectar."
         },
         "communityFavorites": {
-          "title": "Picks",
+          "title": "Populares",
           "description": "Mira lo que otros aman."
         },
         "nightlife": {
