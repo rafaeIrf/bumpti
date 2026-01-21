@@ -117,8 +117,18 @@ export function PlaceDetailsBottomSheet({
 
         {/* Identity Section - Tight & Focused */}
         <View style={styles.identitySection}>
-          <ThemedText style={typography.heading} numberOfLines={1}>
-            {placeName}
+          <ThemedText
+            style={[
+              typography.subheading2,
+              {
+                textAlign: "center",
+                marginBottom: spacing.sm,
+                paddingHorizontal: spacing.xxl,
+              },
+            ]}
+            numberOfLines={2}
+          >
+            {placeName.toUpperCase()}
           </ThemedText>
 
           <View style={styles.metaRow}>

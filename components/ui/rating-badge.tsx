@@ -34,13 +34,13 @@ export function RatingBadge({
       <StarIcon
         width={12}
         height={12}
-        fill={colors.premiumGold || "#FFD700"}
-        color={colors.premiumGold || "#FFD700"}
+        fill={colors.accent || "#FFD700"}
+        color={colors.accent || "#FFD700"}
       />
       <ThemedText
         style={[
           styles.text,
-          { color: colors.premiumGold || "#FFD700" }, // Ensure text matches icon
+          { color: colors.textSecondary || "#FFD700" }, // Ensure text matches icon
         ]}
       >
         {rating.toFixed(1)}

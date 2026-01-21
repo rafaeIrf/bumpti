@@ -16,12 +16,11 @@ serve(async (req) => {
     const { q, lat, lng, limit } = params;
 
     // Authentication Check
-    let user;
-    try {
-        user = await requireAuth(req);
-    } catch (e) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    const authResult = await requireAuth(req);
+    if (!authResult.success) {
+        return authResult.response;
     }
+    const { user } = authResult;
 
     // Validation
     if (!q || q.trim().length < 2) {
