@@ -425,8 +425,26 @@ export default function CategoryResultsScreen() {
       ? availableCategories
       : lastAvailableCategories;
 
+  // Calculate loading state before using it
+  let loadingState: boolean;
+  if (trendingMode) {
+    loadingState = trendingLoading;
+  } else if (favoritesMode) {
+    loadingState = favoritePlacesLoading;
+  } else if (communityFavoritesMode) {
+    loadingState = locationLoading || communityFavoritesLoading;
+  } else if (mostFrequentMode) {
+    loadingState = locationLoading || mostFrequentFetching;
+  } else {
+    loadingState = locationLoading || isPaginatedInitialLoading;
+  }
+
+  const isLoadingState = useMemo(() => loadingState, [loadingState]);
+
   const shouldShowFilters =
-    nearbyMode || favoritesMode || trendingMode || communityFavoritesMode;
+    (nearbyMode || favoritesMode || trendingMode || communityFavoritesMode) &&
+    !isLoadingState &&
+    visibleCategories.length > 1;
 
   const handleApplyFilters = useCallback(
     (nextSortBy: SortOption, nextMinRating: number | null) => {
@@ -570,27 +588,13 @@ export default function CategoryResultsScreen() {
     return null;
   }, [hasMore, isFetchingMore, searchFooterComponent, shouldShowSearchFooter]);
 
-  let loadingState: boolean;
-  if (trendingMode) {
-    loadingState = trendingLoading;
-  } else if (favoritesMode) {
-    loadingState = favoritePlacesLoading;
-  } else if (communityFavoritesMode) {
-    loadingState = locationLoading || communityFavoritesLoading;
-  } else if (mostFrequentMode) {
-    loadingState = locationLoading || mostFrequentFetching;
-  } else {
-    loadingState = locationLoading || isPaginatedInitialLoading;
-  }
-
-  const isLoadingState = useMemo(() => loadingState, [loadingState]);
-
   const [filterHeight, setFilterHeight] = useState(0);
   const translateY = useSharedValue(0);
   const scrollY = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event, context: { prevY?: number }) => {
+      "worklet";
       const y = event.contentOffset.y;
       scrollY.value = y;
 
@@ -608,6 +612,7 @@ export default function CategoryResultsScreen() {
       context.prevY = y;
     },
     onBeginDrag: (event, context: { prevY?: number }) => {
+      "worklet";
       context.prevY = event.contentOffset.y;
     },
   });

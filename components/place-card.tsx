@@ -116,7 +116,7 @@ export function PlaceCard({
       >
         {/* Header: Name + Favorite */}
         <View style={styles.headerRow}>
-          <ThemedText style={styles.placeTitle} numberOfLines={2}>
+          <ThemedText style={styles.placeTitle} numberOfLines={1}>
             {place.name.toUpperCase()}
           </ThemedText>
           <Pressable onPress={() => onToggleFavorite?.()} hitSlop={12}>
@@ -133,13 +133,17 @@ export function PlaceCard({
         <View style={styles.metaRow}>
           {place.tag && (
             <>
-              <ThemedText style={styles.tagText}>
+              <ThemedText
+                style={[styles.tagText, { color: colors.textSecondary }]}
+              >
                 {t(`place.categories.${place.tag}`)}
               </ThemedText>
               <View style={styles.dot} />
             </>
           )}
-          <ThemedText style={styles.metaText}>
+          <ThemedText
+            style={[styles.metaText, { color: colors.textSecondary }]}
+          >
             {formatDistance(place.distance)}
           </ThemedText>
           {/* Rating */}
@@ -199,7 +203,7 @@ export function PlaceCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: spacing.lg,
     overflow: "hidden",
     backgroundColor: "#0F0F0F",
     borderWidth: 1,
@@ -236,11 +240,9 @@ const styles = StyleSheet.create({
   },
   metaText: {
     ...typography.caption,
-    color: "#A1A1AA",
   },
   tagText: {
     ...typography.caption,
-    color: "#E7E9EA",
   },
   dot: {
     width: 2,
