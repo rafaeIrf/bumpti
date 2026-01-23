@@ -34,9 +34,6 @@ async function uploadPhotos(
   userId: string,
   photos: File[]
 ): Promise<{ paths: string[]; positions: number[] }> {
-  const paths: string[] = [];
-  const positions: number[] = [];
-
   // Remove existing photos for this user before uploading new ones
   const { data: existing } = await supabase.storage
     .from(userPhotosBucket)
@@ -46,7 +43,8 @@ async function uploadPhotos(
     await supabase.storage.from(userPhotosBucket).remove(filesToRemove);
   }
 
-  for (const [index, photo] of photos.entries()) {
+  // Upload all photos in PARALLEL for better performance
+  const uploadPromises = photos.map(async (photo, index) => {
     const ext = getFileExtension(photo.name, photo.type);
     const path = `${userId}/${crypto.randomUUID() || `photo-${index}`}.${ext}`;
 
@@ -60,11 +58,15 @@ async function uploadPhotos(
 
     if (uploadError) throw uploadError;
 
-    paths.push(path);
-    positions.push(index);
-  }
+    return { path, position: index };
+  });
 
-  return { paths, positions };
+  const results = await Promise.all(uploadPromises);
+  
+  return {
+    paths: results.map(r => r.path),
+    positions: results.map(r => r.position),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -127,6 +129,7 @@ Deno.serve(async (req) => {
       throw new Error(userError?.message ?? "User not found");
     }
 
+    // Run all queries AND photo upload in PARALLEL for maximum performance
     const gendersPromise = connectWith.length
       ? supabase.from("gender_options").select("id,key").in("key", connectWith).eq("active", true)
       : Promise.resolve({ data: [], error: null });
@@ -135,11 +138,24 @@ Deno.serve(async (req) => {
       ? supabase.from("intention_options").select("id,key").in("key", intentions).eq("active", true)
       : Promise.resolve({ data: [], error: null });
 
-    const [{ data: connectOptions, error: connectError }, { data: intentionOptions, error: intentionError }] =
-      await Promise.all([gendersPromise, intentionPromise]);
+    const genderIdPromise = genderKey
+      ? supabase.from("gender_options").select("id,key").eq("key", genderKey)
+      : Promise.resolve({ data: [], error: null });
+
+    const uploadPromise = photos.length
+      ? uploadPhotos(user.id, photos)
+      : Promise.resolve({ paths: [], positions: [] });
+
+    const [
+      { data: connectOptions, error: connectError },
+      { data: intentionOptions, error: intentionError },
+      { data: genders, error: genderError },
+      uploadResult,
+    ] = await Promise.all([gendersPromise, intentionPromise, genderIdPromise, uploadPromise]);
 
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
+    if (genderError) throw genderError;
 
     if ((connectWith.length && (connectOptions?.length ?? 0) !== connectWith.length) ||
         (intentions.length && (intentionOptions?.length ?? 0) !== intentions.length)) {
@@ -152,15 +168,9 @@ Deno.serve(async (req) => {
     const connectIds = (connectOptions ?? []).map((o) => o.id);
     const intentionIds = (intentionOptions ?? []).map((o) => o.id);
 
-    // Resolve gender_id
+    // Resolve gender_id from pre-fetched data
     let genderId: number | null = null;
     if (genderKey) {
-      const { data: genders, error: genderError } = await supabase
-        .from("gender_options")
-        .select("id,key")
-        .eq("key", genderKey);
-
-      if (genderError) throw genderError;
       if (!genders || genders.length === 0) {
         return new Response(
           JSON.stringify({
@@ -176,14 +186,8 @@ Deno.serve(async (req) => {
       genderId = genders[0].id;
     }
 
-    let photoPaths: string[] = [];
-    let photoPositions: number[] = [];
-
-    if (photos.length) {
-      const uploaded = await uploadPhotos(user.id, photos);
-      photoPaths = uploaded.paths;
-      photoPositions = uploaded.positions;
-    }
+    const photoPaths = uploadResult.paths;
+    const photoPositions = uploadResult.positions;
 
     const { error: rpcError } = await supabase.rpc("save_onboarding_txn", {
       p_user_id: user.id,

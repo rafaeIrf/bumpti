@@ -71,10 +71,8 @@ serve(async (req: Request) => {
       });
     }
 
-    const results: PlacesByCategory[] = [];
-
-    for (const category of categories) {
-      // Use the category name directly as filter
+    // Execute all category queries in PARALLEL for better performance
+    const categoryPromises = categories.map(async (category: string) => {
       const { data: places, error } = await supabase.rpc("search_places_nearby", {
         user_lat: latNum,
         user_lng: lngNum,
@@ -85,8 +83,9 @@ serve(async (req: Request) => {
       });
 
       if (error) {
-        continue; // Skip this category on error
+        return null; // Skip this category on error
       }
+
       const uniquePlaces = (places || [])
         .map((place: any) => ({
           placeId: place.id,
@@ -98,11 +97,14 @@ serve(async (req: Request) => {
           distance: Number((place.dist_meters / 1000).toFixed(2)), // Convert meters to km
         }));
 
-      results.push({
+      return {
         category,
         places: uniquePlaces,
-      });
-    }
+      };
+    });
+
+    const resultsWithNulls = await Promise.all(categoryPromises);
+    const results: PlacesByCategory[] = resultsWithNulls.filter((r): r is PlacesByCategory => r !== null);
 
     return new Response(
       JSON.stringify({ data: results }),
