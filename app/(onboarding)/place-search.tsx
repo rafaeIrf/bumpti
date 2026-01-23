@@ -1,6 +1,6 @@
 import { PlaceSearchContent } from "@/components/place-search/place-search-content";
 import React from "react";
 
-export default function MainPlaceSearchModal() {
-  return <PlaceSearchContent isModal={false} />;
+export default function OnboardingPlaceSearchModal() {
+  return <PlaceSearchContent />;
 }

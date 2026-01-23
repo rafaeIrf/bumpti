@@ -7,6 +7,7 @@ import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { isAndroid } from "@/utils";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import moment, { Moment } from "moment";
 import React, { useState } from "react";
@@ -98,11 +99,14 @@ export default function UserAgeScreen() {
   };
 
   const age = birthDate ? calculateAge(birthDate) : null;
-  const isValid = birthDate !== null && age !== null && age >= 18;
+  const MIN_AGE = 18;
+  const MAX_AGE = 100; // Maximum realistic age
+  const isValid =
+    birthDate !== null && age !== null && age >= MIN_AGE && age <= MAX_AGE;
 
-  // Get max date (today) and min date (120 years ago)
+  // Get max date (today) and min date (100 years ago)
   const maxDate = new Date();
-  const minDate = moment().subtract(120, "years").toDate();
+  const minDate = moment().subtract(MAX_AGE, "years").toDate();
 
   return (
     <BaseTemplateScreen hasStackHeader>
@@ -164,7 +168,7 @@ export default function UserAgeScreen() {
             </View>
 
             {/* Age Preview - Valid */}
-            {age !== null && age >= 18 && (
+            {age !== null && age >= MIN_AGE && age <= MAX_AGE && (
               <Animated.View
                 entering={FadeInUp.delay(100).duration(400)}
                 style={[styles.agePreview, { borderColor: colors.border }]}
@@ -178,7 +182,7 @@ export default function UserAgeScreen() {
             )}
 
             {/* Age Error - Underage */}
-            {age !== null && age < 18 && (
+            {age !== null && age < MIN_AGE && (
               <Animated.View
                 entering={FadeInUp.delay(100).duration(400)}
                 style={[styles.agePreview, { borderColor: colors.error }]}
@@ -187,6 +191,20 @@ export default function UserAgeScreen() {
                   style={[styles.agePreviewText, { color: colors.error }]}
                 >
                   {t("screens.onboarding.ageError")}
+                </ThemedText>
+              </Animated.View>
+            )}
+
+            {/* Age Error - Too Old */}
+            {age !== null && age > MAX_AGE && (
+              <Animated.View
+                entering={FadeInUp.delay(100).duration(400)}
+                style={[styles.agePreview, { borderColor: colors.error }]}
+              >
+                <ThemedText
+                  style={[styles.agePreviewText, { color: colors.error }]}
+                >
+                  {t("screens.onboarding.ageErrorTooOld")}
                 </ThemedText>
               </Animated.View>
             )}
@@ -209,11 +227,11 @@ export default function UserAgeScreen() {
         </View>
 
         {/* Date Picker Modal */}
-        {showPicker && (
+        {showPicker && isAndroid && (
           <DateTimePicker
             value={birthDate ? birthDate.toDate() : maxDate}
             mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
+            display="default"
             onChange={handleDateChange}
             maximumDate={maxDate}
             minimumDate={minDate}

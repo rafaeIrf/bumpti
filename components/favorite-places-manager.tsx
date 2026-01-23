@@ -1,8 +1,10 @@
 import { SearchIcon } from "@/assets/icons";
+import { LocationPermissionState } from "@/components/location-permission-state";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { PlacesByCategory } from "@/modules/places/api";
@@ -135,8 +137,9 @@ export function useFavoritePlaces({
       .filter((id) => placesMap[id])
       .map((id) => ({ id, name: placesMap[id] }));
 
+    // Use relative path - works from both (onboarding) and main
     router.push({
-      pathname: "/(modals)/place-search",
+      pathname: "./place-search",
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),
@@ -192,6 +195,12 @@ export function FavoritePlacesContent({
   setIsExpanded,
 }: FavoritePlacesContentProps) {
   const colors = useThemeColors();
+  const { location: userLocation } = useCachedLocation();
+  const {
+    canAskAgain,
+    request: requestLocationPermission,
+    openSettings,
+  } = useLocationPermission();
 
   return (
     <Pressable
@@ -241,6 +250,12 @@ export function FavoritePlacesContent({
               {t("common.loading")}
             </ThemedText>
           </View>
+        ) : !userLocation ? (
+          <LocationPermissionState
+            canAskAgain={canAskAgain}
+            onRequest={requestLocationPermission}
+            onOpenSettings={openSettings}
+          />
         ) : (
           <ScrollView
             style={styles.categoriesScroll}
