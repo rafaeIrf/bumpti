@@ -1063,8 +1063,10 @@
       "blockConfirm": "Block {{name}}"
     },
     "match": {
-      "title": "It's a match!",
-      "subtitle": "You and {{name}} liked each other."
+      "title": "It's a Match!",
+      "subtitle": "You and {{name}} liked each other.",
+      "actionPrimary": "Send message",
+      "actionSecondary": "Keep swiping"
     }
   },
   "components": {

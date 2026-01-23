@@ -1063,8 +1063,10 @@
       "blockConfirm": "Bloquear a {{name}}"
     },
     "match": {
-      "title": "¡Es un match!",
-      "subtitle": "Tú y {{name}} os habéis gustado."
+      "title": "¡Es un Match!",
+      "subtitle": "Tú y {{name}} se gustaron.",
+      "actionPrimary": "Enviar mensaje",
+      "actionSecondary": "Seguir navegando"
     }
   },
   "components": {
