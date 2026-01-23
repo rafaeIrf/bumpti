@@ -87,9 +87,9 @@ export default function ConnectWithScreen() {
           >
             {t("screens.onboarding.connectWithSubtitle")}
           </ThemedText>
-          <ThemedText style={[styles.info, { color: colors.textTertiary }]}>
+          {/* <ThemedText style={[styles.info, { color: colors.textTertiary }]}>
             {t("screens.onboarding.connectWithInfo")}
-          </ThemedText>
+          </ThemedText> */}
         </Animated.View>
 
         <Animated.View
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     textAlign: "center",
-    marginBottom: spacing.xs,
+    marginBottom: spacing.lg,
   },
   info: {
     ...typography.caption,
