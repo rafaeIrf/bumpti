@@ -41,6 +41,7 @@ interface PlaceDetailsBottomSheetProps {
   onClose?: () => void;
   onRate?: () => void;
   onConnect?: () => void;
+  onReport?: () => void;
   isLoading?: boolean;
 }
 
@@ -58,6 +59,7 @@ export function PlaceDetailsBottomSheet({
   onClose,
   onRate,
   onConnect,
+  onReport,
   isLoading = false,
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
@@ -94,7 +96,7 @@ export function PlaceDetailsBottomSheet({
       style={[
         styles.container,
         {
-          paddingBottom: insets.bottom + spacing.md,
+          paddingBottom: insets.bottom,
           backgroundColor: colors.surface,
         },
       ]}
@@ -229,7 +231,7 @@ export function PlaceDetailsBottomSheet({
         )}
 
         {/* Actions Section - Command Center Layout */}
-        <View style={styles.actionsContainer}>
+        <View>
           <Button
             variant="default"
             size="lg"
@@ -299,6 +301,15 @@ export function PlaceDetailsBottomSheet({
               </ThemedText>
             </View>
           </View>
+
+          {/* Report button - ghost style at the end */}
+          <Button
+            variant="ghost"
+            size="default"
+            textStyle={{ color: colors.textSecondary }}
+            label={t("bottomSheets.placeReport.reportButton")}
+            onPress={onReport || (() => {})}
+          />
         </View>
       </View>
     </View>
@@ -357,12 +368,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  actionsContainer: {
-    gap: spacing.lg,
-  },
   secondaryRow: {
     flexDirection: "row",
     alignItems: "flex-start",
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
   fabItem: {
     flex: 1,

@@ -415,3 +415,52 @@ export async function triggerCityHydration(
     return { status: "error" };
   }
 }
+
+/**
+ * Creates a place report in the database
+ */
+export async function createPlaceReport(
+  params: {
+    placeId: string;
+    reason: string;
+    description?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("report-place", {
+      body: {
+        place_id: params.placeId,
+        reason: params.reason,
+        description: params.description,
+      },
+    });
+
+    if (error) {
+      logger.error("Error creating place report (edge)", {
+        error,
+        placeId: params.placeId,
+      });
+      return { success: false, error: error.message };
+    }
+
+    if (data?.error) {
+      logger.error("Error creating place report (API)", {
+        error: data.error,
+        placeId: params.placeId,
+      });
+      return { success: false, error: data.error };
+    }
+
+    logger.log("Place report created successfully", {
+      placeId: params.placeId,
+      reason: params.reason,
+      reportId: data?.report_id,
+    });
+
+    return { success: true };
+  } catch (error) {
+    logger.error("Unexpected error creating place report", { error });
+    return { success: false, error: "Unexpected error" };
+  }
+}
+

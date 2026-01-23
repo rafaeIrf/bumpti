@@ -1,9 +1,11 @@
 import { ArrowLeftIcon, ArrowRightIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ReportProgressBar } from "@/components/report/report-progress-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
+import { InputText } from "@/components/ui/input-text";
 import { ListOption } from "@/components/ui/list-option";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -11,13 +13,7 @@ import { t } from "@/modules/locales";
 import { submitReport } from "@/modules/report/api";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ReportReasonId =
@@ -141,30 +137,7 @@ export default function ReportModalScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 0}
       >
         <ThemedView style={styles.container}>
-          {/* Progress Bar */}
-          <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBarSegment,
-                {
-                  backgroundColor: colors.accent,
-                  borderTopLeftRadius: 4,
-                  borderBottomLeftRadius: 4,
-                },
-              ]}
-            />
-            <View
-              style={[
-                styles.progressBarSegment,
-                {
-                  backgroundColor:
-                    currentStep === 2 ? colors.accent : colors.border,
-                  borderTopRightRadius: 4,
-                  borderBottomRightRadius: 4,
-                },
-              ]}
-            />
-          </View>
+          <ReportProgressBar currentStep={currentStep} />
 
           <View style={styles.content}>
             {currentStep === 1 ? (
@@ -205,48 +178,16 @@ export default function ReportModalScreen() {
                   {t("screens.report.description", { name: params.name ?? "" })}
                 </ThemedText>
 
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    styles.label,
-                    { color: colors.text },
-                  ]}
-                >
-                  {t("screens.report.detailsLabel")}
-                </ThemedText>
-
-                <View
-                  style={[
-                    styles.textAreaWrapper,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                >
-                  <TextInput
-                    value={details}
-                    onChangeText={setDetails}
-                    placeholder={t("screens.report.placeholder")}
-                    placeholderTextColor={colors.textSecondary}
-                    multiline
-                    maxLength={500}
-                    textAlignVertical="top"
-                    style={[
-                      styles.textArea,
-                      { color: colors.text, ...typography.body },
-                    ]}
-                  />
-                </View>
-                <ThemedText
-                  style={[
-                    typography.caption,
-                    styles.counter,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {t("screens.report.counter", { count: details.length })}
-                </ThemedText>
+                <InputText
+                  label={t("screens.report.detailsLabel")}
+                  value={details}
+                  onChangeText={setDetails}
+                  placeholder={t("screens.report.placeholder")}
+                  multiline
+                  maxLength={500}
+                  showCharacterCounter
+                  containerStyle={{ marginBottom: spacing.md }}
+                />
               </>
             )}
           </View>
@@ -283,17 +224,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.md,
   },
-  progressBarContainer: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-    height: 4,
-  },
-  progressBarSegment: {
-    flex: 1,
-    height: "100%",
-  },
   content: {
     flex: 1,
     paddingTop: spacing.sm,
@@ -307,21 +237,6 @@ const styles = StyleSheet.create({
   },
   description: {
     lineHeight: 20,
-  },
-  label: {
-    marginBottom: spacing.xs,
-  },
-  textAreaWrapper: {
-    borderWidth: 1,
-    borderRadius: spacing.md,
-    padding: spacing.md,
-  },
-  textArea: {
-    minHeight: 160,
-  },
-  counter: {
-    alignSelf: "flex-end",
-    marginTop: -spacing.sm,
   },
   helperText: {
     alignSelf: "flex-start",

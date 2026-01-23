@@ -1051,6 +1051,24 @@
         "inappropriate_content": "Inappropriate content",
         "other": "Other reason"
       }
+    },
+    "placeReport": {
+      "title": "What's wrong?",
+      "subtitle": "Help us keep information accurate",
+      "placeLabel": "PLACE",
+      "reasons": {
+        "closed": "Place is permanently closed",
+        "wrong_info": "Incorrect information",
+        "does_not_exist": "Place does not exist here",
+        "inappropriate": "Inappropriate",
+        "other": "Other issue"
+      },
+      "descriptionPlaceholder": "Tell us more details to help us verify...",
+      "submit": "Send",
+      "submitting": "Sending...",
+      "success": "Thanks! We'll check it out.",
+      "error": "Could not send. Please try again.",
+      "reportButton": "Report"
     }
   },
   "modals": {

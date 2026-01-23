@@ -1051,6 +1051,24 @@
         "inappropriate_content": "Contenido inapropiado",
         "other": "Otro motivo"
       }
+    },
+    "placeReport": {
+      "title": "¿Qué sucede?",
+      "subtitle": "Ayúdanos a mantener la información precisa",
+      "placeLabel": "LUGAR",
+      "reasons": {
+        "closed": "Lugar cerrado permanentemente",
+        "wrong_info": "Información incorrecta",
+        "does_not_exist": "Este lugar no existe aquí",
+        "inappropriate": "Inapropiado",
+        "other": "Otro problema"
+      },
+      "descriptionPlaceholder": "Cuéntanos más detalles para ayudarnos a verificar...",
+      "submit": "Enviar",
+      "submitting": "Enviando...",
+      "success": "¡Gracias! Lo verificaremos.",
+      "error": "No se pudo enviar. Inténtalo de nuevo.",
+      "reportButton": "Reportar"
     }
   },
   "modals": {
