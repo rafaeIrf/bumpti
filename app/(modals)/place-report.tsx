@@ -142,7 +142,12 @@ export default function PlaceReportScreen() {
                 </ThemedText>
 
                 {placeName && (
-                  <View style={styles.placeContext}>
+                  <View
+                    style={[
+                      styles.placeContext,
+                      { backgroundColor: colors.surface },
+                    ]}
+                  >
                     <ThemedText
                       style={[
                         typography.caption,
@@ -243,8 +248,9 @@ const styles = StyleSheet.create({
   },
   placeContext: {
     marginBottom: spacing.lg,
-    padding: spacing.md,
-    borderRadius: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: spacing.lg,
     backgroundColor: "rgba(0,0,0,0.03)", // subtle background
   },
   placeName: {
