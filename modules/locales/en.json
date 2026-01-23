@@ -525,7 +525,7 @@
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "Active Now",
+          "title": "On Radar",
           "description": "Crowded places with people connecting."
         },
         "favorites": {
@@ -537,8 +537,12 @@
           "description": "See what others love."
         },
         "nightlife": {
-          "title": "Nightlife",
+          "title": "Bars",
           "description": "To go out and meet new people."
+        },
+        "nightclubs": {
+          "title": "Nightclubs",
+          "description": "To party all night long."
         },
         "cafes": {
           "title": "Cafes & Chat",

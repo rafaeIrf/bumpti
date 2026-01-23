@@ -525,7 +525,7 @@
       "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",
       "categories": {
         "highlighted": {
-          "title": "Activo ahora",
+          "title": "En el radar",
           "description": "Lugares llenos y con gente conectando."
         },
         "favorites": {
@@ -537,8 +537,12 @@
           "description": "Mira lo que otros aman."
         },
         "nightlife": {
-          "title": "Bares y discotecas",
+          "title": "Bares",
           "description": "Para salir y conocer gente nueva."
+        },
+        "nightclubs": {
+          "title": "Discotecas",
+          "description": "Para disfrutar la fiesta."
         },
         "cafes": {
           "title": "Cafés y charla",

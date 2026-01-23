@@ -25,39 +25,6 @@ export interface PlaceCardFeaturedProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Helper to darken a hex color
-function darkenColor(hex: string, percent: number): string {
-  // Validate hex format
-  if (!/^#([0-9A-F]{3}){1,2}$/i.test(hex)) return hex;
-
-  let r = 0,
-    g = 0,
-    b = 0;
-  if (hex.length === 4) {
-    r = parseInt("0x" + hex[1] + hex[1]);
-    g = parseInt("0x" + hex[2] + hex[2]);
-    b = parseInt("0x" + hex[3] + hex[3]);
-  } else {
-    r = parseInt("0x" + hex[1] + hex[2]);
-    g = parseInt("0x" + hex[3] + hex[4]);
-    b = parseInt("0x" + hex[5] + hex[6]);
-  }
-
-  r = Math.max(0, Math.floor(r * (1 - percent)));
-  g = Math.max(0, Math.floor(g * (1 - percent)));
-  b = Math.max(0, Math.floor(b * (1 - percent)));
-
-  return (
-    "#" +
-    (r < 16 ? "0" : "") +
-    r.toString(16) +
-    (g < 16 ? "0" : "") +
-    g.toString(16) +
-    (b < 16 ? "0" : "") +
-    b.toString(16)
-  );
-}
-
 export function PlaceCardFeatured({
   title,
   icon: Icon,
@@ -86,9 +53,6 @@ export function PlaceCardFeatured({
     opacity.value = withSpring(0);
   };
 
-  // Generate darker icon color (30% darker)
-  const iconColor = darkenColor(color, 0.3);
-
   return (
     <AnimatedPressable
       onPress={onClick}
@@ -112,21 +76,14 @@ export function PlaceCardFeatured({
           />
         </Animated.View>
 
-        {/* Decorative Icon - Bottom Right */}
-        {Icon && (
-          <View style={styles.decorativeIconContainer} pointerEvents="none">
-            <View style={{ opacity: 0.5 }}>
-              <Icon width={64} height={64} color={iconColor} />
-            </View>
-          </View>
-        )}
-
         {/* Content Container */}
         <View style={styles.contentContainer}>
+          {Icon && <Icon />}
+
           <ThemedText
-            numberOfLines={2}
+            numberOfLines={1}
             ellipsizeMode="tail"
-            style={[typography.body2, styles.title]}
+            style={[typography.body1, styles.title]}
           >
             {title}
           </ThemedText>
@@ -138,7 +95,7 @@ export function PlaceCardFeatured({
 
 const styles = StyleSheet.create({
   card: {
-    height: 90,
+    height: 112,
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -150,22 +107,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
-  decorativeIconContainer: {
-    position: "absolute",
-    bottom: -10,
-    right: -10,
-    zIndex: 2,
-    transform: [{ rotate: "-15deg" }],
-  },
   contentContainer: {
     flex: 1,
-    padding: spacing.md,
-    justifyContent: "flex-start", // Top alignment
-    zIndex: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    padding: spacing.sm,
   },
   title: {
-    color: "#FFFFFF", // White text as requested
-    fontSize: 14,
-    maxWidth: "80%", // Prevent overlap with icon if it grows
+    textAlign: "center",
   },
 });
