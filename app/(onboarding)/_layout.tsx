@@ -20,9 +20,9 @@ const OnboardingHeader = React.memo(() => {
       "connect-with",
       "intention",
       "user-photos",
-      "favorite-places",
     ];
     if (shouldShowLocation) base.push("location");
+    base.push("favorite-places");
     if (shouldShowNotifications) base.push("notifications");
     return base;
   }, [shouldShowLocation, shouldShowNotifications]);
@@ -79,8 +79,16 @@ export default function OnboardingLayout() {
         <Stack.Screen name="connect-with" />
         <Stack.Screen name="intention" />
         <Stack.Screen name="user-photos" />
-        <Stack.Screen name="favorite-places" />
         <Stack.Screen name="location" />
+        <Stack.Screen name="favorite-places" />
+        <Stack.Screen
+          name="place-search"
+          options={{
+            presentation: "modal",
+            headerShown: false,
+            animation: "slide_from_bottom",
+          }}
+        />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="complete" />
       </Stack>

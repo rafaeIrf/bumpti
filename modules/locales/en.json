@@ -511,7 +511,7 @@
     "home": {
       "heroTitle": "Good to see you here.",
       "heroSubtitle": "",
-      "intermediateTitle": "The vibe is better when it matches yours.",
+      "intermediateTitle": "Explore your region",
       "intermediateSubtitle": "Find places and people on the same wavelength.",
       "placeDetected": {
         "title": "Location detected",
@@ -525,7 +525,7 @@
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "Active Now",
+          "title": "On Radar",
           "description": "Crowded places with people connecting."
         },
         "favorites": {
@@ -537,8 +537,12 @@
           "description": "See what others love."
         },
         "nightlife": {
-          "title": "Nightlife",
+          "title": "Bars",
           "description": "To go out and meet new people."
+        },
+        "nightclubs": {
+          "title": "Nightclubs",
+          "description": "To party all night long."
         },
         "cafes": {
           "title": "Cafes & Chat",
@@ -696,6 +700,7 @@
       "ageSubtitle": "We need your birth date to personalize your experience and confirm you are over 18.",
       "agePreview": "You are {{age}} years old",
       "ageError": "You must be at least 18 years old",
+      "ageErrorTooOld": "Please enter a valid birth date",
       "ageRequired": "Please select your birth date",
       "ageMinimum": "You must be 18 or older to use this app.",
       "selectDate": "Select date",
@@ -835,7 +840,7 @@
       "addressFallback": "Address unavailable"
     },
     "chat": {
-      "title": "Connections",
+      "title": "Chat",
       "messages": "Messages",
       "messagePlaceholder": "Type a message...",
       "emptyTitle": "No conversations yet",

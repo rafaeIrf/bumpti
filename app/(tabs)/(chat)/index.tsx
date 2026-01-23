@@ -331,9 +331,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   emptyTitle: {
-    ...typography.heading,
+    ...typography.subheading2,
     textAlign: "center",
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   emptySubtitle: {
     ...typography.body,

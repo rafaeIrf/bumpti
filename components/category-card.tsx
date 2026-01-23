@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleProp,
   StyleSheet,
+  TextStyle,
   View,
   ViewStyle,
 } from "react-native";
@@ -21,7 +22,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface CategoryCardProps {
   category: {
     id: string;
-    icon: React.ComponentType<{ width: number; height: number; color: string }>;
+    icon?: React.ComponentType<{
+      width: number;
+      height: number;
+      color: string;
+    }>;
     title: string;
     description: string;
     iconColor: string;
@@ -32,6 +37,7 @@ interface CategoryCardProps {
   color?: string;
   illustration?: React.ComponentType<SvgProps>;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export function CategoryCard({
@@ -41,6 +47,7 @@ export function CategoryCard({
   color,
   illustration,
   style,
+  textStyle,
 }: CategoryCardProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
@@ -70,7 +77,7 @@ export function CategoryCard({
     if (!illustration) return null;
 
     const Illustration = illustration as React.ComponentType<SvgProps>;
-    return <Illustration width={80} height={80} />;
+    return <Illustration />;
   };
 
   return (
@@ -121,9 +128,7 @@ export function CategoryCard({
             )}
             <View style={styles.infoRow}>
               <View style={styles.iconAndText}>
-                <ThemedText
-                  style={[typography.body1, styles.title, { color: "#FFFFFF" }]}
-                >
+                <ThemedText style={[typography.body1, styles.title, textStyle]}>
                   {category.title}
                 </ThemedText>
               </View>
@@ -185,10 +190,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   title: {
-    fontSize: 18,
-    color: "#FFFFFF",
     flex: 1,
+    textAlign: "center",
     flexWrap: "wrap",
+    paddingHorizontal: spacing.md,
   },
   arrowContainer: {
     width: 36,

@@ -51,6 +51,7 @@ export interface PlaceSearchContentProps {
   autoFocus?: boolean;
   multiSelectMode?: boolean;
   selectedPlaceIds?: string[];
+  isModal?: boolean;
   onPlaceToggle?: (placeId: string, placeName: string) => void;
   onSelectionComplete?: () => void;
 }
@@ -63,6 +64,7 @@ export function PlaceSearchContent({
   selectedPlaceIds: selectedPlaceIdsProp = [],
   onPlaceToggle,
   onSelectionComplete,
+  isModal = true,
 }: PlaceSearchContentProps) {
   const colors = useThemeColors();
   const router = useRouter();
@@ -424,7 +426,7 @@ export function PlaceSearchContent({
 
   return (
     <BaseTemplateScreen
-      isModal={multiSelectMode}
+      isModal={isModal}
       TopHeader={header}
       BottomBar={
         multiSelectMode && localSelectedIds.length > 0 ? (

@@ -511,7 +511,7 @@
     "home": {
       "heroTitle": "Qué bueno verte por aquí.",
       "heroSubtitle": "",
-      "intermediateTitle": "El plan se pone mejor con la vibra correcta.",
+      "intermediateTitle": "Explora tu región",
       "intermediateSubtitle": "Encuentra lugares y personas en la misma sintonía.",
       "placeDetected": {
         "title": "Lugar detectado",
@@ -525,7 +525,7 @@
       "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",
       "categories": {
         "highlighted": {
-          "title": "Activo ahora",
+          "title": "En el radar",
           "description": "Lugares llenos y con gente conectando."
         },
         "favorites": {
@@ -537,8 +537,12 @@
           "description": "Mira lo que otros aman."
         },
         "nightlife": {
-          "title": "Bares y discotecas",
+          "title": "Bares",
           "description": "Para salir y conocer gente nueva."
+        },
+        "nightclubs": {
+          "title": "Discotecas",
+          "description": "Para disfrutar la fiesta."
         },
         "cafes": {
           "title": "Cafés y charla",
@@ -696,6 +700,7 @@
       "ageSubtitle": "Necesitamos saber tu fecha de nacimiento para personalizar tu experiencia y confirmar que tienes más de 18 años.",
       "agePreview": "Tienes {{age}} años",
       "ageError": "Necesitas tener al menos 18 años",
+      "ageErrorTooOld": "Por favor, ingresa una fecha de nacimiento válida",
       "ageRequired": "Por favor, selecciona tu fecha de nacimiento",
       "ageMinimum": "Debes tener 18 años o más para usar esta app.",
       "selectDate": "Seleccionar fecha",
@@ -835,7 +840,7 @@
       "addressFallback": "Dirección no disponible"
     },
     "chat": {
-      "title": "Conexiones",
+      "title": "Chat",
       "messages": "Mensajes",
       "messagePlaceholder": "Escribe un mensaje...",
       "emptyTitle": "Ninguna conversación aún",
