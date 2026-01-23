@@ -818,6 +818,11 @@
           "title": "Ainda sem lugares populares",
           "description": "Ninguém fez check-in em lugares perto de você ainda. Seja o primeiro!",
           "button": "Explorar lugares"
+        },
+        "cityNotAvailable": {
+          "title": "Em breve na sua cidade",
+          "description": "Estamos disponíveis apenas em algumas cidades no momento. Avisaremos quando o Bumpti chegar até você!",
+          "button": "Voltar"
         }
       },
       "tryAnother": "Tente outra categoria 👇",

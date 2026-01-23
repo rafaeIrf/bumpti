@@ -79,7 +79,7 @@ export const useCachedLocation = () => {
     fetchLocation();
   }, [hasPermission]);
 
-  return { location: { ...location, city: "Curitiba", countryCode: "BR", latitude: -25.40303156447935, longitude: -49.24624665524243 }, loading };
+  return { location: { ...location, city: "Belo Horizonte", countryCode: "BR", latitude: -19.912958583360687, longitude: -43.93923178611386 }, loading };
 };
 
 // Function to manually invalidate the location cache

@@ -22,6 +22,7 @@ export type PlacesEmptyMode =
   | "communityFavorites"
   | "ranking"
   | "search"
+  | "cityNotAvailable"
   | "default";
 
 interface PlacesEmptyStateProps {
@@ -47,6 +48,8 @@ export function PlacesEmptyState({ mode, onPress }: PlacesEmptyStateProps) {
         return <FlameIcon {...iconProps} />;
       case "search":
         return <SearchIcon {...iconProps} />;
+      case "cityNotAvailable":
+        return <CompassIcon {...iconProps} />;
       case "default":
       default:
         return <CompassIcon {...iconProps} />;

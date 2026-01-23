@@ -815,6 +815,11 @@
           "title": "Still no popular places",
           "description": "No one has checked in to places near you yet. Be the first!",
           "button": "Explore places"
+        },
+        "cityNotAvailable": {
+          "title": "Coming soon to your city",
+          "description": "We're currently available in select cities only. We'll notify you when Bumpti arrives in your area!",
+          "button": "Go back"
         }
       },
       "tryAnother": "Try another category 👇",

@@ -730,10 +730,22 @@ export default function CategoryResultsScreen() {
           }
 
           if (places.length === 0) {
+            // Show cityNotAvailable mode for category/nearby searches when no results
+            const shouldShowCityNotAvailable =
+              !favoritesMode &&
+              !trendingMode &&
+              !communityFavoritesMode &&
+              !mostFrequentMode &&
+              (nearbyMode || category.length > 0);
+
+            const effectiveEmptyMode = shouldShowCityNotAvailable
+              ? "cityNotAvailable"
+              : emptyMode;
+
             return (
               <ThemedView style={{ paddingTop: filterHeight }}>
                 <PlacesEmptyState
-                  mode={emptyMode}
+                  mode={effectiveEmptyMode}
                   onPress={() => router.back()}
                 />
               </ThemedView>
