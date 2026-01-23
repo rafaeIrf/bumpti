@@ -24,6 +24,7 @@ import { useUserActions } from "@/hooks/use-user-actions";
 import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
+import { triggerLightHaptic } from "@/utils/haptics";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
@@ -177,10 +178,12 @@ export function UserProfileCard({
   }, [profile.photos]);
 
   const nextPhoto = () => {
+    triggerLightHaptic();
     setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
   };
 
   const prevPhoto = () => {
+    triggerLightHaptic();
     setCurrentPhotoIndex(
       (prev) => (prev - 1 + profile.photos.length) % profile.photos.length
     );
