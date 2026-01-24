@@ -322,6 +322,7 @@ export default function EditFieldScreen() {
   return (
     <BaseTemplateScreen
       useKeyboardAvoidingView
+      isModal
       scrollEnabled={
         field !== "height" && field !== "languages" && field !== "location"
       }
