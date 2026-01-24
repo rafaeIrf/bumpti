@@ -15,10 +15,10 @@ import { WebView } from "react-native-webview";
 
 /**
  * Verification WebView Modal
- * 
+ *
  * Opens the Didit verification URL in a WebView following official recommendations:
  * https://docs.didit.me/reference/ios-android
- * 
+ *
  * This modal handles:
  * - Fetching the verification session from the API
  * - Loading state while fetching
@@ -33,9 +33,14 @@ export default function VerificationWebViewModal() {
   const [isLoading, setIsLoading] = useState(true);
   const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = () => {
-    router.back();
+    if (isClosing) return;
+    setIsClosing(true);
+    if (router.canDismiss()) {
+      router.dismiss();
+    }
   };
 
   // Fetch verification session on mount
@@ -44,29 +49,31 @@ export default function VerificationWebViewModal() {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         logger.log("[VerificationWebView] Fetching verification session...");
-        
+
         const { verification_url } = await createVerificationSession();
-        
+
         logger.log("[VerificationWebView] Session fetched successfully:", {
           hasUrl: !!verification_url,
         });
-        
+
         setVerificationUrl(verification_url);
       } catch (err: any) {
         logger.error("[VerificationWebView] Error fetching session:", err);
-        
+
         // Handle specific errors
         if (err?.message?.includes("already verified")) {
           Alert.alert(
-            t("screens.profile.settingsPage.account.verification.alreadyVerified"),
+            t(
+              "screens.profile.settingsPage.account.verification.alreadyVerified"
+            ),
             "",
             [{ text: t("common.close"), onPress: handleClose }]
           );
           return;
         }
-        
+
         setError(err?.message || t("errors.generic"));
       } finally {
         setIsLoading(false);
@@ -93,7 +100,6 @@ export default function VerificationWebViewModal() {
     return () => backHandler.remove();
   }, [canGoBack]);
 
-
   const TopHeader = (
     <ScreenToolbar
       title={t("screens.profile.settingsPage.account.verifyProfile")}
@@ -106,7 +112,7 @@ export default function VerificationWebViewModal() {
   );
 
   return (
-    <BaseTemplateScreen 
+    <BaseTemplateScreen
       TopHeader={TopHeader}
       isModal
       contentContainerStyle={styles.container}
@@ -124,37 +130,50 @@ export default function VerificationWebViewModal() {
       {/* WebView - only show when URL is loaded */}
       {!isLoading && !error && verificationUrl && (
         <WebView
-        ref={webViewRef}
-        source={{ uri: verificationUrl }}
-        // Make sure to set the user agent to a generic mobile one
-        userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-        // Mandatory props
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback={true}
-        // Android-specific props
-        domStorageEnabled={true}
-        // Optional props for performance
-        androidHardwareAccelerationDisabled={false}
-        androidLayerType="hardware"
-        // Navigation state handler
-        onNavigationStateChange={(navState) => {
-          // Track if WebView can go back
-          setCanGoBack(navState.canGoBack);
-          
-          logger.log("[VerificationWebView] Navigation:", {
-            url: navState.url,
-            canGoBack: navState.canGoBack,
-            canGoForward: navState.canGoForward,
-          });
-        }}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          logger.error("[VerificationWebView] Error loading:", nativeEvent);
-        }}
-        onHttpError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          logger.error("[VerificationWebView] HTTP error:", nativeEvent.statusCode);
-        }}
+          ref={webViewRef}
+          source={{ uri: verificationUrl }}
+          // Make sure to set the user agent to a generic mobile one
+          userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+          // Mandatory props
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback={true}
+          // Android-specific props
+          domStorageEnabled={true}
+          // Optional props for performance
+          androidHardwareAccelerationDisabled={false}
+          androidLayerType="hardware"
+          // Navigation state handler
+          onNavigationStateChange={(navState) => {
+            // Track if WebView can go back
+            setCanGoBack(navState.canGoBack);
+
+            logger.log("[VerificationWebView] Navigation:", {
+              url: navState.url,
+              canGoBack: navState.canGoBack,
+              canGoForward: navState.canGoForward,
+            });
+
+            // Auto-close when reaching webhook success page
+            if (!isClosing && navState.url.includes("/didit-webhook")) {
+              logger.log(
+                "[VerificationWebView] Webhook success page detected, closing modal in 2 seconds"
+              );
+              setTimeout(() => {
+                handleClose();
+              }, 2000);
+            }
+          }}
+          onError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            logger.error("[VerificationWebView] Error loading:", nativeEvent);
+          }}
+          onHttpError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            logger.error(
+              "[VerificationWebView] HTTP error:",
+              nativeEvent.statusCode
+            );
+          }}
           style={styles.webview}
         />
       )}

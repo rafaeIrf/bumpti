@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
-import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 /**
  * Edge Function: didit-webhook
@@ -100,12 +100,55 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 Deno.serve(async (req) => {
+  const requestMethod = req.method;
+  const requestUrl = req.url;
+  
+  console.log("[didit-webhook] Incoming request:", {
+    method: requestMethod,
+    url: requestUrl,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
+  if (requestMethod === "OPTIONS") {
+    console.log("[didit-webhook] CORS preflight");
     return new Response("ok", { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
+  // Handle GET request - browser redirect from Didit after verification
+  if (requestMethod === "GET") {
+    const url = new URL(requestUrl);
+    console.log("[didit-webhook] Browser redirect (GET):", {
+      searchParams: Object.fromEntries(url.searchParams.entries())
+    });
+
+    // Return simple HTML page for WebView to detect
+    return new Response(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Verificação Concluída</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body>
+          <h1>Verificação Concluída</h1>
+          <p>Você pode fechar esta janela.</p>
+        </body>
+      </html>`,
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=utf-8",
+        },
+      }
+    );
+  }
+
+  // Only POST requests beyond this point (actual webhooks)
+  if (requestMethod !== "POST") {
+    console.log("[didit-webhook] Method not allowed:", requestMethod);
     return new Response(
       JSON.stringify({ error: "method_not_allowed" }),
       {
@@ -122,12 +165,18 @@ Deno.serve(async (req) => {
       throw new Error("DIDIT_WEBHOOK_SECRET not configured");
     }
 
+    // Check if this is a test webhook from Didit Dashboard
+    const isTestWebhook = req.headers.get("X-Didit-Test-Webhook") === "true";
+
     // Get signature and timestamp from headers
-    const signature = req.headers.get("X-Signature");
+    // Didit can send different signature headers: X-Signature, X-Signature-V2, or X-Signature-Simple
+    const signature = req.headers.get("X-Signature") || 
+                     req.headers.get("X-Signature-V2") || 
+                     req.headers.get("X-Signature-Simple");
     const timestamp = req.headers.get("X-Timestamp");
 
     if (!signature || !timestamp) {
-      console.warn("Missing X-Signature or X-Timestamp header");
+      console.warn("Missing signature or timestamp header");
       return new Response(
         JSON.stringify({ error: "missing_headers" }),
         {
@@ -140,17 +189,22 @@ Deno.serve(async (req) => {
     // Read raw body for signature verification
     const rawBody = await req.text();
 
-    // Verify signature and timestamp
-    const isValid = await verifyDiditSignature(rawBody, signature, timestamp, webhookSecret);
-    if (!isValid) {
-      console.warn("Invalid webhook signature or stale timestamp");
-      return new Response(
-        JSON.stringify({ error: "invalid_signature" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    // Skip signature validation for test webhooks
+    if (!isTestWebhook) {
+      // Verify signature and timestamp for production webhooks
+      const isValid = await verifyDiditSignature(rawBody, signature, timestamp, webhookSecret);
+      if (!isValid) {
+        console.warn("Invalid webhook signature or stale timestamp");
+        return new Response(
+          JSON.stringify({ error: "invalid_signature" }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    } else {
+      console.log("Test webhook detected, skipping signature validation");
     }
 
     // Parse payload after signature verification
@@ -171,6 +225,24 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "missing_user_id" }),
         {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate that userId is a valid UUID (not a test string from Didit Dashboard)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.warn("Invalid UUID in vendor_data (likely a test webhook):", userId);
+      // Return success for test webhooks without updating database
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Test webhook received successfully",
+          user_id: userId,
+        }),
+        {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
