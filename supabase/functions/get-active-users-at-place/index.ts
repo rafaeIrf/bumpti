@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,8 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Content-Type": "application/json",
 };
-
-const SIGNED_URL_EXPIRES = 3600;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -78,23 +77,24 @@ Deno.serve(async (req) => {
 
     const client = serviceSupabase;
 
-    // Use RPC to get filtered users directly from database
-    const { data: rows, error: fetchError } = await client.rpc(
-      "get_available_users_at_place",
-      {
+    // Run RPC and likers query in PARALLEL
+    const [rpcResult, likersResult] = await Promise.all([
+      client.rpc("get_available_users_at_place", {
         p_place_id: placeId,
         viewer_id: user.id,
-      }
-    );
+      }),
+      client
+        .from("user_interactions")
+        .select("from_user_id")
+        .eq("to_user_id", user.id)
+        .eq("action", "like")
+        .gt("action_expires_at", new Date().toISOString()),
+    ]);
 
+    const { data: rows, error: fetchError } = rpcResult;
     if (fetchError) throw fetchError;
 
-    const { data: likerRows } = await client
-      .from("user_interactions")
-      .select("from_user_id")
-      .eq("to_user_id", user.id)
-      .eq("action", "like")
-      .gt("action_expires_at", new Date().toISOString());
+    const { data: likerRows } = likersResult;
 
     const likerIds = (likerRows ?? [])
       .map((row) => row.from_user_id)
@@ -145,77 +145,77 @@ Deno.serve(async (req) => {
     // Extract all unique favorite place IDs
     const allFavoritePlaceIds = Array.from(
       new Set(
-        filteredRows.flatMap((row) => row.favorite_places || [])
+        filteredRows.flatMap((row: any) => row.favorite_places || [])
       )
     ).filter(Boolean) as string[];
 
-    // Fetch all favorite places from database in a single query
-    let placeMap = new Map();
-    if (allFavoritePlaceIds.length > 0) {
-      const { data: places } = await client
-        .from("places")
-        .select("id, name, category")
-        .in("id", allFavoritePlaceIds);
-      
-      if (places) {
-        placeMap = new Map(places.map((p) => [p.id, p]));
-      }
+    // Collect ALL photo paths from ALL users for batch signing
+    const allPhotoPaths: string[] = [];
+    const photoIndexMap: { userId: string; paths: string[] }[] = [];
+    
+    for (const row of filteredRows) {
+      const photos = (Array.isArray(row.photos) ? row.photos : []).filter(Boolean) as string[];
+      photoIndexMap.push({ userId: row.user_id, paths: photos });
+      allPhotoPaths.push(...photos);
     }
 
-    const users =
-      await Promise.all(
-        filteredRows.map(async (row) => {
-          const photos = Array.isArray(row.photos) ? row.photos : [];
-          const signedPhotos = await Promise.all(
-            photos.map(async (filename: string | null) => {
-              if (!filename) return null;
-              const { data, error } = await serviceSupabase.storage
-                .from("user_photos")
-                .createSignedUrl(filename, SIGNED_URL_EXPIRES);
-              if (error || !data?.signedUrl) {
-                console.error("signed url error", { filename, error });
-                return null;
-              }
-              return data.signedUrl;
-            })
-          );
+    // Run places query and photo signing in PARALLEL
+    const [placesResult, allSignedUrls] = await Promise.all([
+      allFavoritePlaceIds.length > 0
+        ? client.from("places").select("id, name, category").in("id", allFavoritePlaceIds)
+        : Promise.resolve({ data: [] }),
+      signPhotoUrls(serviceSupabase, allPhotoPaths),
+    ]);
 
-          // Map favorite places to objects
-          const favoritePlaces = (row.favorite_places || []).map((id: string) => {
-            const details = placeMap.get(id);
-            return {
-              id: id,
-              name: details?.name || "Unknown Place",
-              category: details?.category || ""
-            };
-          });
+    // Build place map
+    const placeMap = new Map((placesResult.data || []).map((p: any) => [p.id, p]));
 
-          return {
-            user_id: row.user_id,
-            name: row.name,
-            age: row.age,
-            bio: row.bio,
-            intentions: Array.isArray(row.intentions)
-              ? row.intentions.map((i) => (i == null ? null : String(i)))
-              : [],
-            photos: signedPhotos.filter((url): url is string => Boolean(url)),
-            visited_places_count: 0, 
-            favorite_places: favoritePlaces,
-            job_title: row.job_title,
-            company_name: row.company_name,
-            height_cm: row.height_cm,
-            languages: row.languages || [],
-            relationship_status: row.relationship_status,
-            smoking_habit: row.smoking_habit,
-            education_level: row.education_level,
-            place_id: placeId,
-            entered_at: row.entered_at,
-            expires_at: row.expires_at,
-            zodiac_sign: row.zodiac_sign,
-            entry_type: row.entry_type || 'physical',
-          };
-        })
-      ) ?? [];
+    // Build signed URL map for each user
+    let urlIndex = 0;
+    const userSignedUrlsMap = new Map<string, string[]>();
+    for (const entry of photoIndexMap) {
+      const count = entry.paths.length;
+      const userUrls = allSignedUrls.slice(urlIndex, urlIndex + count);
+      userSignedUrlsMap.set(entry.userId, userUrls);
+      urlIndex += count;
+    }
+
+    // Build users array (no async needed now - all data is pre-fetched)
+    const users = filteredRows.map((row: any) => {
+      const favoritePlaces = (row.favorite_places || []).map((id: string) => {
+        const details = placeMap.get(id);
+        return {
+          id: id,
+          name: details?.name || "Unknown Place",
+          category: details?.category || ""
+        };
+      });
+
+      return {
+        user_id: row.user_id,
+        name: row.name,
+        age: row.age,
+        bio: row.bio,
+        intentions: Array.isArray(row.intentions)
+          ? row.intentions.map((i: any) => (i == null ? null : String(i)))
+          : [],
+        photos: userSignedUrlsMap.get(row.user_id) || [],
+        visited_places_count: 0, 
+        favorite_places: favoritePlaces,
+        job_title: row.job_title,
+        company_name: row.company_name,
+        height_cm: row.height_cm,
+        languages: row.languages || [],
+        relationship_status: row.relationship_status,
+        smoking_habit: row.smoking_habit,
+        education_level: row.education_level,
+        place_id: placeId,
+        entered_at: row.entered_at,
+        expires_at: row.expires_at,
+        zodiac_sign: row.zodiac_sign,
+        entry_type: row.entry_type || 'physical',
+      };
+    });
 
     return new Response(
       JSON.stringify({

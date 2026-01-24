@@ -753,6 +753,10 @@
         "selectAtLeastOne": "Selecciona al menos 1 spot",
         "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación."
       },
+      "cityNotAvailable": {
+        "title": "¡Todavía no llegamos ahí!",
+        "subtitle": "Por el momento, Bumpti solo está disponible en algunas ciudades. Pero puedes terminar tu registro y te avisaremos en cuanto lleguemos a tu zona."
+      },
       "locationTitle": "Permitir ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
       "locationEnable": "Permitir ubicación",
@@ -815,6 +819,11 @@
           "title": "Aún sin lugares populares",
           "description": "Nadie ha hecho check-in en lugares cerca de ti todavía. ¡Sé el primero!",
           "button": "Explorar lugares"
+        },
+        "cityNotAvailable": {
+          "title": "Pronto en tu ciudad",
+          "description": "Actualmente estamos disponibles solo en algunas ciudades. ¡Te avisaremos cuando Bumpti llegue a tu zona!",
+          "button": "Volver"
         }
       },
       "tryAnother": "Prueba otra categoría 👇",
@@ -1051,6 +1060,24 @@
         "inappropriate_content": "Contenido inapropiado",
         "other": "Otro motivo"
       }
+    },
+    "placeReport": {
+      "title": "¿Qué sucede?",
+      "subtitle": "Ayúdanos a mantener la información precisa",
+      "placeLabel": "LUGAR",
+      "reasons": {
+        "closed": "Lugar cerrado permanentemente",
+        "wrong_info": "Información incorrecta",
+        "does_not_exist": "Este lugar no existe aquí",
+        "inappropriate": "Inapropiado",
+        "other": "Otro problema"
+      },
+      "descriptionPlaceholder": "Cuéntanos más detalles para ayudarnos a verificar...",
+      "submit": "Enviar",
+      "submitting": "Enviando...",
+      "success": "¡Gracias! Lo verificaremos.",
+      "error": "No se pudo enviar. Inténtalo de nuevo.",
+      "reportButton": "Reportar"
     }
   },
   "modals": {
@@ -1063,8 +1090,10 @@
       "blockConfirm": "Bloquear a {{name}}"
     },
     "match": {
-      "title": "¡Es un match!",
-      "subtitle": "Tú y {{name}} os habéis gustado."
+      "title": "¡Es un Match!",
+      "subtitle": "Tú y {{name}} se gustaron.",
+      "actionPrimary": "Enviar mensaje",
+      "actionSecondary": "Seguir navegando"
     }
   },
   "components": {

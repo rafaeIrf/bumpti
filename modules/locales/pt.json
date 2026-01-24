@@ -756,6 +756,10 @@
         "selectAtLeastOne": "Selecione pelo menos 1 spot",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização."
       },
+      "cityNotAvailable": {
+        "title": "Ainda não chegamos aí!",
+        "subtitle": "No momento, o Bumpti está disponível apenas em algumas cidades. Mas você pode terminar seu cadastro e nós te avisaremos assim que chegarmos na sua região."
+      },
       "locationTitle": "Permitir localização",
       "locationSubtitle": "Para encontrar pessoas e lugares perto de você, precisamos da sua localização. Você pode desativar isso a qualquer momento",
       "locationEnable": "Permitir localização",
@@ -818,6 +822,11 @@
           "title": "Ainda sem lugares populares",
           "description": "Ninguém fez check-in em lugares perto de você ainda. Seja o primeiro!",
           "button": "Explorar lugares"
+        },
+        "cityNotAvailable": {
+          "title": "Em breve na sua cidade",
+          "description": "Estamos disponíveis apenas em algumas cidades no momento. Avisaremos quando o Bumpti chegar até você!",
+          "button": "Voltar"
         }
       },
       "tryAnother": "Tente outra categoria 👇",
@@ -1054,6 +1063,24 @@
         "inappropriate_content": "Conteúdo impróprio",
         "other": "Outro motivo"
       }
+    },
+    "placeReport": {
+      "title": "O que há de errado?",
+      "subtitle": "Ajude-nos a manter as informações precisas",
+      "placeLabel": "LOCAL",
+      "reasons": {
+        "closed": "Local fechou permanentemente",
+        "wrong_info": "Informações incorretas",
+        "does_not_exist": "Este local não existe aqui",
+        "inappropriate": "Inapropriado",
+        "other": "Outro problema"
+      },
+      "descriptionPlaceholder": "Conte mais detalhes para nos ajudar a verificar...",
+      "submit": "Enviar",
+      "submitting": "Enviando...",
+      "success": "Obrigado! Vamos verificar.",
+      "error": "Não foi possível enviar. Tente novamente.",
+      "reportButton": "Reportar"
     }
   },
   "modals": {
@@ -1066,8 +1093,10 @@
       "blockConfirm": "Bloquear {{name}}"
     },
     "match": {
-      "title": "É match!",
-      "subtitle": "Você e {{name}} curtiram um ao outro."
+      "title": "É Match!",
+      "subtitle": "Você e {{name}} gostaram um do outro.",
+      "actionPrimary": "Enviar mensagem",
+      "actionSecondary": "Continuar navegando"
     }
   },
   "components": {

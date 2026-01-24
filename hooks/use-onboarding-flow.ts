@@ -13,8 +13,8 @@ const STEP_ORDER: OnboardingStep[] = [
   "connect-with",
   "intention",
   "user-photos",
-  "favorite-places",
   "location",
+  "favorite-places",
   "notifications",
   "complete",
 ];
@@ -27,8 +27,8 @@ const STEP_ROUTES: Record<OnboardingStep, string> = {
   "connect-with": "/(onboarding)/connect-with",
   intention: "/(onboarding)/intention",
   "user-photos": "/(onboarding)/user-photos",
-  "favorite-places": "/(onboarding)/favorite-places",
   location: "/(onboarding)/location",
+  "favorite-places": "/(onboarding)/favorite-places",
   notifications: "/(onboarding)/notifications",
   complete: "/(onboarding)/complete",
 };
@@ -55,7 +55,6 @@ export function useOnboardingFlow() {
     let next = step;
 
     while (next) {
-      console.log('next',next)
       if (next === "location") {
         const granted = await hasLocationPermission();
         if (granted) {

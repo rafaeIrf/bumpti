@@ -1,4 +1,3 @@
-import { XIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
@@ -7,10 +6,12 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
+import Animated, { Easing, ZoomIn } from "react-native-reanimated";
 
 type ItsMatchModalProps = {
   readonly isOpen: boolean;
   readonly onClose: () => void;
+  readonly onSendMessage: () => void;
   readonly name: string;
   readonly photoUrl?: string | null;
 };
@@ -18,10 +19,13 @@ type ItsMatchModalProps = {
 export function ItsMatchModal({
   isOpen,
   onClose,
+  onSendMessage,
   name,
   photoUrl,
 }: ItsMatchModalProps) {
   const colors = useThemeColors();
+
+  if (!isOpen) return null;
 
   return (
     <Modal
@@ -38,26 +42,15 @@ export function ItsMatchModal({
           pointerEvents="box-only"
         />
         <View style={styles.center} pointerEvents="box-none">
-          <View style={[styles.card, { backgroundColor: colors.surface }]}>
-            <Pressable
-              onPress={onClose}
-              style={styles.closeButton}
-              accessibilityRole="button"
-              accessibilityLabel={t("common.close")}
+          <Animated.View
+            entering={ZoomIn.duration(200).easing(Easing.linear)}
+            style={[styles.card, { backgroundColor: colors.surface }]}
+          >
+            <View
+              style={[styles.photoWrapper, { borderColor: colors.surface }]}
             >
-              <XIcon width={24} height={24} color={colors.textSecondary} />
-            </Pressable>
-
-            <ThemedText style={[styles.title, { color: colors.text }]}>
-              {t("modals.match.title")}
-            </ThemedText>
-
-            <View style={styles.photoWrapper}>
               {photoUrl ? (
-                <RemoteImage
-                  source={{ uri: photoUrl }}
-                  style={styles.photo}
-                />
+                <RemoteImage source={{ uri: photoUrl }} style={styles.photo} />
               ) : (
                 <View
                   style={[
@@ -72,22 +65,32 @@ export function ItsMatchModal({
               )}
             </View>
 
-            <ThemedText style={[styles.name, { color: colors.text }]}>
-              {name}
+            <ThemedText style={[styles.title, { color: colors.text }]}>
+              {t("modals.match.title")}
             </ThemedText>
+
             <ThemedText
               style={[styles.subtitle, { color: colors.textSecondary }]}
             >
               {t("modals.match.subtitle", { name })}
             </ThemedText>
 
-            <Button
-              label={t("common.continue")}
-              onPress={onClose}
-              size="lg"
-              fullWidth
-            />
-          </View>
+            <View style={styles.actions}>
+              <Button
+                label={t("modals.match.actionPrimary")}
+                onPress={onSendMessage}
+                size="lg"
+                fullWidth
+              />
+              <Button
+                label={t("modals.match.actionSecondary")}
+                onPress={onClose}
+                size="lg"
+                variant="ghost"
+                fullWidth
+              />
+            </View>
+          </Animated.View>
         </View>
       </View>
     </Modal>
@@ -97,42 +100,51 @@ export function ItsMatchModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   backdrop: {
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    width: "100%",
     padding: spacing.lg,
+    alignItems: "center",
   },
   card: {
     width: "100%",
     borderRadius: spacing.xl,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    paddingTop: 80 + spacing.xs, // Space for the popped-out photo
     alignItems: "center",
-  },
-  closeButton: {
-    position: "absolute",
-    top: spacing.md,
-    right: spacing.md,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
+    overflow: "visible", // Allow photo to pop out
   },
   title: {
-    ...typography.heading,
+    ...typography.heading1,
     textAlign: "center",
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    ...typography.body,
+    textAlign: "center",
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.sm,
+  },
+  actions: {
+    width: "100%",
+    gap: spacing.sm,
   },
   photoWrapper: {
+    position: "absolute",
+    top: -80,
     width: 160,
-    height: 200,
-    borderRadius: spacing.lg,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 6, // Thick border
     overflow: "hidden",
-    marginBottom: spacing.md,
+    alignSelf: "center",
+    zIndex: 1,
   },
   photo: {
     width: "100%",
@@ -147,12 +159,7 @@ const styles = StyleSheet.create({
     ...typography.heading,
   },
   name: {
-    ...typography.subheading,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    ...typography.body,
-    textAlign: "center",
-    marginBottom: spacing.lg,
+    ...typography.heading2,
+    marginBottom: spacing.md,
   },
 });

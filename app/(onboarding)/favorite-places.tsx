@@ -5,6 +5,8 @@ import {
 } from "@/components/favorite-places-manager";
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
@@ -30,8 +32,14 @@ export default function FavoritePlacesScreen() {
     getPlacesByCategory,
   } = useFavoritePlaces({});
 
-  const handleSave = () => {
-    if (selectedPlaceIds.length >= 1) {
+  // Check if we have no suggested places after loading completes (city not supported)
+  const hasSuggestedPlaces = false;
+  const isCityNotAvailable =
+    !isLoadingPlaces && !locationLoading && userLocation && !hasSuggestedPlaces;
+
+  const handleContinue = () => {
+    // Allow continue even without selections if city is not available
+    if (isCityNotAvailable || selectedPlaceIds.length >= 1) {
       onboardingActions.setFavoritePlaces(selectedPlaceIds);
       completeCurrentStep("favorite-places");
     }
@@ -54,8 +62,8 @@ export default function FavoritePlacesScreen() {
         userLocation && (
           <ScreenBottomBar
             primaryLabel={t("common.continue")}
-            onPrimaryPress={handleSave}
-            primaryDisabled={selectedPlaceIds.length < 1}
+            onPrimaryPress={handleContinue}
+            primaryDisabled={!isCityNotAvailable && selectedPlaceIds.length < 1}
             topContent={
               selectedPlaceIds.length > 0 ? (
                 <MultiSelectSheet
@@ -72,17 +80,54 @@ export default function FavoritePlacesScreen() {
         )
       }
     >
-      <FavoritePlacesContent
-        selectedPlaceIds={selectedPlaceIds}
-        togglePlace={togglePlace}
-        handleOpenSearch={handleOpenSearch}
-        suggestedPlaces={suggestedPlaces}
-        isLoadingPlaces={isLoadingPlaces}
-        locationLoading={locationLoading}
-        getPlacesByCategory={getPlacesByCategory}
-        isExpanded={isExpanded}
-        setIsExpanded={setIsExpanded}
-      />
+      {isCityNotAvailable ? (
+        <ThemedView
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: spacing.xxl,
+          }}
+        >
+          <ThemedText
+            style={{
+              fontSize: 24,
+              fontWeight: "600",
+              lineHeight: 32,
+              marginBottom: spacing.md,
+              textAlign: "center",
+              color: "#FFFFFF",
+            }}
+          >
+            {t("screens.onboarding.cityNotAvailable.title")}
+          </ThemedText>
+          <ThemedText
+            style={{
+              fontSize: 16,
+              lineHeight: 24,
+              textAlign: "center",
+              maxWidth: 320,
+              marginBottom: spacing.lg,
+              color: "#8B98A5",
+            }}
+          >
+            {t("screens.onboarding.cityNotAvailable.subtitle")}
+          </ThemedText>
+        </ThemedView>
+      ) : (
+        <FavoritePlacesContent
+          selectedPlaceIds={selectedPlaceIds}
+          togglePlace={togglePlace}
+          handleOpenSearch={handleOpenSearch}
+          suggestedPlaces={suggestedPlaces}
+          isLoadingPlaces={isLoadingPlaces}
+          locationLoading={locationLoading}
+          getPlacesByCategory={getPlacesByCategory}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+          onLocationSkip={() => completeCurrentStep("favorite-places")}
+        />
+      )}
     </BaseTemplateScreen>
   );
 }

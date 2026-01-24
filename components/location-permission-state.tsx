@@ -25,6 +25,10 @@ interface LocationPermissionStateProps {
    * Should be from the SAME useLocationPermission hook instance as the parent.
    */
   onOpenSettings: () => Promise<void>;
+  /**
+   * Optional callback to skip the location permission step (for onboarding, etc.)
+   */
+  onSkip?: () => void;
 }
 
 /**
@@ -36,6 +40,7 @@ export function LocationPermissionState({
   canAskAgain,
   onRequest,
   onOpenSettings,
+  onSkip,
 }: LocationPermissionStateProps) {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
@@ -96,6 +101,16 @@ export function LocationPermissionState({
           loading={isRequesting}
           style={styles.button}
         />
+
+        {onSkip && (
+          <Button
+            onPress={onSkip}
+            variant="ghost"
+            size="default"
+            label={t("permissions.location.skip")}
+            style={{ marginTop: spacing.sm }}
+          />
+        )}
       </ThemedView>
     </Animated.View>
   );

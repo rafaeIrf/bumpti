@@ -179,6 +179,10 @@ interface FavoritePlacesContentProps {
   getPlacesByCategory: (category: PlaceCategory) => any[];
   isExpanded: boolean;
   setIsExpanded: (expanded: boolean) => void;
+  /**
+   * Optional callback to skip location permission step (onboarding only)
+   */
+  onLocationSkip?: () => void;
 }
 
 export function FavoritePlacesContent({
@@ -193,6 +197,7 @@ export function FavoritePlacesContent({
   getPlacesByCategory,
   isExpanded,
   setIsExpanded,
+  onLocationSkip,
 }: FavoritePlacesContentProps) {
   const colors = useThemeColors();
   const { location: userLocation } = useCachedLocation();
@@ -201,6 +206,20 @@ export function FavoritePlacesContent({
     request: requestLocationPermission,
     openSettings,
   } = useLocationPermission();
+
+  // If no location permission, show only the permission state
+  if (!userLocation && !locationLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <LocationPermissionState
+          canAskAgain={canAskAgain}
+          onRequest={requestLocationPermission}
+          onOpenSettings={openSettings}
+          onSkip={onLocationSkip}
+        />
+      </ThemedView>
+    );
+  }
 
   return (
     <Pressable
@@ -250,12 +269,6 @@ export function FavoritePlacesContent({
               {t("common.loading")}
             </ThemedText>
           </View>
-        ) : !userLocation ? (
-          <LocationPermissionState
-            canAskAgain={canAskAgain}
-            onRequest={requestLocationPermission}
-            onOpenSettings={openSettings}
-          />
         ) : (
           <ScrollView
             style={styles.categoriesScroll}

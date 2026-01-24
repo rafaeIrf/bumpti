@@ -23,6 +23,7 @@ function PlaceDetailsWrapper({
   onClose,
   onRate,
   onConnect,
+  onReport,
 }: {
   place: Place;
   category: string;
@@ -47,6 +48,7 @@ function PlaceDetailsWrapper({
     distance: number;
     active_users?: number;
   }) => Promise<void>;
+  onReport: () => void;
 }) {
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -92,6 +94,7 @@ function PlaceDetailsWrapper({
       isLoading={isConnecting}
       onClose={onClose}
       onRate={onRate}
+      onReport={onReport}
     />
   );
 }
@@ -136,6 +139,16 @@ export function usePlaceDetailsSheet(
               });
             }}
             onConnect={handlePlaceClick}
+            onReport={() => {
+              bottomSheet.close();
+              router.push({
+                pathname: "/(modals)/place-report",
+                params: {
+                  placeId: place.placeId,
+                  placeName: place.name,
+                },
+              });
+            }}
           />
         ),
         draggable: true,

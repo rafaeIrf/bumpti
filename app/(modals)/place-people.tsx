@@ -371,11 +371,20 @@ export default function PlacePeopleScreen() {
     setIsDeckExhausted(true);
   }, [hasAvailableToAppend, isRefilling, remaining]);
 
+  const handleSendMessage = () => {
+    setMatchProfile(null);
+    router.dismissAll();
+    setTimeout(() => {
+      router.replace("/(tabs)/(chat)");
+    }, 100);
+  };
+
   return (
     <View style={styles.screenContainer}>
       <ItsMatchModal
         isOpen={Boolean(matchProfile)}
         onClose={() => setMatchProfile(null)}
+        onSendMessage={handleSendMessage}
         name={matchProfile?.name ?? ""}
         photoUrl={matchProfile?.photos?.[0]}
       />

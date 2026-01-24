@@ -753,6 +753,10 @@
         "selectAtLeastOne": "Select at least 1 spot",
         "locationNeeded": "To suggest places near you, we need your location."
       },
+      "cityNotAvailable": {
+        "title": "We haven't reached there yet!",
+        "subtitle": "Bumpti is currently available in select cities only. But you can finish signing up and we'll notify you as soon as we arrive in your area."
+      },
       "locationTitle": "Enable location",
       "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
       "locationEnable": "Enable location",
@@ -815,6 +819,11 @@
           "title": "Still no popular places",
           "description": "No one has checked in to places near you yet. Be the first!",
           "button": "Explore places"
+        },
+        "cityNotAvailable": {
+          "title": "Coming soon to your city",
+          "description": "We're currently available in select cities only. We'll notify you when Bumpti arrives in your area!",
+          "button": "Go back"
         }
       },
       "tryAnother": "Try another category 👇",
@@ -1051,6 +1060,24 @@
         "inappropriate_content": "Inappropriate content",
         "other": "Other reason"
       }
+    },
+    "placeReport": {
+      "title": "What's wrong?",
+      "subtitle": "Help us keep information accurate",
+      "placeLabel": "PLACE",
+      "reasons": {
+        "closed": "Place is permanently closed",
+        "wrong_info": "Incorrect information",
+        "does_not_exist": "Place does not exist here",
+        "inappropriate": "Inappropriate",
+        "other": "Other issue"
+      },
+      "descriptionPlaceholder": "Tell us more details to help us verify...",
+      "submit": "Send",
+      "submitting": "Sending...",
+      "success": "Thanks! We'll check it out.",
+      "error": "Could not send. Please try again.",
+      "reportButton": "Report"
     }
   },
   "modals": {
@@ -1063,8 +1090,10 @@
       "blockConfirm": "Block {{name}}"
     },
     "match": {
-      "title": "It's a match!",
-      "subtitle": "You and {{name}} liked each other."
+      "title": "It's a Match!",
+      "subtitle": "You and {{name}} liked each other.",
+      "actionPrimary": "Send message",
+      "actionSecondary": "Keep swiping"
     }
   },
   "components": {

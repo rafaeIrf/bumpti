@@ -83,3 +83,23 @@ export type PlaceCategory =
   | "events_venue"
   | "language_school"
   | "club";
+
+// Place Reports
+export type PlaceReportReason =
+  | "closed"
+  | "wrong_info"
+  | "does_not_exist"
+  | "inappropriate"
+  | "other";
+
+export interface CreatePlaceReportParams {
+  placeId: string;
+  reason: PlaceReportReason;
+  description?: string;
+}
+
+export interface CreatePlaceReportResult {
+  success: boolean;
+  error?: string;
+}
+

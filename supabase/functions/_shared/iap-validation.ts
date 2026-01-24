@@ -375,17 +375,22 @@ export async function grantCheckinCredits(supabase: any, userId: string, amount:
 }
 
 export async function getEntitlements(supabase: any, userId: string) {
-  const { data: sub } = await supabase
-    .from("user_subscriptions")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // Execute both queries in PARALLEL
+  const [subResult, creditsResult] = await Promise.all([
+    supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("user_checkin_credits")
+      .select("credits")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
 
-  const { data: credits } = await supabase
-    .from("user_checkin_credits") // Correct table
-    .select("credits") // Correct column name 'credits'
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: sub } = subResult;
+  const { data: credits } = creditsResult;
 
   return {
     is_premium: sub?.status === 'active',

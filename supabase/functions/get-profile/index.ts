@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
+import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +52,7 @@ Deno.serve(async (req) => {
       favoritePlacesResult,
       notificationSettingsResult,
       subscription,
+      genderOptionsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -91,6 +93,10 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle(),
       getEntitlements(supabase, userId),
+      // Include gender query in Promise.all for parallel execution
+      supabase
+        .from("gender_options")
+        .select("id, key"),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -101,28 +107,22 @@ Deno.serve(async (req) => {
       favoritePlacesResult;
     const { data: notificationSettings, error: notificationError } =
       notificationSettingsResult;
+    const { data: genderOptions, error: genderError } = genderOptionsResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
     if (favoritePlacesError) throw favoritePlacesError;
+    if (genderError) throw genderError;
     // notificationError is optional, if missing we can execute default logic or just ignore
     // But maybeSingle shouldn't error on no rows, just return null data.
     if (notificationError) console.error("Error fetching notification settings", notificationError);
 
-    // Resolve gender key if gender_id exists
-    let genderKey: string | null = null;
-    if (profile?.gender_id) {
-      const { data: genderRow, error: genderError } = await supabase
-        .from("gender_options")
-        .select("key")
-        .eq("id", profile.gender_id)
-        .maybeSingle();
-
-      if (genderError) throw genderError;
-      genderKey = genderRow?.key ?? null;
-    }
+    // Resolve gender key from pre-fetched options
+    const genderKey = profile?.gender_id 
+      ? genderOptions?.find((g: any) => g.id === profile.gender_id)?.key ?? null
+      : null;
 
     const connectWith = (connectRows ?? [])
       .map((row: any) => row.gender?.key)
@@ -153,25 +153,13 @@ Deno.serve(async (req) => {
         .filter((p: any) => !!p.path)
         .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
-    // Generate signed URLs for each photo path (private bucket support)
-    // URLs válidas por 7 dias (alinhado com o cache do WatermelonDB)
-    const SIGNED_URL_EXPIRES = 60 * 60 * 24 * 7; // 604800 segundos = 7 dias
-    const signedPhotos: { url: string; position: number }[] = [];
-    for (const photo of photos) {
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from(userPhotosBucket)
-        .createSignedUrl(photo.path, SIGNED_URL_EXPIRES);
-
-      if (signedError) {
-        console.error("createSignedUrl error", signedError);
-        continue;
-      }
-
-      if (signedData?.signedUrl) {
-        signedPhotos.push({ url: signedData.signedUrl, position: photo.position });
-      }
-    }
-    photos = signedPhotos;
+    // Use shared signPhotoUrls util for consistent URL signing
+    const paths = photos.map((p: any) => p.path);
+    const signedUrls = await signPhotoUrls(supabase, paths);
+    photos = signedUrls.map((url, index) => ({
+      url,
+      position: photos[index]?.position ?? index,
+    }));
 
     let profilePayload = null;
 
