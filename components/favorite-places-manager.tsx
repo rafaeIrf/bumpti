@@ -58,8 +58,9 @@ export function useFavoritePlaces({
   // API State
   const {
     data: suggestedPlacesResponse,
-    isFetching: isLoadingPlaces,
+    isFetching,
     isError,
+    isUninitialized,
   } = useGetSuggestedPlacesQuery(
     userLocation
       ? {
@@ -69,6 +70,9 @@ export function useFavoritePlaces({
         }
       : skipToken
   );
+
+  // Treat uninitialized or fetching as loading to prevent flicker
+  const isLoadingPlaces = isUninitialized || isFetching;
 
   React.useEffect(() => {
     if (isError) {
@@ -200,15 +204,26 @@ export function FavoritePlacesContent({
   onLocationSkip,
 }: FavoritePlacesContentProps) {
   const colors = useThemeColors();
-  const { location: userLocation } = useCachedLocation();
+  const { location: userLocation, loading: cachedLocationLoading } =
+    useCachedLocation();
   const {
     canAskAgain,
     request: requestLocationPermission,
     openSettings,
+    hasPermission,
   } = useLocationPermission();
 
-  // If no location permission, show only the permission state
-  if (!userLocation && !locationLoading) {
+  // If no location but we have permission, we're still loading
+  const isStillLoadingLocation =
+    hasPermission && !userLocation && !cachedLocationLoading;
+
+  // Only show permission state if we DON'T have permission (not just missing location)
+  if (
+    !hasPermission &&
+    !userLocation &&
+    !locationLoading &&
+    !cachedLocationLoading
+  ) {
     return (
       <ThemedView style={styles.container}>
         <LocationPermissionState
@@ -260,7 +275,7 @@ export function FavoritePlacesContent({
         </Pressable>
 
         {/* Suggested Places by Category */}
-        {isLoadingPlaces || locationLoading ? (
+        {isLoadingPlaces || locationLoading || isStillLoadingLocation ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accent} />
             <ThemedText
