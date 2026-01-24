@@ -174,7 +174,7 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      <View style={{ flex: 1, paddingBottom: spacing.md }}>
+      <View style={{ flex: 1 }}>
         {scrollEnabled ? (
           <View style={{ flex: 1 }}>
             <Animated.ScrollView
