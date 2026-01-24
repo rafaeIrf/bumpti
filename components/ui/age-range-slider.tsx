@@ -4,7 +4,6 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { OnValueChangeEventPayload } from "@/modules/range-slider/src/RangeSlider.types";
 import RangeSliderView from "@/modules/range-slider/src/RangeSliderView";
-import React from "react";
 import { StyleSheet, View } from "react-native";
 
 interface AgeRangeSliderProps {

@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   header: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 32,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   inputContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   input: {
     height: 56,

@@ -665,6 +665,30 @@
       "updatePlan": "Atualizar plano"
     },
     "onboarding": {
+      "welcome": {
+        "title": "Boas-vindas ao Bumpti",
+        "subtitle": "Conecte-se com as pessoas que frequentam os mesmos lugares que você.",
+        "button": "Conhecer o Bumpti"
+      },
+      "introCarousel": {
+        "slide1": {
+          "title": "Conexões que acontecem ao vivo",
+          "text": "Descubra quem está nos mesmos lugares que você, em tempo real. Sem espera, sem match perdido."
+        },
+        "slide2": {
+          "title": "Lugares que você já conhece",
+          "text": "Bares, cafés, academias, parques. Conecte-se com pessoas que frequentam os mesmos spots que você."
+        },
+        "slide3": {
+          "title": "Privacidade no seu controle",
+          "text": "Você decide quando aparecer e para quem. Sua localização só é compartilhada quando você quiser."
+        },
+        "slide4": {
+          "title": "Pronto para começar?",
+          "text": "Crie seu perfil, escolha seus lugares favoritos e comece a fazer conexões reais."
+        },
+        "finalButton": "Vamos lá"
+      },
       "heroTitle1": "Conheça pessoas reais,",
       "heroTitle2": "em lugares reais",
       "heroSubtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",

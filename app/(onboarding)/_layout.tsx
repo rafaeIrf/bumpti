@@ -5,7 +5,7 @@ import { Stack, useSegments } from "expo-router";
 import React, { useMemo } from "react";
 
 export const unstable_settings = {
-  initialRouteName: "user-name",
+  initialRouteName: "welcome",
 };
 
 const OnboardingHeader = React.memo(() => {
@@ -31,8 +31,12 @@ const OnboardingHeader = React.memo(() => {
   const currentScreenName =
     segments.length > 1 ? segments[segments.length - 1] : null;
 
-  // Don't show progress bar on complete screen
-  if (currentScreenName === "complete") {
+  // Don't show progress bar on complete screen, welcome or intro carousel
+  if (
+    currentScreenName === "complete" ||
+    currentScreenName === "welcome" ||
+    currentScreenName === "intro-carousel"
+  ) {
     return null;
   }
 
@@ -73,6 +77,8 @@ export default function OnboardingLayout() {
           gestureEnabled: false,
         }}
       >
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="intro-carousel" options={{ headerShown: false }} />
         <Stack.Screen name="user-name" />
         <Stack.Screen name="user-age" />
         <Stack.Screen name="user-gender" />
