@@ -51,6 +51,7 @@ export type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   is_invisible?: boolean;
+  filter_only_verified?: boolean;
   [key: string]: unknown;
 };
 

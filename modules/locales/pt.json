@@ -1064,8 +1064,10 @@
       "casual": "Casual"
     },
     "verified": {
-      "title": "Perfis verificados",
-      "description": "Mostrar apenas perfis verificados"
+      "title": "Apenas verificados",
+      "description": "Mostrar apenas perfis verificados",
+      "switchDescription": "Ao ativar, você só verá perfis verificados e só ficará visível para eles.",
+      "verifyToEnable": "Verifique seu perfil para ativar este filtro."
     }
   },
   "bottomSheets": {
