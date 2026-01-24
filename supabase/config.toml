@@ -363,3 +363,6 @@ verify_jwt = false
 
 [functions.finalize-city-hydration]
 verify_jwt = false
+
+[functions.didit-webhook]
+verify_jwt = false

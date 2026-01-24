@@ -31,6 +31,7 @@ export type ProfileData = {
   notificationSettings?: NotificationSettings | null;
   verification_status?: VerificationStatus | null;
   is_invisible?: boolean | null;
+  filter_only_verified?: boolean | null;
 };
 
 export interface SubscriptionData {
@@ -108,6 +109,11 @@ const profileSlice = createSlice({
         state.data.is_invisible = action.payload;
       }
     },
+    setFilterOnlyVerified: (state, action: PayloadAction<boolean>) => {
+      if (state.data) {
+        state.data.filter_only_verified = action.payload;
+      }
+    },
     resetProfile: () => initialState,
   },
 });
@@ -121,6 +127,7 @@ export const {
   setCheckinCredits,
   setVerificationStatus,
   setInvisibleMode,
+  setFilterOnlyVerified,
   resetProfile,
 } = profileSlice.actions;
 

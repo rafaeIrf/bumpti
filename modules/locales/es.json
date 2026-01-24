@@ -662,6 +662,30 @@
       "updatePlan": "Actualizar plan"
     },
     "onboarding": {
+      "welcome": {
+        "title": "Bienvenido a Bumpti",
+        "subtitle": "Conéctate con personas que frecuentan los mismos lugares que tú.",
+        "button": "Conocer Bumpti"
+      },
+      "introCarousel": {
+        "slide1": {
+          "title": "Conexiones que suceden en vivo",
+          "text": "Descubre quién está en los mismos lugares que tú, en tiempo real. Sin espera, sin match perdido."
+        },
+        "slide2": {
+          "title": "Lugares que ya conoces",
+          "text": "Bares, cafés, gimnasios, parques. Conéctate con personas que frecuentan los mismos spots que tú."
+        },
+        "slide3": {
+          "title": "Privacidad bajo tu control",
+          "text": "Tú decides cuándo aparecer y para quién. Tu ubicación solo se comparte cuando quieras."
+        },
+        "slide4": {
+          "title": "¿Listo para empezar?",
+          "text": "Crea tu perfil, elige tus lugares favoritos y comienza a hacer conexiones reales."
+        },
+        "finalButton": "Vamos"
+      },
       "heroTitle1": "Conoce gente real,",
       "heroTitle2": "en lugares reales",
       "heroSubtitle": "Descubre y conecta con quienes frecuentan los mismos lugares que tú. Haz amigos, charla y expande tu red social",
@@ -1037,8 +1061,10 @@
       "casual": "Casual"
     },
     "verified": {
-      "title": "Perfiles verificados",
-      "description": "Mostrar solo perfiles verificados"
+      "title": "Solo verificados",
+      "description": "Mostrar solo perfiles verificados",
+      "switchDescription": "Al activar, solo verás perfiles verificados y solo serás visible para ellos.",
+      "verifyToEnable": "Verifica tu perfil para activar este filtro."
     }
   },
   "bottomSheets": {

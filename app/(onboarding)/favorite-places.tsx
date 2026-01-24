@@ -33,7 +33,7 @@ export default function FavoritePlacesScreen() {
   } = useFavoritePlaces({});
 
   // Check if we have no suggested places after loading completes (city not supported)
-  const hasSuggestedPlaces = false;
+  const hasSuggestedPlaces = suggestedPlaces && suggestedPlaces.length > 0;
   const isCityNotAvailable =
     !isLoadingPlaces && !locationLoading && userLocation && !hasSuggestedPlaces;
 

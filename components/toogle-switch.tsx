@@ -1,6 +1,5 @@
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { StyleSheet, Switch } from "react-native";
-import { useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { Switch } from "react-native";
 
 interface ToggleSwitchProps {
   value: boolean;
@@ -15,35 +14,16 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   colors,
   disabled = false,
 }) => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: withSpring(value ? 24 : 0) }],
-  }));
-
   return (
     <Switch
       value={value}
       onValueChange={onValueChange}
       trackColor={{ false: colors.border, true: colors.accent }}
-      thumbColor={colors.text}
+      thumbColor={colors.surface}
+      ios_backgroundColor={colors.border}
       disabled={disabled}
     />
   );
 };
 
 export default ToggleSwitch;
-
-const styles = StyleSheet.create({
-  toggle: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
-    padding: 4,
-    justifyContent: "center",
-  },
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
-  },
-});

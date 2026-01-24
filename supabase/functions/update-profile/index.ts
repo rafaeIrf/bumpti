@@ -40,6 +40,7 @@ type UpdateProfilePayload = {
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
   is_invisible?: boolean; // Invisible mode flag
+  filter_only_verified?: boolean; // Trust Circle filter flag
   [key: string]: unknown;
 };
 
@@ -130,6 +131,7 @@ Deno.serve(async (req) => {
       languages,
       favoritePlaces,
       is_invisible,
+      filter_only_verified,
       ...rest
     } = payload;
 
@@ -327,6 +329,29 @@ Deno.serve(async (req) => {
         }
       }
       updates.is_invisible = is_invisible;
+    }
+
+    // Validate Trust Circle filter: only verified users can enable it
+    if (filter_only_verified !== undefined) {
+      if (filter_only_verified === true) {
+        // Check if user is verified
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("verification_status")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (profileData?.verification_status !== 'verified') {
+          return new Response(
+            JSON.stringify({ 
+              error: "verification_required", 
+              message: "Only verified users can enable the Trust Circle filter" 
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+      updates.filter_only_verified = filter_only_verified;
     }
 
     // Basic validations

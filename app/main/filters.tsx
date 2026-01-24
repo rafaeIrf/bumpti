@@ -5,6 +5,7 @@ import { GenderSelectionBottomSheetContent } from "@/components/gender-selection
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import ToggleSwitch from "@/components/toogle-switch";
 import { AgeRangeSlider } from "@/components/ui/age-range-slider";
 import {
   CONNECT_WITH_OPTIONS,
@@ -14,7 +15,10 @@ import { spacing, typography } from "@/constants/theme";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { invalidatePlacesCache } from "@/modules/places/placesApi";
+import {
+  invalidatePlacesCache,
+  useUpdateProfileSettingsMutation,
+} from "@/modules/places/placesApi";
 import { updateProfile } from "@/modules/profile/api";
 import { setProfile } from "@/modules/store/slices/profileActions";
 import { logger } from "@/utils/logger";
@@ -26,6 +30,11 @@ export default function FiltersScreen() {
   const colors = useThemeColors();
   const bottomSheet = useCustomBottomSheet();
   const { profile, isLoading: profileLoading } = useProfile();
+  const [updateSettings] = useUpdateProfileSettingsMutation();
+
+  // Derived state for Trust Circle filter
+  const isVerified = profile?.verification_status === "verified";
+  const filterOnlyVerified = profile?.filter_only_verified ?? false;
 
   const [localFilters, setLocalFilters] = useState<{
     connectWith: string[];
@@ -168,6 +177,16 @@ export default function FiltersScreen() {
     scheduleSave(newFilters);
   };
 
+  // Handler for Trust Circle filter toggle
+  const handleToggleVerifiedFilter = (value: boolean) => {
+    if (!isVerified) {
+      // Open verification modal for unverified users
+      router.push("/(modals)/verification-webview");
+      return;
+    }
+    updateSettings({ filter_only_verified: value });
+  };
+
   return (
     <BaseTemplateScreen
       TopHeader={
@@ -285,6 +304,40 @@ export default function FiltersScreen() {
             ))}
           </View>
         </View>
+
+        {/* Section 4: Trust Circle - Verified Only */}
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <View style={styles.switchRow}>
+            <View style={styles.switchTextContainer}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                {t("filters.verified.title")}
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.sectionDescription,
+                  { color: colors.textSecondary, marginBottom: 0 },
+                ]}
+              >
+                {isVerified
+                  ? t("filters.verified.switchDescription")
+                  : t("filters.verified.verifyToEnable")}
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={() => handleToggleVerifiedFilter(!filterOnlyVerified)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <View pointerEvents={isVerified ? "auto" : "none"}>
+                <ToggleSwitch
+                  value={filterOnlyVerified}
+                  onValueChange={handleToggleVerifiedFilter}
+                  disabled={!isVerified}
+                  colors={colors}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </View>
       </ThemedView>
     </BaseTemplateScreen>
   );
@@ -332,5 +385,14 @@ const styles = StyleSheet.create({
   chipText: {
     ...typography.caption,
     fontWeight: "600",
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  switchTextContainer: {
+    flex: 1,
+    marginRight: spacing.md,
   },
 });

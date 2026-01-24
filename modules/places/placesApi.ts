@@ -13,7 +13,8 @@ import {
   searchPlacesByText as searchPlacesByTextApi,
   toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
-import { setFavoritePlaces } from "@/modules/store/slices/profileSlice";
+import { updateProfile } from "@/modules/profile/api";
+import { setFavoritePlaces, setFilterOnlyVerified } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
   buildNearbyCacheKey,
@@ -519,6 +520,42 @@ export const placesApi = createApi({
       },
     }),
 
+    // Update profile settings (e.g., filter_only_verified) with optimistic updates
+    updateProfileSettings: builder.mutation<
+      unknown,
+      { filter_only_verified?: boolean }
+    >({
+      queryFn: async (payload) => {
+        try {
+          await updateProfile(payload);
+          return { data: null };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      onQueryStarted: async (
+        { filter_only_verified },
+        { dispatch, queryFulfilled, getState }
+      ) => {
+        // Get current value for potential rollback
+        const state = getState() as any;
+        const previousValue = state.profile.data?.filter_only_verified ?? false;
+
+        // 1. Optimistically update Redux profileSlice
+        if (filter_only_verified !== undefined) {
+          dispatch(setFilterOnlyVerified(filter_only_verified));
+        }
+
+        // 2. On failure: Rollback to previous value
+        // Note: Cache invalidation happens in filters.tsx via invalidatePlacesCache()
+        queryFulfilled.catch(() => {
+          if (filter_only_verified !== undefined) {
+            dispatch(setFilterOnlyVerified(previousValue));
+          }
+        });
+      },
+    }),
+
   }),
 });
 
@@ -535,6 +572,7 @@ export const {
   useLazySearchPlacesByTextQuery,
   useGetSuggestedPlacesQuery,
   useSaveReviewMutation,
+  useUpdateProfileSettingsMutation,
 } = placesApi;
 
 /**

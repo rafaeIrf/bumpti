@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
-import { corsHeaders } from "../_shared/cors.ts";
 import { requireAuth } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 /**
@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
       console.log("[didit-session] Creating new session to replace pending verification");
     }
 
-    // Create verification session with Didit API v2
-    // Reference: https://docs.didit.me/reference/quick-start
+    // Create verification session with Didit API v3
+    // Reference: https://docs.didit.me/reference/create-session-verification-sessions
     const requestBody: Record<string, any> = {
       workflow_id: workflowId,
       vendor_data: userId, // Pass user_id as vendor_data (returned in webhook)
@@ -129,17 +129,14 @@ Deno.serve(async (req) => {
       requestBody.callback = callbackUrl;
     }
 
-    // Note: We don't set a redirect_url to keep user in the verification flow
-    // The webhook will handle the status update
-
-    console.log("[didit-session] Calling Didit API:", {
-      url: `${diditApiUrl}/v2/session/`,
+    console.log("[didit-session] Calling Didit API v3:", {
+      url: `${diditApiUrl}/v3/session/`,
       hasWorkflowId: !!requestBody.workflow_id,
       hasVendorData: !!requestBody.vendor_data,
       hasCallback: !!requestBody.callback,
     });
 
-    const diditResponse = await fetch(`${diditApiUrl}/v2/session/`, {
+    const diditResponse = await fetch(`${diditApiUrl}/v3/session/`, {
       method: "POST",
       headers: {
         "x-api-key": diditApiKey,

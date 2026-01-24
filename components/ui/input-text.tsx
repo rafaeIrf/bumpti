@@ -9,6 +9,7 @@ import {
   TextInput,
   TextInputProps,
   TextStyle,
+  View,
   ViewStyle,
 } from "react-native";
 
@@ -71,7 +72,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
     const verticalPadding = multiline ? spacing.md : 10;
 
     return (
-      <ThemedView style={[{ flex: 1 }, containerStyle]}>
+      <View style={[{ flex: 1 }, containerStyle]}>
         {label && (
           <ThemedText
             style={[
@@ -86,7 +87,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
           </ThemedText>
         )}
 
-        <ThemedView style={{ position: "relative" }}>
+        <View style={{ position: "relative" }}>
           {LeftIcon && (
             <ThemedView
               style={{
@@ -157,7 +158,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
               <RightIcon width={18} height={18} color={colors.textSecondary} />
             </ThemedView>
           ) : null}
-        </ThemedView>
+        </View>
 
         {showCharacterCounter && maxLength && (
           <ThemedText
@@ -173,7 +174,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
             {value.length}/{maxLength}
           </ThemedText>
         )}
-      </ThemedView>
+      </View>
     );
   }
 );
