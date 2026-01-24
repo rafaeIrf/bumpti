@@ -753,6 +753,10 @@
         "selectAtLeastOne": "Select at least 1 spot",
         "locationNeeded": "To suggest places near you, we need your location."
       },
+      "cityNotAvailable": {
+        "title": "We haven't reached there yet!",
+        "subtitle": "Bumpti is currently available in select cities only. But you can finish signing up and we'll notify you as soon as we arrive in your area."
+      },
       "locationTitle": "Enable location",
       "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
       "locationEnable": "Enable location",
