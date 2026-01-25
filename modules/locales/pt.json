@@ -196,7 +196,8 @@
         "support": {
           "title": "SUPORTE",
           "help": "Ajuda & Suporte",
-          "report": "Reportar um problema"
+          "report": "Reportar um problema",
+          "rateApp": "Avaliar o app"
         },
         "about": {
           "title": "SOBRE O APP",
@@ -644,7 +645,7 @@
           "title": "Check-in+ (5 por semana)",
           "subtitle": "Apareça no local antes de chegar e aumente suas chances de ser descoberto.",
           "month": "1 Check-in",
-          "quarter": "5 Check-ins",
+          "quarter": "3 Check-ins",
           "year": "12 Check-ins"
         },
         "pings": {

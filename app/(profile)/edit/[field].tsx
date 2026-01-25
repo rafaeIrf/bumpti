@@ -55,7 +55,13 @@ export default function EditFieldScreen() {
 
   const getInitialValue = () => {
     if (!profile) {
-      return field === "profession" ? { jobTitle: "", companyName: "" } : "";
+      if (field === "profession") {
+        return { jobTitle: "", companyName: "" };
+      }
+      if (field === "height") {
+        return 150;
+      }
+      return "";
     }
 
     if (field === "profession") {
@@ -66,7 +72,13 @@ export default function EditFieldScreen() {
     }
 
     const dbKey = FIELD_DB_KEYS[field] || field;
-    return (profile as any)[dbKey] ?? "";
+    const profileValue = (profile as any)[dbKey];
+
+    if (field === "height" && !profileValue) {
+      return 150;
+    }
+
+    return profileValue ?? "";
   };
 
   const [value, setValue] = useState<any>(getInitialValue);
@@ -197,7 +209,7 @@ export default function EditFieldScreen() {
             value={value}
             onChangeText={setValue}
             placeholder={t(
-              `screens.profile.profileEdit.profile.${field}Placeholder`
+              `screens.profile.profileEdit.profile.${field}Placeholder`,
             )}
             placeholderTextColor={colors.textSecondary}
             multiline

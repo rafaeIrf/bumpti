@@ -45,11 +45,11 @@ const BENEFITS: Benefit[] = [
     titleKey: "screens.premiumPaywall.benefits.visibilityControl.title",
     subtitleKey: "screens.premiumPaywall.benefits.visibilityControl.subtitle",
   },
-  {
-    icon: SearchIcon,
-    titleKey: "screens.premiumPaywall.benefits.seeWhoViewed.title",
-    subtitleKey: "screens.premiumPaywall.benefits.seeWhoViewed.subtitle",
-  },
+  // {
+  //   icon: SearchIcon,
+  //   titleKey: "screens.premiumPaywall.benefits.seeWhoViewed.title",
+  //   subtitleKey: "screens.premiumPaywall.benefits.seeWhoViewed.subtitle",
+  // },
   // {
   //   icon: FlameIcon,
   //   titleKey: "screens.premiumPaywall.benefits.turboIncluded.title",
@@ -97,15 +97,15 @@ export function PremiumBenefits({
 
             if (planId === "1-mes") {
               customTitle = t(
-                "screens.premiumPaywall.benefits.earlyCheckin.month"
+                "screens.premiumPaywall.benefits.earlyCheckin.month",
               );
             } else if (planId === "3-meses") {
               customTitle = t(
-                "screens.premiumPaywall.benefits.earlyCheckin.quarter"
+                "screens.premiumPaywall.benefits.earlyCheckin.quarter",
               );
             } else if (planId === "12-meses") {
               customTitle = t(
-                "screens.premiumPaywall.benefits.earlyCheckin.year"
+                "screens.premiumPaywall.benefits.earlyCheckin.year",
               );
             }
 

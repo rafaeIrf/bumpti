@@ -3,6 +3,7 @@ import type Match from '@/modules/database/models/Match';
 import type Message from '@/modules/database/models/Message';
 import { syncDatabase } from '@/modules/database/sync';
 import { logger } from '@/utils/logger';
+import { requestReviewAfterFirstMatch } from '@/utils/review';
 import { Database, Q } from '@nozbe/watermelondb';
 
 /**
@@ -280,6 +281,13 @@ export async function handleNewMatchBroadcast(
           record.firstMessageAt = toDateOrNull(payload.first_message_at);
         });
         logger.log('✅ Match created from broadcast:', matchId);
+        
+        // Request review after first match (with delay)
+        // This will only execute once per user, tracked via AsyncStorage
+        requestReviewAfterFirstMatch().catch((err) => {
+          logger.error('Failed to request review after match:', err);
+        });
+        
         return;
       }
 
