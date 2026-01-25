@@ -3029,7 +3029,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNFBApp (23.8.3):
+  - RNFBApp (23.8.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -3058,7 +3058,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNFBAuth (23.8.3):
+  - RNFBAuth (23.8.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -3088,7 +3088,7 @@ PODS:
     - RNFBApp
     - SocketRocket
     - Yoga
-  - RNFBCrashlytics (23.8.3):
+  - RNFBCrashlytics (23.8.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -3119,7 +3119,7 @@ PODS:
     - RNFBApp
     - SocketRocket
     - Yoga
-  - RNFBFunctions (23.8.3):
+  - RNFBFunctions (23.8.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -3149,7 +3149,7 @@ PODS:
     - RNFBApp
     - SocketRocket
     - Yoga
-  - RNFBMessaging (23.8.3):
+  - RNFBMessaging (23.8.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -4110,11 +4110,11 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: fd44f4b03e007e642e98df6726737bc66e9ba609
   RNCPicker: 70fd0622147f0ca1b9c5e1be2069a4fb2e8ec461
   RNDateTimePicker: bfb315bc0439c9aeb649fbf7944475a7f268f9f6
-  RNFBApp: fe515c180ffb9267935050177db2c1e9fe3878ae
-  RNFBAuth: 9eae1b71046946b1db82fcc6c4bb2a4b98190813
-  RNFBCrashlytics: 990d805c89881f1ae1e6091e579d8fdaffc41f75
-  RNFBFunctions: 7409dd348992b1b938817b430c2305c2ca9e54e2
-  RNFBMessaging: 921dcc021d3f8f44d8ccec44082f2b933e8db400
+  RNFBApp: d26ef99dc9f9530f56ceee011b05175a16af42bc
+  RNFBAuth: 96d6a293f64697f20271f9620d7ed2678ab1eae1
+  RNFBCrashlytics: 629db5d799cf0b2475b18f3ef9ae5f45bcbfa45f
+  RNFBFunctions: 1cfd70b5751087043b2740cdecf13dbdce0f9345
+  RNFBMessaging: 702aa5f2921f1e8411b8e066b2f8f40184146937
   RNGestureHandler: b8d2e75c2e88fc2a1f6be3b3beeeed80b88fa37d
   RNKeychain: 76d042fc1dfba47f3945920bc82e0bce9ad1ff55
   RNReanimated: 84b0ffbe148232bda35e2527d0b938a97a51c5e7
