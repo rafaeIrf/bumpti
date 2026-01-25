@@ -194,7 +194,8 @@
         "support": {
           "title": "SUPPORT",
           "help": "Help & Support",
-          "report": "Report a problem"
+          "report": "Report a problem",
+          "rateApp": "Rate the app"
         },
         "about": {
           "title": "ABOUT THE APP",
@@ -641,7 +642,7 @@
           "title": "Check-in+ (5 per week)",
           "subtitle": "Appear at the place before arriving and increase your chances of being discovered.",
           "month": "1 Check-in",
-          "quarter": "5 Check-ins",
+          "quarter": "3 Check-ins",
           "year": "12 Check-ins"
         },
         "pings": {
@@ -770,6 +771,10 @@
       "photosMinimum": "Minimum of 3 required",
       "photosAddMore": "Add at least {{count}} photo",
       "photosAddMorePlural": "Add at least {{count}} photos",
+      "bioTitle": "Tell us about you",
+      "bioSubtitle": "A good bio increases your chances of connection. Be authentic!",
+      "bioPlaceholder": "Tell more about yourself...",
+      "bioCharacterCount": "{{count}}/500 characters",
       "favoritePlaces": {
         "title": "What are your favorite spots?",
         "subtitle": "Increase your connections by choosing your favorite spots.",

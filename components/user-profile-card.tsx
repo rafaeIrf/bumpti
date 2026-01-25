@@ -109,13 +109,13 @@ export function UserProfileCard({
 
   const educationText = getOptionLabel(
     EDUCATION_OPTIONS,
-    profile.education_level
+    profile.education_level,
   );
   const heightText =
     typeof profile.height_cm === "number"
       ? getCurrentLanguage() === "en" || getCurrentLanguage() === "en-US"
         ? `${Math.floor(profile.height_cm / 30.48)} ft ${Math.round(
-            (profile.height_cm % 30.48) / 2.54
+            (profile.height_cm % 30.48) / 2.54,
           )} pol.`
         : `${(profile.height_cm / 100).toFixed(2)}m`
       : null;
@@ -147,7 +147,7 @@ export function UserProfileCard({
     // FIX: currentUserProfile uses favoritePlaces (camelCase)
     const myPlaces =
       (currentUserProfile as any)?.favoritePlaces?.map((p: any) =>
-        typeof p === "string" ? p : p.id
+        typeof p === "string" ? p : p.id,
       ) ?? [];
 
     if (myPlaces.length === 0 || !profile.favorite_places) return [];
@@ -185,7 +185,7 @@ export function UserProfileCard({
   const prevPhoto = () => {
     triggerLightHaptic();
     setCurrentPhotoIndex(
-      (prev) => (prev - 1 + profile.photos.length) % profile.photos.length
+      (prev) => (prev - 1 + profile.photos.length) % profile.photos.length,
     );
   };
 
@@ -351,14 +351,14 @@ export function UserProfileCard({
               ? renderTag(
                   t("userProfile.planningToGo"),
                   <SparklesIcon width={12} height={12} color="#2997FF" />,
-                  true
+                  true,
                 )
               : // Assume here now if found in list
                 profile.entry_type === "physical" &&
                 renderTag(
                   t("userProfile.hereNow"),
                   <View style={styles.onlineDot} />,
-                  true
+                  true,
                 )}
           </View>
         </View>
@@ -369,7 +369,9 @@ export function UserProfileCard({
         {/* BIO */}
         {!!profile.bio && (
           <Section title={t("userProfile.sections.about")}>
-            <Text style={styles.bioText}>{profile.bio}</Text>
+            <Text style={[styles.bioText, { color: colors.textSecondary }]}>
+              {profile.bio}
+            </Text>
           </Section>
         )}
 
@@ -383,8 +385,8 @@ export function UserProfileCard({
                   isMatchIntention(i) ? (
                     <SparklesIcon width={12} height={12} color="#2997FF" />
                   ) : null,
-                  isMatchIntention(i) // Blue if match
-                )
+                  isMatchIntention(i), // Blue if match
+                ),
               )}
 
               {/* Show fallback if empty? No, checking length above */}
@@ -476,7 +478,7 @@ export function UserProfileCard({
                       color="#E7E9EA"
                     />
                   ),
-                  isMatch
+                  isMatch,
                 );
               })}
             </View>
@@ -686,9 +688,6 @@ const styles = StyleSheet.create({
   },
   bioText: {
     ...typography.body,
-    fontSize: 15,
-    color: "#B0B3B8",
-    lineHeight: 22,
   },
   chipsWrap: {
     flexDirection: "row",

@@ -20,6 +20,7 @@ import { useInvisibleMode } from "@/modules/profile/hooks/use-invisible-mode";
 import { openEmail, openPrivacyPolicy, openTermsOfUse } from "@/utils/linking";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
+import * as StoreReview from "expo-store-review";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -67,7 +68,7 @@ export default function SettingsScreen() {
           <GenericConfirmationBottomSheet
             title={t("screens.profile.settingsPage.session.errorTitle")}
             description={t(
-              "screens.profile.settingsPage.session.errorDescription"
+              "screens.profile.settingsPage.session.errorDescription",
             )}
             primaryButton={{
               text: t("common.ok"),
@@ -173,15 +174,28 @@ export default function SettingsScreen() {
       icon: ExclamationCircleIcon,
       title: t("screens.profile.settingsPage.session.deleteAccountTitle"),
       description: t(
-        "screens.profile.settingsPage.session.deleteAccountDescription"
+        "screens.profile.settingsPage.session.deleteAccountDescription",
       ),
       confirmText: t(
-        "screens.profile.settingsPage.session.deleteAccountButton"
+        "screens.profile.settingsPage.session.deleteAccountButton",
       ),
       confirmAction: async () => {
         await phoneAuthService.deleteAccount();
       },
     });
+  };
+
+  const handleRateApp = async () => {
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      } else {
+        logger.warn("In-app review not available on this device");
+      }
+    } catch (error) {
+      logger.error("Error requesting in-app review:", error);
+    }
   };
 
   const TopHeader = (
@@ -206,7 +220,7 @@ export default function SettingsScreen() {
           <SettingItem
             title={t("screens.profile.settingsPage.presence.invisible")}
             description={t(
-              "screens.profile.settingsPage.presence.invisibleDescription"
+              "screens.profile.settingsPage.presence.invisibleDescription",
             )}
             rightContent={
               <View style={styles.invisibleToggleContainer}>
@@ -252,7 +266,7 @@ export default function SettingsScreen() {
           <SettingItem
             title={t("screens.profile.settingsPage.account.blockList")}
             description={t(
-              "screens.profile.settingsPage.account.blockListDescription"
+              "screens.profile.settingsPage.account.blockListDescription",
             )}
             onClick={() => router.push("/main/blocked-list")}
           />
@@ -263,7 +277,7 @@ export default function SettingsScreen() {
               description={
                 profile?.verification_status === "pending"
                   ? t(
-                      "screens.profile.settingsPage.account.verification.retryDescription"
+                      "screens.profile.settingsPage.account.verification.retryDescription",
                     )
                   : undefined
               }
@@ -300,6 +314,10 @@ export default function SettingsScreen() {
             title={t("screens.profile.settingsPage.support.report")}
             onClick={() => openEmail(undefined, "Report a problem")}
           />
+          <SettingItem
+            title={t("screens.profile.settingsPage.support.rateApp")}
+            onClick={handleRateApp}
+          />
         </View>
 
         {/* Sobre */}
@@ -334,7 +352,7 @@ export default function SettingsScreen() {
               <SettingItem
                 title={t("screens.profile.settingsPage.dev.itemTitle")}
                 description={t(
-                  "screens.profile.settingsPage.dev.itemDescription"
+                  "screens.profile.settingsPage.dev.itemDescription",
                 )}
                 onClick={() => router.push("/main/dev-settings")}
               />

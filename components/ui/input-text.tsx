@@ -30,6 +30,10 @@ export interface InputTextProps extends Omit<TextInputProps, "style"> {
     height: number;
     color: string;
   }>;
+  /** Callback when left icon is pressed */
+  onLeftIconPress?: () => void;
+  /** Callback when right icon is pressed */
+  onRightIconPress?: () => void;
   showClearButton?: boolean;
   containerStyle?: ViewStyle;
   inputStyle?: TextStyle;
@@ -47,6 +51,8 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
       placeholder = "Buscar...",
       leftIcon: LeftIcon,
       rightIcon: RightIcon,
+      onLeftIconPress,
+      onRightIconPress,
       showClearButton = true,
       containerStyle,
       inputStyle,
@@ -55,7 +61,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
       showCharacterCounter,
       ...textInputProps
     },
-    ref
+    ref,
   ) => {
     const colors = useThemeColors();
 
@@ -89,17 +95,18 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
 
         <View style={{ position: "relative" }}>
           {LeftIcon && (
-            <ThemedView
+            <Pressable
+              onPress={onLeftIconPress}
+              disabled={!onLeftIconPress}
               style={{
                 position: "absolute",
                 left: 12,
                 top: 12,
                 zIndex: 1,
-                backgroundColor: "transparent",
               }}
             >
               <LeftIcon width={18} height={18} color={colors.textSecondary} />
-            </ThemedView>
+            </Pressable>
           )}
 
           <TextInput
@@ -146,17 +153,18 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
               </ThemedView>
             </Pressable>
           ) : RightIcon ? (
-            <ThemedView
+            <Pressable
+              onPress={onRightIconPress}
+              disabled={!onRightIconPress}
               style={{
                 position: "absolute",
                 right: 12,
                 top: 12,
                 zIndex: 1,
-                backgroundColor: "transparent",
               }}
             >
               <RightIcon width={18} height={18} color={colors.textSecondary} />
-            </ThemedView>
+            </Pressable>
           ) : null}
         </View>
 
@@ -176,7 +184,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
         )}
       </View>
     );
-  }
+  },
 );
 
 InputText.displayName = "InputText";

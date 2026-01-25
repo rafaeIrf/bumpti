@@ -40,7 +40,7 @@ export default function TabLayout() {
       .subscribe((chats) => {
         const count = chats.reduce(
           (acc, chat) => acc + (chat.unreadCount || 0),
-          0
+          0,
         );
         setUnreadCount(count);
       });

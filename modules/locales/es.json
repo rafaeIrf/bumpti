@@ -194,7 +194,8 @@
         "support": {
           "title": "SOPORTE",
           "help": "Ayuda y Soporte",
-          "report": "Reportar un problema"
+          "report": "Reportar un problema",
+          "rateApp": "Calificar la app"
         },
         "about": {
           "title": "SOBRE LA APP",
@@ -641,7 +642,7 @@
           "title": "Check-in+ (5 por semana)",
           "subtitle": "Aparece en el lugar antes de llegar y aumenta tus posibilidades de ser descubierto.",
           "month": "1 Check-in",
-          "quarter": "5 Check-ins",
+          "quarter": "3 Check-ins",
           "year": "12 Check-ins"
         },
         "pings": {
@@ -770,6 +771,10 @@
       "photosMinimum": "Mínimo de 3 necesarias",
       "photosAddMore": "Añade al menos {{count}} foto",
       "photosAddMorePlural": "Añade al menos {{count}} fotos",
+      "bioTitle": "Cuéntanos sobre ti",
+      "bioSubtitle": "Una buena bio aumenta tus posibilidades de conexión. ¡Sé auténtico!",
+      "bioPlaceholder": "Cuéntanos más sobre ti...",
+      "bioCharacterCount": "{{count}}/500 caracteres",
       "favoritePlaces": {
         "title": "¿Cuáles son tus spots preferidos?",
         "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",

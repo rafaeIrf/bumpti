@@ -1,5 +1,7 @@
 -- Drop the old version to avoid overloading conflicts
 drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], text[]);
+drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], uuid[]);
+drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], uuid[], text);
 
 -- Creates a transactional RPC to save onboarding data atomically
 create or replace function public.save_onboarding_txn(
@@ -11,7 +13,8 @@ create or replace function public.save_onboarding_txn(
   p_intention_ids int[],
   p_photo_urls text[] default array[]::text[],
   p_photo_positions int[] default array[]::int[],
-  p_favorite_place_ids uuid[] default array[]::uuid[]
+  p_favorite_place_ids uuid[] default array[]::uuid[],
+  p_bio text default null
 ) returns void
 language plpgsql
 security definer
@@ -19,12 +22,13 @@ set search_path = public
 as $$
 begin
   -- Upsert profile
-  insert into public.profiles as p (id, name, birthdate, gender_id, age_range_min, age_range_max, updated_at)
-  values (p_user_id, p_name, p_birthdate, p_gender_id, 18, 35, now())
+  insert into public.profiles as p (id, name, birthdate, gender_id, age_range_min, age_range_max, bio, updated_at)
+  values (p_user_id, p_name, p_birthdate, p_gender_id, 18, 35, p_bio, now())
   on conflict (id) do update
     set name = excluded.name,
         birthdate = excluded.birthdate,
         gender_id = excluded.gender_id,
+        bio = excluded.bio,
         age_range_min = coalesce(p.age_range_min, 18),
         age_range_max = coalesce(p.age_range_max, 35),
         updated_at = now();

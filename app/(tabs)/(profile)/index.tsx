@@ -1,8 +1,4 @@
-import {
-  MapPinIcon,
-  PencilIcon,
-  SettingsIcon,
-} from "@/assets/icons";
+import { MapPinIcon, PencilIcon, SettingsIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { BenefitsTable } from "@/components/benefits-table";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
@@ -59,7 +55,7 @@ export default function ProfileScreen() {
   const bottomSheet = useCustomBottomSheet();
   const { profile } = useProfile();
   const onboardingUserData = useAppSelector(
-    (state) => state.onboarding.userData
+    (state) => state.onboarding.userData,
   );
   const insets = useSafeAreaInsets();
 
@@ -146,6 +142,7 @@ export default function ProfileScreen() {
 
   return (
     <BaseTemplateScreen
+      ignoreBottomSafeArea
       useSafeArea={false}
       contentContainerStyle={{ paddingHorizontal: 0 }}
     >

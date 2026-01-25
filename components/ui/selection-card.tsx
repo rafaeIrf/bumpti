@@ -12,6 +12,14 @@ export interface SelectionCardProps {
   readonly isSelected: boolean;
   readonly onPress: () => void;
   readonly testID?: string;
+  /** Optional icon component to display on the left */
+  readonly icon?: React.ComponentType<{
+    width: number;
+    height: number;
+    color: string;
+  }>;
+  /** Whether to show checkmark when selected (default: true) */
+  readonly showCheckmark?: boolean;
 }
 
 export function SelectionCard({
@@ -20,6 +28,8 @@ export function SelectionCard({
   isSelected,
   onPress,
   testID,
+  icon: Icon,
+  showCheckmark = true,
 }: SelectionCardProps) {
   const colors = useThemeColors();
 
@@ -36,6 +46,13 @@ export function SelectionCard({
       ]}
     >
       <View style={styles.content}>
+        {Icon && (
+          <Icon
+            width={24}
+            height={24}
+            color={isSelected ? colors.accent : colors.textSecondary}
+          />
+        )}
         <View style={{ flex: 1 }}>
           <ThemedText
             style={[
@@ -61,7 +78,7 @@ export function SelectionCard({
             </ThemedText>
           )}
         </View>
-        {isSelected && (
+        {isSelected && showCheckmark && (
           <Animated.View
             entering={FadeIn.duration(200)}
             style={{ marginLeft: spacing.sm }}
@@ -76,8 +93,9 @@ export function SelectionCard({
 
 const styles = StyleSheet.create({
   container: {
-    padding: spacing.md,
-    borderRadius: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: spacing.lg * 2,
     borderWidth: 2,
   },
   content: {
