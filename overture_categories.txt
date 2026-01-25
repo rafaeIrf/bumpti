@@ -76,10 +76,10 @@ botanical_garden:park
 college_university:university
 language_school:language_school
 
-# ========== SHOPPING (ONLY MALLS FOUND) ==========
-shopping_center:shopping
-shopping_mall:shopping
-shopping_plaza:shopping
+# ========== SHOPPING (DIFFERENTIATED) ==========
+shopping_mall:shopping_mall
+shopping_center:commercial_center
+shopping_plaza:commercial_center
 
 # ========== EVENTS & VENUES (FOUND IN DATA) ==========
 event_planning:event_venue

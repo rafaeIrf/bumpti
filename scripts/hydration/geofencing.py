@@ -40,7 +40,7 @@ AREA_CATEGORIES = {
     'park',
     'stadium', 
     'university',
-    'shopping',
+    'shopping_mall',
     'botanical_garden',
     'event_venue'
 }
@@ -59,7 +59,9 @@ POINT_CATEGORIES = {
     'library',
     'community_centre',
     'sports_centre',
-    'language_school'
+    'language_school',
+    'commercial_center',
+    'skate_park'
 }
 
 # Fallback radius (in meters) for area categories without polygon matches
@@ -68,7 +70,7 @@ FALLBACK_RADIUS = {
     'university': 150,
     'botanical_garden': 300,
     'stadium': 300,
-    'shopping': 300,
+    'shopping_mall': 300,
     'event_venue': 300,
 }
 
@@ -81,7 +83,7 @@ VALID_LAND_USE_CLASSES = {
     'plaza': {'plaza', 'pedestrian'},
     'botanical_garden': {'park', 'recreation_ground'},
     'university': {'university', 'college'},
-    'shopping': {'retail', 'commercial'},
+    'shopping_mall': {'retail', 'commercial'},
 }
 
 # Overture release version for polygon sources
