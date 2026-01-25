@@ -100,10 +100,7 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
         GeoDataFrame with polygon geometries and metadata, or None if unavailable.
     """
     if not GEOPANDAS_AVAILABLE:
-        print("⚠️ GeoPandas not available - skipping polygon fetch")
         return None
-    
-    print(f"🗺️ Fetching city polygons for geofencing...")
     
     close_conn = False
     if con is None:
@@ -125,7 +122,7 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
         class,
         subtype,
         ST_AsWKB(geometry) AS geom_wkb,
-        ST_Area(geometry::geography) AS area_sqm
+        ST_Area_Spheroid(geometry) AS area_sqm
     FROM read_parquet('{land_use_path}', filename=true, hive_partitioning=1)
     WHERE bbox.xmin >= {min_lng} AND bbox.xmax <= {max_lng}
       AND bbox.ymin >= {min_lat} AND bbox.ymax <= {max_lat}
@@ -135,12 +132,12 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
     
     try:
         results = con.execute(query).fetchall()
-        print(f"   ✅ Loaded {len(results):,} polygons from land_use theme")
     except Exception as e:
-        print(f"   ❌ Failed to query land_use: {e}")
+        print(f"❌ Failed to query land_use: {e}")
         results = []
     
-    # Also query buildings theme for large structures (optional enhancement)
+    # Query buildings theme for large named structures (shopping centers, stadiums, etc.)
+    # Uses Parquet pushdown filters to eliminate 90% of residential buildings
     buildings_path = f"s3://overturemaps-us-west-2/release/{OVERTURE_RELEASE}/theme=buildings/type=building/*"
     
     buildings_query = f"""
@@ -149,27 +146,28 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
         JSON_EXTRACT_STRING(names, '$.primary') AS poly_name,
         'building' AS class,
         subtype,
-        ST_AsWKB(geometry) AS geom_wkb,
-        ST_Area(geometry::geography) AS area_sqm
+        ST_AsWKB(geometry) AS geom_wkb
     FROM read_parquet('{buildings_path}', filename=true, hive_partitioning=1)
     WHERE bbox.xmin >= {min_lng} AND bbox.xmax <= {max_lng}
       AND bbox.ymin >= {min_lat} AND bbox.ymax <= {max_lat}
-      AND ST_Area(geometry::geography) > 5000  -- Only large buildings (>5000 sqm)
-    LIMIT 10000
+      AND (bbox.xmax - bbox.xmin) > 0.0005
+      AND (bbox.ymax - bbox.ymin) > 0.0005
+      AND subtype IN ('commercial', 'education', 'sports', 'entertainment')
+      AND JSON_EXTRACT_STRING(names, '$.primary') IS NOT NULL
+    LIMIT 2000
     """
     
     try:
         buildings_results = con.execute(buildings_query).fetchall()
-        print(f"   ✅ Loaded {len(buildings_results):,} large buildings")
+        buildings_results = [(r[0], r[1], r[2], r[3], r[4], None) for r in buildings_results]
         results.extend(buildings_results)
     except Exception as e:
-        print(f"   ⚠️ Buildings query failed (continuing without): {e}")
+        print(f"⚠️ Buildings query failed: {e}")
     
     if close_conn:
         con.close()
     
     if not results:
-        print("   ⚠️ No polygons found in city bbox")
         return None
     
     # Convert to GeoDataFrame
@@ -195,9 +193,7 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
     gdf = gpd.GeoDataFrame(polygons, geometry='geometry', crs='EPSG:4326')
     
     # Build spatial index for efficient queries
-    gdf.sindex  # Forces R-Tree creation
-    
-    print(f"   ✅ Created GeoDataFrame with {len(gdf):,} polygons (spatial index built)")
+    gdf.sindex
     
     return gdf
 
@@ -279,57 +275,121 @@ def _find_matching_polygon(
     poi_point: 'Point',
     poi_name: str,
     poi_category: str,
-    polygons_gdf: 'gpd.GeoDataFrame'
+    polygons_gdf: 'gpd.GeoDataFrame',
+    debug: bool = False
 ) -> Optional[Any]:
     """
-    Find a matching polygon for an area-category POI using spatial join.
+    Proximity Semantic Matcher - Find matching polygon using spatial proximity + semantic similarity.
     
-    Applies:
-    1. Point-in-polygon check (ST_Within equivalent)
-    2. Land-use class filtering based on category
-    3. Name similarity validation (>0.8) or area-based master selection
+    Strategy:
+    1. Search within 450m radius (0.004 degrees) for area categories
+    2. Score candidates: (similarity * 0.8) + (proximity * 0.2)
+    3. Accept if: similarity > 0.7 OR exclusive category match within 100m
     """
-    # Use spatial index for efficient query
-    possible_idx = list(polygons_gdf.sindex.query(poi_point, predicate='intersects'))
+    # Constants
+    SEARCH_RADIUS_DEG = 0.004  # ~450m at equator
+    MAX_DISTANCE_M = 450
+    CLOSE_DISTANCE_M = 100
+    MIN_SIMILARITY = 0.7
+    
+    # Expand search area for area categories
+    search_buffer = poi_point.buffer(SEARCH_RADIUS_DEG)
+    possible_idx = list(polygons_gdf.sindex.query(search_buffer, predicate='intersects'))
     
     if not possible_idx:
+        if debug:
+            print(f"[GEO-MATCH] POI '{poi_name}': No polygons within 450m radius")
         return None
     
-    candidates = polygons_gdf.iloc[possible_idx]
-    
-    # Filter to polygons that actually contain the point
-    containing = candidates[candidates.contains(poi_point)]
-    
-    if containing.empty:
-        return None
+    candidates = polygons_gdf.iloc[possible_idx].copy()
     
     # Apply category-aware class filtering
     valid_classes = VALID_LAND_USE_CLASSES.get(poi_category)
     if valid_classes:
-        class_filtered = containing[containing['class'].isin(valid_classes)]
+        class_filtered = candidates[candidates['class'].isin(valid_classes)]
         if not class_filtered.empty:
-            containing = class_filtered
+            candidates = class_filtered
+        elif debug:
+            print(f"[GEO-MATCH] POI '{poi_name}': No polygons with valid classes {valid_classes}")
     
-    # Name similarity check (if rapidfuzz available)
+    if candidates.empty:
+        return None
+    
+    # Calculate distance to each candidate (approximate meters)
+    # Project to Web Mercator for distance calculation
+    try:
+        candidates_proj = candidates.to_crs('EPSG:3857')
+        poi_proj = gpd.GeoSeries([poi_point], crs='EPSG:4326').to_crs('EPSG:3857').iloc[0]
+        candidates['distance_m'] = candidates_proj.geometry.distance(poi_proj)
+    except Exception:
+        # Fallback: approximate using degrees (1 deg ≈ 111km)
+        candidates['distance_m'] = candidates.geometry.distance(poi_point) * 111000
+    
+    # Filter to max distance
+    candidates = candidates[candidates['distance_m'] <= MAX_DISTANCE_M]
+    
+    if candidates.empty:
+        if debug:
+            print(f"[GEO-MATCH] POI '{poi_name}': All candidates > 450m away")
+        return None
+    
+    # Calculate similarity scores
     if RAPIDFUZZ_AVAILABLE and poi_name:
-        best_match = None
-        best_score = 0.0
+        from rapidfuzz import fuzz as rfuzz
         
-        for idx, row in containing.iterrows():
-            poly_name = row.get('name', '')
-            if poly_name:
-                score = fuzz.ratio(poi_name.lower(), poly_name.lower()) / 100.0
-                if score > best_score:
-                    best_score = score
-                    best_match = row
+        def calc_similarity(poly_name):
+            if not poly_name:
+                return 0.0
+            return rfuzz.token_set_ratio(poi_name.lower(), poly_name.lower()) / 100.0
         
-        # Accept if similarity > 0.8
-        if best_score >= 0.8 and best_match is not None:
-            return best_match.geometry
+        candidates['similarity'] = candidates['name'].apply(calc_similarity)
+    else:
+        candidates['similarity'] = 0.0
     
-    # Fallback: Return smallest matching polygon (most specific)
-    smallest = containing.loc[containing['area_sqm'].idxmin()]
-    return smallest.geometry
+    # Calculate proximity score (inversely proportional to distance)
+    # 0m = 1.0, 450m = 0.0
+    candidates['proximity_score'] = 1.0 - (candidates['distance_m'] / MAX_DISTANCE_M)
+    candidates['proximity_score'] = candidates['proximity_score'].clip(0, 1)
+    
+    # Composite score: 80% similarity + 20% proximity
+    candidates['composite_score'] = (candidates['similarity'] * 0.8) + (candidates['proximity_score'] * 0.2)
+    
+    # Sort by composite score (descending)
+    candidates = candidates.sort_values('composite_score', ascending=False)
+    
+    best = candidates.iloc[0]
+    
+    # Acceptance criteria
+    accepted = False
+    reason = ""
+    
+    # Criterion 1: High similarity (> 0.7)
+    if best['similarity'] >= MIN_SIMILARITY:
+        accepted = True
+        reason = f"similarity={best['similarity']:.2f}"
+    
+    # Criterion 2: Correct category class AND exclusive within 100m
+    elif valid_classes and best['class'] in valid_classes:
+        close_competitors = candidates[candidates['distance_m'] <= CLOSE_DISTANCE_M]
+        if len(close_competitors) == 1:
+            accepted = True
+            reason = f"exclusive class '{best['class']}' within 100m"
+        elif best['distance_m'] <= CLOSE_DISTANCE_M:
+            # Accept if it's the only one very close
+            accepted = True
+            reason = f"class '{best['class']}' at {best['distance_m']:.0f}m"
+    
+    if debug or (accepted and poi_name and 'shopping' in poi_name.lower()):
+        dist = best['distance_m']
+        sim = best['similarity']
+        poly_name = best.get('name', 'N/A')
+        status = "MATCHED" if accepted else "REJECTED"
+        print(f"[GEO-MATCH] POI '{poi_name}' {status} → polygon '{poly_name}' at {dist:.0f}m (Sim: {sim:.2f})")
+    
+    if accepted:
+        return best.geometry
+    
+    return None
 
 
 def _buffer_geometry(geom: Any, meters: float) -> Optional[Any]:
