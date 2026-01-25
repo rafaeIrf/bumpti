@@ -51,7 +51,7 @@ class POIColumn(IntEnum):
 
 
 # Configuration constants
-FUZZY_THRESHOLD = 0.75  # 75% similarity required for fuzzy match
+FUZZY_THRESHOLD = 0.90  # 90% similarity required (avoid false positives like "Restaurante X" vs "Restaurante Y")
 LARGE_VENUE_CATEGORIES = {
     'park', 'stadium', 'shopping', 'university', 'botanical_garden', 
     'event_venue', 'sports_centre', 'recreation_ground', 'plaza'
