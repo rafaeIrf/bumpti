@@ -118,75 +118,163 @@ def deduplicate_pois_in_memory(
     config: dict
 ) -> Tuple[List[tuple], Dict[str, str], Dict[str, tuple]]:
     """
-    Remove exact duplicates based on normalized name + street + house_number.
+    Remove duplicates based on normalized name + spatial proximity.
+    
+    Proximity thresholds by category:
+    - Large venues (parks, stadiums, shopping, universities): 500m
+    - Other categories: 30m
     
     Algorithm:
-    1. For each POI, create dedup key: (norm_name, norm_street, norm_house_number)
-    2. Group POIs by dedup key
-    3. For each group:
-       a. Calculate completeness score
-       b. Select winner (highest score)
-       c. Map losers to winner
+    1. For each POI, create dedup key from normalized name
+    2. Group POIs by name key
+    3. Within each name group, cluster by proximity (category-aware threshold)
+    4. For each cluster, select winner with highest completeness
     
     Args:
         pois_list: List of tuples from DuckDB query
         config: Curation configuration dict
         
     Returns:
-        winners: List of unique POI tuples (no exact duplicates)
+        winners: List of unique POI tuples
         duplicate_mappings: Dict[loser_id → winner_id]
-        all_pois_data: Dict[overture_id → POI tuple] (preserve all data)
+        all_pois_data: Dict[overture_id → POI tuple]
     """
     if not pois_list:
         return [], {}, {}
     
-    # Group POIs by dedup key
-    dedup_groups = {}  # key → [poi_idx, ...]
+    # Import shapely for geometry operations
+    try:
+        from shapely import wkb as shapely_wkb
+        HAS_SHAPELY = True
+    except ImportError:
+        HAS_SHAPELY = False
+    
+    # Category-aware proximity thresholds
+    LARGE_VENUE_CATEGORIES = {
+        'park', 'stadium', 'shopping', 'university', 'botanical_garden', 
+        'event_venue', 'sports_centre', 'recreation_ground', 'plaza'
+    }
+    LARGE_VENUE_THRESHOLD_M = 500
+    DEFAULT_THRESHOLD_M = 30
+    DEG_TO_M = 111000  # Approximate meters per degree at equator
+    
+    # Build category map from config
+    category_map = config.get('categories', {}).get('mapping', {})
+    
+    # Group POIs by normalized name
+    name_groups = {}  # normalized_name → [poi_idx, ...]
     all_pois_data = {}  # overture_id → row
     
     for idx, row in enumerate(pois_list):
         overture_id = row[POIColumn.OVERTURE_ID]
         all_pois_data[overture_id] = row
         
-        # Create dedup key (normalized name + street + house_number)
         norm_name = normalize_text(row[POIColumn.NAME])
-        norm_street = normalize_text(row[POIColumn.STREET])
-        norm_house_number = normalize_text(row[POIColumn.HOUSE_NUMBER])
         
-        dedup_key = (norm_name, norm_street, norm_house_number)
-        
-        if dedup_key not in dedup_groups:
-            dedup_groups[dedup_key] = []
-        dedup_groups[dedup_key].append(idx)
+        if norm_name not in name_groups:
+            name_groups[norm_name] = []
+        name_groups[norm_name].append(idx)
     
-    # Select winners from each group
+    # Process each name group
     winners = []
     duplicate_mappings = {}
     
-    for dedup_key, poi_indices in dedup_groups.items():
+    for norm_name, poi_indices in name_groups.items():
         if len(poi_indices) == 1:
-            # No duplicates, keep as-is
+            # Single POI with this name, no duplicates
             winners.append(pois_list[poi_indices[0]])
+            continue
+        
+        # Determine proximity threshold based on category of first POI in group
+        first_row = pois_list[poi_indices[0]]
+        overture_cat = first_row[POIColumn.OVERTURE_CATEGORY]
+        internal_cat = category_map.get(overture_cat, '')
+        
+        if internal_cat in LARGE_VENUE_CATEGORIES:
+            proximity_threshold = LARGE_VENUE_THRESHOLD_M
         else:
-            # Multiple POIs with same key, select winner
-            # Calculate completeness scores
-            scores = []
+            proximity_threshold = DEFAULT_THRESHOLD_M
+        
+        # Multiple POIs with same name - cluster by proximity
+        if HAS_SHAPELY:
+            # Extract coordinates for spatial clustering
+            poi_coords = []
             for idx in poi_indices:
                 row = pois_list[idx]
-                completeness = calculate_completeness_score(row)
-                scores.append((completeness, idx))
+                geom_wkb = row[POIColumn.GEOM_WKB]
+                if geom_wkb:
+                    try:
+                        point = shapely_wkb.loads(geom_wkb)
+                        poi_coords.append((idx, point.x, point.y))
+                    except Exception:
+                        poi_coords.append((idx, None, None))
+                else:
+                    poi_coords.append((idx, None, None))
             
-            # Sort by score (descending), pick highest
-            scores.sort(reverse=True)
-            winner_idx = scores[0][1]
-            winner_row = pois_list[winner_idx]
+            # Simple clustering: assign each POI to nearest cluster or create new one
+            clusters = []  # List of [(idx, x, y), ...]
+            
+            for poi_data in poi_coords:
+                idx, x, y = poi_data
+                if x is None or y is None:
+                    # No coords, treat as unique
+                    clusters.append([poi_data])
+                    continue
+                
+                # Find if this POI is within threshold of an existing cluster
+                assigned = False
+                for cluster in clusters:
+                    # Check distance to first POI in cluster
+                    ref_idx, ref_x, ref_y = cluster[0]
+                    if ref_x is None:
+                        continue
+                    
+                    # Approximate distance in meters
+                    dist_deg = ((x - ref_x)**2 + (y - ref_y)**2)**0.5
+                    dist_m = dist_deg * DEG_TO_M
+                    
+                    if dist_m <= proximity_threshold:
+                        cluster.append(poi_data)
+                        assigned = True
+                        break
+                
+                if not assigned:
+                    clusters.append([poi_data])
+            
+            # Select winner from each cluster
+            for cluster in clusters:
+                cluster_indices = [p[0] for p in cluster]
+                
+                if len(cluster_indices) == 1:
+                    winners.append(pois_list[cluster_indices[0]])
+                else:
+                    # Multiple POIs in cluster, select by completeness
+                    scores = []
+                    for idx in cluster_indices:
+                        row = pois_list[idx]
+                        completeness = calculate_completeness_score(row)
+                        scores.append((completeness, idx))
+                    
+                    scores.sort(reverse=True)
+                    winner_idx = scores[0][1]
+                    winner_row = pois_list[winner_idx]
+                    winner_id = winner_row[POIColumn.OVERTURE_ID]
+                    
+                    winners.append(winner_row)
+                    
+                    # Map losers to winner
+                    for _, loser_idx in scores[1:]:
+                        loser_row = pois_list[loser_idx]
+                        loser_id = loser_row[POIColumn.OVERTURE_ID]
+                        duplicate_mappings[loser_id] = winner_id
+        else:
+            # Fallback: no spatial clustering, use first as winner
+            winner_row = pois_list[poi_indices[0]]
             winner_id = winner_row[POIColumn.OVERTURE_ID]
-            
             winners.append(winner_row)
             
-            # Map losers to winner
-            for _, loser_idx in scores[1:]:
-                loser_row = pois_list[loser_idx]
+            for idx in poi_indices[1:]:
+                loser_row = pois_list[idx]
                 loser_id = loser_row[POIColumn.OVERTURE_ID]
                 duplicate_mappings[loser_id] = winner_id
     
