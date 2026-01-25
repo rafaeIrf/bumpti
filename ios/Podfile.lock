@@ -267,9 +267,9 @@ PODS:
   - ExpoHead (6.0.22):
     - ExpoModulesCore
     - RNScreens
-  - ExpoIap (3.4.2):
+  - ExpoIap (3.4.0):
     - ExpoModulesCore
-    - openiap (= 1.3.10)
+    - openiap (= 1.3.9)
   - ExpoImage (3.0.11):
     - ExpoModulesCore
     - libavif/libdav1d
@@ -463,7 +463,7 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - openiap (1.3.10)
+  - openiap (1.3.9)
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
@@ -3992,7 +3992,7 @@ SPEC CHECKSUMS:
   ExpoFont: f543ce20a228dd702813668b1a07b46f51878d47
   ExpoHaptics: d3a6375d8dcc3a1083d003bc2298ff654fafb536
   ExpoHead: 4425246bc93411f0fe7f6945f95f698e91db8780
-  ExpoIap: 6c6214db037caa47f42c05b3aaecf4c7663e4c18
+  ExpoIap: 1ff5f9cc21bd56bdad751ec63d710aa699aefffe
   ExpoImage: 686f972bff29525733aa13357f6691dc90aa03d8
   ExpoImageManipulator: 607a5c8c88085381639458a46cc55fb9d3869148
   ExpoImagePicker: 1af3e4e31512d2f34c95c2a3018a3edc40aee748
@@ -4033,7 +4033,7 @@ SPEC CHECKSUMS:
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  openiap: ab4ecc6d04e3fa65c8410bca9d3a05a37be0f108
+  openiap: 809316b97d2a92f7de56c7242529b84bb1aa9acf
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   RangeSlider: 752a87e7278b524ed942494cf06652271170670e
