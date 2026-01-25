@@ -209,6 +209,7 @@ export function BaseTemplateScreen({
             style={{
               flex: 1,
               paddingHorizontal: spacing.md,
+              paddingBottom: !BottomBar ? insets.bottom : 0,
             }}
           >
             {children}
