@@ -52,11 +52,12 @@ class POIColumn(IntEnum):
 
 # Configuration constants
 FUZZY_THRESHOLD = 0.90  # 90% similarity required (avoid false positives like "Restaurante X" vs "Restaurante Y")
+# Note: Uses INTERNAL categories (after mapping). botanical_garden → park, shopping_mall → shopping
 LARGE_VENUE_CATEGORIES = {
-    'park', 'stadium', 'shopping', 'university', 'botanical_garden', 
+    'park', 'stadium', 'shopping', 'university',
     'event_venue', 'sports_centre', 'recreation_ground', 'plaza'
 }
-LARGE_VENUE_THRESHOLD_M = 500
+LARGE_VENUE_THRESHOLD_M = 700  # Increased from 500m to catch duplicates like Botanical Garden (588m apart)
 DEFAULT_THRESHOLD_M = 30
 DEG_TO_M = 111000  # Approximate meters per degree
 
@@ -267,8 +268,8 @@ def deduplicate_pois_in_memory(
         # Use buffer for points to create search area
         search_geom = row_i['geometry']
         if search_geom.geom_type == 'Point':
-            # Create 500m search buffer for points (covers large venues)
-            search_geom = search_geom.buffer(0.005)  # ~500m
+            # Create 700m search buffer for points (covers large venues)
+            search_geom = search_geom.buffer(0.007)  # ~700m
         
         possible_idx = list(gdf.sindex.query(search_geom, predicate='intersects'))
         
