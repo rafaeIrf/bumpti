@@ -67,7 +67,7 @@ POINT_CATEGORIES = {
 # Fallback radius (in meters) for area categories without polygon matches
 # Note: Uses INTERNAL categories (after mapping), not Overture categories
 FALLBACK_RADIUS = {
-    'park': 500,
+    'park': 400,
     'university': 150,
     'stadium': 150,
     'shopping': 300,  # shopping_mall → shopping
