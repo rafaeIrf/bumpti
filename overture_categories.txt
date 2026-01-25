@@ -49,7 +49,7 @@ gym:gym
 sports_club_and_league:club
 martial_arts_club:gym
 fitness_trainer:gym
-skate_park:park
+skate_park:skate_park
 gymnastics_center:gym
 tennis_court:sports_centre
 sports_and_recreation_venue:club
@@ -69,7 +69,7 @@ library:library
 
 # ========== OUTDOORS (FOUND IN DATA) ==========
 park:park
-public_plaza:park
+public_plaza:plaza
 botanical_garden:park
 
 # ========== EDUCATION (FOUND IN DATA) ==========
