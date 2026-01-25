@@ -145,17 +145,27 @@ No comments. No explanations.
         return {}
 
 
-def get_cached_hotlist(city_id, pg_conn):
-    """Retrieve cached hotlist from database if available and recent."""
+def get_cached_hotlist(city_id, pg_conn=None):
+    """Retrieve cached hotlist from database if available (no expiration).
+    
+    Uses independent connection to avoid SSL issues with long-running main connection.
+    """
+    import os
+    import psycopg2
+    
     try:
-        cur = pg_conn.cursor()
+        # Use independent connection for hotlist operations
+        hotlist_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
+        cur = hotlist_conn.cursor()
         cur.execute("""
             SELECT hotlist, generated_at, venue_count
             FROM ai_city_hotlist
-            WHERE city_id = %s AND generated_at > NOW() - INTERVAL '30 days'
+            WHERE city_id = %s
         """, (city_id,))
         row = cur.fetchone()
         cur.close()
+        hotlist_conn.close()
+        
         if row:
             from datetime import datetime, timezone
             hotlist, generated_at, venue_count = row
@@ -168,24 +178,38 @@ def get_cached_hotlist(city_id, pg_conn):
         return None
 
 
-def save_hotlist_to_cache(city_id, hotlist, pg_conn):
-    """Save hotlist to database cache."""
+def save_hotlist_to_cache(city_id, hotlist, pg_conn=None):
+    """Save hotlist to database cache ONLY if one doesn't exist.
+    
+    Uses INSERT ... ON CONFLICT DO NOTHING to never overwrite existing hotlists.
+    Uses independent connection to avoid SSL issues.
+    """
+    import os
+    import psycopg2
+    
     try:
-        cur = pg_conn.cursor()
+        # Use independent connection for hotlist operations
+        hotlist_conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
+        cur = hotlist_conn.cursor()
         venue_count = sum(len(venues) for venues in hotlist.values())
+        
+        # DO NOTHING on conflict - never overwrite existing hotlists
         cur.execute("""
             INSERT INTO ai_city_hotlist (city_id, hotlist, venue_count, model_version, temperature)
             VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (city_id) 
-            DO UPDATE SET hotlist = EXCLUDED.hotlist, venue_count = EXCLUDED.venue_count,
-                generated_at = NOW(), updated_at = NOW()
+            ON CONFLICT (city_id) DO NOTHING
         """, (city_id, json.dumps(hotlist), venue_count, 'gpt-4.1', 0.1))
-        pg_conn.commit()
+        
+        if cur.rowcount > 0:
+            print(f"💾 Hotlist cached to database ({venue_count} venues)")
+        else:
+            print(f"📦 Hotlist already exists in cache, skipping save")
+            
+        hotlist_conn.commit()
         cur.close()
-        print(f"💾 Hotlist cached to database ({venue_count} venues)")
+        hotlist_conn.close()
     except Exception as e:
         print(f"⚠️  Cache save error: {str(e)}")
-        pg_conn.rollback()
 
 
 def find_candidates_for_iconic(iconic_name, all_pois, category, max_candidates=5, min_similarity=70):
