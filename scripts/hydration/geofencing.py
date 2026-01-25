@@ -65,8 +65,8 @@ POINT_CATEGORIES = {
 # Fallback radius (in meters) for area categories without polygon matches
 FALLBACK_RADIUS = {
     'park': 500,
-    'university': 500,
-    'botanical_garden': 500,
+    'university': 150,
+    'botanical_garden': 300,
     'stadium': 300,
     'shopping': 300,
     'event_venue': 300,
