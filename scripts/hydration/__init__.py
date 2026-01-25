@@ -36,6 +36,16 @@ from .database import (
     fetch_city_from_registry
 )
 
+# Geofencing
+from .geofencing import (
+    fetch_city_polygons,
+    compute_poi_boundary,
+    export_geojson_by_category,
+    AREA_CATEGORIES,
+    POINT_CATEGORIES,
+    SAFETY_MARGIN_METERS
+)
+
 __all__ = [
     # Utils
     'load_config',
@@ -59,4 +69,12 @@ __all__ = [
     # Database
     'upsert_city_to_registry',
     'fetch_city_from_registry',
+    # Geofencing
+    'fetch_city_polygons',
+    'compute_poi_boundary',
+    'export_geojson_by_category',
+    'AREA_CATEGORIES',
+    'POINT_CATEGORIES',
+    'SAFETY_MARGIN_METERS',
 ]
+
