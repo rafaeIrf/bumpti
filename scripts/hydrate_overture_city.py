@@ -25,6 +25,13 @@ from hydration.ai_matcher import (
     ai_match_iconic_venues
 )
 from hydration.database import upsert_city_to_registry, fetch_city_from_registry
+from hydration.geofencing import (
+    fetch_city_polygons,
+    compute_poi_boundary,
+    export_geojson_by_category,
+    AREA_CATEGORIES,
+    POINT_CATEGORIES
+)
 
 
 def load_curation_config():
@@ -536,6 +543,19 @@ def main():
             finalize_callback(city_id, 'completed', stats={'inserted': 0, 'updated': 0})
             return
         
+        # ====================================================================
+        # GEOFENCING: Fetch city polygons for boundary enrichment
+        # ====================================================================
+        print(f"\n🗺️ Fetching polygons for geofencing...")
+        city_polygons_gdf = fetch_city_polygons(bbox)
+        if city_polygons_gdf is not None:
+            print(f"   ✅ Loaded {len(city_polygons_gdf):,} polygons for boundary matching")
+        else:
+            print(f"   ⚠️ No polygons available - using fallback radius buffers")
+        
+        # Track for GeoJSON export
+        all_pois_with_boundaries = []
+        
         
         # ====================================================================
         # SIMPLE DEDUP: Remove exact duplicates (same name + street + house_number)
@@ -708,6 +728,27 @@ def main():
                 geom_wkb = row[POIColumn.GEOM_WKB]
                 geom_hex = geom_wkb.hex() if geom_wkb else None
                 
+                # ============================================================
+                # GEOFENCING: Compute boundary for this POI
+                # ============================================================
+                boundary_wkb_hex = None
+                if geom_wkb:
+                    boundary_wkb_hex = compute_poi_boundary(
+                        poi_geom_wkb=geom_wkb,
+                        poi_name=name,
+                        poi_category=internal_cat,
+                        city_polygons_gdf=city_polygons_gdf,
+                        relevance_score=relevance_score
+                    )
+                
+                # Track for GeoJSON export
+                all_pois_with_boundaries.append({
+                    'name': name,
+                    'category': internal_cat,
+                    'relevance_score': relevance_score,
+                    'boundary_wkb_hex': boundary_wkb_hex
+                })
+                
                 staging_rows.append((
                     name,
                     internal_cat,
@@ -723,7 +764,8 @@ def main():
                     row[POIColumn.CONFIDENCE],
                     overture_cat,
                     row[POIColumn.OVERTURE_ID],
-                    json.dumps(row[POIColumn.SOURCE_RAW]) if row[POIColumn.SOURCE_RAW] else None
+                    json.dumps(row[POIColumn.SOURCE_RAW]) if row[POIColumn.SOURCE_RAW] else None,
+                    boundary_wkb_hex  # NEW: boundary geometry
                 ))
             
             print(f"   ✅ Processed {len(staging_rows)} valid POIs")
@@ -736,7 +778,7 @@ def main():
                   name, category, geom_wkb_hex, street, house_number,
                   neighborhood, city, state, postal_code, country_code,
                   relevance_score, confidence, original_category,
-                  overture_id, overture_raw
+                  overture_id, overture_raw, boundary_wkb_hex
                 ) VALUES %s
                 """
                 
@@ -825,10 +867,18 @@ def main():
         print(f"Total updated:       {total_updated:,}")
         print(f"{'='*70}")
         
+        # ====================================================================
+        # GEOJSON EXPORT: Generate audit files for visual verification
+        # ====================================================================
+        print(f"\n📁 Exporting GeoJSON files for auditing...")
+        output_dir = os.path.join(os.path.dirname(__file__), 'output', 'geojson')
+        geojson_stats = export_geojson_by_category(all_pois_with_boundaries, output_dir)
+        
         stats = {
             'inserted': total_inserted,
             'updated': total_updated,
-            'batches_processed': num_batches
+            'batches_processed': num_batches,
+            'geojson_exported': sum(geojson_stats.values()) if geojson_stats else 0
         }
         
         finalize_callback(city_id, 'completed', stats=stats)
