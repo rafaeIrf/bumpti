@@ -338,7 +338,7 @@ def _find_matching_polygon(
         from rapidfuzz import fuzz as rfuzz
         
         def calc_similarity(poly_name):
-            if not poly_name:
+            if not isinstance(poly_name, str):
                 return 0.0
             return rfuzz.token_set_ratio(poi_name.lower(), poly_name.lower()) / 100.0
         
