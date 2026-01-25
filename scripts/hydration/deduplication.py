@@ -54,10 +54,9 @@ class POIColumn(IntEnum):
 FUZZY_THRESHOLD = 0.90  # 90% similarity required (avoid false positives like "Restaurante X" vs "Restaurante Y")
 # Note: Uses INTERNAL categories (after mapping). botanical_garden → park, shopping_mall → shopping
 LARGE_VENUE_CATEGORIES = {
-    'park', 'stadium', 'shopping', 'university',
-    'event_venue', 'sports_centre', 'recreation_ground', 'plaza'
+    'park', 'stadium', 'shopping', 'university', 'event_venue'
 }
-LARGE_VENUE_THRESHOLD_M = 700  # Increased from 500m to catch duplicates like Botanical Garden (588m apart)
+LARGE_VENUE_THRESHOLD_M = 1500  # 1.5km - large venues with similar names are usually duplicates
 DEFAULT_THRESHOLD_M = 30
 DEG_TO_M = 111000  # Approximate meters per degree
 
@@ -147,7 +146,7 @@ def calculate_completeness_score(row: tuple, has_real_polygon: bool = False) -> 
     - Has postal_code: +10
     - Has websites: +5
     - Has socials: +5
-    - Confidence score: +0-100
+    - Confidence score: +0-100 (higher confidence = better data quality)
     """
     score = 0
     
@@ -169,7 +168,7 @@ def calculate_completeness_score(row: tuple, has_real_polygon: bool = False) -> 
     if row[POIColumn.SOCIALS]:
         score += 5
     
-    # Confidence score
+    # Confidence score (from Overture data quality)
     if row[POIColumn.CONFIDENCE]:
         score += int(row[POIColumn.CONFIDENCE] * 100)
     
@@ -268,8 +267,8 @@ def deduplicate_pois_in_memory(
         # Use buffer for points to create search area
         search_geom = row_i['geometry']
         if search_geom.geom_type == 'Point':
-            # Create 700m search buffer for points (covers large venues)
-            search_geom = search_geom.buffer(0.007)  # ~700m
+            # Create 1.5km search buffer for points (covers large venues)
+            search_geom = search_geom.buffer(0.015)  # ~1.5km
         
         possible_idx = list(gdf.sindex.query(search_geom, predicate='intersects'))
         
