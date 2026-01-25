@@ -65,12 +65,12 @@ POINT_CATEGORIES = {
 }
 
 # Fallback radius (in meters) for area categories without polygon matches
+# Note: Uses INTERNAL categories (after mapping), not Overture categories
 FALLBACK_RADIUS = {
     'park': 500,
     'university': 150,
-    'botanical_garden': 300,
-    'stadium': 300,
-    'shopping_mall': 300,
+    'stadium': 150,
+    'shopping': 300,  # shopping_mall → shopping
     'event_venue': 300,
 }
 
@@ -78,12 +78,12 @@ FALLBACK_RADIUS = {
 SAFETY_MARGIN_METERS = 60
 
 # Land-use class whitelist per category (prevents incorrect polygon associations)
+# Note: Uses INTERNAL categories (after mapping), not Overture categories
 VALID_LAND_USE_CLASSES = {
     'park': {'park', 'recreation_ground', 'protected_landscape_seascape', 'natural_monument', 'meadow', 'grass', 'playground'},
     'plaza': {'plaza', 'pedestrian'},
-    'botanical_garden': {'park', 'recreation_ground'},
     'university': {'university', 'college'},
-    'shopping_mall': {'retail', 'commercial'},
+    'shopping': {'retail', 'commercial'},
 }
 
 # Overture release version for polygon sources

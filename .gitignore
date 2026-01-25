@@ -69,3 +69,5 @@ ui-debug.log
 
 expo-env.d.ts
 # @end expo-cli
+
+scripts/.venv/

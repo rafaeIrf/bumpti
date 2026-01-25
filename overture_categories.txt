@@ -77,7 +77,7 @@ college_university:university
 language_school:language_school
 
 # ========== SHOPPING (DIFFERENTIATED) ==========
-shopping_mall:shopping_mall
+shopping_mall:shopping
 shopping_center:commercial_center
 shopping_plaza:commercial_center
 
