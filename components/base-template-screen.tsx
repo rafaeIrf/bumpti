@@ -176,7 +176,12 @@ export function BaseTemplateScreen({
       {/* Scrollable content */}
       <View style={{ flex: 1 }}>
         {scrollEnabled ? (
-          <View style={{ flex: 1 }}>
+          <View
+            style={[
+              { flex: 1 },
+              !BottomBar && { paddingBottom: insets.bottom },
+            ]}
+          >
             <Animated.ScrollView
               style={styles.scrollView}
               contentContainerStyle={[
