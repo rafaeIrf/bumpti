@@ -64,7 +64,7 @@ export default function HomeScreen() {
     },
     {
       skip: !location?.latitude || !location?.longitude,
-    }
+    },
   );
 
   const {
@@ -100,7 +100,7 @@ export default function HomeScreen() {
         t("screens.home.placeDetected.title"),
         t("screens.home.placeDetected.message", {
           placeName: detectedPlaceResult.suggested.name,
-        })
+        }),
       );
     }
   }, [detectedPlaceResult]);
@@ -303,6 +303,7 @@ export default function HomeScreen() {
 
   return (
     <BaseTemplateScreen
+      ignoreBottomSafeArea
       TopHeader={
         <ScreenToolbar
           leftAction={{

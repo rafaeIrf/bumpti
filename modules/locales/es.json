@@ -771,6 +771,10 @@
       "photosMinimum": "Mínimo de 3 necesarias",
       "photosAddMore": "Añade al menos {{count}} foto",
       "photosAddMorePlural": "Añade al menos {{count}} fotos",
+      "bioTitle": "Cuéntanos sobre ti",
+      "bioSubtitle": "Una buena bio aumenta tus posibilidades de conexión. ¡Sé auténtico!",
+      "bioPlaceholder": "Cuéntanos más sobre ti...",
+      "bioCharacterCount": "{{count}}/500 caracteres",
       "favoritePlaces": {
         "title": "¿Cuáles son tus spots preferidos?",
         "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",

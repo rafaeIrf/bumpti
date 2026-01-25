@@ -49,6 +49,10 @@ export async function saveOnboarding(userData: OnboardingUserData) {
     "favoritePlaces",
     JSON.stringify(userData.favoritePlaces ?? [])
   );
+  
+  if (userData.bio) {
+    formData.append("bio", userData.bio);
+  }
 
   if (userData.photoUris?.length) {
     const processedPhotos = await Promise.all(

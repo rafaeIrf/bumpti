@@ -77,6 +77,9 @@ interface BaseTemplateScreenProps {
   // Enable keyboard avoiding behavior for the BottomBar (default: false)
   useKeyboardAvoidingView?: boolean;
 
+  // If true, won't add paddingBottom for safe area (useful for screens with Tab Bar)
+  ignoreBottomSafeArea?: boolean;
+
   // Status bar style (default: 'light')
   statusBarStyle?: "auto" | "inverted" | "light" | "dark";
 }
@@ -96,6 +99,7 @@ export function BaseTemplateScreen({
   useSafeArea = true,
   statusBarStyle = "light",
   useKeyboardAvoidingView = false,
+  ignoreBottomSafeArea = false,
 }: BaseTemplateScreenProps) {
   const scrollY = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -174,12 +178,13 @@ export function BaseTemplateScreen({
       </View>
 
       {/* Scrollable content */}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, marginBottom: BottomBar ? spacing.md : 0 }}>
         {scrollEnabled ? (
           <View
             style={[
               { flex: 1 },
-              !BottomBar && { paddingBottom: insets.bottom },
+              !BottomBar &&
+                !ignoreBottomSafeArea && { paddingBottom: insets.bottom },
             ]}
           >
             <Animated.ScrollView
@@ -209,7 +214,8 @@ export function BaseTemplateScreen({
             style={{
               flex: 1,
               paddingHorizontal: spacing.md,
-              paddingBottom: !BottomBar ? insets.bottom : 0,
+              paddingBottom:
+                !BottomBar && !ignoreBottomSafeArea ? insets.bottom : 0,
             }}
           >
             {children}
@@ -244,6 +250,5 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10,
-    paddingBottom: spacing.md,
   },
 });

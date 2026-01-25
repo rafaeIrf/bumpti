@@ -117,7 +117,7 @@ function ChatListScreen({
         />
       );
     },
-    [chats, profile?.id, markMatchAsOpened]
+    [chats, profile?.id, markMatchAsOpened],
   );
 
   // Sort chats by lastMessageAt in the component (not in query)
@@ -171,7 +171,7 @@ function ChatListScreen({
         .map((u) => u.photos?.[0])
         .filter((p): p is string => !!p)
         .slice(0, 3),
-    [pendingUsers]
+    [pendingUsers],
   );
 
   const { isPremium } = useUserSubscription();
@@ -198,6 +198,7 @@ function ChatListScreen({
 
   return (
     <BaseTemplateScreen
+      ignoreBottomSafeArea
       TopHeader={header}
       // Disable BaseTemplateScreen scroll to avoid VirtualizedList error
       scrollEnabled={false}
@@ -266,7 +267,7 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
     .get<Chat>("chats")
     .query(
       Q.where("last_message_content", Q.notEq(null)),
-      Q.sortBy("last_message_at", Q.desc)
+      Q.sortBy("last_message_at", Q.desc),
     )
     .observeWithColumns([
       "last_message_at",

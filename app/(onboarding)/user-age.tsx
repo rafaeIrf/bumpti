@@ -1,7 +1,8 @@
 import { CalendarIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
-import { Button } from "@/components/ui/button";
+import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -11,19 +12,11 @@ import { isAndroid } from "@/utils";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import moment, { Moment } from "moment";
 import React, { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { Platform, StyleSheet, View } from "react-native";
 
 export default function UserAgeScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { completeCurrentStep } = useOnboardingFlow();
 
   const [birthDate, setBirthDate] = useState<Moment | null>(null);
   const [dateText, setDateText] = useState<string>("");
@@ -61,7 +54,7 @@ export default function UserAgeScreen() {
     } else {
       return `${limitedNumbers.slice(0, 2)}/${limitedNumbers.slice(
         2,
-        4
+        4,
       )}/${limitedNumbers.slice(4)}`;
     }
   };
@@ -109,189 +102,97 @@ export default function UserAgeScreen() {
   const minDate = moment().subtract(MAX_AGE, "years").toDate();
 
   return (
-    <BaseTemplateScreen hasStackHeader>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <View style={styles.content}>
-          {/* Header */}
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(600)}
-            style={styles.header}
-          >
-            <ThemedText style={[styles.title, { color: colors.text }]}>
-              {t("screens.onboarding.ageTitle")}
-            </ThemedText>
+    <BaseTemplateScreen
+      hasStackHeader
+      useKeyboardAvoidingView
+      contentContainerStyle={{
+        paddingBottom: spacing.xxl * 3,
+      }}
+      BottomBar={
+        <ScreenBottomBar
+          primaryLabel={t("screens.onboarding.continue")}
+          onPrimaryPress={handleContinue}
+          primaryDisabled={!isValid}
+        />
+      }
+    >
+      <ThemedText style={[styles.title, { color: colors.text }]}>
+        {t("screens.onboarding.ageTitle")}
+      </ThemedText>
+      <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+        {t("screens.onboarding.ageSubtitle")}
+      </ThemedText>
+
+      <View>
+        <InputText
+          value={dateText}
+          onChangeText={handleTextChange}
+          placeholder="DD/MM/AAAA"
+          keyboardType="number-pad"
+          maxLength={10}
+          leftIcon={CalendarIcon}
+          onLeftIconPress={() => setShowPicker(true)}
+        />
+
+        {/* Age Preview - Valid */}
+        {age !== null && age >= MIN_AGE && age <= MAX_AGE && (
+          <View style={[styles.agePreview, { borderColor: colors.border }]}>
             <ThemedText
-              style={[styles.subtitle, { color: colors.textSecondary }]}
+              style={[styles.agePreviewText, { color: colors.accent }]}
             >
-              {t("screens.onboarding.ageSubtitle")}
+              {t("screens.onboarding.agePreview", { age })}
             </ThemedText>
-          </Animated.View>
-
-          {/* Date Input */}
-          <Animated.View
-            entering={FadeInUp.delay(400).duration(600)}
-            style={styles.inputContainer}
-          >
-            <View
-              style={[
-                styles.dateInputWrapper,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Pressable
-                onPress={() => setShowPicker(true)}
-                style={styles.iconButton}
-              >
-                <CalendarIcon width={20} height={20} color={colors.accent} />
-              </Pressable>
-
-              <TextInput
-                value={dateText}
-                onChangeText={handleTextChange}
-                placeholder="DD/MM/AAAA"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={10}
-                style={[
-                  styles.dateInput,
-                  {
-                    color: colors.text,
-                  },
-                ]}
-              />
-            </View>
-
-            {/* Age Preview - Valid */}
-            {age !== null && age >= MIN_AGE && age <= MAX_AGE && (
-              <Animated.View
-                entering={FadeInUp.delay(100).duration(400)}
-                style={[styles.agePreview, { borderColor: colors.border }]}
-              >
-                <ThemedText
-                  style={[styles.agePreviewText, { color: colors.accent }]}
-                >
-                  {t("screens.onboarding.agePreview", { age })}
-                </ThemedText>
-              </Animated.View>
-            )}
-
-            {/* Age Error - Underage */}
-            {age !== null && age < MIN_AGE && (
-              <Animated.View
-                entering={FadeInUp.delay(100).duration(400)}
-                style={[styles.agePreview, { borderColor: colors.error }]}
-              >
-                <ThemedText
-                  style={[styles.agePreviewText, { color: colors.error }]}
-                >
-                  {t("screens.onboarding.ageError")}
-                </ThemedText>
-              </Animated.View>
-            )}
-
-            {/* Age Error - Too Old */}
-            {age !== null && age > MAX_AGE && (
-              <Animated.View
-                entering={FadeInUp.delay(100).duration(400)}
-                style={[styles.agePreview, { borderColor: colors.error }]}
-              >
-                <ThemedText
-                  style={[styles.agePreviewText, { color: colors.error }]}
-                >
-                  {t("screens.onboarding.ageErrorTooOld")}
-                </ThemedText>
-              </Animated.View>
-            )}
-          </Animated.View>
-
-          {/* Continue Button */}
-          <Animated.View
-            entering={FadeInUp.delay(600).duration(600)}
-            style={styles.buttonContainer}
-          >
-            <Button
-              onPress={handleContinue}
-              disabled={!isValid}
-              size="lg"
-              fullWidth
-            >
-              {t("screens.onboarding.continue")}
-            </Button>
-          </Animated.View>
-        </View>
-
-        {/* Date Picker Modal */}
-        {showPicker && isAndroid && (
-          <DateTimePicker
-            value={birthDate ? birthDate.toDate() : maxDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-            maximumDate={maxDate}
-            minimumDate={minDate}
-            textColor={colors.text}
-          />
+          </View>
         )}
-      </KeyboardAvoidingView>
+
+        {/* Age Error - Underage */}
+        {age !== null && age < MIN_AGE && (
+          <View style={[styles.agePreview, { borderColor: colors.error }]}>
+            <ThemedText
+              style={[styles.agePreviewText, { color: colors.error }]}
+            >
+              {t("screens.onboarding.ageError")}
+            </ThemedText>
+          </View>
+        )}
+
+        {/* Age Error - Too Old */}
+        {age !== null && age > MAX_AGE && (
+          <View style={[styles.agePreview, { borderColor: colors.error }]}>
+            <ThemedText
+              style={[styles.agePreviewText, { color: colors.error }]}
+            >
+              {t("screens.onboarding.ageErrorTooOld")}
+            </ThemedText>
+          </View>
+        )}
+      </View>
+
+      {/* Date Picker Modal */}
+      {showPicker && isAndroid && (
+        <DateTimePicker
+          value={birthDate ? birthDate.toDate() : maxDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          maximumDate={maxDate}
+          minimumDate={minDate}
+          textColor={colors.text}
+        />
+      )}
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingTop: spacing.md,
-    justifyContent: "center",
-  },
-  header: {
-    marginBottom: spacing.xxl,
-  },
   title: {
     ...typography.heading,
-    fontSize: 28,
     marginBottom: spacing.sm,
+    marginTop: spacing.md,
   },
   subtitle: {
     ...typography.body,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  inputContainer: {
-    marginBottom: spacing.lg,
-  },
-  dateInputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingRight: spacing.lg,
-  },
-  iconButton: {
-    width: 56,
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dateInput: {
-    ...typography.body,
-    flex: 1,
-    height: 56,
-    fontWeight: "600",
-    paddingVertical: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
-    includeFontPadding: false,
-    textAlignVertical: "center",
+    marginBottom: spacing.xl,
   },
   agePreview: {
     marginTop: spacing.sm,
@@ -301,8 +202,5 @@ const styles = StyleSheet.create({
   agePreviewText: {
     ...typography.caption,
     fontWeight: "500",
-  },
-  buttonContainer: {
-    marginTop: spacing.md,
   },
 });

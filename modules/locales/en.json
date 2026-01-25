@@ -771,6 +771,10 @@
       "photosMinimum": "Minimum of 3 required",
       "photosAddMore": "Add at least {{count}} photo",
       "photosAddMorePlural": "Add at least {{count}} photos",
+      "bioTitle": "Tell us about you",
+      "bioSubtitle": "A good bio increases your chances of connection. Be authentic!",
+      "bioPlaceholder": "Tell more about yourself...",
+      "bioCharacterCount": "{{count}}/500 characters",
       "favoritePlaces": {
         "title": "What are your favorite spots?",
         "subtitle": "Increase your connections by choosing your favorite spots.",

@@ -4,6 +4,7 @@ import {
     completeStep as completeStepAction,
     OnboardingStep,
     resetOnboarding as resetOnboardingAction,
+    setBio as setBioAction,
     setConnectWith as setConnectWithAction,
     setCurrentStep as setCurrentStepAction,
     setFavoritePlaces as setFavoritePlacesAction,
@@ -48,6 +49,10 @@ export const onboardingActions = {
 
   setPhotoUris: (photoUris: string[]) => {
     store.dispatch(setPhotoUrisAction(photoUris));
+  },
+
+  setBio: (bio: string) => {
+    store.dispatch(setBioAction(bio));
   },
 
   setFavoritePlaces: (favoritePlaces: string[]) => {
