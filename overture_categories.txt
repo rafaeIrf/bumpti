@@ -59,8 +59,8 @@ social_club:club
 # ========== ARTS & ENTERTAINMENT (FOUND IN DATA) ==========
 stadium_arena:stadium
 theatre:theatre
-art_gallery:museum
 cinema:theatre
+# NOTE: art_gallery excluded - these are small commercial galleries, not museums
 museum:museum
 art_museum:museum
 history_museum:museum

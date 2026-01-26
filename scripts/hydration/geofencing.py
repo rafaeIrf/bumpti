@@ -42,7 +42,8 @@ AREA_CATEGORIES = {
     'university',
     'shopping_mall',
     'botanical_garden',
-    'event_venue'
+    'event_venue',
+    'museum',  # Large museums like Museu Oscar Niemeyer
 }
 
 # Categories that use point-based boundaries (precision circles)
@@ -54,7 +55,6 @@ POINT_CATEGORIES = {
     'gym',
     'club',
     'plaza',
-    'museum',
     'theatre',
     'library',
     'community_centre',
@@ -72,7 +72,8 @@ FALLBACK_RADIUS = {
     'stadium': 150,
     'shopping': 300,
     'event_venue': 300,
-    'club': 300,  # Large social clubs like Clube Duque de Caxias
+    'club': 300,
+    'museum': 200,  # Large museums like Museu Oscar Niemeyer
 }
 
 # Safety margin (in meters) for GPS error compensation
@@ -85,7 +86,9 @@ VALID_LAND_USE_CLASSES = {
     'plaza': {'plaza', 'pedestrian'},
     'university': {'university', 'college'},
     'shopping': {'retail', 'commercial'},
-    'club': {'recreation_ground', 'sports_centre', 'grass'},  # Social clubs, sports clubs
+    'club': {'recreation_ground', 'sports_centre', 'grass'},
+    'museum': {'museum', 'attraction'},
+    'stadium': {'stadium', 'sports_centre', 'pitch'},  # Stadiums and sports arenas
 }
 
 # Overture release version for polygon sources
