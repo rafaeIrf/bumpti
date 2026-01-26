@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { haversineDistance } from "../_shared/haversine.ts";
 import { refreshPresenceForPlace } from "../_shared/refresh-presence.ts";
 
 const corsHeaders = {
@@ -10,8 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
 };
-
-const MAX_DISTANCE_METERS = 60;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -66,8 +63,6 @@ Deno.serve(async (req) => {
     const place_id = body?.place_id;
     const userLat = typeof body?.userLat === "number" ? body.userLat : null;
     const userLng = typeof body?.userLng === "number" ? body.userLng : null;
-    const place_lat = typeof body?.place_lat === "number" ? body.place_lat : null;
-    const place_lng = typeof body?.place_lng === "number" ? body.place_lng : null;
     const is_checkin_plus = body?.is_checkin_plus === true;
 
     if (!place_id || typeof place_id !== "string") {
@@ -77,14 +72,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Calculate distance if coordinates available
+    // Check if user is inside place boundary using RPC
     let isPhysicallyClose = false;
-    let distanceInMeters: number | null = null;
     
-    if (userLat !== null && userLng !== null && place_lat !== null && place_lng !== null) {
-      distanceInMeters = haversineDistance(userLat, userLng, place_lat, place_lng) * 1000;
-      isPhysicallyClose = distanceInMeters <= MAX_DISTANCE_METERS;
-      console.log(`Distance: ${distanceInMeters.toFixed(0)}m, isPhysicallyClose: ${isPhysicallyClose}`);
+    if (userLat !== null && userLng !== null) {
+      const { data: insideBoundary, error: boundaryError } = await serviceClient.rpc(
+        "check_user_in_place_boundary",
+        { p_place_id: place_id, p_user_lat: userLat, p_user_lng: userLng }
+      );
+      
+      if (boundaryError) {
+        console.error("Boundary check error:", boundaryError);
+      } else {
+        isPhysicallyClose = insideBoundary === true;
+      }
+      console.log(`Boundary check: inside=${isPhysicallyClose} (lat=${userLat}, lng=${userLng})`);
     }
 
     // FIRST: Check for existing active presence
@@ -95,7 +97,7 @@ Deno.serve(async (req) => {
     );
 
     if (existingPresence) {
-      // If user was using checkin_plus but is now physically close, upgrade to physical
+      // If user was using checkin_plus but is now physically inside boundary, upgrade to physical
       if (existingPresence.entry_type === 'checkin_plus' && isPhysicallyClose) {
         console.log(`Upgrading user ${user.id} from checkin_plus to physical at ${place_id}`);
         const { data: upgraded, error: upgradeError } = await serviceClient
@@ -122,23 +124,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // SECOND: Validate distance for NEW entries only
+    // SECOND: Validate boundary for NEW entries only
     let usedCheckinPlus = false;
     
     if (!isPhysicallyClose) {
       if (is_checkin_plus) {
-        // User is far but using Check-in+ - allow entry
+        // User is outside boundary but using Check-in+ - allow entry
         usedCheckinPlus = true;
-        console.log(`User ${user.id} entering via Check-in+ (distance: ${distanceInMeters?.toFixed(0) ?? 'unknown'}m)`);
+        console.log(`User ${user.id} entering via Check-in+ (outside boundary)`);
       } else {
-        // User is far and NOT using Check-in+ - reject
-        return new Response(JSON.stringify({ error: "too_far" }), {
+        // User is outside boundary and NOT using Check-in+ - reject
+        return new Response(JSON.stringify({ error: "outside_boundary" }), {
           status: 400,
           headers: corsHeaders,
         });
       }
     } else {
-      console.log(`Distance validation passed: ${distanceInMeters?.toFixed(0)}m`);
+      console.log(`Boundary validation passed: user is inside place boundary`);
     }
 
     // Determine entry_type based on how user is entering

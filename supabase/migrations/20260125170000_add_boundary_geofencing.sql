@@ -284,3 +284,37 @@ COMMENT ON FUNCTION get_current_place_candidate IS
 'Returns candidate places where the user might be located, based on boundary intersection.
 Orders by area (smallest first) so more specific locations (e.g., a bar inside a park) 
 appear before larger containing areas.';
+
+-- =============================================================================
+-- PART 6: Create check_user_in_place_boundary RPC for enter-place validation
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION check_user_in_place_boundary(
+  p_place_id uuid,
+  p_user_lat float,
+  p_user_lng float
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_inside boolean;
+BEGIN
+  SELECT ST_Intersects(
+    p.boundary,
+    ST_SetSRID(ST_MakePoint(p_user_lng, p_user_lat), 4326)
+  ) INTO v_inside
+  FROM places p
+  WHERE p.id = p_place_id
+    AND p.active = true
+    AND p.boundary IS NOT NULL;
+  
+  RETURN COALESCE(v_inside, false);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION check_user_in_place_boundary(uuid, float, float) TO authenticated, service_role;
+
+COMMENT ON FUNCTION check_user_in_place_boundary IS 
+'Checks if user coordinates are inside a place boundary. Used by enter-place validation.';
