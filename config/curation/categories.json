@@ -70,7 +70,6 @@
     "shopping_center": "commercial_center",
     "shopping_mall": "shopping",
     "shopping_plaza": "commercial_center",
-    "event_planning": "event_venue",
     "topic_concert_venue": "event_venue",
     "music_venue": "event_venue",
     "venue_and_event_space": "event_venue",
