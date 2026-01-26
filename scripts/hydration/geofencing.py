@@ -72,7 +72,7 @@ FALLBACK_RADIUS = {
     'stadium': 150,
     'shopping': 300,
     'event_venue': 300,
-    'club': 300,
+    'club': 200,
     'museum': 200,  # Large museums like Museu Oscar Niemeyer
 }
 
