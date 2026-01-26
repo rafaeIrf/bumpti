@@ -286,35 +286,127 @@ Orders by area (smallest first) so more specific locations (e.g., a bar inside a
 appear before larger containing areas.';
 
 -- =============================================================================
--- PART 6: Create check_user_in_place_boundary RPC for enter-place validation
+-- PART 7: Unified enter_place RPC (optimized single-call)
 -- =============================================================================
+-- Consolidates: boundary check + presence refresh/insert + credit decrement
+-- Reduces 5-6 network calls to 1
 
-CREATE OR REPLACE FUNCTION check_user_in_place_boundary(
+CREATE OR REPLACE FUNCTION enter_place(
+  p_user_id uuid,
   p_place_id uuid,
-  p_user_lat float,
-  p_user_lng float
+  p_user_lat float DEFAULT NULL,
+  p_user_lng float DEFAULT NULL,
+  p_is_checkin_plus boolean DEFAULT false
 )
-RETURNS boolean
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_inside boolean;
+  v_inside_boundary boolean := false;
+  v_existing_presence record;
+  v_new_presence record;
+  v_entry_type text;
+  v_new_expires_at timestamptz;
+  v_remaining_credits int;
+  v_result jsonb;
 BEGIN
-  SELECT ST_Intersects(
-    p.boundary,
-    ST_SetSRID(ST_MakePoint(p_user_lng, p_user_lat), 4326)
-  ) INTO v_inside
-  FROM places p
-  WHERE p.id = p_place_id
-    AND p.active = true
-    AND p.boundary IS NOT NULL;
-  
-  RETURN COALESCE(v_inside, false);
+  v_new_expires_at := NOW() + INTERVAL '30 minutes';
+
+  -- 1. Check boundary intersection (if coordinates provided)
+  IF p_user_lat IS NOT NULL AND p_user_lng IS NOT NULL THEN
+    SELECT ST_Intersects(
+      p.boundary,
+      ST_SetSRID(ST_MakePoint(p_user_lng, p_user_lat), 4326)
+    ) INTO v_inside_boundary
+    FROM places p
+    WHERE p.id = p_place_id
+      AND p.active = true
+      AND p.boundary IS NOT NULL;
+    
+    v_inside_boundary := COALESCE(v_inside_boundary, false);
+  END IF;
+
+  -- 2. Check for existing active presence
+  SELECT * INTO v_existing_presence
+  FROM user_presences
+  WHERE user_id = p_user_id
+    AND place_id = p_place_id
+    AND active = true
+    AND ended_at IS NULL
+    AND expires_at > NOW()
+  ORDER BY entered_at DESC
+  LIMIT 1;
+
+  -- 3a. Existing presence found - refresh it
+  IF v_existing_presence.id IS NOT NULL THEN
+    -- Upgrade checkin_plus to physical if now inside boundary
+    IF v_existing_presence.entry_type = 'checkin_plus' AND v_inside_boundary THEN
+      UPDATE user_presences
+      SET entry_type = 'physical',
+          lat = p_user_lat,
+          lng = p_user_lng,
+          expires_at = v_new_expires_at
+      WHERE id = v_existing_presence.id
+      RETURNING * INTO v_existing_presence;
+    ELSE
+      -- Just refresh expires_at
+      UPDATE user_presences
+      SET expires_at = v_new_expires_at
+      WHERE id = v_existing_presence.id
+      RETURNING * INTO v_existing_presence;
+    END IF;
+
+    RETURN jsonb_build_object(
+      'status', 'refreshed',
+      'presence', row_to_json(v_existing_presence)::jsonb,
+      'inside_boundary', v_inside_boundary
+    );
+  END IF;
+
+  -- 3b. No existing presence - validate and create new
+  IF NOT v_inside_boundary THEN
+    IF p_is_checkin_plus THEN
+      v_entry_type := 'checkin_plus';
+    ELSE
+      -- User is outside boundary and not using checkin_plus
+      RETURN jsonb_build_object(
+        'status', 'rejected',
+        'error', 'outside_boundary',
+        'inside_boundary', false
+      );
+    END IF;
+  ELSE
+    v_entry_type := 'physical';
+  END IF;
+
+  -- Insert new presence
+  INSERT INTO user_presences (user_id, place_id, lat, lng, active, entry_type, expires_at)
+  VALUES (p_user_id, p_place_id, p_user_lat, p_user_lng, true, v_entry_type, v_new_expires_at)
+  RETURNING * INTO v_new_presence;
+
+  -- 4. Consume credit if checkin_plus
+  IF v_entry_type = 'checkin_plus' THEN
+    UPDATE user_checkin_credits
+    SET credits = GREATEST(credits - 1, 0),
+        updated_at = NOW()
+    WHERE user_id = p_user_id;
+    
+    SELECT credits INTO v_remaining_credits
+    FROM user_checkin_credits
+    WHERE user_id = p_user_id;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'status', 'created',
+    'presence', row_to_json(v_new_presence)::jsonb,
+    'inside_boundary', v_inside_boundary,
+    'remaining_credits', v_remaining_credits
+  );
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION check_user_in_place_boundary(uuid, float, float) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION enter_place(uuid, uuid, float, float, boolean) TO service_role;
 
-COMMENT ON FUNCTION check_user_in_place_boundary IS 
-'Checks if user coordinates are inside a place boundary. Used by enter-place validation.';
+COMMENT ON FUNCTION enter_place IS 
+'Unified enter-place operation. Handles boundary check, presence refresh/insert, and credit decrement in one call.';

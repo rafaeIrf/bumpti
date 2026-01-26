@@ -1,6 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { refreshPresenceForPlace } from "../_shared/refresh-presence.ts";
+import { requireAuth } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +10,23 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
+interface EnterPlaceRequest {
+  place_id: string;
+  userLat?: number;
+  userLng?: number;
+  is_checkin_plus?: boolean;
+}
+
+interface EnterPlaceV2Result {
+  status: 'created' | 'refreshed' | 'rejected';
+  presence?: Record<string, unknown>;
+  error?: string;
+  inside_boundary?: boolean;
+  remaining_credits?: number;
+}
+
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -23,182 +39,78 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "").trim();
+    // Auth check + body parsing in parallel
+    const [authResult, body] = await Promise.all([
+      requireAuth(req),
+      req.json().catch(() => null) as Promise<EnterPlaceRequest | null>,
+    ]);
 
-    if (!token) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+    if (!authResult.success) {
+      return authResult.response;
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const { user } = authResult;
 
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-      throw new Error("Missing SUPABASE_URL, SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY env vars");
-    }
-
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    const {
-      data: { user },
-      error: userError,
-    } = await authClient.auth.getUser();
-
-    if (userError || !user?.id) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-
-    const body = await req.json().catch(() => null);
-    const place_id = body?.place_id;
-    const userLat = typeof body?.userLat === "number" ? body.userLat : null;
-    const userLng = typeof body?.userLng === "number" ? body.userLng : null;
-    const is_checkin_plus = body?.is_checkin_plus === true;
-
-    if (!place_id || typeof place_id !== "string") {
+    // Validate request body
+    if (!body?.place_id || typeof body.place_id !== "string") {
       return new Response(JSON.stringify({ error: "invalid_place_id" }), {
         status: 400,
         headers: corsHeaders,
       });
     }
 
-    // Check if user is inside place boundary using RPC
-    let isPhysicallyClose = false;
-    
-    if (userLat !== null && userLng !== null) {
-      const { data: insideBoundary, error: boundaryError } = await serviceClient.rpc(
-        "check_user_in_place_boundary",
-        { p_place_id: place_id, p_user_lat: userLat, p_user_lng: userLng }
-      );
-      
-      if (boundaryError) {
-        console.error("Boundary check error:", boundaryError);
-      } else {
-        isPhysicallyClose = insideBoundary === true;
-      }
-      console.log(`Boundary check: inside=${isPhysicallyClose} (lat=${userLat}, lng=${userLng})`);
-    }
+    const { place_id, userLat, userLng, is_checkin_plus } = body;
 
-    // FIRST: Check for existing active presence
-    const existingPresence = await refreshPresenceForPlace(
-      serviceClient,
-      user.id,
-      place_id
+    // Create service client for the unified RPC
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Single RPC call handles everything:
+    // - Boundary intersection check
+    // - Existing presence refresh OR new presence insert
+    // - Credit decrement (if checkin_plus)
+    const { data: result, error: rpcError } = await serviceClient.rpc<EnterPlaceV2Result>(
+      "enter_place",
+      {
+        p_user_id: user.id,
+        p_place_id: place_id,
+        p_user_lat: typeof userLat === "number" ? userLat : null,
+        p_user_lng: typeof userLng === "number" ? userLng : null,
+        p_is_checkin_plus: is_checkin_plus === true,
+      }
     );
 
-    if (existingPresence) {
-      // If user was using checkin_plus but is now physically inside boundary, upgrade to physical
-      if (existingPresence.entry_type === 'checkin_plus' && isPhysicallyClose) {
-        console.log(`Upgrading user ${user.id} from checkin_plus to physical at ${place_id}`);
-        const { data: upgraded, error: upgradeError } = await serviceClient
-          .from("user_presences")
-          .update({ entry_type: 'physical', lat: userLat, lng: userLng })
-          .eq("id", existingPresence.id)
-          .select()
-          .single();
-        
-        if (upgradeError) {
-          console.error("Error upgrading entry_type:", upgradeError);
-        } else {
-          return new Response(JSON.stringify({ presence: upgraded }), {
-            status: 200,
-            headers: corsHeaders,
-          });
-        }
-      }
-      
-      console.log(`User ${user.id} has existing presence at ${place_id}, refreshing`);
-      return new Response(JSON.stringify({ presence: existingPresence }), {
-        status: 200,
+    if (rpcError) {
+      console.error("enter_place RPC error:", rpcError);
+      throw rpcError;
+    }
+
+    // Handle rejection (outside boundary without checkin_plus)
+    if (result?.status === "rejected") {
+      return new Response(JSON.stringify({ error: result.error }), {
+        status: 400,
         headers: corsHeaders,
       });
     }
 
-    // SECOND: Validate boundary for NEW entries only
-    let usedCheckinPlus = false;
+    // Success response
+    const httpStatus = result?.status === "created" ? 201 : 200;
     
-    if (!isPhysicallyClose) {
-      if (is_checkin_plus) {
-        // User is outside boundary but using Check-in+ - allow entry
-        usedCheckinPlus = true;
-        console.log(`User ${user.id} entering via Check-in+ (outside boundary)`);
-      } else {
-        // User is outside boundary and NOT using Check-in+ - reject
-        return new Response(JSON.stringify({ error: "outside_boundary" }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-    } else {
-      console.log(`Boundary validation passed: user is inside place boundary`);
-    }
-
-    // Determine entry_type based on how user is entering
-    const entryType = usedCheckinPlus ? 'checkin_plus' : 'physical';
-
-    const { data, error } = await serviceClient
-      .from("user_presences")
-      .insert({
-        user_id: user.id,
-        place_id,
-        lat: userLat,
-        lng: userLng,
-        active: true,
-        entry_type: entryType,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    console.log(`Created presence for user ${user.id} at ${place_id} with entry_type: ${entryType}`);
-
-    // Consume check-in credit if used
-    let remainingCredits: number | undefined;
-    if (usedCheckinPlus) {
-      const { error: decrementError } = await serviceClient.rpc(
-        "decrement_checkin_credit",
-        { p_user_id: user.id }
-      );
-      
-      if (decrementError) {
-        console.error("Error decrementing check-in credit:", decrementError);
-      } else {
-        console.log(`Check-in credit consumed for user ${user.id}`);
-        
-        const { data: updatedCredits } = await serviceClient
-          .from("user_checkin_credits")
-          .select("credits")
-          .eq("user_id", user.id)
-          .single();
-        
-        remainingCredits = updatedCredits?.credits ?? 0;
-      }
-    }
-
-    return new Response(JSON.stringify({ 
-      presence: data,
-      remaining_credits: remainingCredits,
-    }), {
-      status: 201,
-      headers: corsHeaders,
-    });
-  } catch (err: any) {
-    console.error("enterPlace error:", err);
+    return new Response(
+      JSON.stringify({
+        presence: result?.presence,
+        remaining_credits: result?.remaining_credits,
+      }),
+      { status: httpStatus, headers: corsHeaders }
+    );
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("enterPlace error:", error);
     return new Response(
       JSON.stringify({
         error: "internal_error",
-        message: err?.message ?? "Unexpected error",
+        message: error?.message ?? "Unexpected error",
       }),
       { status: 500, headers: corsHeaders }
     );
