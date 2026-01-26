@@ -1,26 +1,26 @@
 import {
-  detectPlace as detectPlaceApi,
-  type DetectPlaceResult,
-  getFavoritePlaces as getFavoritePlacesApi,
-  getNearbyPlaces as getNearbyPlacesApi,
-  getPlacesByFavorites as getPlacesByFavoritesApi,
-  getRankedPlaces as getRankedPlacesApi,
-  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
-  getTrendingPlaces as getTrendingPlacesApi,
-  type PlacesByCategory,
-  type RankByOption,
-  saveSocialReview,
-  searchPlacesByText as searchPlacesByTextApi,
-  toggleFavoritePlace as toggleFavoritePlaceApi
+    detectPlace as detectPlaceApi,
+    type DetectPlaceResult,
+    getFavoritePlaces as getFavoritePlacesApi,
+    getNearbyPlaces as getNearbyPlacesApi,
+    getPlacesByFavorites as getPlacesByFavoritesApi,
+    getRankedPlaces as getRankedPlacesApi,
+    getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+    getTrendingPlaces as getTrendingPlacesApi,
+    type PlacesByCategory,
+    type RankByOption,
+    saveSocialReview,
+    searchPlacesByText as searchPlacesByTextApi,
+    toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { updateProfile } from "@/modules/profile/api";
 import { setFavoritePlaces, setFilterOnlyVerified } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-  buildNearbyCacheKey,
-  mergeNearbyPlaces,
-  roundToGrid,
-  shouldRefetchNearby,
+    buildNearbyCacheKey,
+    mergeNearbyPlaces,
+    roundToGrid,
+    shouldRefetchNearby,
 } from "./nearby-cache";
 import { Place, PlaceCategory } from "./types";
 
@@ -77,19 +77,18 @@ export const placesApi = createApi({
       keepUnusedDataFor: CACHE_TIME.SUGGESTED_PLACES,
     }),
 
-    // Detect place based on user location
+    // Detect place based on user location (boundary intersection)
     detectPlace: builder.query<
       DetectPlaceResult | null,
       {
         latitude: number;
         longitude: number;
         hacc?: number;
-        limit?: number;
       }
     >({
-      queryFn: async ({ latitude, longitude, hacc, limit }) => {
+      queryFn: async ({ latitude, longitude, hacc }) => {
         try {
-          const result = await detectPlaceApi(latitude, longitude, hacc, limit);
+          const result = await detectPlaceApi(latitude, longitude, hacc);
           return { data: result };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };

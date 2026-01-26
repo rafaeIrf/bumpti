@@ -312,16 +312,11 @@ export async function toggleFavoritePlace({
 }
 
 export interface DetectedPlace {
-  fsq_place_id: string;
+  id: string;
   name: string;
-  formatted_address?: string;
-  categories: {
-    fsq_category_id: string;
-    name: string;
-  }[];
-  latitude: number;
-  longitude: number;
-  distance: number;
+  category: string;
+  relevance_score: number;
+  boundary_area_sqm?: number;
 }
 
 export interface DetectPlaceResult {
@@ -331,8 +326,7 @@ export interface DetectPlaceResult {
 export async function detectPlace(
   latitude: number,
   longitude: number,
-  hacc?: number,
-  limit?: number
+  hacc?: number
 ): Promise<DetectPlaceResult | null> {
   const { data, error } = await supabase.functions.invoke<{
     data: DetectPlaceResult | null;
@@ -342,7 +336,6 @@ export async function detectPlace(
       lat: latitude,
       lng: longitude,
       ...(hacc != null && { hacc }),
-      ...(limit != null && { limit }),
     },
   });
 
