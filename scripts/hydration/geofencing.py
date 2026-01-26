@@ -77,7 +77,7 @@ FALLBACK_RADIUS = {
 }
 
 # Safety margin (in meters) for GPS error compensation
-SAFETY_MARGIN_METERS = 60
+SAFETY_MARGIN_METERS = 30
 
 # Land-use class whitelist per category (prevents incorrect polygon associations)
 # Note: Uses INTERNAL categories (after mapping), not Overture categories

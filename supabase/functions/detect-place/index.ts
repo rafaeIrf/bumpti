@@ -1,5 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
-import { geotagCandidates } from "../_shared/foursquare/geotag.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +12,14 @@ interface DetectPlaceRequest {
   lat?: number;
   lng?: number;
   hacc?: number;
-  limit?: number;
+}
+
+interface PlaceCandidate {
+  id: string;
+  name: string;
+  category: string;
+  relevance_score: number;
+  boundary_area_sqm: number;
 }
 
 Deno.serve(async (req) => {
@@ -46,7 +53,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { lat, lng, hacc, limit } = body;
+    const { lat, lng, hacc } = body;
 
     // Validate required parameters
     if (lat === undefined || lng === undefined) {
@@ -69,31 +76,63 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Call geotagging API
-    const result = await geotagCandidates({
-      lat,
-      lng,
-      hacc: hacc ?? 20,
-      limit: limit ?? 10,
-    });
+    // If horizontal accuracy is too poor (>80m), don't return suggestions
+    if (hacc && hacc > 80) {
+      console.warn(`Location accuracy too poor (${hacc}m). Not detecting place.`);
+      return new Response(
+        JSON.stringify({
+          data: { suggested: null },
+          error: null,
+        }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
 
-    // Handle API failure
-    if (result === null) {
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Supabase configuration missing");
       return new Response(
         JSON.stringify({
           data: null,
-          error: "geotag_api_failed",
+          error: "configuration_error",
         }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    // Return successful response
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Call RPC to get place candidates based on boundary intersection
+    const { data: candidates, error: rpcError } = await supabase.rpc(
+      "get_current_place_candidate",
+      {
+        user_lat: lat,
+        user_lng: lng,
+      }
+    );
+
+    if (rpcError) {
+      console.error("RPC error:", rpcError.message);
+      return new Response(
+        JSON.stringify({
+          data: null,
+          error: "rpc_failed",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // RPC returns candidates ordered by boundary size (smallest first)
+    // The first one is the most specific (e.g., a bar inside a park)
+    const suggested: PlaceCandidate | null =
+      candidates && candidates.length > 0 ? candidates[0] : null;
+
     return new Response(
       JSON.stringify({
-        data: {
-          suggested: result.suggested,
-        },
+        data: { suggested },
         error: null,
       }),
       { status: 200, headers: corsHeaders }
