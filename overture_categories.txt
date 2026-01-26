@@ -52,7 +52,7 @@ fitness_trainer:gym
 skate_park:skate_park
 gymnastics_center:gym
 tennis_court:sports_centre
-sports_and_recreation_venue:club
+sports_and_recreation_venue:gym
 country_club:club
 social_club:club
 

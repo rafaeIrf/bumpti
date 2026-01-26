@@ -70,8 +70,9 @@ FALLBACK_RADIUS = {
     'park': 400,
     'university': 150,
     'stadium': 150,
-    'shopping': 300,  # shopping_mall → shopping
+    'shopping': 300,
     'event_venue': 300,
+    'club': 300,  # Large social clubs like Clube Duque de Caxias
 }
 
 # Safety margin (in meters) for GPS error compensation
@@ -84,6 +85,7 @@ VALID_LAND_USE_CLASSES = {
     'plaza': {'plaza', 'pedestrian'},
     'university': {'university', 'college'},
     'shopping': {'retail', 'commercial'},
+    'club': {'recreation_ground', 'sports_centre', 'grass'},  # Social clubs, sports clubs
 }
 
 # Overture release version for polygon sources

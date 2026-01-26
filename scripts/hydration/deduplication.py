@@ -54,7 +54,7 @@ class POIColumn(IntEnum):
 FUZZY_THRESHOLD = 0.90  # 90% similarity required (avoid false positives like "Restaurante X" vs "Restaurante Y")
 # Note: Uses INTERNAL categories (after mapping). botanical_garden → park, shopping_mall → shopping
 LARGE_VENUE_CATEGORIES = {
-    'park', 'stadium', 'shopping', 'university', 'event_venue'
+    'park', 'stadium', 'shopping', 'university', 'event_venue', 'club'
 }
 LARGE_VENUE_THRESHOLD_M = 1500  # 1.5km - large venues with similar names are usually duplicates
 DEFAULT_THRESHOLD_M = 30
