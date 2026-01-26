@@ -37,13 +37,13 @@ except ImportError:
 
 # Categories that should use real polygon boundaries (large area venues)
 AREA_CATEGORIES = {
-    'park',
-    'stadium', 
-    'university',
-    'shopping_mall',
-    'botanical_garden',
-    'event_venue',
-    'museum',  # Large museums like Museu Oscar Niemeyer
+    'park',       # park, botanical_garden, skate_park
+    'stadium',    # stadium_arena
+    'university', # college_university
+    'shopping',   # shopping_mall
+    'event_venue',# venue_and_event_space, music_venue, etc.
+    'museum',     # museum, art_museum, history_museum
+    'club',       # country_club, social_club, sports_club_and_league
 }
 
 # Categories that use point-based boundaries (precision circles)
@@ -53,7 +53,6 @@ POINT_CATEGORIES = {
     'restaurant',
     'cafe',
     'gym',
-    'club',
     'plaza',
     'theatre',
     'library',
@@ -63,6 +62,7 @@ POINT_CATEGORIES = {
     'commercial_center',
     'skate_park'
 }
+
 
 # Fallback radius (in meters) for area categories without polygon matches
 # Note: Uses INTERNAL categories (after mapping), not Overture categories
