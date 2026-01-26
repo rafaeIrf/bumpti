@@ -90,7 +90,7 @@ VALID_LAND_USE_CLASSES = {
     'club': {'recreation_ground', 'sports_centre', 'grass'},
     'museum': {'museum', 'attraction'},
     'stadium': {'stadium', 'sports_centre', 'pitch'},  # Stadiums and sports arenas
-    'event_venue': {'entertainment', 'building', 'commercial'},
+    'event_venue': {'entertainment'},
 }
 
 # Overture release version for polygon sources
@@ -373,21 +373,24 @@ def _find_matching_polygon(
     accepted = False
     reason = ""
     
-    # Criterion 1: High similarity (> 0.7)
-    if best['similarity'] >= MIN_SIMILARITY:
+    # Check if category matches (for both criteria)
+    best_class = best.get('class')
+    best_subtype = best.get('subtype')
+    matches_class = False
+    if valid_classes:
+        matches_class = best_class in valid_classes or best_subtype in valid_classes
+    
+    # Criterion 1: High similarity (≥ 0.7) AND correct category
+    # This prevents matching "Parque Barigui" with "Shopping Barigui"
+    if best['similarity'] >= MIN_SIMILARITY and (not valid_classes or matches_class):
         accepted = True
         reason = f"similarity={best['similarity']:.2f}"
     
-    # Criterion 2: Correct category class AND exclusive within 100m
-    elif valid_classes and best['class'] in valid_classes:
-        close_competitors = candidates[candidates['distance_m'] <= CLOSE_DISTANCE_M]
-        if len(close_competitors) == 1:
-            accepted = True
-            reason = f"exclusive class '{best['class']}' within 100m"
-        elif best['distance_m'] <= CLOSE_DISTANCE_M:
-            # Accept if it's the only one very close
-            accepted = True
-            reason = f"class '{best['class']}' at {best['distance_m']:.0f}m"
+    # Criterion 2: Very close proximity (≤ 50m) with moderate similarity (≥ 0.5)
+    # For cases where the name is slightly different in OSM but location is certain
+    elif matches_class and best['distance_m'] <= 50 and best['similarity'] >= 0.5:
+        accepted = True
+        reason = f"{best_subtype or best_class} at {best['distance_m']:.0f}m (sim={best['similarity']:.2f})"
     
     if debug or (accepted and poi_name and 'shopping' in poi_name.lower()):
         dist = best['distance_m']
