@@ -71,7 +71,7 @@ FALLBACK_RADIUS = {
     'university': 150,
     'stadium': 150,
     'shopping': 300,
-    'event_venue': 300,
+    'event_venue': 100,
     'club': 200,
     'museum': 200,  # Large museums like Museu Oscar Niemeyer
 }
@@ -86,9 +86,11 @@ VALID_LAND_USE_CLASSES = {
     'plaza': {'plaza', 'pedestrian'},
     'university': {'university', 'college'},
     'shopping': {'retail', 'commercial'},
+    'botanical_garden': {'park', 'recreation_ground'},
     'club': {'recreation_ground', 'sports_centre', 'grass'},
     'museum': {'museum', 'attraction'},
     'stadium': {'stadium', 'sports_centre', 'pitch'},  # Stadiums and sports arenas
+    'event_venue': {'entertainment', 'building', 'commercial'},
 }
 
 # Overture release version for polygon sources
@@ -311,16 +313,17 @@ def _find_matching_polygon(
     candidates = polygons_gdf.iloc[possible_idx].copy()
     
     # Apply category-aware class filtering
+    # Note: land_use uses 'class', buildings use 'subtype' - check both
     valid_classes = VALID_LAND_USE_CLASSES.get(poi_category)
     if valid_classes:
-        class_filtered = candidates[candidates['class'].isin(valid_classes)]
+        class_match = candidates['class'].isin(valid_classes)
+        subtype_match = candidates['subtype'].isin(valid_classes) if 'subtype' in candidates.columns else False
+        class_filtered = candidates[class_match | subtype_match]
         if not class_filtered.empty:
             candidates = class_filtered
         elif debug:
-            print(f"[GEO-MATCH] POI '{poi_name}': No polygons with valid classes {valid_classes}")
+            print(f"[GEO-MATCH] POI '{poi_name}': No polygons with valid classes/subtypes {valid_classes}")
     
-    if candidates.empty:
-        return None
     
     # Calculate distance to each candidate (approximate meters)
     # Project to Web Mercator for distance calculation
