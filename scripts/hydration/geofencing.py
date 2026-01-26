@@ -44,6 +44,7 @@ AREA_CATEGORIES = {
     'event_venue',# venue_and_event_space, music_venue, etc.
     'museum',     # museum, art_museum, history_museum
     'club',       # country_club, social_club, sports_club_and_league
+    'theatre',    # theatre, cinema - large performance venues
 }
 
 # Categories that use point-based boundaries (precision circles)
@@ -54,7 +55,6 @@ POINT_CATEGORIES = {
     'cafe',
     'gym',
     'plaza',
-    'theatre',
     'library',
     'community_centre',
     'sports_centre',
@@ -74,6 +74,7 @@ FALLBACK_RADIUS = {
     'event_venue': 100,
     'club': 200,
     'museum': 200,  # Large museums like Museu Oscar Niemeyer
+    'theatre': 100,  # Theatres and cinemas - similar to event venues
 }
 
 # Safety margin (in meters) for GPS error compensation
@@ -91,6 +92,7 @@ VALID_LAND_USE_CLASSES = {
     'museum': {'museum', 'attraction'},
     'stadium': {'stadium', 'sports_centre', 'pitch'},  # Stadiums and sports arenas
     'event_venue': {'entertainment'},
+    'theatre': {'entertainment', 'civic'},  # Theatres, cinemas, performance venues
 }
 
 # Overture release version for polygon sources
@@ -317,8 +319,11 @@ def _find_matching_polygon(
     valid_classes = VALID_LAND_USE_CLASSES.get(poi_category)
     if valid_classes:
         class_match = candidates['class'].isin(valid_classes)
-        subtype_match = candidates['subtype'].isin(valid_classes) if 'subtype' in candidates.columns else False
-        class_filtered = candidates[class_match | subtype_match]
+        if 'subtype' in candidates.columns:
+            subtype_match = candidates['subtype'].isin(valid_classes)
+            class_filtered = candidates[class_match | subtype_match]
+        else:
+            class_filtered = candidates[class_match]
         if not class_filtered.empty:
             candidates = class_filtered
         elif debug:
