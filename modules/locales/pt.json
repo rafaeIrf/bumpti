@@ -9,6 +9,13 @@
       "skip": "Agora não"
     }
   },
+  "maps": {
+    "chooseApp": "Abrir com...",
+    "appleMaps": "Apple Maps",
+    "googleMaps": "Google Maps",
+    "waze": "Waze",
+    "cancel": "Cancelar"
+  },
   "actions": {
     "report": "Denunciar",
     "block": "Bloquear",

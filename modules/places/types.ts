@@ -65,24 +65,26 @@ export type CityPrediction = {
 
 export type NearbyPlacesResponse = { places: Place[] };
 
-export type PlaceCategory = 
-  | "bar" 
-  | "nightclub" 
-  | "cafe" 
-  | "restaurant" 
-  | "gym" 
-  | "fitness_centre" 
-  | "university" 
-  | "college" 
+export type PlaceCategory =
+  | "bar"
+  | "nightclub"
+  | "cafe"
+  | "restaurant"
+  | "gym"
+  | "university"
   | "park"
   | "museum"
   | "stadium"
   | "library"
   | "sports_centre"
   | "community_centre"
-  | "events_venue"
+  | "event_venue"
   | "language_school"
-  | "club";
+  | "club"
+  | "theatre"
+  | "plaza"
+  | "shopping"
+  | "skate_park";
 
 // Place Reports
 export type PlaceReportReason =
