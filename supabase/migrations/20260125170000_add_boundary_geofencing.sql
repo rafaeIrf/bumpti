@@ -245,6 +245,7 @@ GRANT EXECUTE ON FUNCTION merge_staging_to_production(uuid, double precision[], 
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION get_current_place_candidate(
+  p_user_id uuid,
   user_lat float,
   user_lng float
 )
@@ -259,6 +260,18 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  -- Check if user already has an active check-in
+  IF EXISTS (
+    SELECT 1 FROM user_presences
+    WHERE user_id = p_user_id
+      AND active = true
+      AND ended_at IS NULL
+      AND expires_at > NOW()
+  ) THEN
+    RETURN; -- Return empty result set
+  END IF;
+
+  -- Return candidate places based on boundary intersection
   RETURN QUERY
   SELECT
     p.id,
@@ -278,7 +291,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION get_current_place_candidate(float, float) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION get_current_place_candidate(uuid, float, float) TO authenticated, anon;
 
 COMMENT ON FUNCTION get_current_place_candidate IS 
 'Returns candidate places where the user might be located, based on boundary intersection.
