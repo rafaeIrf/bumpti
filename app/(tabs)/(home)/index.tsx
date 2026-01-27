@@ -29,7 +29,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
-import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
+import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
@@ -56,6 +56,7 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Detection banner with smart cooldowns and dismissal
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -66,8 +67,8 @@ export default function HomeScreen() {
       enabled: !!location?.latitude && !!location?.longitude,
     });
 
-  // Place details bottomsheet
-  const { showPlaceDetails } = usePlaceDetailsSheet();
+  // Place click handler for auto check-in
+  const { handlePlaceClick } = usePlaceClick();
 
   const {
     showLocationSheet,
@@ -283,25 +284,23 @@ export default function HomeScreen() {
     router.push("/main/place-search");
   };
 
-  const handleConnectPlace = (placeData: DetectedPlace) => {
-    // Convert detected place data to Place format for bottomsheet
-    if (!detectedPlace) return;
-    console.log("placeData", placeData);
+  const handleConnectPlace = async (placeData: DetectedPlace) => {
+    // Auto check-in at detected place
+    if (!detectedPlace || isConnecting) return;
 
-    const place = {
-      placeId: placeData.id,
-      name: placeData.name,
-      formattedAddress: placeData.formatted_address,
-      distance: placeData.dist_meters ? placeData.dist_meters / 1000 : 0,
-      latitude: placeData.latitude,
-      longitude: placeData.longitude,
-      types: placeData.types,
-      active_users: placeData.active_users || 0,
-      review: placeData.review,
-      preview_avatars: placeData.preview_avatars,
-    };
-
-    showPlaceDetails(place);
+    setIsConnecting(true);
+    try {
+      await handlePlaceClick({
+        placeId: placeData.id,
+        name: placeData.name,
+        latitude: placeData.latitude,
+        longitude: placeData.longitude,
+        distance: placeData.dist_meters ? placeData.dist_meters / 1000 : 0,
+        active_users: placeData.active_users || 0,
+      });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   return (
@@ -336,6 +335,7 @@ export default function HomeScreen() {
             place={detectedPlace}
             onConnect={handleConnectPlace}
             onDismiss={dismissDetectedPlace}
+            isConnecting={isConnecting}
           />
         )}
 

@@ -58,12 +58,14 @@ interface DetectionBannerProps {
   place: DetectedPlace;
   onConnect: (place: DetectedPlace) => void;
   onDismiss?: () => void;
+  isConnecting?: boolean;
 }
 
 export function DetectionBanner({
   place,
   onConnect,
   onDismiss,
+  isConnecting = false,
 }: DetectionBannerProps) {
   const colors = useThemeColors();
   const [show, setShow] = React.useState(false);
@@ -152,6 +154,8 @@ export function DetectionBanner({
           onPress={handleConnect}
           style={styles.connectButton}
           variant="primary"
+          disabled={isConnecting}
+          loading={isConnecting}
           label={t("screens.home.detectionBanner.connect")}
         />
 
