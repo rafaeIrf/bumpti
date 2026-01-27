@@ -15,6 +15,7 @@ import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { ReduxProvider } from "@/components/redux-provider";
 import { RootNavigator } from "@/components/root-navigator";
 import { VerificationListener } from "@/components/verification-listener";
+import { VersionGuard } from "@/components/VersionGuard";
 import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
@@ -113,12 +114,14 @@ export default function RootLayout() {
               <IAPProvider>
                 <DatabaseProvider>
                   <BottomSheetProvider>
-                    <ChatRealtimeProvider>
-                      <SessionProvider>
-                        <RootNavigator />
-                      </SessionProvider>
-                      <StatusBar style="auto" />
-                    </ChatRealtimeProvider>
+                    <VersionGuard>
+                      <ChatRealtimeProvider>
+                        <SessionProvider>
+                          <RootNavigator />
+                        </SessionProvider>
+                        <StatusBar style="auto" />
+                      </ChatRealtimeProvider>
+                    </VersionGuard>
                   </BottomSheetProvider>
                 </DatabaseProvider>
               </IAPProvider>

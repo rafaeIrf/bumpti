@@ -71,17 +71,20 @@ const allCategories: PlaceCategory[] = [
   "cafe",
   "restaurant",
   "gym",
-  "fitness_centre",
   "university",
-  "college",
   "park",
   "museum",
   "stadium",
   "library",
   "sports_centre",
   "community_centre",
-  "events_venue",
+  "event_venue",
   "club",
+  "theatre",
+  "plaza",
+  "shopping",
+  "skate_park",
+  "language_school",
 ];
 
 const getRandomVibes = (): PlaceVibe[] => {
@@ -127,12 +130,12 @@ export default function CategoryResultsScreen() {
     openSettings,
   } = useLocationPermission();
   const [activeFilter, setActiveFilter] = useState<PlaceCategory | "all">(
-    "all"
+    "all",
   );
   const [sortBy, setSortBy] = useState<SortOption>("relevance");
   const [minRating, setMinRating] = useState<number | null>(null);
   const [rankingFilter, setRankingFilter] = useState<"month" | "general">(
-    "month"
+    "month",
   );
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -159,7 +162,7 @@ export default function CategoryResultsScreen() {
       },
       {
         skip: !trendingMode,
-      }
+      },
     );
 
   const targetCategory = useMemo<PlaceCategory[]>(() => {
@@ -242,7 +245,7 @@ export default function CategoryResultsScreen() {
       targetCategory,
       userLocation?.latitude,
       userLocation?.longitude,
-    ]
+    ],
   );
 
   const { data: nearbyPlacesData, isFetching: nearbyFetching } =
@@ -262,7 +265,7 @@ export default function CategoryResultsScreen() {
       },
       {
         skip: !shouldFetchCommunityFavorites,
-      }
+      },
     );
 
   // Fetch for mostFrequent mode with ranking using dedicated RPC
@@ -273,7 +276,7 @@ export default function CategoryResultsScreen() {
       longitude: userLocation?.longitude ?? 0,
       rankBy: rankByOption as "monthly" | "total",
     }),
-    [userLocation?.latitude, userLocation?.longitude, rankByOption]
+    [userLocation?.latitude, userLocation?.longitude, rankByOption],
   );
 
   const { data: mostFrequentData, isFetching: mostFrequentFetching } =
@@ -283,7 +286,7 @@ export default function CategoryResultsScreen() {
 
   const paginatedPlaces = useMemo<Place[]>(
     () => nearbyPlacesData ?? [],
-    [nearbyPlacesData]
+    [nearbyPlacesData],
   );
 
   useEffect(() => {
@@ -307,7 +310,7 @@ export default function CategoryResultsScreen() {
     if (paginationKey !== resetKey && activePage !== 1) return;
     const fetchedCount = Math.max(
       0,
-      paginatedPlaces.length - (activePage - 1) * PAGE_SIZE
+      paginatedPlaces.length - (activePage - 1) * PAGE_SIZE,
     );
     setHasMore(
       shouldHaveMorePages({
@@ -315,7 +318,7 @@ export default function CategoryResultsScreen() {
         pageSize: PAGE_SIZE,
         totalLoaded: activePage >= 2 ? paginatedPlaces.length : fetchedCount,
         maxPages: MAX_PAGES,
-      })
+      }),
     );
     lastAppendedPageRef.current = activePage;
   }, [
@@ -410,7 +413,7 @@ export default function CategoryResultsScreen() {
   const availableCategories = useMemo(() => {
     if (nearbyMode) return allCategories;
     return allCategories.filter((category) =>
-      places.some((place) => place.types?.includes(category))
+      places.some((place) => place.types?.includes(category)),
     );
   }, [nearbyMode, places]);
 
@@ -452,7 +455,7 @@ export default function CategoryResultsScreen() {
       setMinRating(nextMinRating);
       bottomSheet?.close();
     },
-    [bottomSheet]
+    [bottomSheet],
   );
 
   const handleOpenFilters = useCallback(() => {
@@ -552,7 +555,7 @@ export default function CategoryResultsScreen() {
       favoriteIds,
       handleToggle,
       mostFrequentMode,
-    ]
+    ],
   );
 
   const searchFooterComponent = useMemo(
@@ -572,7 +575,7 @@ export default function CategoryResultsScreen() {
         />
       </ThemedView>
     ),
-    [colors.text, colors.textSecondary, handleOpenSearch, t]
+    [colors.text, colors.textSecondary, handleOpenSearch, t],
   );
 
   const shouldShowSearchFooter =
@@ -624,7 +627,7 @@ export default function CategoryResultsScreen() {
         translateY.value,
         [-filterHeight, 0],
         [0, 1],
-        Extrapolation.CLAMP
+        Extrapolation.CLAMP,
       ),
     };
   });

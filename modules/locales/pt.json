@@ -9,6 +9,13 @@
       "skip": "Agora não"
     }
   },
+  "maps": {
+    "chooseApp": "Abrir com...",
+    "appleMaps": "Apple Maps",
+    "googleMaps": "Google Maps",
+    "waze": "Waze",
+    "cancel": "Cancelar"
+  },
   "actions": {
     "report": "Denunciar",
     "block": "Bloquear",
@@ -134,6 +141,19 @@
       "theatre": "Teatros",
       "casino": "Cassinos",
       "shopping": "Shopping Centers"
+    }
+  },
+  "versionCheck": {
+    "forceUpdate": {
+      "title": "Atualização Necessária",
+      "message": "Sua versão atual não é mais compatível. Por favor, atualize para continuar usando o Bumpti.",
+      "button": "Atualizar agora"
+    },
+    "suggestUpdate": {
+      "title": "Nova versão disponível!",
+      "message": "Fizemos melhorias e corrigimos problemas. Atualize agora para a melhor experiência.",
+      "updateButton": "Atualizar agora",
+      "laterButton": "Depois"
     }
   },
   "errors": {

@@ -34,6 +34,7 @@ module.exports = {
             },
           },
         },
+        LSApplicationQueriesSchemes: ["comgooglemaps", "waze", "maps"],
       },
       appleTeamId: "V68Y42WV27",
     },

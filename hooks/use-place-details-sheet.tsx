@@ -6,7 +6,7 @@ import { t } from "@/modules/locales";
 import { Place } from "@/modules/places/types";
 import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
-import { openMaps } from "@/utils/maps";
+import { openMapsWithChooser } from "@/utils/maps-utils";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 
@@ -36,7 +36,7 @@ function PlaceDetailsWrapper({
       value?: boolean;
       place?: Place;
       details?: { name: string; emoji?: string };
-    }
+    },
   ) => void;
   onClose: () => void;
   onRate: () => void;
@@ -81,7 +81,12 @@ function PlaceDetailsWrapper({
       activeUsers={place.active_users}
       isFavorite={favoriteIds.has(place.placeId)}
       onNavigate={() => {
-        openMaps(place.formattedAddress || place.name);
+        openMapsWithChooser({
+          name: place.name,
+          formattedAddress: place.formattedAddress,
+          lat: place.latitude,
+          lng: place.longitude,
+        });
       }}
       onToggleFavorite={(id, opts) =>
         onToggleFavorite(id, {
@@ -104,7 +109,7 @@ function PlaceDetailsWrapper({
  * Reusable across category-results, place-search, and other screens.
  */
 export function usePlaceDetailsSheet(
-  options: UsePlaceDetailsSheetOptions = {}
+  options: UsePlaceDetailsSheetOptions = {},
 ) {
   const router = useRouter();
   const bottomSheet = useCustomBottomSheet();
@@ -154,7 +159,7 @@ export function usePlaceDetailsSheet(
         draggable: true,
       });
     },
-    [bottomSheet, favoriteIds, handleToggle, router, handlePlaceClick]
+    [bottomSheet, favoriteIds, handleToggle, router, handlePlaceClick],
   );
 
   return {
