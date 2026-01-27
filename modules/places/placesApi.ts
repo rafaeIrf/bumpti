@@ -1,26 +1,26 @@
 import {
-    detectPlace as detectPlaceApi,
-    type DetectPlaceResult,
-    getFavoritePlaces as getFavoritePlacesApi,
-    getNearbyPlaces as getNearbyPlacesApi,
-    getPlacesByFavorites as getPlacesByFavoritesApi,
-    getRankedPlaces as getRankedPlacesApi,
-    getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
-    getTrendingPlaces as getTrendingPlacesApi,
-    type PlacesByCategory,
-    type RankByOption,
-    saveSocialReview,
-    searchPlacesByText as searchPlacesByTextApi,
-    toggleFavoritePlace as toggleFavoritePlaceApi
+  detectPlace as detectPlaceApi,
+  type DetectPlaceResult,
+  getFavoritePlaces as getFavoritePlacesApi,
+  getNearbyPlaces as getNearbyPlacesApi,
+  getPlacesByFavorites as getPlacesByFavoritesApi,
+  getRankedPlaces as getRankedPlacesApi,
+  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+  getTrendingPlaces as getTrendingPlacesApi,
+  type PlacesByCategory,
+  type RankByOption,
+  saveSocialReview,
+  searchPlacesByText as searchPlacesByTextApi,
+  toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { updateProfile } from "@/modules/profile/api";
 import { setFavoritePlaces, setFilterOnlyVerified } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-    buildNearbyCacheKey,
-    mergeNearbyPlaces,
-    roundToGrid,
-    shouldRefetchNearby,
+  buildNearbyCacheKey,
+  mergeNearbyPlaces,
+  roundToGrid,
+  shouldRefetchNearby,
 } from "./nearby-cache";
 import { Place, PlaceCategory } from "./types";
 
@@ -231,15 +231,44 @@ export const placesApi = createApi({
       keepUnusedDataFor: CACHE_TIME.SEARCH_PLACES,
     }),
 
-    // Trending places: returns places with active users count
+    // Trending places: returns places with active users count (supports pagination)
     getTrendingPlaces: builder.query<
-      { places: (Place & { active_users: number })[] },
-      { lat?: number; lng?: number } | void
+      { places: (Place & { active_users: number })[]; totalCount: number },
+      { lat?: number; lng?: number; page?: number; pageSize?: number } | void
     >({
+      serializeQueryArgs: ({ queryArgs }) => {
+        // Cache key based on location only (not page) to enable merge
+        const lat = queryArgs?.lat ? roundToGrid(queryArgs.lat) : 0;
+        const lng = queryArgs?.lng ? roundToGrid(queryArgs.lng) : 0;
+        return `getTrendingPlaces-${lat}-${lng}`;
+      },
+      merge: (currentCache, newData, { arg }) => {
+        const page = arg?.page ?? 1;
+        if (page === 1) {
+          // First page: replace entirely
+          return newData;
+        }
+        // Subsequent pages: merge, deduplicating by placeId
+        const existingIds = new Set(currentCache.places.map((p) => p.placeId));
+        const newPlaces = newData.places.filter((p) => !existingIds.has(p.placeId));
+        return {
+          places: [...currentCache.places, ...newPlaces],
+          totalCount: newData.totalCount,
+        };
+      },
+      forceRefetch: ({ currentArg, previousArg }) => {
+        // Refetch when page increases
+        if (!currentArg || !previousArg) return false;
+        return (currentArg.page ?? 1) > (previousArg.page ?? 1);
+      },
       queryFn: async (args) => {
         try {
-          const { places } = await getTrendingPlacesApi(args?.lat, args?.lng);
-          return { data: { places } };
+          const { places, totalCount } = await getTrendingPlacesApi(
+            args?.lat,
+            args?.lng,
+            { page: args?.page, pageSize: args?.pageSize }
+          );
+          return { data: { places, totalCount } };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
         }

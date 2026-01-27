@@ -33,6 +33,7 @@ import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
+import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -69,6 +70,20 @@ export default function HomeScreen() {
 
   // Place click handler for auto check-in
   const { handlePlaceClick } = usePlaceClick();
+
+  // Trending places count for "No radar" card
+  const { data: trendingData } = useGetTrendingPlacesQuery(
+    location?.latitude && location?.longitude
+      ? {
+          lat: location.latitude,
+          lng: location.longitude,
+          page: 1,
+          pageSize: 20,
+        }
+      : undefined,
+    { skip: !location?.latitude || !location?.longitude },
+  );
+  const trendingCount = trendingData?.totalCount ?? 0;
 
   const {
     showLocationSheet,
@@ -358,6 +373,7 @@ export default function HomeScreen() {
                   color={item.color}
                   onClick={() => handleCategoryClick(item)}
                   containerStyle={styles.featuredItem}
+                  count={item.id === "highlighted" ? trendingCount : undefined}
                 />
               ))}
             </View>
