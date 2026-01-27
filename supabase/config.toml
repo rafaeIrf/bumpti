@@ -366,3 +366,6 @@ verify_jwt = false
 
 [functions.didit-webhook]
 verify_jwt = false
+
+[functions.get-app-config]
+verify_jwt = false

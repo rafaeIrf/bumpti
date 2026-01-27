@@ -136,6 +136,19 @@
       "shopping": "Shopping Centers"
     }
   },
+  "versionCheck": {
+    "forceUpdate": {
+      "title": "Update Required",
+      "message": "Your current version is no longer compatible. Please update to continue using Bumpti.",
+      "button": "Update now"
+    },
+    "suggestUpdate": {
+      "title": "New version available!",
+      "message": "We've made improvements and fixed issues. Update now for the best experience.",
+      "updateButton": "Update now",
+      "laterButton": "Later"
+    }
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "profileUnavailable": "Profile unavailable"

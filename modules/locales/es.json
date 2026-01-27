@@ -136,6 +136,19 @@
       "shopping": "Centros Comerciales"
     }
   },
+  "versionCheck": {
+    "forceUpdate": {
+      "title": "Actualización Necesaria",
+      "message": "Tu versión actual ya no es compatible. Por favor, actualiza para continuar usando Bumpti.",
+      "button": "Actualizar ahora"
+    },
+    "suggestUpdate": {
+      "title": "¡Nueva versión disponible!",
+      "message": "Hicimos mejoras y corregimos problemas. Actualiza ahora para la mejor experiencia.",
+      "updateButton": "Actualizar ahora",
+      "laterButton": "Más tarde"
+    }
+  },
   "errors": {
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
     "profileUnavailable": "Perfil no disponible"

@@ -17,6 +17,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
 import { t } from "@/modules/locales";
 import { useInvisibleMode } from "@/modules/profile/hooks/use-invisible-mode";
+import { getAppVersion, getBuildNumber } from "@/utils";
 import { openEmail, openPrivacyPolicy, openTermsOfUse } from "@/utils/linking";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
@@ -338,7 +339,7 @@ export default function SettingsScreen() {
                 { color: colors.text, marginBottom: 12 },
               ]}
             >
-              1.0.0
+              {`${getAppVersion()} (${getBuildNumber()})`}
             </ThemedText>
           </View>
         </View>

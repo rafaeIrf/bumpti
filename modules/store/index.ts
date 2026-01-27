@@ -1,5 +1,5 @@
 import { interactionsApi } from "@/modules/interactions/interactionsApi";
-import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi"; // Added pendingLikesApi import
+import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
 import { placesApi } from "@/modules/places/placesApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
@@ -12,7 +12,7 @@ import {
   persistStore,
   PURGE,
   REGISTER,
-  REHYDRATE
+  REHYDRATE,
 } from "redux-persist";
 import onboardingReducer from "./slices/onboardingSlice";
 import profileReducer from "./slices/profileSlice";
@@ -28,7 +28,7 @@ const persistConfig = {
 const RESET_STORE = "RESET_STORE";
 
 // Combine reducers
-const appReducer = combineReducers({
+const appReducer_combined = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   [interactionsApi.reducerPath]: interactionsApi.reducer,
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
@@ -42,7 +42,7 @@ const rootReducer = (state: any, action: any) => {
     // Check if we need to purge storage here as well, but usually handled by purge helper
     state = undefined;
   }
-  return appReducer(state, action);
+  return appReducer_combined(state, action);
 };
 
 // Create persisted reducer
