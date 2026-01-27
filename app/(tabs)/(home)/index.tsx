@@ -20,20 +20,23 @@ import {
 import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
+import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
+import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useDetectPlaceQuery } from "@/modules/places/placesApi";
+import type { DetectedPlace } from "@/modules/places/api";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 
@@ -53,19 +56,18 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
-  // Detect place when location is available
-  const { data: detectedPlaceResult } = useDetectPlaceQuery(
-    {
-      latitude: location?.latitude ?? 0,
-      longitude: location?.longitude ?? 0,
-      hacc: location?.accuracy,
-    },
-    {
-      skip: !location?.latitude || !location?.longitude,
-    },
-  );
+  // Detection banner with smart cooldowns and dismissal
+  const { place: detectedPlace, dismiss: dismissDetectedPlace } =
+    useDetectionBanner({
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      accuracy: location?.accuracy,
+      enabled: !!location?.latitude && !!location?.longitude,
+    });
+
+  // Place details bottomsheet
+  const { showPlaceDetails } = usePlaceDetailsSheet();
 
   const {
     showLocationSheet,
@@ -92,18 +94,6 @@ export default function HomeScreen() {
     showLocationSheet,
     showNotificationSheet,
   ]);
-
-  useEffect(() => {
-    if (detectedPlaceResult?.suggested) {
-      console.log("Detected place:", detectedPlaceResult);
-      Alert.alert(
-        t("screens.home.placeDetected.title"),
-        t("screens.home.placeDetected.message", {
-          placeName: detectedPlaceResult.suggested.name,
-        }),
-      );
-    }
-  }, [detectedPlaceResult]);
 
   const nearbyCategory: Category = {
     id: "nearby",
@@ -289,16 +279,29 @@ export default function HomeScreen() {
     setSelectedCategory(null);
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // TODO: Fetch real data
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  };
-
   const handleOpenSearch = () => {
     router.push("/main/place-search");
+  };
+
+  const handleConnectPlace = (placeData: DetectedPlace) => {
+    // Convert detected place data to Place format for bottomsheet
+    if (!detectedPlace) return;
+    console.log("placeData", placeData);
+
+    const place = {
+      placeId: placeData.id,
+      name: placeData.name,
+      formattedAddress: placeData.formatted_address,
+      distance: placeData.dist_meters ? placeData.dist_meters / 1000 : 0,
+      latitude: placeData.latitude,
+      longitude: placeData.longitude,
+      types: placeData.types,
+      active_users: placeData.active_users || 0,
+      review: placeData.review,
+      preview_avatars: placeData.preview_avatars,
+    };
+
+    showPlaceDetails(place);
   };
 
   return (
@@ -324,10 +327,18 @@ export default function HomeScreen() {
           ]}
         />
       }
-      refreshing={refreshing}
-      onRefresh={handleRefresh}
     >
-      <ThemedView>
+      {/* Main Content */}
+      <ThemedView style={styles.mainContent}>
+        {/* Detection Banner - Fixed at top */}
+        {detectedPlace && (
+          <DetectionBanner
+            place={detectedPlace}
+            onConnect={handleConnectPlace}
+            onDismiss={dismissDetectedPlace}
+          />
+        )}
+
         {/* Title Section */}
         <ScreenSectionHeading
           titleStyle={{ marginTop: 24 }}

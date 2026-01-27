@@ -315,6 +315,18 @@ export interface DetectedPlace {
   id: string;
   name: string;
   category: string;
+  latitude: number;
+  longitude: number;
+  formatted_address: string;
+  types: string[];
+  dist_meters: number;
+  active_users: number;
+  preview_avatars?: { user_id: string; url: string }[];
+  review?: {
+    average: number;
+    count: number;
+    tags: string[];
+  };
   relevance_score: number;
   boundary_area_sqm?: number;
 }

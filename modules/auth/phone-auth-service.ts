@@ -1,6 +1,7 @@
 import { deactivateDeviceToken } from "@/modules/notifications";
 import { supabase } from "@/modules/supabase/client";
 import { clearPrefetchCache } from "@/utils/image-prefetch";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthError, User } from "@supabase/supabase-js";
 import { resetDatabase } from "../database";
 import { resetGlobalStore } from "../store";
@@ -93,6 +94,9 @@ class PhoneAuthService {
       }
       
       await supabase.auth.signOut();
+      
+      // Clear all AsyncStorage data (onboarding, banner dismissals, etc.)
+      await AsyncStorage.clear();
       
       // Clear local database
       await resetDatabase();

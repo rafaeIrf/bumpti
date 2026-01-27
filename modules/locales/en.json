@@ -514,9 +514,11 @@
       "heroSubtitle": "",
       "intermediateTitle": "Explore your region",
       "intermediateSubtitle": "Find places and people on the same wavelength.",
-      "placeDetected": {
-        "title": "Location detected",
-        "message": "Are you at {{placeName}}?"
+      "detectionBanner": {
+        "detected": "Detected",
+        "question": "Are you at {{placeName}}? ✨",
+        "connect": "Connect",
+        "dismiss": "Dismiss"
       },
       "toolbar": {
         "filters": "Filters",

@@ -514,9 +514,11 @@
       "heroSubtitle": "",
       "intermediateTitle": "Explora tu región",
       "intermediateSubtitle": "Encuentra lugares y personas en la misma sintonía.",
-      "placeDetected": {
-        "title": "Lugar detectado",
-        "message": "¿Estás en {{placeName}}?"
+      "detectionBanner": {
+        "detected": "Detectado",
+        "question": "¿Estás en {{placeName}}? ✨",
+        "connect": "Conectar",
+        "dismiss": "Descartar"
       },
       "toolbar": {
         "filters": "Filtros",

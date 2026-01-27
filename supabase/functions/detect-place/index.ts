@@ -1,5 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -103,12 +105,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: req.headers.get("Authorization") ?? "",
+        },
+      },
+    });
 
-    // Call RPC to get place candidates based on boundary intersection
-    const { data: candidates, error: rpcError } = await supabase.rpc(
+    // Get user from JWT
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.warn("No authenticated user found");
+      return new Response(
+        JSON.stringify({
+          data: { suggested: null },
+          error: null,
+        }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // Call RPC to get place candidate based on boundary intersection
+    // RPC checks if user has active check-in. Dismissal filtering is client-side.
+    // RPC now returns a single jsonb object with complete place info
+    const { data: candidate, error: rpcError } = await supabase.rpc(
       "get_current_place_candidate",
       {
+        p_user_id: user.id,
         user_lat: lat,
         user_lng: lng,
       }
@@ -125,10 +152,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // RPC returns candidates ordered by boundary size (smallest first)
-    // The first one is the most specific (e.g., a bar inside a park)
-    const suggested: PlaceCandidate | null =
-      candidates && candidates.length > 0 ? candidates[0] : null;
+    // RPC returns a single jsonb object or null
+    let suggested = candidate || null;
+
+    // Sign preview avatar URLs if place has avatars using admin client
+    if (suggested && suggested.preview_avatars && suggested.preview_avatars.length > 0) {
+      const adminSupabase = createAdminClient();
+      const signedAvatars = await signUserAvatars(adminSupabase, suggested.preview_avatars);
+      suggested = {
+        ...suggested,
+        preview_avatars: signedAvatars,
+      };
+    }
 
     return new Response(
       JSON.stringify({
