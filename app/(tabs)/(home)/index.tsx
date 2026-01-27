@@ -83,7 +83,9 @@ export default function HomeScreen() {
       : undefined,
     { skip: !location?.latitude || !location?.longitude },
   );
-  const trendingCount = trendingData?.totalCount ?? 0;
+  // Use actual count of places in the filtered array, not backend totalCount
+  // This ensures the count updates when places with 0 active_users are filtered out
+  const trendingCount = trendingData?.places?.length ?? 0;
 
   const {
     showLocationSheet,

@@ -9,6 +9,7 @@ import {
   StarIcon,
 } from "@/assets/icons";
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { Button } from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
 import {
@@ -489,26 +490,17 @@ export function UserProfileCard({
       {/* ACTIONS */}
       {!isOwnProfile && (
         <View style={styles.actionsSection}>
-          <Pressable
+          <Button
+            variant="ghost"
             onPress={handleReport}
-            style={({ pressed }) => [
-              styles.actionButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text style={styles.actionText}>{t("actions.report")}</Text>
-          </Pressable>
-          <Pressable
+            label={t("actions.report")}
+          />
+          <Button
+            variant="link"
             onPress={() => setShowBlockModal(true)}
-            style={({ pressed }) => [
-              styles.actionButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text style={[styles.actionText, { color: colors.error }]}>
-              {t("actions.block")}
-            </Text>
-          </Pressable>
+            label={t("actions.block")}
+            textStyle={{ color: colors.error }}
+          />
         </View>
       )}
 
@@ -760,12 +752,6 @@ const styles = StyleSheet.create({
   actionsSection: {
     padding: spacing.lg,
     alignItems: "center",
-  },
-  actionButton: {
-    padding: 12,
-  },
-  actionText: {
-    color: "#5B6671",
-    fontWeight: "600",
+    gap: 8,
   },
 });

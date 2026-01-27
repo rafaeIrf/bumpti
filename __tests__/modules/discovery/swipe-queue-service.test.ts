@@ -1,9 +1,19 @@
+// Mock expo modules to avoid Jest parsing issues
+jest.mock("expo-image-manipulator", () => ({
+  manipulateAsync: jest.fn(),
+  ImageManipulator: {},
+}));
+jest.mock("react-native", () => ({
+  Image: {},
+  Platform: { OS: "ios" },
+}));
+
 import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
-import type { Database } from "@nozbe/watermelondb";
-import { interactUsersBatch } from "@/modules/interactions/api";
-import * as swipeQueueService from "@/modules/discovery/swipe-queue-service";
 import { removeDiscoveryProfiles } from "@/modules/discovery/discovery-service";
+import * as swipeQueueService from "@/modules/discovery/swipe-queue-service";
+import { interactUsersBatch } from "@/modules/interactions/api";
 import { logger } from "@/utils/logger";
+import type { Database } from "@nozbe/watermelondb";
 
 jest.mock("@/modules/interactions/api");
 jest.mock("@/modules/discovery/discovery-service");
