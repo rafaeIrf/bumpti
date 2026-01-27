@@ -28,6 +28,7 @@ interface TrendingPlace {
   dist_meters: number;
   active_users: number;
   preview_avatars: { user_id: string; url: string }[] | null;
+  total_count: number;
 }
 
 Deno.serve(async (req) => {
@@ -84,13 +85,21 @@ Deno.serve(async (req) => {
     const userLng = requestBody.lng ?? 0;
     const radiusMeters = requestBody.radius_meters ?? 50000;
 
-    // Single RPC call - replaces 3 DB queries
+    // Parse pagination params
+    const parsedPage = Number(requestBody.page);
+    const pageNumber = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const parsedPageSize = Number(requestBody.pageSize);
+    const pageSizeNumber = Number.isFinite(parsedPageSize) && parsedPageSize > 0 ? parsedPageSize : 20;
+    const pageOffset = (pageNumber - 1) * pageSizeNumber;
+
+    // Single RPC call with pagination
     const { data: places, error } = await supabase.rpc("get_trending_places", {
       user_lat: userLat,
       user_lng: userLng,
       radius_meters: radiusMeters,
-      max_results: 10,
       requesting_user_id: user.id,
+      page_offset: pageOffset,
+      page_size: pageSizeNumber,
     });
 
     if (error) {
@@ -103,6 +112,9 @@ Deno.serve(async (req) => {
 
     // Use admin client to sign avatar URLs
     const adminSupabase = createAdminClient();
+
+    // Extract totalCount from first result (all rows have the same total_count)
+    const totalCount = places?.[0]?.total_count ?? 0;
 
     const results = await Promise.all((places || []).map(async (p: TrendingPlace) => {
       const signedAvatars = await signUserAvatars(adminSupabase, p.preview_avatars);
@@ -127,7 +139,7 @@ Deno.serve(async (req) => {
       };
     }));
 
-    return new Response(JSON.stringify({ places: results }), {
+    return new Response(JSON.stringify({ places: results, totalCount }), {
       status: 200,
       headers: corsHeaders,
     });

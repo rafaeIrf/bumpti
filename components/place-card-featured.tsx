@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -21,6 +22,7 @@ export interface PlaceCardFeaturedProps {
   onClick: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   color?: string;
+  count?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -31,9 +33,11 @@ export function PlaceCardFeatured({
   onClick,
   containerStyle,
   color = "#2997FF",
+  count,
 }: PlaceCardFeaturedProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
+  const colors = useThemeColors();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -80,6 +84,19 @@ export function PlaceCardFeatured({
         <View style={styles.contentContainer}>
           {Icon && <Icon />}
 
+          {count !== undefined && count > 0 && (
+            <View
+              style={[
+                styles.countBadge,
+                {
+                  backgroundColor: "rgba(255, 255, 255, 0.25)",
+                },
+              ]}
+            >
+              <ThemedText style={styles.countText}>{count}</ThemedText>
+            </View>
+          )}
+
           <ThemedText
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -111,10 +128,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.sm,
     padding: spacing.sm,
   },
   title: {
     textAlign: "center",
+  },
+  countBadge: {
+    paddingHorizontal: spacing.xs,
+    borderRadius: 6,
+    width: 28,
+    height: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.xs,
+  },
+  countText: {
+    ...typography.caption,
+    lineHeight: 0,
+    fontSize: 10,
   },
 });

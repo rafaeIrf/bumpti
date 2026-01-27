@@ -198,22 +198,31 @@ export async function getPlacesByFavorites(
 
 export async function getTrendingPlaces(
   latitude?: number,
-  longitude?: number
+  longitude?: number,
+  options?: {
+    page?: number;
+    pageSize?: number;
+  }
 ): Promise<{
   places: (Place & { active_users: number })[];
+  totalCount: number;
 }> {
+  const { page, pageSize } = options ?? {};
   const { data, error } = await supabase.functions.invoke<{
     places: (Place & { active_users: number })[];
+    totalCount: number;
   }>("get-trending-places", {
     body: {
       ...(latitude != null && { lat: latitude }),
       ...(longitude != null && { lng: longitude }),
+      ...(page != null && { page }),
+      ...(pageSize != null && { pageSize }),
     },
   });
 
   if (error) {
     logger.error("Failed to fetch trending places (edge):", error);
-    return { places: [] };
+    return { places: [], totalCount: 0 };
   }
 
   return {
@@ -229,6 +238,7 @@ export async function getTrendingPlaces(
       preview_avatars: p.preview_avatars,
       review: p.review,
     })),
+    totalCount: data?.totalCount ?? 0,
   };
 }
 

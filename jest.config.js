@@ -11,4 +11,7 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!(expo-image-manipulator|expo-modules-core|@react-native|react-native)/)",
+  ],
 };
