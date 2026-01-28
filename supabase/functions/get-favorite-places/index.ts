@@ -19,6 +19,7 @@ interface FavoritePlace {
   lng: number;
   street: string | null;
   house_number: string | null;
+  neighborhood: string | null;  // NEW
   city: string | null;
   state: string | null;
   country: string | null;
@@ -114,6 +115,7 @@ Deno.serve(async (req) => {
         latitude: p.lat,
         longitude: p.lng,
         formattedAddress: [p.street, p.house_number].filter(Boolean).join(", "),
+        neighborhood: p.neighborhood || undefined,
         distance: Math.round(p.dist_meters),
         active_users: p.active_users,
         preview_avatars: signedAvatars.length > 0 ? signedAvatars : undefined,

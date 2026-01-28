@@ -23,6 +23,7 @@ export function useFavoritePlacesList(enabled: boolean) {
         type: place.types?.[0] || '',
         types: place.types || [],
         formattedAddress: place.formattedAddress || place.address || '',
+        neighborhood: place.neighborhood,
         distance: place.distance || 0,
         latitude: place.latitude,
         longitude: place.longitude,

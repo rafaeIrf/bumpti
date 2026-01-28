@@ -93,6 +93,7 @@ serve(async (req) => {
         lat: p.lat,
         lng: p.lng,
         formattedAddress: addressParts.join(", "),
+        neighborhood: p.neighborhood || undefined,
         city: p.city,
         state: p.state,
         country: p.country,

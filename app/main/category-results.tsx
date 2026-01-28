@@ -447,6 +447,7 @@ export default function CategoryResultsScreen() {
   const shouldShowFilters =
     (nearbyMode || favoritesMode || trendingMode || communityFavoritesMode) &&
     !isLoadingState &&
+    places.length > 0 &&
     visibleCategories.length > 1;
 
   const handleApplyFilters = useCallback(
@@ -525,6 +526,7 @@ export default function CategoryResultsScreen() {
         activeUsers: (item as any).active_users || 0,
         activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
+        neighborhood: item.neighborhood,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
       };
@@ -693,7 +695,7 @@ export default function CategoryResultsScreen() {
             />
           )}
           {/* Ranking filter pills for mostFrequent mode */}
-          {mostFrequentMode && (
+          {mostFrequentMode && places.length > 0 && (
             <ThemedView style={styles.rankingPillsContainer}>
               <FilterChip
                 label={t("screens.home.categories.ranking.filterMonth")}

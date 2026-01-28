@@ -76,6 +76,7 @@ function PlaceDetailsWrapper({
       placeId={place.placeId}
       category={category}
       address={place.formattedAddress || ""}
+      neighborhood={place.neighborhood}
       distance={formatDistance(place.distance)}
       review={place.review}
       activeUsers={place.active_users}
