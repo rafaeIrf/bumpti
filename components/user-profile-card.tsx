@@ -3,7 +3,6 @@ import {
   CigarreteIcon,
   GlobeIcon,
   GraduationCapIcon,
-  GraduationIcon,
   MapPinIcon,
   RulerIcon,
   SparklesIcon,
@@ -26,7 +25,7 @@ import { useUserActions } from "@/hooks/use-user-actions";
 import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
-import { triggerSelectionHaptic } from "@/utils/haptics";
+import { triggerLightHaptic } from "@/utils/haptics";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
@@ -191,12 +190,12 @@ export function UserProfileCard({
   }, [profile.photos]);
 
   const nextPhoto = () => {
-    triggerSelectionHaptic();
+    triggerLightHaptic();
     setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
   };
 
   const prevPhoto = () => {
-    triggerSelectionHaptic();
+    triggerLightHaptic();
     setCurrentPhotoIndex(
       (prev) => (prev - 1 + profile.photos.length) % profile.photos.length,
     );
@@ -226,14 +225,14 @@ export function UserProfileCard({
     icon,
     value,
   }: {
-    label?: string;
+    label: string;
     icon: React.ReactNode;
     value: string | null | undefined;
   }) => {
     if (!value) return null;
     return (
       <View style={styles.infoRowContainer}>
-        {label && <Text style={styles.infoLabel}>{label}</Text>}
+        <Text style={styles.infoLabel}>{label}</Text>
         <View style={styles.infoValueRow}>
           {icon}
           <Text style={styles.infoValueText}>{value}</Text>
@@ -424,14 +423,18 @@ export function UserProfileCard({
         {hasFormation && (
           <Section title={t("userProfile.educationSection")}>
             <InfoRow
+              label={t("userProfile.education")}
               value={educationText}
               icon={
                 <GraduationCapIcon width={18} height={18} color="#8B98A5" />
               }
             />
             <InfoRow
+              label={t("userProfile.university")}
               value={universityText}
-              icon={<GraduationIcon width={18} height={18} color="#8B98A5" />}
+              icon={
+                <GraduationCapIcon width={18} height={18} color="#8B98A5" />
+              }
             />
           </Section>
         )}
