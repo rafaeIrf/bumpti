@@ -405,6 +405,7 @@
           "title": "Más sobre ti",
           "subtitle": "Información adicional (opcional)",
           "education": "Educación",
+          "university": "Universidad",
           "location": "Ubicación actual",
           "languages": "Idiomas",
           "zodiac": "Signo"
@@ -531,10 +532,18 @@
       "intermediateTitle": "Explora tu región",
       "intermediateSubtitle": "Encuentra lugares y personas en la misma sintonía.",
       "detectionBanner": {
-        "detected": "Detectado",
-        "question": "¿Estás en {{placeName}}? ✨",
+        "question": "¿Estás en {{placeName}}?",
         "connect": "Conectar",
-        "dismiss": "Descartar"
+        "close": "Cerrar",
+        "activeUsers": "{{count}} personas aquí"
+      },
+      "university": {
+        "customTitle": "Nombre personalizado",
+        "customDescription": "Ingresa el nombre de tu universidad",
+        "customPlaceholder": "Nombre de la universidad",
+        "searchOfficial": "Buscar oficial",
+        "enterCustom": "Nombre personalizado",
+        "selected": "Seleccionado"
       },
       "toolbar": {
         "filters": "Filtros",

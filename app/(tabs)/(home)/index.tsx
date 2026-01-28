@@ -88,12 +88,7 @@ export default function HomeScreen() {
       : undefined,
     {
       skip: !location?.latitude || !location?.longitude,
-      // Refetch when component mounts or args change (respects TTL)
-      refetchOnMountOrArgChange: 30, // Refetch if data is older than 30 seconds
-      // Refetch when window regains focus
-      refetchOnFocus: true,
-      // Refetch when network reconnects
-      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
     },
   );
   // Use actual count of places in the filtered array, not backend totalCount

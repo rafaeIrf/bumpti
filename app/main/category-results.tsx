@@ -162,6 +162,7 @@ export default function CategoryResultsScreen() {
       },
       {
         skip: !trendingMode,
+        refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
       },
     );
 
