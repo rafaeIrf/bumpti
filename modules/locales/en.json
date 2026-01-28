@@ -405,6 +405,7 @@
           "title": "More about you",
           "subtitle": "Additional information (optional)",
           "education": "Education",
+          "university": "University",
           "location": "Current location",
           "languages": "Languages",
           "zodiac": "Zodiac"
@@ -531,10 +532,18 @@
       "intermediateTitle": "Explore your region",
       "intermediateSubtitle": "Find places and people on the same wavelength.",
       "detectionBanner": {
-        "detected": "Detected",
-        "question": "Are you at {{placeName}}? ✨",
+        "question": "Are you at {{placeName}}?",
         "connect": "Connect",
-        "dismiss": "Dismiss"
+        "close": "Close",
+        "activeUsers": "{{count}} people here"
+      },
+      "university": {
+        "customTitle": "Custom name",
+        "customDescription": "Enter your university name",
+        "customPlaceholder": "University name",
+        "searchOfficial": "Search official",
+        "enterCustom": "Custom name",
+        "selected": "Selected"
       },
       "toolbar": {
         "filters": "Filters",
