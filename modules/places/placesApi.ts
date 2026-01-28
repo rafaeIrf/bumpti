@@ -50,6 +50,7 @@ export const placesApi = createApi({
     "DetectedPlace",
     "SuggestedPlaces",
     "RankedPlaces",
+    "PlaceById",
   ],
   endpoints: (builder) => ({
     getSuggestedPlaces: builder.query<
@@ -210,14 +211,16 @@ export const placesApi = createApi({
         lng: number;
         radius?: number;
         sessionToken?: string;
+        category?: string; // Optional category filter (e.g., 'university')
       }
     >({
-      queryFn: async ({ input, lat, lng, radius = 20000, sessionToken }) => {
+      queryFn: async ({ input, lat, lng, radius = 20000, sessionToken, category }) => {
         try {
           const places = await searchPlacesByTextApi(
             input,
             lat,
-            lng
+            lng,
+            category
           );
 
           return { data: { places } };
@@ -226,7 +229,7 @@ export const placesApi = createApi({
         }
       },
       providesTags: (result, error, arg) => [
-        { type: "SearchPlaces", id: `${arg.input}_${arg.lat}_${arg.lng}` },
+        { type: "SearchPlaces", id: `${arg.input}_${arg.lat}_${arg.lng}_${arg.category || 'all'}` },
       ],
       keepUnusedDataFor: CACHE_TIME.SEARCH_PLACES,
     }),
@@ -294,7 +297,6 @@ export const placesApi = createApi({
       ],
       keepUnusedDataFor: CACHE_TIME.RANKED_PLACES,
     }),
-
     getFavoritePlaces: builder.query<
       { places: Place[] },
       { lat?: number; lng?: number } | void
@@ -601,6 +603,7 @@ export const {
   useGetSuggestedPlacesQuery,
   useSaveReviewMutation,
   useUpdateProfileSettingsMutation,
+  useGetPlaceByIdQuery,
 } = placesApi;
 
 /**

@@ -30,8 +30,18 @@ export type ProfilePayload = {
   height_cm?: number | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
   is_invisible?: boolean | null;
+  filter_only_verified?: boolean | null;
   subscription?: any;
   notification_settings?: NotificationSettings;
+  university_id?: string | null;
+  university_name_custom?: string | null;
+  // These come from places table via JOIN in get-profile
+  university_name?: string | null;
+  university_lat?: number | null;
+  university_lng?: number | null;
+  university_active_users?: number | null;
+  graduation_year?: number | null;
+  show_university_on_home?: boolean | null;
 };
 
 export type UpdateProfilePayload = {
@@ -52,6 +62,10 @@ export type UpdateProfilePayload = {
   height_cm?: number;
   is_invisible?: boolean;
   filter_only_verified?: boolean;
+  university_id?: string | null;
+  university_name_custom?: string | null;
+  graduation_year?: number | null;
+  show_university_on_home?: boolean;
   [key: string]: unknown;
 };
 

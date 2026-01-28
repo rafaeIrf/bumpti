@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const params = Object.fromEntries(url.searchParams.entries());
-    const { q, lat, lng, limit } = params;
+    const { q, lat, lng, limit, category } = params;
 
     // Authentication Check
     const authResult = await requireAuth(req);
@@ -37,6 +37,9 @@ serve(async (req) => {
     const latNum = lat ? parseFloat(lat) : undefined;
     const lngNum = lng ? parseFloat(lng) : undefined;
     const radiusNum = 50; // Default radius 50km
+    
+    // Parse category filter (can be comma-separated for multiple categories)
+    const filterCategories = category ? category.split(',').map((c: string) => c.trim()) : null;
 
     // 1. Local Search (RPC)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -60,7 +63,8 @@ serve(async (req) => {
         user_lng: lngNum,
         radius_meters: radiusNum * 1000, // km to meters
         max_results: limitParams,
-        requesting_user_id: user.id
+        requesting_user_id: user.id,
+        filter_categories: filterCategories
     });
 
     if (rpcError) {

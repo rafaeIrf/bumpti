@@ -119,6 +119,16 @@ Deno.serve(async (req) => {
         ? JSON.parse(formData.get("favoritePlaces") as string)
         : [];
     const bio = (formData.get("bio") as string | null) || null;
+    
+    // University fields (name/lat/lng come from places table via university_id FK)
+    const universityId = (formData.get("universityId") as string | null) || null;
+    const universityNameCustom = (formData.get("universityNameCustom") as string | null) || null;
+    const graduationYearRaw = formData.get("graduationYear") as string | null;
+    const showUniversityOnHomeRaw = formData.get("showUniversityOnHome") as string | null;
+    
+    const graduationYear = graduationYearRaw ? parseInt(graduationYearRaw, 10) : null;
+    const showUniversityOnHome = showUniversityOnHomeRaw === "true" ? true : (showUniversityOnHomeRaw === "false" ? false : null);
+    
     const photos = formData.getAll("photos").filter((f): f is File => f instanceof File);
 
     const {
@@ -201,6 +211,11 @@ Deno.serve(async (req) => {
       p_photo_positions: photoPositions,
       p_favorite_place_ids: favoritePlaces,
       p_bio: bio,
+      // University fields (name/lat/lng come from places table via FK)
+      p_university_id: universityId,
+      p_university_name_custom: universityNameCustom,
+      p_graduation_year: graduationYear,
+      p_show_university_on_home: showUniversityOnHome,
     });
 
     if (rpcError) {

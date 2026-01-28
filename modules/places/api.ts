@@ -25,6 +25,7 @@ export async function searchPlacesByText(
   input: string,
   lat: number,
   lng: number,
+  category?: string, // Optional category filter (e.g., 'university')
 ): Promise<Place[]> {
   // We use the new places-autocomplete function which uses Photon
   // It expects GET with q, lat, lng
@@ -32,7 +33,8 @@ export async function searchPlacesByText(
     q: input,
     lat: lat.toString(),
     lng: lng.toString(),
-    limit: "10"
+    limit: "10",
+    ...(category && { category }),
   });
 
   const { data, error } = await supabase.functions.invoke<Place[]>(`places-autocomplete?${params.toString()}`, {

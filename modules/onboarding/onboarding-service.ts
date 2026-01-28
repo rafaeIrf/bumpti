@@ -54,6 +54,21 @@ export async function saveOnboarding(userData: OnboardingUserData) {
     formData.append("bio", userData.bio);
   }
 
+  // University data (name/lat/lng come from places table via university_id FK)
+  if (userData.universityId) {
+    formData.append("universityId", userData.universityId);
+  }
+  if (userData.universityNameCustom) {
+    formData.append("universityNameCustom", userData.universityNameCustom);
+  }
+  if (userData.graduationYear !== undefined && userData.graduationYear !== null) {
+    formData.append("graduationYear", String(userData.graduationYear));
+  }
+  // Default show_university_on_home to true if university is set
+  if (userData.universityId || userData.universityNameCustom) {
+    formData.append("showUniversityOnHome", String(userData.showUniversityOnHome ?? true));
+  }
+
   if (userData.photoUris?.length) {
     const processedPhotos = await Promise.all(
       userData.photoUris.map((uri, index) =>

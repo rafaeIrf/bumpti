@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: spacing.lg * 2,
+    borderRadius: spacing.lg,
     borderWidth: 2,
   },
   content: {

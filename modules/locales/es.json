@@ -607,6 +607,14 @@
           "filterMonth": "Este mes",
           "filterGeneral": "General"
         }
+      },
+      "myCampus": {
+        "sectionTitle": "Mi Campus",
+        "communityTitle": "Comunidad {{name}}",
+        "activeNow": "{{count}} persona(s) en el campus ahora",
+        "noActiveNow": "Nadie en el campus ahora",
+        "findOnMap": "Encuentra tu universidad en el mapa",
+        "tapToConnect": "Toca para conectar"
       }
     },
     "premiumPaywall": {
@@ -819,6 +827,21 @@
       "notificationsDeniedTitle": "Permiso denegado",
       "notificationsDeniedMessage": "Has denegado el permiso de notificaciones. Puedes activarlo después en la configuración de la app.",
       "notificationsError": "Error al solicitar permiso de notificaciones. Inténtalo de nuevo.",
+      "university": {
+        "title": "¿A qué universidad asistes?",
+        "subtitle": "Conéctate con personas que asisten a la misma universidad o facultad que tú.",
+        "universityLabel": "FACULTAD O UNIVERSIDAD",
+        "searchPlaceholder": "Buscar universidad...",
+        "notFound": "No encuentro mi universidad",
+        "searchInstead": "Buscar en la lista",
+        "manualPlaceholder": "Ingresa el nombre de tu universidad",
+        "yearLabel": "AÑO DE GRADUACIÓN (OPCIONAL)",
+        "yearPlaceholder": "Ej: 2026",
+        "yearInvalid": "Año inválido",
+        "yearOutOfRange": "El año debe estar entre {{min}} y {{max}}",
+        "showOnHomeTitle": "Mostrar atajo de universidad en Home",
+        "showOnHomeSubtitle": "Accede rápidamente a lo que está pasando en tu campus"
+      },
       "completeTitle": "¡Todo listo para empezar a conectar!",
       "completeSubtitle": "Entra en un lugar y mira quién comparte tus mismos gustos.",
       "completeExplore": "Explorar locales",

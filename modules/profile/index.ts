@@ -54,6 +54,16 @@ export async function fetchAndSetUserProfile() {
       is_invisible: data.is_invisible ?? false,
       subscription: data.subscription ?? null,
       notificationSettings: data.notification_settings ?? null,
+      filter_only_verified: data.filter_only_verified ?? null,
+      university_id: data.university_id ?? null,
+      university_name_custom: data.university_name_custom ?? null,
+      // These come from places table via JOIN in get-profile
+      university_name: data.university_name ?? null,
+      university_lat: data.university_lat ?? null,
+      university_lng: data.university_lng ?? null,
+      university_active_users: data.university_active_users ?? 0,
+      graduation_year: data.graduation_year ?? null,
+      show_university_on_home: data.show_university_on_home ?? true,
     };
 
     logger.log("[fetchAndSetUserProfile] Setting profile in Redux store");

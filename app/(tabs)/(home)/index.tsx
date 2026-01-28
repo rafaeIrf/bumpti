@@ -21,6 +21,7 @@ import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
+import { MyCampusCard } from "@/components/my-campus-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -35,6 +36,7 @@ import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
+import { useAppSelector } from "@/modules/store/hooks";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -58,6 +60,9 @@ export default function HomeScreen() {
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // Get user profile for MyCampusCard
+  const profile = useAppSelector((state) => state.profile.data);
 
   // Detection banner with smart cooldowns and dismissal
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -380,6 +385,14 @@ export default function HomeScreen() {
               ))}
             </View>
           </Animated.View>
+
+          {/* My Campus Card - Between Featured and Nearby */}
+          <ScreenSectionHeading
+            titleStyle={{ marginTop: 16 }}
+            title={t("screens.home.myCampus.sectionTitle")}
+          />
+          {profile && <MyCampusCard profile={profile} />}
+
           {/* Nearby Section - Between Featured and Explore */}
           {/* Intermediate Section - Nearby & Explore */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>

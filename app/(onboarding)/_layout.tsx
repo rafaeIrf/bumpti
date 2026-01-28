@@ -21,6 +21,7 @@ const OnboardingHeader = React.memo(() => {
       "intention",
       "user-photos",
       "user-bio",
+      "university",
     ];
     if (shouldShowLocation) base.push("location");
     base.push("favorite-places");
@@ -87,6 +88,15 @@ export default function OnboardingLayout() {
         <Stack.Screen name="intention" />
         <Stack.Screen name="user-photos" />
         <Stack.Screen name="user-bio" />
+        <Stack.Screen name="university" />
+        <Stack.Screen
+          name="university-search"
+          options={{
+            presentation: "modal",
+            headerShown: false,
+            animation: "slide_from_bottom",
+          }}
+        />
         <Stack.Screen name="location" />
         <Stack.Screen name="favorite-places" />
         <Stack.Screen

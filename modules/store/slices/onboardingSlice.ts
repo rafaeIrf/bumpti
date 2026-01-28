@@ -8,6 +8,7 @@ export type OnboardingStep =
   | "intention"
   | "user-photos"
   | "user-bio"
+  | "university"
   | "favorite-places"
   | "location"
   | "notifications"
@@ -21,6 +22,13 @@ export interface OnboardingUserData {
   intentions?: string[];
   photoUris?: string[];
   bio?: string;
+  universityId?: string | null;
+  universityName?: string | null;
+  universityNameCustom?: string | null;
+  universityLat?: number | null;
+  universityLng?: number | null;
+  graduationYear?: number | null;
+  showUniversityOnHome?: boolean;
   favoritePlaces?: string[];
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
@@ -86,6 +94,42 @@ const onboardingSlice = createSlice({
       state.isOnboardingComplete = true;
       state.currentStep = "complete";
     },
+    setUniversityData: (
+      state,
+      action: PayloadAction<{
+        universityId?: string | null;
+        universityName?: string | null;
+        universityNameCustom?: string | null;
+        universityLat?: number | null;
+        universityLng?: number | null;
+        graduationYear?: number | null;
+        showUniversityOnHome?: boolean;
+      }>
+    ) => {
+      const {
+        universityId,
+        universityName,
+        universityNameCustom,
+        universityLat,
+        universityLng,
+        graduationYear,
+        showUniversityOnHome,
+      } = action.payload;
+      if (universityId !== undefined)
+        state.userData.universityId = universityId;
+      if (universityName !== undefined)
+        state.userData.universityName = universityName;
+      if (universityNameCustom !== undefined)
+        state.userData.universityNameCustom = universityNameCustom;
+      if (universityLat !== undefined)
+        state.userData.universityLat = universityLat;
+      if (universityLng !== undefined)
+        state.userData.universityLng = universityLng;
+      if (graduationYear !== undefined)
+        state.userData.graduationYear = graduationYear;
+      if (showUniversityOnHome !== undefined)
+        state.userData.showUniversityOnHome = showUniversityOnHome;
+    },
     resetOnboarding: () => initialState,
   },
 });
@@ -104,6 +148,7 @@ export const {
   setLocationPermission,
   setNotificationPermission,
   completeOnboarding,
+  setUniversityData,
   resetOnboarding,
 } = onboardingSlice.actions;
 

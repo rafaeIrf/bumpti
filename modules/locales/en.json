@@ -607,6 +607,14 @@
           "filterMonth": "This month",
           "filterGeneral": "All time"
         }
+      },
+      "myCampus": {
+        "sectionTitle": "My Campus",
+        "communityTitle": "Community {{name}}",
+        "activeNow": "{{count}} people on campus now",
+        "noActiveNow": "No one on campus right now",
+        "findOnMap": "Find your university on the map",
+        "tapToConnect": "Tap to connect"
       }
     },
     "premiumPaywall": {
@@ -819,6 +827,21 @@
       "notificationsDeniedTitle": "Permission denied",
       "notificationsDeniedMessage": "You denied notification permission. You can enable it later in app settings.",
       "notificationsError": "Error requesting notification permission. Please try again.",
+      "university": {
+        "title": "What school do you attend?",
+        "subtitle": "Connect with people who attend the same university or college as you.",
+        "universityLabel": "COLLEGE OR UNIVERSITY",
+        "searchPlaceholder": "Search university...",
+        "notFound": "I can't find my school",
+        "searchInstead": "Search the list",
+        "manualPlaceholder": "Enter your school name",
+        "yearLabel": "GRADUATION YEAR (OPTIONAL)",
+        "yearPlaceholder": "Ex: 2026",
+        "yearInvalid": "Invalid year",
+        "yearOutOfRange": "Year must be between {{min}} and {{max}}",
+        "showOnHomeTitle": "Show university shortcut on Home",
+        "showOnHomeSubtitle": "Get quick access to what's happening on your campus"
+      },
       "completeTitle": "All set to start connecting!",
       "completeSubtitle": "Enter a place and see who shares your tastes.",
       "completeExplore": "Explore places",
