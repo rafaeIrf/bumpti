@@ -10,6 +10,7 @@ export const PROFILE_FIELDS_ORDER = [
   "smoking",
   "spots",
   "education",
+  "university",
   "location",
   "zodiac",
 ];
@@ -20,6 +21,7 @@ const FIELD_DB_KEYS: Record<string, string> = {
   smoking: "smoking_key",
   relationshipStatus: "relationship_key",
   height: "height_cm",
+  university: "university_id",
 };
 
 export function getNextMissingField(
@@ -64,16 +66,23 @@ export function navigateToNextProfileField(
   if (nextFieldKey) {
     if (nextFieldKey === "spots") {
       router.push("/main/favorite-places");
+    } else if (nextFieldKey === "university") {
+      router.push("/main/university");
     } else {
-      // Use replace to remove current screen (favorites) from stack
-      router.replace({
-        pathname: "/(profile)/edit/[field]",
-        params: { field: nextFieldKey },
-      });
+      // For modal screens, go back first
+      // The edit profile screen will handle showing the next field
+      router.back();
+      // Then push the modal
+      setTimeout(() => {
+        router.push({
+          pathname: "/(profile)/edit/[field]",
+          params: { field: nextFieldKey },
+        });
+      }, 100);
     }
     return;
   }
 
   // If no empty fields found, go back to edit profile
-  router.replace("/(profile)/edit");
+  router.back();
 }

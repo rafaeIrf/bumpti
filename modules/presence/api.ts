@@ -39,6 +39,14 @@ export type ActiveUserAtPlace = {
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
   entry_type?: "physical" | "checkin_plus"; // NEW: How user entered the place
+  // University fields
+  university_id?: string | null;
+  university_name?: string | null;
+  university_name_custom?: string | null;
+  university_lat?: number | null;
+  university_lng?: number | null;
+  graduation_year?: number | null;
+  show_university_on_home?: boolean;
 };
 
 export type ActiveUsersResponse = {

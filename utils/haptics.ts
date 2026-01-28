@@ -1,6 +1,15 @@
 import * as Haptics from "expo-haptics";
 
 /**
+ * Trigger a selection haptic feedback (most subtle).
+ * Works on both iOS and Android.
+ * Useful for scrolling through content, changing photos, etc.
+ */
+export function triggerSelectionHaptic() {
+  Haptics.selectionAsync();
+}
+
+/**
  * Trigger a light haptic feedback.
  * Works on both iOS and Android.
  * Same effect used in the bottom tab bar.

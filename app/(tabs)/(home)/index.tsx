@@ -362,11 +362,11 @@ export default function HomeScreen() {
         )}
 
         {/* Title Section */}
-        <ScreenSectionHeading
+        {/* <ScreenSectionHeading
           titleStyle={{ marginTop: 24 }}
           title={t("screens.home.heroTitle")}
           subtitle={t("screens.home.heroSubtitle")}
-        />
+        /> */}
 
         <ThemedView style={styles.contentContainer}>
           {/* Featured Section */}
@@ -387,11 +387,17 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* My Campus Card - Between Featured and Nearby */}
-          <ScreenSectionHeading
-            titleStyle={{ marginTop: 16 }}
-            title={t("screens.home.myCampus.sectionTitle")}
-          />
-          {profile && <MyCampusCard profile={profile} />}
+          {profile &&
+            profile.university_id &&
+            profile.show_university_on_home && (
+              <>
+                <ScreenSectionHeading
+                  titleStyle={{ marginTop: 16 }}
+                  title={t("screens.home.myCampus.sectionTitle")}
+                />
+                <MyCampusCard profile={profile} />
+              </>
+            )}
 
           {/* Nearby Section - Between Featured and Explore */}
           {/* Intermediate Section - Nearby & Explore */}

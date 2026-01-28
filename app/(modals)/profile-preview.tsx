@@ -87,9 +87,14 @@ export default function ProfilePreviewModal() {
           expires_at: "",
           visited_places_count: cachedProfileData.visited_places_count,
           favorite_places: cachedProfileData.favorite_places,
+          university_id: cachedProfileData.university_id,
+          university_name: cachedProfileData.university_name,
+          university_name_custom: cachedProfileData.university_name_custom,
+          graduation_year: cachedProfileData.graduation_year,
+          show_university_on_home: cachedProfileData.show_university_on_home,
         };
       }
-      
+
       // Fallback para initialProfile dos params (compatibilidade)
       return otherUserProfile;
     }
@@ -107,7 +112,7 @@ export default function ProfilePreviewModal() {
       })) ?? [];
 
     return {
-      user_id: myProfile.id || "me",
+      user_id: myProfile.id || "",
       name: myProfile.name ?? "",
       age: myProfile.age ?? null,
       bio: myProfile.bio ?? null,
@@ -127,12 +132,17 @@ export default function ProfilePreviewModal() {
       expires_at: "",
       visited_places_count: favoritePlacesIds.length,
       favorite_places: favoritePlacesIds,
+      university_id: myProfile.university_id ?? null,
+      university_name: myProfile.university_name ?? null,
+      university_name_custom: myProfile.university_name_custom ?? null,
+      graduation_year: myProfile.graduation_year ?? null,
+      show_university_on_home: myProfile.show_university_on_home ?? false,
     };
   }, [isScanningOther, cachedProfileData, otherUserProfile, myProfile]);
 
   // Loading state
-  const isLoading = isScanningOther 
-    ? isCachedProfileLoading 
+  const isLoading = isScanningOther
+    ? isCachedProfileLoading
     : isMyProfileLoading;
 
   const handleRefresh = async () => {

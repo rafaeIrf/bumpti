@@ -3,6 +3,7 @@ import {
   CigarreteIcon,
   GlobeIcon,
   GraduationCapIcon,
+  GraduationIcon,
   MapPinIcon,
   RulerIcon,
   SparklesIcon,
@@ -25,7 +26,7 @@ import { useUserActions } from "@/hooks/use-user-actions";
 import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
-import { triggerLightHaptic } from "@/utils/haptics";
+import { triggerSelectionHaptic } from "@/utils/haptics";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
@@ -112,6 +113,16 @@ export function UserProfileCard({
     EDUCATION_OPTIONS,
     profile.education_level,
   );
+
+  // University text: show custom name or official name with graduation year if available
+  const universityName =
+    profile.university_name_custom || profile.university_name;
+  const universityText = universityName
+    ? profile.graduation_year
+      ? `${universityName} • ${profile.graduation_year}`
+      : universityName
+    : null;
+
   const heightText =
     typeof profile.height_cm === "number"
       ? getCurrentLanguage() === "en" || getCurrentLanguage() === "en-US"
@@ -127,6 +138,7 @@ export function UserProfileCard({
     !!profile.location ||
     !!heightText ||
     (profile.languages && profile.languages.length > 0);
+  const hasFormation = !!educationText || !!universityText;
   const hasLifestyle = !!zodiacText || !!smokingText;
 
   // --- Logic for Common Connections ---
@@ -179,12 +191,12 @@ export function UserProfileCard({
   }, [profile.photos]);
 
   const nextPhoto = () => {
-    triggerLightHaptic();
+    triggerSelectionHaptic();
     setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
   };
 
   const prevPhoto = () => {
-    triggerLightHaptic();
+    triggerSelectionHaptic();
     setCurrentPhotoIndex(
       (prev) => (prev - 1 + profile.photos.length) % profile.photos.length,
     );
@@ -214,14 +226,14 @@ export function UserProfileCard({
     icon,
     value,
   }: {
-    label: string;
+    label?: string;
     icon: React.ReactNode;
     value: string | null | undefined;
   }) => {
     if (!value) return null;
     return (
       <View style={styles.infoRowContainer}>
-        <Text style={styles.infoLabel}>{label}</Text>
+        {label && <Text style={styles.infoLabel}>{label}</Text>}
         <View style={styles.infoValueRow}>
           {icon}
           <Text style={styles.infoValueText}>{value}</Text>
@@ -323,25 +335,15 @@ export function UserProfileCard({
             )}
           </View>
 
-          {/* Job & Education - In Overlay now */}
-          {(professionText || educationText) && (
+          {/* Job - In Overlay now */}
+          {!!professionText && (
             <View style={styles.subtitleRow}>
-              {!!professionText && (
-                <View style={styles.subtitleItem}>
-                  <BriefcaseIcon width={14} height={14} color="#E7E9EA" />
-                  <Text style={styles.subtitleText} numberOfLines={1}>
-                    {professionText}
-                  </Text>
-                </View>
-              )}
-              {!!educationText && (
-                <View style={styles.subtitleItem}>
-                  <GraduationCapIcon width={14} height={14} color="#E7E9EA" />
-                  <Text style={styles.subtitleText} numberOfLines={1}>
-                    {educationText}
-                  </Text>
-                </View>
-              )}
+              <View style={styles.subtitleItem}>
+                <BriefcaseIcon width={14} height={14} color="#E7E9EA" />
+                <Text style={styles.subtitleText} numberOfLines={1}>
+                  {professionText}
+                </Text>
+              </View>
             </View>
           )}
 
@@ -398,16 +400,9 @@ export function UserProfileCard({
         {/* BASIC INFO */}
         {hasBasicInfo && (
           <Section title={t("userProfile.sections.basicInfo")}>
-            {/* Job/School moved to overlay, but we can repeat specialized details here if beneficial, or just keep secondary stats */}
             <InfoRow
               label={t("userProfile.location")}
-              value={
-                profile.location
-                  ? t("userProfile.nearLocation", {
-                      location: profile.location,
-                    })
-                  : null
-              }
+              value={profile.location}
               icon={<MapPinIcon width={18} height={18} color="#8B98A5" />}
             />
             <InfoRow
@@ -415,20 +410,28 @@ export function UserProfileCard({
               value={heightText}
               icon={<RulerIcon width={18} height={18} color="#8B98A5" />}
             />
-            {/* Education hidden if covered in overlay or handled elsewhere */}
-            <InfoRow
-              label={t("userProfile.education")}
-              value={!educationText ? profile.education_level : null}
-              icon={
-                <GraduationCapIcon width={18} height={18} color="#8B98A5" />
-              }
-            />
             <InfoRow
               label={t("userProfile.languages")}
               value={profile.languages
                 ?.map((l) => t(`languages.${l}`))
                 .join(", ")}
               icon={<GlobeIcon width={18} height={18} color="#8B98A5" />}
+            />
+          </Section>
+        )}
+
+        {/* FORMATION */}
+        {hasFormation && (
+          <Section title={t("userProfile.educationSection")}>
+            <InfoRow
+              value={educationText}
+              icon={
+                <GraduationCapIcon width={18} height={18} color="#8B98A5" />
+              }
+            />
+            <InfoRow
+              value={universityText}
+              icon={<GraduationIcon width={18} height={18} color="#8B98A5" />}
             />
           </Section>
         )}
