@@ -5,6 +5,7 @@ import {
   CigarreteIcon,
   GlobeIcon,
   GraduationCapIcon,
+  GraduationIcon,
   HeartIcon,
   MapIcon,
   MapPinIcon,
@@ -346,7 +347,7 @@ export default function ProfileEditScreen() {
             onPress={() => handleFieldPress("education")}
           />
           <EditRow
-            icon={GraduationCapIcon}
+            icon={GraduationIcon}
             label={t("screens.profile.profileEdit.more.university")}
             value={
               profile?.university_name || profile?.university_name_custom || ""

@@ -209,6 +209,159 @@ def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFra
     return gdf
 
 
+def fetch_city_neighborhoods(bbox: List[float], con=None) -> Optional['gpd.GeoDataFrame']:
+    """
+    Fetch neighborhood polygons from Overture divisions theme for hierarchical spatial join.
+    
+    Joins division_area (geometries) with division (metadata) for subtypes:
+    - 'neighborhood' (bairros - highest priority)
+    - 'macrohood' (larger districts - fallback)
+    
+    Args:
+        bbox: [min_lng, min_lat, max_lng, max_lat]
+        con: Optional existing DuckDB connection
+    
+    Returns:
+        GeoDataFrame with: division_id, neighborhood_name, subtype, geometry, area_sqm
+        Sorted by area for efficient smallest-first matching.
+    """
+    if not GEOPANDAS_AVAILABLE:
+        return None
+    
+    close_conn = False
+    if con is None:
+        con = duckdb.connect(':memory:')
+        con.execute("INSTALL spatial; LOAD spatial;")
+        con.execute("INSTALL httpfs; LOAD httpfs;")
+        con.execute("SET s3_region='us-west-2';")
+        close_conn = True
+    
+    min_lng, min_lat, max_lng, max_lat = bbox
+    
+    # Paths to divisions theme
+    area_path = f"s3://overturemaps-us-west-2/release/{OVERTURE_RELEASE}/theme=divisions/type=division_area/*"
+    division_path = f"s3://overturemaps-us-west-2/release/{OVERTURE_RELEASE}/theme=divisions/type=division/*"
+    
+    # Query joining division_area (polygons) with division (metadata)
+    # Note: Overture names structure can vary - try primary first, fallback to primary[0].value
+    query = f"""
+    SELECT 
+        area.division_id,
+        COALESCE(
+            JSON_EXTRACT_STRING(div.names, '$.primary'),
+            JSON_EXTRACT_STRING(div.names, '$.primary[0].value')
+        ) AS neighborhood_name,
+        div.subtype,
+        ST_AsWKB(area.geometry) AS geom_wkb,
+        ST_Area_Spheroid(area.geometry) AS area_sqm
+    FROM read_parquet('{area_path}', filename=true, hive_partitioning=1) AS area
+    JOIN read_parquet('{division_path}', filename=true, hive_partitioning=1) AS div
+        ON area.division_id = div.id
+    WHERE div.subtype IN ('neighborhood', 'macrohood')
+        AND area.bbox.xmin >= {min_lng} AND area.bbox.xmax <= {max_lng}
+        AND area.bbox.ymin >= {min_lat} AND area.bbox.ymax <= {max_lat}
+    """
+    
+    try:
+        results = con.execute(query).fetchall()
+        print(f"   🏘️  Loaded {len(results)} neighborhood polygons from Overture divisions")
+    except Exception as e:
+        print(f"❌ Failed to query divisions: {e}")
+        results = []
+    
+    if close_conn:
+        con.close()
+    
+    if not results:
+        print("   ⚠️  No neighborhood polygons found for this city")
+        return None
+    
+    # Convert to GeoDataFrame
+    neighborhoods = []
+    for row in results:
+        div_id, name, subtype, geom_wkb, area_sqm = row
+        if not name:
+            continue
+        try:
+            geom = shapely_wkb.loads(geom_wkb)
+            neighborhoods.append({
+                'division_id': div_id,
+                'neighborhood_name': name,
+                'subtype': subtype,
+                'geometry': geom,
+                'area_sqm': area_sqm or 0
+            })
+        except Exception:
+            continue
+    
+    if not neighborhoods:
+        return None
+    
+    gdf = gpd.GeoDataFrame(neighborhoods, geometry='geometry', crs='EPSG:4326')
+    
+    # CRITICAL: Build R-Tree spatial index for 80k+ POI queries
+    # This must be called before any spatial operations
+    _ = gdf.sindex
+    
+    # Count by subtype for logging
+    subtype_counts = gdf['subtype'].value_counts().to_dict()
+    print(f"   📊 Neighborhood breakdown: {subtype_counts}")
+    
+    return gdf
+
+
+def resolve_poi_neighborhood(
+    poi_point: 'Point',
+    neighborhoods_gdf: Optional['gpd.GeoDataFrame']
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Resolve the neighborhood name for a POI using hierarchical spatial join.
+    
+    Priority Logic (Hierarchical):
+    1. subtype='neighborhood' takes priority over 'macrohood'
+    2. If multiple matches within same subtype, smallest area wins (most specific)
+    
+    Args:
+        poi_point: Shapely Point geometry of the POI
+        neighborhoods_gdf: GeoDataFrame from fetch_city_neighborhoods()
+    
+    Returns:
+        Tuple of (neighborhood_name, subtype) or (None, None) if no match
+    """
+    if neighborhoods_gdf is None or len(neighborhoods_gdf) == 0:
+        return None, None
+    
+    if not GEOPANDAS_AVAILABLE:
+        return None, None
+    
+    # Use spatial index for efficient candidate discovery
+    possible_idx = list(neighborhoods_gdf.sindex.query(poi_point, predicate='intersects'))
+    
+    if not possible_idx:
+        return None, None
+    
+    candidates = neighborhoods_gdf.iloc[possible_idx].copy()
+    
+    if candidates.empty:
+        return None, None
+    
+    # HIERARCHICAL PRIORITY:
+    # 1. Filter to 'neighborhood' subtype if any exist
+    neighborhoods = candidates[candidates['subtype'] == 'neighborhood']
+    if not neighborhoods.empty:
+        candidates = neighborhoods
+    else:
+        # Fallback to macrohood
+        macrohoods = candidates[candidates['subtype'] == 'macrohood']
+        if not macrohoods.empty:
+            candidates = macrohoods
+    
+    # 2. TIEBREAKER: Smallest area wins (most specific polygon)
+    best = candidates.loc[candidates['area_sqm'].idxmin()]
+    
+    return best['neighborhood_name'], best['subtype']
+
+
 def compute_poi_boundary(
     poi_geom_wkb: bytes,
     poi_name: str,
