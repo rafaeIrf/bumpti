@@ -30,7 +30,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import Animated, {
   Easing,
   FadeInUp,
@@ -49,6 +48,7 @@ import Message from "@/modules/database/models/Message";
 import { preloadProfile } from "@/modules/profile/cache";
 import { Database, Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 
 type Params = {
   chatId?: string;
@@ -89,8 +89,11 @@ function ChatMessageList({
   const { height } = useReanimatedKeyboardAnimation();
 
   const fakeView = useAnimatedStyle(() => {
+    // When keyboard is closed (height = 0), use safe area bottom
+    // When keyboard is open, use keyboard height (which includes safe area)
+    const keyboardHeight = Math.abs(height.value);
     return {
-      height: Math.abs(height.value),
+      height: keyboardHeight > 0 ? keyboardHeight + spacing.sm : insets.bottom,
     };
   });
 
@@ -138,7 +141,7 @@ function ChatMessageList({
   useEffect(() => {
     if (otherUserId) {
       logger.log(
-        `[ChatMessageList] Preloading profile for other user: ${otherUserId}`
+        `[ChatMessageList] Preloading profile for other user: ${otherUserId}`,
       );
       preloadProfile(otherUserId);
     }
@@ -179,7 +182,7 @@ function ChatMessageList({
         setError(err instanceof Error ? err.message : t("errors.generic"));
       }
     },
-    [sendMessage, database]
+    [sendMessage, database],
   );
 
   const handleDeleteMessage = useCallback(
@@ -192,7 +195,7 @@ function ChatMessageList({
         logger.error("Failed to delete message", error);
       }
     },
-    [database]
+    [database],
   );
 
   const openActionsBottomSheet = () => {
@@ -365,6 +368,7 @@ function ChatMessageList({
         TopHeader={header}
         scrollEnabled={false}
         useKeyboardAvoidingView={false}
+        ignoreBottomSafeArea
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 0,
@@ -414,7 +418,7 @@ function ChatMessageList({
                     <Animated.View
                       entering={FadeInUp.duration(400)}
                       exiting={FadeOutDown.duration(500).easing(
-                        Easing.out(Easing.cubic)
+                        Easing.out(Easing.cubic),
                       )}
                     >
                       <MatchPlaceCard
@@ -475,7 +479,6 @@ function ChatMessageList({
             {
               borderTopColor: colors.border,
               paddingVertical: spacing.sm,
-              paddingBottom: insets.bottom,
               backgroundColor: colors.background,
             },
           ]}
@@ -536,10 +539,10 @@ const EnhancedMessageList = withObservables(
       .query(
         Q.where("chat_id", chatId),
         Q.sortBy("created_at", Q.desc),
-        Q.take(limit)
+        Q.take(limit),
       )
       .observeWithColumns(["status"]),
-  })
+  }),
 )(ChatMessageList);
 
 // --- Wrapper Component ---
