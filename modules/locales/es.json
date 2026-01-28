@@ -307,19 +307,13 @@
       "yearsOld": "{{age}} años",
       "options": {
         "education": {
-          "preferNotToSay": "Prefiero no decir",
-          "highSchool": "Secundaria",
-          "highSchoolDesc": "Educación secundaria completa",
-          "technical": "Técnico",
-          "technicalDesc": "Curso técnico profesional",
-          "undergraduate": "Grado",
-          "undergraduateDesc": "Cursando o completo",
-          "postgraduate": "Posgrado",
-          "postgraduateDesc": "Especialización o MBA",
-          "masters": "Maestría",
-          "mastersDesc": "Maestría académica",
-          "doctorate": "Doctorado",
-          "doctorateDesc": "Doctorado o PhD"
+          "highSchoolStudent": "Cursando secundaria",
+          "collegeStudent": "Haciendo universidad",
+          "graduate": "Graduado",
+          "mastersStudent": "Haciendo maestría",
+          "mastersDegree": "Maestría completada",
+          "doctorateStudent": "Haciendo doctorado",
+          "doctorateDegree": "Doctorado completado"
         },
         "zodiac": {
           "preferNotToSay": "Prefiero no decir",

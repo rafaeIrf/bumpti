@@ -1,36 +1,14 @@
 export const EDUCATION_OPTIONS = [
-  { id: "", labelKey: "screens.profile.options.education.preferNotToSay" },
-  {
-    id: "high_school",
-    labelKey: "screens.profile.options.education.highSchool",
-    descriptionKey: "screens.profile.options.education.highSchoolDesc",
-  },
-  {
-    id: "technical",
-    labelKey: "screens.profile.options.education.technical",
-    descriptionKey: "screens.profile.options.education.technicalDesc",
-  },
-  {
-    id: "undergraduate",
-    labelKey: "screens.profile.options.education.undergraduate",
-    descriptionKey: "screens.profile.options.education.undergraduateDesc",
-  },
-  {
-    id: "postgraduate",
-    labelKey: "screens.profile.options.education.postgraduate",
-    descriptionKey: "screens.profile.options.education.postgraduateDesc",
-  },
-  {
-    id: "masters",
-    labelKey: "screens.profile.options.education.masters",
-    descriptionKey: "screens.profile.options.education.mastersDesc",
-  },
-  {
-    id: "doctorate",
-    labelKey: "screens.profile.options.education.doctorate",
-    descriptionKey: "screens.profile.options.education.doctorateDesc",
-  },
+  { id: "high_school_student", labelKey: "screens.profile.options.education.highSchoolStudent" },
+  { id: "college_student", labelKey: "screens.profile.options.education.collegeStudent" },
+  { id: "graduate", labelKey: "screens.profile.options.education.graduate" },
+  { id: "masters_student", labelKey: "screens.profile.options.education.mastersStudent" },
+  { id: "masters_degree", labelKey: "screens.profile.options.education.mastersDegree" },
+  { id: "doctorate_student", labelKey: "screens.profile.options.education.doctorateStudent" },
+  { id: "doctorate_degree", labelKey: "screens.profile.options.education.doctorateDegree" },
 ];
+
+
 
 export const ZODIAC_OPTIONS = [
   { id: "", labelKey: "screens.profile.options.zodiac.preferNotToSay" },

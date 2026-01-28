@@ -307,19 +307,13 @@
       "yearsOld": "{{age}} years old",
       "options": {
         "education": {
-          "preferNotToSay": "Prefer not to say",
-          "highSchool": "High School",
-          "highSchoolDesc": "High school diploma",
-          "technical": "Technical",
-          "technicalDesc": "Technical or vocational training",
-          "undergraduate": "Undergraduate",
-          "undergraduateDesc": "Bachelor's degree or equivalent",
-          "postgraduate": "Postgraduate",
-          "postgraduateDesc": "Master's degree or MBA",
-          "masters": "Master's",
-          "mastersDesc": "Academic Master's degree",
-          "doctorate": "Doctorate",
-          "doctorateDesc": "PhD or equivalent"
+          "highSchoolStudent": "High school student",
+          "collegeStudent": "College student",
+          "graduate": "Graduate",
+          "mastersStudent": "Master's student",
+          "mastersDegree": "Master's degree",
+          "doctorateStudent": "Doctorate student",
+          "doctorateDegree": "Doctorate"
         },
         "zodiac": {
           "preferNotToSay": "Prefer not to say",
