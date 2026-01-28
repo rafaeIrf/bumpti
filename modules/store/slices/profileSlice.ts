@@ -32,6 +32,15 @@ export type ProfileData = {
   verification_status?: VerificationStatus | null;
   is_invisible?: boolean | null;
   filter_only_verified?: boolean | null;
+  university_id?: string | null;
+  university_name_custom?: string | null;
+  // These come from places table via JOIN in get-profile
+  university_name?: string | null;
+  university_lat?: number | null;
+  university_lng?: number | null;
+  university_active_users?: number | null;
+  graduation_year?: number | null;
+  show_university_on_home?: boolean | null;
 };
 
 export interface SubscriptionData {

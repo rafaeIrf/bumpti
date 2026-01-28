@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
           *,
           verification_status,
           is_invisible,
+          university:places!university_id(id, name, category, lat, lng),
           education:education_levels(key),
           zodiac:zodiac_signs(key),
           smoking:smoking_habits(key),
@@ -171,6 +172,7 @@ Deno.serve(async (req) => {
         smoking,
         relationship,
         profile_languages,
+        university,
         job_title,
         company_name,
         ...rest
@@ -179,6 +181,19 @@ Deno.serve(async (req) => {
       const location = rest.city_name
         ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
         : rest.location;
+
+      // Get university active users count if university exists
+      let universityActiveUsers = 0;
+      if (rest.university_id) {
+        const { data: activeUsersCount } = await supabase.rpc(
+          "get_eligible_active_users_count",
+          {
+            target_place_id: rest.university_id,
+            requesting_user_id: userId,
+          }
+        );
+        universityActiveUsers = activeUsersCount ?? 0;
+      }
 
       profilePayload = {
         ...rest,
@@ -209,6 +224,15 @@ Deno.serve(async (req) => {
           messages: true,
           matches: true,
         },
+        // University fields
+        university_id: rest.university_id ?? null,
+        university_name_custom: rest.university_name_custom ?? null,
+        university_name: (university as any)?.name ?? rest.university_name_custom ?? null,
+        university_lat: (university as any)?.lat ?? null,
+        university_lng: (university as any)?.lng ?? null,
+        university_active_users: universityActiveUsers,
+        graduation_year: rest.graduation_year ?? null,
+        show_university_on_home: rest.show_university_on_home ?? true,
       };
     }
 

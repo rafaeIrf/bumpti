@@ -52,8 +52,16 @@ export interface PlaceSearchContentProps {
   multiSelectMode?: boolean;
   selectedPlaceIds?: string[];
   isModal?: boolean;
+  categoryFilter?: string;
   onPlaceToggle?: (placeId: string, placeName: string) => void;
   onSelectionComplete?: () => void;
+  onUniversitySelect?: (place: {
+    id: string;
+    name: string;
+    address?: string;
+    lat?: number;
+    lng?: number;
+  }) => void;
 }
 
 export function PlaceSearchContent({
@@ -65,6 +73,8 @@ export function PlaceSearchContent({
   onPlaceToggle,
   onSelectionComplete,
   isModal = true,
+  categoryFilter,
+  onUniversitySelect,
 }: PlaceSearchContentProps) {
   const colors = useThemeColors();
   const router = useRouter();
@@ -107,21 +117,21 @@ export function PlaceSearchContent({
       userLocation
         ? { lat: userLocation.latitude, lng: userLocation.longitude }
         : undefined,
-    [userLocation]
+    [userLocation],
   );
   const { showPlaceDetails, favoriteIds, handleToggle } = usePlaceDetailsSheet({
     queryArg,
   });
 
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(
-    initialSelection.map((p) => p.id)
+    initialSelection.map((p) => p.id),
   );
 
   const selectedPlacesMapRef = useRef<Record<string, string>>(
     initialSelection.reduce(
       (acc, p) => ({ ...acc, [p.id]: p.name }),
-      {} as Record<string, string>
-    )
+      {} as Record<string, string>,
+    ),
   );
 
   const [triggerSearch, { data: searchData, isFetching }] =
@@ -157,10 +167,11 @@ export function PlaceSearchContent({
           lat: userLocation.latitude,
           lng: userLocation.longitude,
           radius: 20000,
+          category: categoryFilter, // Pass category filter for filtering results
         });
       }, 400);
     },
-    [userLocation, triggerSearch]
+    [userLocation, triggerSearch, categoryFilter],
   );
 
   const handleResultPress = useCallback(
@@ -170,7 +181,7 @@ export function PlaceSearchContent({
 
         if (isSelected) {
           setLocalSelectedIds((prev) =>
-            prev.filter((id) => id !== result.placeId)
+            prev.filter((id) => id !== result.placeId),
           );
           delete selectedPlacesMapRef.current[result.placeId];
         } else {
@@ -194,7 +205,7 @@ export function PlaceSearchContent({
         });
       }
     },
-    [showPlaceDetails, multiSelectMode, onPlaceToggle, localSelectedIds]
+    [showPlaceDetails, multiSelectMode, onPlaceToggle, localSelectedIds],
   );
 
   const clearSearch = useCallback(() => {
@@ -224,12 +235,32 @@ export function PlaceSearchContent({
       autoFocus,
       isPremium,
       router,
-    ]
+    ],
   );
 
   const renderResult = useCallback(
     ({ item }: { item: SearchResult }) => {
       const isSelected = localSelectedIds.includes(item.placeId);
+
+      // University mode - use SelectionCard with address
+      if (categoryFilter === "university" && onUniversitySelect) {
+        return (
+          <SelectionCard
+            label={item.name}
+            description={item.formattedAddress || undefined}
+            isSelected={false}
+            onPress={() => {
+              onUniversitySelect({
+                id: item.placeId,
+                name: item.name,
+                address: item.formattedAddress,
+                lat: item.lat,
+                lng: item.lng,
+              });
+            }}
+          />
+        );
+      }
 
       if (multiSelectMode) {
         const categoryLabel = item.category
@@ -292,7 +323,9 @@ export function PlaceSearchContent({
       handleToggle,
       multiSelectMode,
       localSelectedIds,
-    ]
+      categoryFilter,
+      onUniversitySelect,
+    ],
   );
 
   const ItemSeparator: React.FC = () => <View style={{ height: spacing.sm }} />;
@@ -351,7 +384,7 @@ export function PlaceSearchContent({
                 key={suggestion}
                 onPress={() =>
                   handleSearch(
-                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`)
+                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`),
                   )
                 }
               >

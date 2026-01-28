@@ -41,6 +41,10 @@ type UpdateProfilePayload = {
   favoritePlaces?: string[]; // array of place_ids
   is_invisible?: boolean; // Invisible mode flag
   filter_only_verified?: boolean; // Trust Circle filter flag
+  university_id?: string | null;
+  university_name_custom?: string | null;
+  graduation_year?: number | null;
+  show_university_on_home?: boolean;
   [key: string]: unknown;
 };
 
@@ -132,6 +136,10 @@ Deno.serve(async (req) => {
       favoritePlaces,
       is_invisible,
       filter_only_verified,
+      university_id,
+      university_name_custom,
+      graduation_year,
+      show_university_on_home,
       ...rest
     } = payload;
 
@@ -352,6 +360,46 @@ Deno.serve(async (req) => {
         }
       }
       updates.filter_only_verified = filter_only_verified;
+    }
+
+    // Validate university_id: must exist in places with category 'university'
+    if (university_id !== undefined) {
+      if (university_id !== null) {
+        const { data, error } = await supabase
+          .from("places")
+          .select("id")
+          .eq("id", university_id)
+          .eq("category", "university")
+          .maybeSingle();
+        if (error || !data) {
+          return new Response(
+            JSON.stringify({ error: "invalid_university_id", message: "University not found in places table" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+      updates.university_id = university_id;
+    }
+
+    // University custom name (for universities not in places table)
+    if (university_name_custom !== undefined) {
+      updates.university_name_custom = university_name_custom;
+    }
+
+    // Validate graduation_year range
+    if (graduation_year !== undefined) {
+      if (graduation_year !== null && (graduation_year < 1950 || graduation_year > 2100)) {
+        return new Response(
+          JSON.stringify({ error: "invalid_graduation_year", message: "graduation_year must be between 1950 and 2100" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      updates.graduation_year = graduation_year;
+    }
+
+    // Show university on home preference
+    if (show_university_on_home !== undefined) {
+      updates.show_university_on_home = show_university_on_home;
     }
 
     // Basic validations

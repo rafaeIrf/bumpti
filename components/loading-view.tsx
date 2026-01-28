@@ -5,14 +5,21 @@ import { ActivityIndicator, StyleSheet, View, ViewStyle } from "react-native";
 type LoadingViewProps = {
   readonly style?: ViewStyle;
   readonly size?: "small" | "large";
+  readonly color?: string;
 };
 
-export function LoadingView({ style, size = "large" }: LoadingViewProps) {
+export function LoadingView({
+  style,
+  size = "large",
+  color,
+}: LoadingViewProps) {
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }, style]}>
-      <ActivityIndicator size={size} color={colors.accent} />
+    <View
+      style={[styles.container, { backgroundColor: colors.background }, style]}
+    >
+      <ActivityIndicator size={size} color={color ?? colors.accent} />
     </View>
   );
 }

@@ -1,4 +1,8 @@
--- Drop the old versions to avoid overloading conflicts
+-- Extension of save_onboarding_txn to include university fields
+-- This migration updates the RPC to accept and save university-related data
+-- Note: university_name, university_lat, university_lng are fetched via university_id FK to places
+
+-- Drop ALL old versions to avoid overloading conflicts
 drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], text[]);
 drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], uuid[]);
 drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], uuid[], text);
@@ -6,7 +10,6 @@ drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[],
 drop function if exists public.save_onboarding_txn(uuid, text, date, int, int[], int[], text[], int[], uuid[], text, uuid, text, int, boolean);
 
 -- Creates a transactional RPC to save onboarding data atomically (with university fields)
--- Note: university name/lat/lng come from places table via university_id FK
 create or replace function public.save_onboarding_txn(
   p_user_id uuid,
   p_name text,

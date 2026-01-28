@@ -310,19 +310,13 @@
       "yearsOld": "{{age}} anos",
       "options": {
         "education": {
-          "preferNotToSay": "Prefiro não informar",
-          "highSchool": "Ensino Médio",
-          "highSchoolDesc": "Conclusão do ensino médio",
-          "technical": "Técnico",
-          "technicalDesc": "Curso técnico profissionalizante",
-          "undergraduate": "Graduação",
-          "undergraduateDesc": "Cursando ou concluído",
-          "postgraduate": "Pós-graduação",
-          "postgraduateDesc": "Especialização ou MBA",
-          "masters": "Mestrado",
-          "mastersDesc": "Mestrado acadêmico",
-          "doctorate": "Doutorado",
-          "doctorateDesc": "Doutorado ou PhD"
+          "highSchoolStudent": "Cursando ensino médio",
+          "collegeStudent": "Fazendo faculdade",
+          "graduate": "Bacharelado concluído",
+          "mastersStudent": "Fazendo mestrado",
+          "mastersDegree": "Mestrado concluído",
+          "doctorateStudent": "Fazendo doutorado",
+          "doctorateDegree": "Doutorado concluído"
         },
         "zodiac": {
           "preferNotToSay": "Prefiro não informar",
@@ -616,6 +610,14 @@
           "filterMonth": "Esse mês",
           "filterGeneral": "Geral"
         }
+      },
+      "myCampus": {
+        "sectionTitle": "Meu campus",
+        "communityTitle": "Comunidade {{name}}",
+        "activeNow": "{{count}} pessoa(s) no campus agora",
+        "noActiveNow": "Ninguém no campus agora",
+        "findOnMap": "Encontre sua faculdade no mapa",
+        "tapToConnect": "Toque para se conectar"
       }
     },
     "premiumPaywall": {
@@ -828,6 +830,21 @@
       "notificationsDeniedTitle": "Permissão negada",
       "notificationsDeniedMessage": "Você negou a permissão de notificações. Pode ativar depois nas configurações do app.",
       "notificationsError": "Erro ao solicitar permissão de notificações. Tente novamente.",
+      "university": {
+        "title": "Qual é a sua faculdade?",
+        "subtitle": "Conecte-se com pessoas que frequentam a mesma universidade ou faculdade que você.",
+        "universityLabel": "FACULDADE OU UNIVERSIDADE",
+        "searchPlaceholder": "Buscar faculdade...",
+        "notFound": "Não encontrei minha faculdade",
+        "searchInstead": "Buscar na lista",
+        "manualPlaceholder": "Digite o nome da sua faculdade",
+        "yearLabel": "ANO DE CONCLUSÃO (OPCIONAL)",
+        "yearPlaceholder": "Ex: 2026",
+        "yearInvalid": "Ano inválido",
+        "yearOutOfRange": "O ano deve estar entre {{min}} e {{max}}",
+        "showOnHomeTitle": "Exibir atalho da faculdade na Home",
+        "showOnHomeSubtitle": "Tenha acesso rápido ao que está rolando no seu campus"
+      },
       "completeTitle": "Tudo pronto para começar a se conectar!",
       "completeSubtitle": "Entre em um lugar e veja quem também compartilha dos mesmos gostos.",
       "completeExplore": "Explorar locais",

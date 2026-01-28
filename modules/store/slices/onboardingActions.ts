@@ -12,6 +12,7 @@ import {
     setLocationPermission as setLocationPermissionAction,
     setNotificationPermission as setNotificationPermissionAction,
     setPhotoUris as setPhotoUrisAction,
+    setUniversityData as setUniversityDataAction,
     setUserBirthdate as setUserBirthdateAction,
     setUserGender as setUserGenderAction,
     setUserName as setUserNameAction,
@@ -67,6 +68,18 @@ export const onboardingActions = {
     store.dispatch(setNotificationPermissionAction(hasPermission));
   },
 
+  setUniversityData: (data: {
+    universityId?: string | null;
+    universityName?: string | null;
+    universityNameCustom?: string | null;
+    universityLat?: number | null;
+    universityLng?: number | null;
+    graduationYear?: number | null;
+    showUniversityOnHome?: boolean;
+  }) => {
+    store.dispatch(setUniversityDataAction(data));
+  },
+
   completeOnboarding: () => {
     store.dispatch(completeOnboardingAction());
   },
@@ -75,3 +88,4 @@ export const onboardingActions = {
     store.dispatch(resetOnboardingAction());
   },
 };
+

@@ -19,10 +19,10 @@ import { useCachedLocation } from "./use-cached-location";
 
 export interface PlaceInteractionParams {
   placeId: string;
-  name: string;
+  name?: string;
   latitude: number;
   longitude: number;
-  distance: number;
+  distance?: number;
   active_users?: number;
 }
 
@@ -52,7 +52,7 @@ export function usePlaceClick() {
         },
       });
     },
-    [router]
+    [router],
   );
 
   const navigateToPremiumPaywall = useCallback(() => {
@@ -71,7 +71,7 @@ export function usePlaceClick() {
         isCheckinPlus: useCheckinPlus,
       });
     },
-    [userLocation]
+    [userLocation],
   );
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ export function usePlaceClick() {
       navigateToPlacePeople,
       showPowerUpSheet,
       tryEnterPlace,
-    ]
+    ],
   );
 
   const handlePlaceClick = useCallback(
@@ -197,7 +197,7 @@ export function usePlaceClick() {
       if (result) {
         // User has active presence or entered successfully - go directly to place-people
         logger.log(
-          "[PlaceClick] Entry successful (existing presence or close), navigating"
+          "[PlaceClick] Entry successful (existing presence or close), navigating",
         );
         bottomSheet?.close();
         navigateToPlacePeople(params.placeId, params.name, params.distance);
@@ -214,7 +214,7 @@ export function usePlaceClick() {
       handleConnectionBottomSheet,
       navigateToPlacePeople,
       tryEnterPlace,
-    ]
+    ],
   );
 
   return {
