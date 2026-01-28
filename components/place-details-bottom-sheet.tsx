@@ -24,6 +24,7 @@ interface PlaceDetailsBottomSheetProps {
   placeName: string;
   category: string;
   address: string;
+  neighborhood?: string; // NEW: Bairro name
   distance: string; // e.g., "1.2 km de você"
   review?: PlaceReview;
   isFavorite?: boolean;
@@ -36,7 +37,7 @@ interface PlaceDetailsBottomSheetProps {
       optimisticOnly?: boolean;
       sync?: boolean;
       value?: boolean;
-    }
+    },
   ) => void;
   onClose?: () => void;
   onRate?: () => void;
@@ -49,6 +50,7 @@ export function PlaceDetailsBottomSheet({
   placeName,
   category,
   address,
+  neighborhood,
   distance,
   review,
   placeId,
@@ -166,19 +168,40 @@ export function PlaceDetailsBottomSheet({
             )}
           </View>
 
-          <ThemedText
-            style={[
-              typography.caption,
-              {
-                color: colors.textSecondary,
-                textAlign: "center",
-                marginTop: spacing.xs,
-              },
-            ]}
-            numberOfLines={2}
-          >
-            {address}
-          </ThemedText>
+          {/* Address with neighborhood */}
+          <View style={styles.addressRow}>
+            <ThemedText
+              style={[
+                typography.caption,
+                {
+                  color: colors.textSecondary,
+                  textAlign: "center",
+                },
+              ]}
+              numberOfLines={2}
+            >
+              {address}
+            </ThemedText>
+            {neighborhood && (
+              <>
+                <View
+                  style={[styles.dot, { backgroundColor: colors.border }]}
+                />
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: "center",
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {neighborhood}
+                </ThemedText>
+              </>
+            )}
+          </View>
         </View>
 
         {/* Community & Insights Section (Moved Up & Redesigned) */}
@@ -424,5 +447,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+  },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.xs,
   },
 });

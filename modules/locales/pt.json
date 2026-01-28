@@ -79,7 +79,9 @@
       "dance_club": "Dança",
       "theatre": "Teatro",
       "casino": "Cassino",
-      "shopping": "Shopping"
+      "shopping": "Shopping",
+      "plaza": "Praça",
+      "skate_park": "Pista de Skate"
     },
     "activeUsersLabel": "pessoas no local",
     "noConnections": "Inicie a conexão",

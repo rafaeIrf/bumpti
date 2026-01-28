@@ -33,6 +33,7 @@ interface SearchResult {
   name: string;
   category: string;
   formattedAddress?: string;
+  neighborhood?: string;
   distance?: number;
   active_users?: number;
   rating?: number;
@@ -143,6 +144,7 @@ export function PlaceSearchContent({
       placeId: p.placeId,
       name: p.name,
       formattedAddress: p.formattedAddress,
+      neighborhood: p.neighborhood,
       category: p.types?.[0],
       lat: p.latitude,
       lng: p.longitude,
@@ -244,10 +246,15 @@ export function PlaceSearchContent({
 
       // University mode - use SelectionCard with address
       if (categoryFilter === "university" && onUniversitySelect) {
+        const addressParts = [item.formattedAddress, item.neighborhood].filter(
+          Boolean,
+        );
+        const description = addressParts.join(" • ");
+
         return (
           <SelectionCard
             label={item.name}
-            description={item.formattedAddress || undefined}
+            description={description || undefined}
             isSelected={false}
             onPress={() => {
               onUniversitySelect({
@@ -290,6 +297,7 @@ export function PlaceSearchContent({
             name: item.name,
             address:
               item.formattedAddress ?? t("screens.placeSearch.addressFallback"),
+            neighborhood: item.neighborhood,
             distance: item.distance ?? 0,
             activeUsers: item.active_users || 0,
             tag: item.category,
@@ -303,6 +311,7 @@ export function PlaceSearchContent({
                 placeId: item.placeId,
                 name: item.name,
                 formattedAddress: item.formattedAddress,
+                neighborhood: item.neighborhood,
                 distance: item.distance,
                 latitude: item.lat,
                 longitude: item.lng,

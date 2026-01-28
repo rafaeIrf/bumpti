@@ -23,6 +23,7 @@ interface PlaceCardData {
   activeUsers: number;
   activeUserAvatars?: UserAvatar[]; // Avatars with user_id for real-time removal
   tag?: string;
+  neighborhood?: string; // NEW: Bairro name
   rank?: number; // Ranking position (1-based)
   review?: {
     average: number;
@@ -129,7 +130,7 @@ export function PlaceCard({
           </Pressable>
         </View>
 
-        {/* Meta: Category • Distance */}
+        {/* Meta: Category • Neighborhood • Distance */}
         <View style={styles.metaRow}>
           {place.tag && (
             <>
@@ -137,6 +138,17 @@ export function PlaceCard({
                 style={[styles.tagText, { color: colors.textSecondary }]}
               >
                 {t(`place.categories.${place.tag}`)}
+              </ThemedText>
+              <View style={styles.dot} />
+            </>
+          )}
+          {place.neighborhood && (
+            <>
+              <ThemedText
+                style={[styles.metaText, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
+                {place.neighborhood}
               </ThemedText>
               <View style={styles.dot} />
             </>
@@ -190,7 +202,7 @@ export function PlaceCard({
                     : place.activeUsers === 1
                       ? "place.onePersonConnecting"
                       : "place.manyPeopleConnecting",
-                  { count: place.activeUsers }
+                  { count: place.activeUsers },
                 )}
               </ThemedText>
             </View>

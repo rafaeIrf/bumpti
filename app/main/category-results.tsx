@@ -526,6 +526,7 @@ export default function CategoryResultsScreen() {
         activeUsers: (item as any).active_users || 0,
         activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
+        neighborhood: item.neighborhood,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
       };
@@ -694,7 +695,7 @@ export default function CategoryResultsScreen() {
             />
           )}
           {/* Ranking filter pills for mostFrequent mode */}
-          {shouldShowFilters && places.length > 0 && (
+          {mostFrequentMode && places.length > 0 && (
             <ThemedView style={styles.rankingPillsContainer}>
               <FilterChip
                 label={t("screens.home.categories.ranking.filterMonth")}

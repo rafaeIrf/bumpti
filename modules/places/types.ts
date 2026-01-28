@@ -41,6 +41,7 @@ export type Place = {
   placeId: string;
   name: string;
   formattedAddress?: string;
+  neighborhood?: string; // NEW: Bairro name
   distance: number; // in km
   latitude: number;
   longitude: number;

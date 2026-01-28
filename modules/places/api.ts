@@ -51,6 +51,7 @@ export async function searchPlacesByText(
       placeId: p.id,
       name: p.name,
       formattedAddress: p.formatted_address,
+      neighborhood: p.neighborhood,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
       latitude: p.latitude ?? p.lat,
       longitude: p.longitude ?? p.lng,
@@ -99,6 +100,7 @@ export async function getNearbyPlaces(
       placeId: p.id,
       name: p.name,
       formattedAddress: p.formatted_address,
+      neighborhood: p.neighborhood,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
       latitude: p.latitude ?? p.lat,
       longitude: p.longitude ?? p.lng,
@@ -142,6 +144,7 @@ export async function getRankedPlaces(
       placeId: p.placeId,
       name: p.name,
       formattedAddress: p.formattedAddress,
+      neighborhood: p.neighborhood,
       distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
       latitude: p.lat,
       longitude: p.lng,
@@ -185,6 +188,7 @@ export async function getPlacesByFavorites(
       placeId: p.id,
       name: p.name,
       formattedAddress: p.formatted_address,
+      neighborhood: p.neighborhood,
       distance: p.dist_meters ? p.dist_meters / 1000 : 0, // convert meters to km
       latitude: p.latitude ?? p.lat,
       longitude: p.longitude ?? p.lng,
@@ -232,6 +236,7 @@ export async function getTrendingPlaces(
       placeId: p.place_id,
       name: p.name,
       formattedAddress: p.formattedAddress,
+      neighborhood: p.neighborhood,
       distance: p.distance ? p.distance / 1000 : 0, // convert meters to km
       latitude: p.latitude ?? p.lat,
       longitude: p.longitude ?? p.lng,

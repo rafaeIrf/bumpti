@@ -74,7 +74,7 @@ export function DetectionBanner({
     if (place) {
       setShow(true);
       // Trigger haptic feedback when place is detected
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.selectionAsync();
     }
   }, [place]);
 
@@ -87,7 +87,7 @@ export function DetectionBanner({
   };
 
   const handleConnect = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.selectionAsync();
     onConnect(place);
   };
 
