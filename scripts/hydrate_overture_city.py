@@ -27,11 +27,14 @@ from hydration.ai_matcher import (
 from hydration.database import upsert_city_to_registry, fetch_city_from_registry
 from hydration.geofencing import (
     fetch_city_polygons,
+    fetch_city_neighborhoods,
+    resolve_poi_neighborhood,
     compute_poi_boundary,
     export_geojson_by_category,
     AREA_CATEGORIES,
     POINT_CATEGORIES
 )
+from shapely import wkb as shapely_wkb
 
 
 def load_curation_config():
@@ -553,6 +556,15 @@ def main():
         else:
             print(f"   ⚠️ No polygons available - using fallback radius buffers")
         
+        # ====================================================================
+        # NEIGHBORHOOD ENRICHMENT: Hierarchical spatial join with divisions
+        # ====================================================================
+        print(f"\n🏘️  Loading neighborhood polygons for spatial join...")
+        neighborhoods_gdf = fetch_city_neighborhoods(bbox)
+        
+        # Track neighborhood resolution statistics
+        neighborhood_stats = {'neighborhoods': 0, 'macrohoods': 0, 'unresolved': 0}
+        
         # Track for GeoJSON export
         all_pois_with_boundaries = []
         
@@ -741,6 +753,27 @@ def main():
                         relevance_score=relevance_score
                     )
                 
+                # ============================================================
+                # NEIGHBORHOOD: Hierarchical spatial join with divisions
+                # ============================================================
+                resolved_neighborhood = row[POIColumn.NEIGHBORHOOD]  # Fallback to Overture locality
+                resolved_subtype = None
+                
+                if geom_wkb and neighborhoods_gdf is not None:
+                    try:
+                        poi_point = shapely_wkb.loads(geom_wkb)
+                        resolved_name, resolved_subtype = resolve_poi_neighborhood(poi_point, neighborhoods_gdf)
+                        if resolved_name:
+                            resolved_neighborhood = resolved_name
+                            if resolved_subtype == 'neighborhood':
+                                neighborhood_stats['neighborhoods'] += 1
+                            elif resolved_subtype == 'macrohood':
+                                neighborhood_stats['macrohoods'] += 1
+                        else:
+                            neighborhood_stats['unresolved'] += 1
+                    except Exception:
+                        neighborhood_stats['unresolved'] += 1
+                
                 # Track for GeoJSON export
                 all_pois_with_boundaries.append({
                     'name': name,
@@ -755,7 +788,7 @@ def main():
                     geom_hex,
                     row[POIColumn.STREET],
                     row[POIColumn.HOUSE_NUMBER],
-                    row[POIColumn.NEIGHBORHOOD],
+                    resolved_neighborhood,  # Use resolved neighborhood instead of Overture locality
                     city_name,
                     row[POIColumn.STATE],
                     row[POIColumn.POSTAL_CODE],
@@ -866,6 +899,15 @@ def main():
         print(f"Total inserted:      {total_inserted:,}")
         print(f"Total updated:       {total_updated:,}")
         print(f"{'='*70}")
+        
+        # NEIGHBORHOOD QUALITY LOG
+        total_classified = neighborhood_stats['neighborhoods'] + neighborhood_stats['macrohoods']
+        print(f"\n[DATA-INFO] {city_name}: {total_classified:,} bairros identificados "
+              f"({neighborhood_stats['neighborhoods']:,} neighborhoods, "
+              f"{neighborhood_stats['macrohoods']:,} macrohoods)")
+        if neighborhood_stats['unresolved'] > 0:
+            coverage_pct = (total_classified / (total_classified + neighborhood_stats['unresolved'])) * 100 if (total_classified + neighborhood_stats['unresolved']) > 0 else 0
+            print(f"   ⚠️  {neighborhood_stats['unresolved']:,} POIs sem bairro ({coverage_pct:.1f}% cobertura)")
         
         # ====================================================================
         # GEOJSON EXPORT: Generate audit files for visual verification

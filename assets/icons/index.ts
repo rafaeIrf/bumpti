@@ -23,6 +23,7 @@ export { default as FlagIcon } from "./flag.svg";
 export { default as FlameIcon } from "./flame.svg";
 export { default as GlobeIcon } from "./globe.svg";
 export { default as GraduationCapIcon } from "./graduation-cap.svg";
+export { default as GraduationIcon } from "./graduation.svg";
 export { default as HeartCrackIcon } from "./heart-crack.svg";
 export { default as HeartIcon } from "./heart.svg";
 export { default as InfoRoundedIcon } from "./info-rounded.svg";

@@ -214,6 +214,12 @@ Deno.serve(async (req) => {
         expires_at: row.expires_at,
         zodiac_sign: row.zodiac_sign,
         entry_type: row.entry_type || 'physical',
+        // University fields
+        university_id: row.university_id,
+        university_name: row.university_name,
+        university_name_custom: row.university_name_custom,
+        graduation_year: row.graduation_year,
+        show_university_on_home: row.show_university_on_home,
       };
     });
 

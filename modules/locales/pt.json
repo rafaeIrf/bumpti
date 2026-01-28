@@ -406,6 +406,7 @@
           "title": "Mais sobre você",
           "subtitle": "Informações adicionais (opcional)",
           "education": "Educação",
+          "university": "Universidade",
           "location": "Localização atual",
           "languages": "Idiomas",
           "zodiac": "Signo"
@@ -536,6 +537,14 @@
         "connect": "Conectar",
         "close": "Fechar",
         "activeUsers": "{{count}} pessoas aqui"
+      },
+      "university": {
+        "customTitle": "Nome customizado",
+        "customDescription": "Digite o nome da sua universidade",
+        "customPlaceholder": "Nome da universidade",
+        "searchOfficial": "Buscar oficial",
+        "enterCustom": "Nome customizado",
+        "selected": "Selecionado"
       },
       "toolbar": {
         "filters": "Filtros",
@@ -1032,6 +1041,8 @@
     "relationship": "Relacionamento",
     "smoking": "Hábito de fumo",
     "education": "Escolaridade",
+    "educationSection": "Educação",
+    "university": "Formação",
     "zodiac": "Signo",
     "interest": "INTERESSE",
     "favoritePlaces": "Locais favoritos",

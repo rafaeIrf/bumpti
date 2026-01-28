@@ -5,6 +5,7 @@ import {
   CigarreteIcon,
   GlobeIcon,
   GraduationCapIcon,
+  GraduationIcon,
   HeartIcon,
   MapIcon,
   MapPinIcon,
@@ -45,7 +46,8 @@ type FieldType =
   | "zodiac"
   | "smoking"
   | "gender"
-  | "relationshipStatus";
+  | "relationshipStatus"
+  | "university";
 
 interface EditRowProps {
   icon: React.ComponentType<SvgProps> | React.ComponentType<any>;
@@ -137,7 +139,7 @@ export default function ProfileEditScreen() {
 
   const professionValue = React.useMemo(() => {
     const parts = [profile?.job_title, profile?.company_name].filter(
-      Boolean
+      Boolean,
     ) as string[];
     return parts.join(" - ");
   }, [profile?.job_title, profile?.company_name]);
@@ -163,6 +165,10 @@ export default function ProfileEditScreen() {
       router.push("/main/favorite-places");
       return;
     }
+    if (field === "university") {
+      router.push("/main/university");
+      return;
+    }
     router.push({
       pathname: "/(profile)/edit/[field]",
       params: { field },
@@ -171,7 +177,7 @@ export default function ProfileEditScreen() {
 
   const getTranslatedValue = (
     field: FieldType,
-    value: string | null | undefined
+    value: string | null | undefined,
   ) => {
     if (!value) return "";
 
@@ -180,35 +186,35 @@ export default function ProfileEditScreen() {
         return (
           t(
             GENDER_OPTIONS.find((o) => o.id === value)?.labelKey ||
-              `screens.profile.options.gender.${value}`
+              `screens.profile.options.gender.${value}`,
           ) || value
         );
       case "relationshipStatus":
         return (
           t(
             RELATIONSHIP_OPTIONS.find((o) => o.id === value)?.labelKey ||
-              `screens.profile.options.relationship.${value}`
+              `screens.profile.options.relationship.${value}`,
           ) || value
         );
       case "smoking":
         return (
           t(
             SMOKING_OPTIONS.find((o) => o.id === value)?.labelKey ||
-              `screens.profile.options.smoking.${value}`
+              `screens.profile.options.smoking.${value}`,
           ) || value
         );
       case "education":
         return (
           t(
             EDUCATION_OPTIONS.find((o) => o.id === value)?.labelKey ||
-              `screens.profile.options.education.${value}`
+              `screens.profile.options.education.${value}`,
           ) || value
         );
       case "zodiac":
         return (
           t(
             ZODIAC_OPTIONS.find((o) => o.id === value)?.labelKey ||
-              `screens.profile.options.zodiac.${value}`
+              `screens.profile.options.zodiac.${value}`,
           ) || value
         );
       default:
@@ -274,11 +280,11 @@ export default function ProfileEditScreen() {
           <EditRow
             icon={HeartIcon}
             label={t(
-              "screens.profile.profileEdit.personalInfo.relationshipStatus"
+              "screens.profile.profileEdit.personalInfo.relationshipStatus",
             )}
             value={getTranslatedValue(
               "relationshipStatus",
-              profile?.relationship_key
+              profile?.relationship_key,
             )}
             onPress={() => handleFieldPress("relationshipStatus")}
           />
@@ -339,6 +345,14 @@ export default function ProfileEditScreen() {
             label={t("screens.profile.profileEdit.more.education")}
             value={getTranslatedValue("education", profile?.education_key)}
             onPress={() => handleFieldPress("education")}
+          />
+          <EditRow
+            icon={GraduationIcon}
+            label={t("screens.profile.profileEdit.more.university")}
+            value={
+              profile?.university_name || profile?.university_name_custom || ""
+            }
+            onPress={() => handleFieldPress("university")}
           />
           <EditRow
             icon={MapPinIcon}
