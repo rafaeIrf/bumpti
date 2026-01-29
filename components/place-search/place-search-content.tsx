@@ -349,77 +349,113 @@ export function PlaceSearchContent({
       />
     );
   } else if (searchQuery.trim().length === 0) {
-    content = (
-      <Animated.View entering={FadeInDown.delay(150).springify()}>
-        <ThemedView style={styles.emptyState}>
-          <ThemedView
-            style={[
-              styles.emptyIcon,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <SearchIcon width={40} height={40} color={colors.textSecondary} />
+    // University-specific empty state
+    if (categoryFilter === "university") {
+      content = (
+        <Animated.View entering={FadeInDown.delay(150).springify()}>
+          <ThemedView style={styles.emptyState}>
+            <ThemedView
+              style={[
+                styles.emptyIcon,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <SearchIcon width={40} height={40} color={colors.textSecondary} />
+            </ThemedView>
+            <ThemedText style={{ color: colors.text, fontSize: 18 }}>
+              {t("screens.universitySearch.emptyTitle")}
+            </ThemedText>
+            <ThemedText
+              style={{
+                color: colors.textSecondary,
+                textAlign: "center",
+                maxWidth: 280,
+              }}
+            >
+              {t("screens.universitySearch.emptyDescription")}
+            </ThemedText>
           </ThemedView>
-          <ThemedText style={{ color: colors.text, fontSize: 18 }}>
-            {t("screens.placeSearch.emptyTitle")}
-          </ThemedText>
-          <ThemedText
-            style={{
-              color: colors.textSecondary,
-              textAlign: "center",
-              maxWidth: 280,
-            }}
-          >
-            {t("screens.placeSearch.emptyDescription")}
-          </ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.suggestions}>
-          <ThemedText
-            style={[styles.suggestionsLabel, { color: colors.textSecondary }]}
-          >
-            {t("screens.placeSearch.suggestionsLabel")}
-          </ThemedText>
-          {["bar", "cafe", "club", "restaurant"]
-            .sort((a, b) => {
-              const textA = t(`screens.placeSearch.suggestionsOptions.${a}`);
-              const textB = t(`screens.placeSearch.suggestionsOptions.${b}`);
-              return textA.length - textB.length;
-            })
-            .map((suggestion) => (
-              <Pressable
-                key={suggestion}
-                onPress={() =>
-                  handleSearch(
-                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`),
-                  )
-                }
-              >
-                <ThemedView
-                  style={[
-                    styles.suggestionButton,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
+        </Animated.View>
+      );
+    } else {
+      // Default place search empty state
+      content = (
+        <Animated.View entering={FadeInDown.delay(150).springify()}>
+          <ThemedView style={styles.emptyState}>
+            <ThemedView
+              style={[
+                styles.emptyIcon,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <SearchIcon width={40} height={40} color={colors.textSecondary} />
+            </ThemedView>
+            <ThemedText style={{ color: colors.text, fontSize: 18 }}>
+              {t("screens.placeSearch.emptyTitle")}
+            </ThemedText>
+            <ThemedText
+              style={{
+                color: colors.textSecondary,
+                textAlign: "center",
+                maxWidth: 280,
+              }}
+            >
+              {t("screens.placeSearch.emptyDescription")}
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.suggestions}>
+            <ThemedText
+              style={[styles.suggestionsLabel, { color: colors.textSecondary }]}
+            >
+              {t("screens.placeSearch.suggestionsLabel")}
+            </ThemedText>
+            {["bar", "cafe", "club", "restaurant"]
+              .sort((a, b) => {
+                const textA = t(`screens.placeSearch.suggestionsOptions.${a}`);
+                const textB = t(`screens.placeSearch.suggestionsOptions.${b}`);
+                return textA.length - textB.length;
+              })
+              .map((suggestion) => (
+                <Pressable
+                  key={suggestion}
+                  onPress={() =>
+                    handleSearch(
+                      t(`screens.placeSearch.suggestionsOptions.${suggestion}`),
+                    )
+                  }
                 >
-                  <SearchIcon
-                    width={16}
-                    height={16}
-                    color={colors.textSecondary}
-                  />
-                  <ThemedText style={{ color: colors.text }}>
-                    {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
-                  </ThemedText>
-                </ThemedView>
-              </Pressable>
-            ))}
-        </ThemedView>
-      </Animated.View>
-    );
+                  <ThemedView
+                    style={[
+                      styles.suggestionButton,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <SearchIcon
+                      width={16}
+                      height={16}
+                      color={colors.textSecondary}
+                    />
+                    <ThemedText style={{ color: colors.text }}>
+                      {t(
+                        `screens.placeSearch.suggestionsOptions.${suggestion}`,
+                      )}
+                    </ThemedText>
+                  </ThemedView>
+                </Pressable>
+              ))}
+          </ThemedView>
+        </Animated.View>
+      );
+    }
   } else if (isFetching || locationLoading) {
     content = (
       <ThemedView style={{ paddingTop: spacing.xl, alignItems: "center" }}>

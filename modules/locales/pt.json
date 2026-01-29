@@ -930,6 +930,10 @@
       "clearButton": "Limpar busca",
       "addressFallback": "Endereço indisponível"
     },
+    "universitySearch": {
+      "emptyTitle": "Buscar universidade",
+      "emptyDescription": "Digite o nome da sua faculdade ou universidade."
+    },
     "chat": {
       "title": "Chat",
       "messages": "Mensagens",
