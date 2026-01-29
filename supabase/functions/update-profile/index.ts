@@ -726,7 +726,8 @@ Deno.serve(async (req) => {
           zodiac:zodiac_signs(key),
           smoking:smoking_habits(key),
           relationship:relationship_status(key),
-          profile_languages(language:languages(key))
+          profile_languages(language:languages(key)),
+          university:places!university_id(name, lat, lng)
         `
         )
         .eq("id", userId)
@@ -808,6 +809,7 @@ Deno.serve(async (req) => {
         smoking,
         relationship,
         profile_languages,
+        university,
         ...rest
       } = profile;
 
@@ -844,6 +846,10 @@ Deno.serve(async (req) => {
           profile_languages
             ?.map((pl: any) => pl.language?.key)
             .filter(Boolean) ?? [],
+        // University fields from joined places table
+        university_name: university?.name ?? null,
+        university_lat: university?.lat ?? null,
+        university_lng: university?.lng ?? null,
       };
     }
 

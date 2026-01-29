@@ -927,6 +927,10 @@
       "clearButton": "Limpiar búsqueda",
       "addressFallback": "Dirección no disponible"
     },
+    "universitySearch": {
+      "emptyTitle": "Buscar universidad",
+      "emptyDescription": "Escribe el nombre de tu facultad o universidad."
+    },
     "chat": {
       "title": "Chat",
       "messages": "Mensajes",

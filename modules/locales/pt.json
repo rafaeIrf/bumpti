@@ -814,8 +814,8 @@
       "bioPlaceholder": "Conte mais sobre você...",
       "bioCharacterCount": "{{count}}/500 caracteres",
       "favoritePlaces": {
-        "title": "Quais são seus spots preferidos?",
-        "subtitle": "Aumente suas conexões escolhendo seus spots favoritos.",
+        "title": "Quais são seus Spots preferidos?",
+        "subtitle": "Aumente suas conexões escolhendo seus Spots favoritos.",
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecione pelo menos 1 spot",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização."
@@ -929,6 +929,10 @@
       "noResultsDescription": "Tente buscar com outro nome ou verifique a ortografia.",
       "clearButton": "Limpar busca",
       "addressFallback": "Endereço indisponível"
+    },
+    "universitySearch": {
+      "emptyTitle": "Buscar universidade",
+      "emptyDescription": "Digite o nome da sua faculdade ou universidade."
     },
     "chat": {
       "title": "Chat",

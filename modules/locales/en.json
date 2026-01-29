@@ -927,6 +927,10 @@
       "clearButton": "Clear search",
       "addressFallback": "Address unavailable"
     },
+    "universitySearch": {
+      "emptyTitle": "Search university",
+      "emptyDescription": "Type the name of your college or university."
+    },
     "chat": {
       "title": "Chat",
       "messages": "Messages",
