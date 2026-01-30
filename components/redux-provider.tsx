@@ -48,13 +48,25 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
 
         logger.log("[Auth] Event:", event, { hasSession: !!session });
 
-        if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+        if (event === "INITIAL_SESSION") {
           if (!session) return;
 
           supabase.auth.startAutoRefresh();
 
           const ok = await validateSessionOrLogout();
           if (!ok) return;
+
+          try {
+            await fetchAndSetUserProfile();
+          } catch (err) {
+            logger.error("[Auth] Failed to load profile:", err);
+          }
+        }
+
+        if (event === "SIGNED_IN") {
+          if (!session) return;
+
+          supabase.auth.startAutoRefresh();
 
           try {
             await fetchAndSetUserProfile();
@@ -71,7 +83,7 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
           logger.warn("[Auth] User signed out");
           supabase.auth.stopAutoRefresh();
         }
-      }
+      },
     );
 
     // ---------- APP FOREGROUND / BACKGROUND ----------
@@ -79,7 +91,9 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
       if (!mounted) return;
 
       if (state === "active") {
-        logger.log("[AppState] App became active, validating session");
+        // Skip validation during onboarding (no profile yet)
+        const hasProfile = !!store.getState().profile?.data;
+        if (!hasProfile) return;
 
         const ok = await validateSessionOrLogout();
         if (!ok) return;

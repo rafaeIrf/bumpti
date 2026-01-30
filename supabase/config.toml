@@ -369,3 +369,6 @@ verify_jwt = false
 
 [functions.get-app-config]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
