@@ -109,6 +109,15 @@ Deno.serve(async (req) => {
       };
     };
 
+    // Bypass: Skip email for Apple reviewer (they use static code 000000)
+    if (user.email.toLowerCase() === "reviewer@bumpti.com") {
+      console.log(`🍎 Apple reviewer bypass - Token would be: ${email_data.token}`);
+      return new Response(JSON.stringify({ success: true, bypass: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Detectar idioma preferido (fallback para PT)
     const lang = (user.user_metadata?.lang || "pt") as "pt" | "en" | "es";
     const langContent = content[lang] || content.pt;

@@ -233,6 +233,8 @@ Deno.serve(async (req) => {
         university_active_users: universityActiveUsers,
         graduation_year: rest.graduation_year ?? null,
         show_university_on_home: rest.show_university_on_home ?? true,
+        // Include user email for client-side reviewer detection
+        email: user.email ?? null,
       };
     }
 

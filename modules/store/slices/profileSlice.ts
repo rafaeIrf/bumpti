@@ -5,6 +5,7 @@ export type VerificationStatus = "unverified" | "pending" | "verified" | "reject
 
 export type ProfileData = {
   id?: string;
+  email?: string | null;
   name?: string | null;
   birthdate?: string | null;
   gender?: string | null;
