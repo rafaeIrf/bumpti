@@ -10,6 +10,7 @@ module.exports = {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      usesAppleSignIn: true,
       googleServicesFile: "./GoogleService-Info.plist",
       bundleIdentifier: "com.bumpti",
       infoPlist: {
@@ -57,6 +58,8 @@ module.exports = {
     plugins: [
       "expo-router",
       "expo-iap",
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {

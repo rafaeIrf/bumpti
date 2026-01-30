@@ -731,7 +731,9 @@
       "title": "Conheça pessoas reais,\nem lugares reais",
       "subtitle": "Descubra e se conecte com quem frequenta os mesmos lugares que você. Faça amizades, converse e expanda sua rede social",
       "phoneAuth": "Entrar com celular",
-      "appleAuth": "Continuar com Apple ID",
+      "appleAuth": "Continuar com Apple",
+      "googleAuth": "Continuar com Google",
+      "socialAuthError": "Não foi possível fazer login. Tente novamente.",
       "termsPrefix": "Ao continuar, você concorda com nossos",
       "terms": "Termos de Uso",
       "termsAnd": "e",
@@ -861,6 +863,16 @@
       "completeExplore": "Explorar locais",
       "completeFindPlaces": "Encontre\nlugares",
       "completeConnectPeople": "Conecte-se\ncom pessoas"
+    },
+    "auth": {
+      "continueWithEmail": "Continuar com E-mail",
+      "emailInputTitle": "Entrar com seu e-mail",
+      "emailInputSubtitle": "Enviaremos um código de verificação para seu e-mail",
+      "emailPlaceholder": "seuemail@exemplo.com",
+      "invalidEmail": "Por favor, insira um e-mail válido",
+      "emailInfo": "Ao continuar, você receberá um código de 6 dígitos por e-mail.",
+      "verifyEmailSubtitle": "Enviamos um código de 6 dígitos para",
+      "emailCodeSent": "Novo código enviado para {{email}}"
     },
     "categoryResults": {
       "subtitle": "Veja os lugares mais populares da região",
