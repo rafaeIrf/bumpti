@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 module.exports = {
   expo: {
     name: "Bumpti",
@@ -38,7 +36,8 @@ module.exports = {
           },
         },
         LSApplicationQueriesSchemes: ["comgooglemaps", "waze", "maps"],
-        GIDClientID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+        GIDClientID:
+          "219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com",
       },
       appleTeamId: "V68Y42WV27",
     },
