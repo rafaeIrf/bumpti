@@ -1,17 +1,18 @@
-import { SmartphoneIcon } from "@/assets/icons";
+import { AppleIcon, GoogleIcon } from "@/assets/icons";
 import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { Colors, spacing, typography } from "@/constants/theme";
-import { useThemeColors } from "@/hooks/use-theme-colors";
+import { socialAuthService } from "@/modules/auth";
 import { t } from "@/modules/locales";
 import { openPrivacyPolicy, openTermsOfUse } from "@/utils";
+import { logger } from "@/utils/logger";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 // Welcome screen background image - also prefetched in _layout.tsx
@@ -19,8 +20,49 @@ export const WELCOME_BG_IMAGE =
   "https://images.unsplash.com/photo-1562878952-7694a555ad20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm93ZGVkJTIwYmFyJTIwc29jaWFsJTIwZ2F0aGVyaW5nfGVufDF8fHx8MTc2ODY1NzQwMHww&ixlib=rb-4.1.0&q=80&w=1080";
 
 export default function WelcomeScreen() {
-  const colors = useThemeColors();
+  const [isAppleAvailable, setIsAppleAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState<"apple" | "google" | null>(null);
 
+  useEffect(() => {
+    // Configure Google Sign-In on mount
+    socialAuthService.configureGoogle();
+
+    // Check Apple availability
+    socialAuthService.isAppleAuthAvailable().then(setIsAppleAvailable);
+  }, []);
+
+  const handleAppleAuth = async () => {
+    if (isLoading) return;
+
+    try {
+      setIsLoading("apple");
+      await socialAuthService.signInWithApple();
+      // Navigation handled by session context
+    } catch (error: any) {
+      logger.error("Apple auth error:", error);
+      // TODO: Show toast with error.message
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    if (isLoading) return;
+
+    try {
+      setIsLoading("google");
+      await socialAuthService.signInWithGoogle();
+      // Navigation handled by session context
+    } catch (error: any) {
+      logger.error("Google auth error:", error);
+      // TODO: Show toast with error.message
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  // LEGACY: Phone auth hidden but functional
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePhoneAuth = () => {
     router.push("/(auth)/phone-auth");
   };
@@ -89,12 +131,51 @@ export default function WelcomeScreen() {
             entering={FadeInDown.delay(400).duration(600)}
             style={styles.bottomContainer}
           >
-            {/* Glass Card Container */}
-
             <ThemedText style={styles.heroSubtitle}>
               {t("screens.onboarding.heroSubtitle")}
             </ThemedText>
-            {/* <View style={[styles.glassCard, { borderColor: colors.border }]}> */}
+
+            {/* Apple Sign-In Button (iOS only) */}
+            {Platform.OS === "ios" && isAppleAvailable && (
+              <Button
+                onPress={handleAppleAuth}
+                size="lg"
+                fullWidth
+                style={styles.appleButton}
+                textStyle={styles.appleButtonText}
+                disabled={isLoading !== null}
+                leftIcon={
+                  isLoading === "apple" ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <AppleIcon width={20} height={20} color="#FFFFFF" />
+                  )
+                }
+              >
+                {t("screens.onboarding.appleAuth")}
+              </Button>
+            )}
+
+            {/* Google Sign-In Button */}
+            <Button
+              onPress={handleGoogleAuth}
+              size="lg"
+              fullWidth
+              style={styles.googleButton}
+              textStyle={styles.googleButtonText}
+              disabled={isLoading !== null}
+              leftIcon={
+                isLoading === "google" ? (
+                  <ActivityIndicator size="small" color="#1F1F1F" />
+                ) : (
+                  <GoogleIcon width={20} height={20} />
+                )
+              }
+            >
+              {t("screens.onboarding.googleAuth")}
+            </Button>
+
+            {/* LEGACY: Phone auth button - hidden but functional
             <Button
               onPress={handlePhoneAuth}
               size="lg"
@@ -107,7 +188,7 @@ export default function WelcomeScreen() {
             >
               {t("screens.onboarding.phoneAuth")}
             </Button>
-            {/* </View> */}
+            */}
 
             {/* Terms and Privacy */}
             <Animated.View
@@ -200,18 +281,33 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 448,
     alignSelf: "center",
+    gap: spacing.md,
   },
-  glassCard: {
-    backgroundColor: "rgba(22, 24, 28, 0.90)",
+  // Apple Button - Black background per Apple guidelines
+  appleButton: {
+    minHeight: 56,
     borderRadius: 28,
-    padding: spacing.lg,
+    backgroundColor: "#000000",
     borderWidth: 1,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 30,
-    elevation: 10,
+    borderColor: "#333333",
   },
+  appleButtonText: {
+    ...typography.body1,
+    color: "#FFFFFF",
+  },
+  // Google Button - White background per Google guidelines
+  googleButton: {
+    minHeight: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  googleButtonText: {
+    ...typography.body1,
+    color: "#1F1F1F",
+  },
+  // LEGACY: Phone button styles kept for reference
   primaryButton: {
     minHeight: 56,
     borderRadius: 28,
@@ -223,7 +319,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   primaryButtonText: {
-    ...typography.body1, // Includes Poppins-SemiBold
+    ...typography.body1,
     color: "#FFFFFF",
   },
   termsContainer: {

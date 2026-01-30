@@ -22,6 +22,7 @@ export { default as ExclamationCircleIcon } from "./exclamation-circle.svg";
 export { default as FlagIcon } from "./flag.svg";
 export { default as FlameIcon } from "./flame.svg";
 export { default as GlobeIcon } from "./globe.svg";
+export { default as GoogleIcon } from "./google.svg";
 export { default as GraduationCapIcon } from "./graduation-cap.svg";
 export { default as GraduationIcon } from "./graduation.svg";
 export { default as HeartCrackIcon } from "./heart-crack.svg";
