@@ -2,7 +2,7 @@ import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { Resend } from "npm:resend";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
-const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
+const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET")!.replace("v1,", "");
 
 // Templates por idioma
 const templates = {

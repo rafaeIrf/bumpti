@@ -36,6 +36,7 @@ module.exports = {
           },
         },
         LSApplicationQueriesSchemes: ["comgooglemaps", "waze", "maps"],
+        GIDClientID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       },
       appleTeamId: "V68Y42WV27",
     },
