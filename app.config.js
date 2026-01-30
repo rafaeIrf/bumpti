@@ -9,7 +9,7 @@ module.exports = {
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
-      supportsTablet: true,
+      supportsTablet: false,
       usesAppleSignIn: true,
       googleServicesFile: "./GoogleService-Info.plist",
       bundleIdentifier: "com.bumpti",
