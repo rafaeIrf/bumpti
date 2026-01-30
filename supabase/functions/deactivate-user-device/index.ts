@@ -16,8 +16,13 @@ serve(async (req: Request) => {
 
   try {
     // Authenticate user from JWT
-    const { user } = await requireAuth(req);
-    const userId = user.id;
+    const authResult = await requireAuth(req);
+    
+    if (!authResult.success) {
+      return authResult.response;
+    }
+    
+    const userId = authResult.user.id;
 
     // Parse request body
     const { fcm_token } = await req.json();

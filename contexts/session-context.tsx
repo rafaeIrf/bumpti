@@ -95,7 +95,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         if (wasAuthenticated !== nowAuthenticated) {
           setProfileFetched(false);
         }
-      }
+      },
     );
 
     return () => {
@@ -113,6 +113,22 @@ export function SessionProvider({ children }: PropsWithChildren) {
         } catch (error: any) {
           logger.error("[SessionProvider] Failed to fetch profile:", error);
 
+          // Detect if profile doesn't exist yet (new user from social login)
+          const isNotFoundError =
+            error?.status === 404 ||
+            error?.message?.toLowerCase()?.includes("not found") ||
+            error?.message?.toLowerCase()?.includes("no rows");
+
+          // If profile doesn't exist, that's OK - user will go to onboarding
+          if (isNotFoundError) {
+            logger.log(
+              "[SessionProvider] No profile found - new user, will redirect to onboarding",
+            );
+            // Don't sign out, just mark as fetched so navigation can proceed
+            setProfileFetched(true);
+            return;
+          }
+
           // Detect auth errors that indicate session is invalid
           const status = error?.status || error?.context?.status;
           const isAuthError =
@@ -123,7 +139,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
           if (isAuthError) {
             logger.warn(
-              "[SessionProvider] Auth error on profile fetch, signing out"
+              "[SessionProvider] Auth error on profile fetch, signing out",
             );
             await phoneAuthService.signOut();
           }
