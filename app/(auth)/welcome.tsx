@@ -1,6 +1,5 @@
 import { AppleIcon, GoogleIcon } from "@/assets/icons";
 import { BumptiWideLogo } from "@/assets/images";
-import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { Colors, spacing, typography } from "@/constants/theme";
@@ -12,12 +11,21 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 // Welcome screen background image - also prefetched in _layout.tsx
 export const WELCOME_BG_IMAGE =
   "https://images.unsplash.com/photo-1562878952-7694a555ad20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm93ZGVkJTIwYmFyJTIwc29jaWFsJTIwZ2F0aGVyaW5nfGVufDF8fHx8MTc2ODY1NzQwMHww&ixlib=rb-4.1.0&q=80&w=1080";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
   const [isAppleAvailable, setIsAppleAvailable] = useState(false);
@@ -107,29 +115,31 @@ export default function WelcomeScreen() {
       />
 
       {/* Content */}
-      <BaseTemplateScreen
-        containerStyle={{ backgroundColor: "transparent" }}
-        useSafeArea={false}
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-          {/* Hero Content */}
-          <View style={styles.logoContainer}>
-            <BumptiWideLogo height={28} width={100} />
-          </View>
+          {/* Top Section - Logo + Hero */}
+          <View>
+            <View style={styles.logoContainer}>
+              <BumptiWideLogo height={28} width={100} />
+            </View>
 
-          <Animated.View
-            entering={FadeInUp.delay(200).duration(600)}
-            style={styles.heroContainer}
-          >
-            <ThemedText style={styles.heroTitle}>
-              {t("screens.onboarding.heroTitle1")}
-              {"\n"}
-              <ThemedText style={styles.heroTitleHighlight}>
-                {t("screens.onboarding.heroTitle2")}
+            <Animated.View
+              entering={FadeInUp.delay(200).duration(600)}
+              style={styles.heroContainer}
+            >
+              <ThemedText style={styles.heroTitle}>
+                {t("screens.onboarding.heroTitle1")}
+                {"\n"}
+                <ThemedText style={styles.heroTitleHighlight}>
+                  {t("screens.onboarding.heroTitle2")}
+                </ThemedText>
               </ThemedText>
-            </ThemedText>
-          </Animated.View>
+            </Animated.View>
+          </View>
           {/* Bottom Section - Auth Buttons */}
           <Animated.View
             entering={FadeInDown.delay(400).duration(600)}
@@ -192,21 +202,6 @@ export default function WelcomeScreen() {
               {t("screens.auth.continueWithEmail")}
             </Button>
 
-            {/* LEGACY: Phone auth button - hidden but functional
-            <Button
-              onPress={handlePhoneAuth}
-              size="lg"
-              fullWidth
-              style={styles.primaryButton}
-              textStyle={styles.primaryButtonText}
-              leftIcon={
-                <SmartphoneIcon width={20} height={20} color="#FFFFFF" />
-              }
-            >
-              {t("screens.onboarding.phoneAuth")}
-            </Button>
-            */}
-
             {/* Terms and Privacy */}
             <Animated.View
               entering={FadeInUp.delay(600).duration(500)}
@@ -228,7 +223,7 @@ export default function WelcomeScreen() {
             </Animated.View>
           </Animated.View>
         </View>
-      </BaseTemplateScreen>
+      </ScrollView>
     </View>
   );
 }
@@ -252,9 +247,11 @@ const styles = StyleSheet.create({
   gradientOverlayBottom: {
     ...StyleSheet.absoluteFillObject,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingHorizontal: 0,
-    flexGrow: 1,
+    minHeight: SCREEN_HEIGHT,
   },
   contentWrapper: {
     flex: 1,
@@ -268,6 +265,7 @@ const styles = StyleSheet.create({
   heroContainer: {
     justifyContent: "center",
     alignItems: "center",
+    marginTop: spacing.xxl,
   },
   heroTitle: {
     ...typography.heading1,
