@@ -6,6 +6,7 @@ export interface AppConfig {
   min_version: string;
   latest_version: string;
   store_url: string | null;
+  active_categories: string[];
 }
 
 /**

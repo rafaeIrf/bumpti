@@ -28,6 +28,7 @@ import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
 import { getEffectiveSortBy } from "@/modules/places/nearby-sort";
@@ -65,41 +66,27 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const allCategories: PlaceCategory[] = [
-  "bar",
-  "nightclub",
-  "cafe",
-  "restaurant",
-  "gym",
-  "university",
-  "park",
-  "museum",
-  "stadium",
-  "library",
-  "sports_centre",
-  "community_centre",
-  "event_venue",
-  "club",
-  "theatre",
-  "plaza",
-  "shopping",
-  "skate_park",
-  "language_school",
-];
-
-const getRandomVibes = (): PlaceVibe[] => {
-  const shuffled = [...PLACE_VIBES].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 3);
-};
-
-const PAGE_SIZE = 20;
-const MAX_RESULTS = 60;
-const MAX_PAGES = Math.ceil(MAX_RESULTS / PAGE_SIZE);
-
 export default function CategoryResultsScreen() {
+  // Get active categories from remote config via Redux
+  const activeCategories = useActiveCategories();
+
+  // Use activeCategories directly for filter chips - only show enabled categories
+  const allCategories: PlaceCategory[] = activeCategories;
+
   const colors = useThemeColors();
   const params = useLocalSearchParams();
   const bottomSheet = useCustomBottomSheet();
+
+  // Utility constants
+  const getRandomVibes = (): PlaceVibe[] => {
+    const shuffled = [...PLACE_VIBES].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  };
+
+  const PAGE_SIZE = 20;
+  const MAX_RESULTS = 60;
+  const MAX_PAGES = Math.ceil(MAX_RESULTS / PAGE_SIZE);
+
   const categoryName =
     typeof params.categoryName === "string" ? params.categoryName : "";
   const categoryParam = params.category;

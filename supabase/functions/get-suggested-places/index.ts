@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 interface PlacesByCategory {
@@ -71,8 +72,26 @@ serve(async (req: Request) => {
       });
     }
 
+    // Fetch active categories from app_config for feature flag enforcement
+    const activeCategories = await getActiveCategories(supabase);
+
+    // Filter requested categories to only include active ones
+    const filteredCategories = categories.filter((cat: string) => 
+      activeCategories.includes(cat)
+    );
+
+    if (filteredCategories.length === 0) {
+      return new Response(
+        JSON.stringify({ data: [] }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Execute all category queries in PARALLEL for better performance
-    const categoryPromises = categories.map(async (category: string) => {
+    const categoryPromises = filteredCategories.map(async (category: string) => {
       const { data: places, error } = await supabase.rpc("search_places_nearby", {
         user_lat: latNum,
         user_lng: lngNum,

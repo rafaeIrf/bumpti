@@ -78,6 +78,16 @@ Deno.serve(async (req) => {
             min_version: "1.0.0",
             latest_version: "1.0.0",
             store_url: null,
+            active_categories: [
+              "bar",
+              "nightclub",
+              "university",
+              "park",
+              "cafe",
+              "gym",
+              "shopping",
+              "library",
+            ],
           }),
           {
             status: 200,

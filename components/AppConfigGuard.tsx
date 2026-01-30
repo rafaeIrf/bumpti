@@ -1,5 +1,5 @@
 import { ForceUpdateScreen } from "@/components/force-update-screen";
-import { AppConfig, getAppConfig } from "@/modules/app/api";
+import { AppConfig, loadAndInitializeAppConfig } from "@/modules/app";
 import { getAppVersion } from "@/utils/app-info";
 import { logger } from "@/utils/logger";
 import { isVersionSmaller } from "@/utils/version-utils";
@@ -13,23 +13,25 @@ type VersionStatus =
   | "force_update"
   | "update_suggested";
 
-interface VersionGuardProps {
+interface AppConfigGuardProps {
   children: React.ReactNode;
 }
 
 /**
- * Provider component that enforces version control policies.
+ * Provider component that enforces version control and loads app configuration.
  *
- * Simplified version using local state (no Redux/persist).
- * Checks version on every app start and when returning from background.
+ * Responsibilities:
+ * - Checks app version and enforces mandatory updates
+ * - Loads remote app configuration (feature flags, active categories)
+ * - Initializes Redux state with active categories via app module
  *
  * Behavior:
  * - Shows blocking ForceUpdateScreen for mandatory updates
  * - Opens modal for suggested updates (once per session)
- * - Re-checks when app returns from background (to detect external updates)
+ * - Re-checks when app returns from background
  * - Renders children normally when version is acceptable
  */
-export function VersionGuard({ children }: VersionGuardProps) {
+export function AppConfigGuard({ children }: AppConfigGuardProps) {
   const [status, setStatus] = useState<VersionStatus>("loading");
   const [config, setConfig] = useState<AppConfig | null>(null);
   const hasShownSuggestionRef = useRef(false);
@@ -42,18 +44,18 @@ export function VersionGuard({ children }: VersionGuardProps) {
    */
   const checkVersion = useCallback(async () => {
     const currentVersion = getAppVersion();
-    const platform = Platform.OS as "ios" | "android";
 
-    logger.info("[VersionGuard] Checking version", {
+    logger.info("[AppConfigGuard] Checking version and loading config", {
       currentVersion,
-      platform,
+      platform: Platform.OS,
     });
 
     try {
-      const data = await getAppConfig(platform);
+      // Use the app module action to load and initialize config
+      const data = await loadAndInitializeAppConfig();
 
       if (!data) {
-        logger.warn("[VersionGuard] Failed to fetch config, allowing access");
+        logger.warn("[AppConfigGuard] Failed to fetch config, allowing access");
         setStatus("up_to_date");
         return;
       }
@@ -62,23 +64,25 @@ export function VersionGuard({ children }: VersionGuardProps) {
 
       // Determine version status
       if (isVersionSmaller(currentVersion, data.min_version)) {
-        logger.warn("[VersionGuard] Force update required", {
+        logger.warn("[AppConfigGuard] Force update required", {
           currentVersion,
           minVersion: data.min_version,
         });
         setStatus("force_update");
       } else if (isVersionSmaller(currentVersion, data.latest_version)) {
-        logger.info("[VersionGuard] Update suggested", {
+        logger.info("[AppConfigGuard] Update suggested", {
           currentVersion,
           latestVersion: data.latest_version,
         });
         setStatus("update_suggested");
       } else {
-        logger.info("[VersionGuard] App is up to date", { currentVersion });
+        logger.info("[AppConfigGuard] App is up to date", { currentVersion });
         setStatus("up_to_date");
       }
     } catch (err) {
-      logger.error("[VersionGuard] Unexpected error, allowing access", { err });
+      logger.error("[AppConfigGuard] Unexpected error, allowing access", {
+        err,
+      });
       setStatus("up_to_date");
     }
   }, []);
@@ -96,7 +100,7 @@ export function VersionGuard({ children }: VersionGuardProps) {
         appStateRef.current.match(/inactive|background/) &&
         nextAppState === "active"
       ) {
-        logger.info("[VersionGuard] App became active, re-checking version");
+        logger.info("[AppConfigGuard] App became active, re-checking version");
         checkVersion();
       }
       appStateRef.current = nextAppState;
@@ -116,7 +120,7 @@ export function VersionGuard({ children }: VersionGuardProps) {
   useEffect(() => {
     if (status === "update_suggested" && !hasShownSuggestionRef.current) {
       hasShownSuggestionRef.current = true;
-      logger.info("[VersionGuard] Showing update suggestion modal");
+      logger.info("[AppConfigGuard] Showing update suggestion modal");
 
       // Small delay to ensure navigation is ready
       const timer = setTimeout(() => {
@@ -129,7 +133,7 @@ export function VersionGuard({ children }: VersionGuardProps) {
 
   // Block app with force update screen
   if (status === "force_update") {
-    logger.warn("[VersionGuard] Blocking app - force update required");
+    logger.warn("[AppConfigGuard] Blocking app - force update required");
     return <ForceUpdateScreen storeUrl={config?.store_url} />;
   }
 

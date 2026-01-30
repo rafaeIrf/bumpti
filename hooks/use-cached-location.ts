@@ -1,8 +1,17 @@
 import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useProfile } from "@/hooks/use-profile";
 import { getUserPosition } from "@/modules/places";
 import { logger } from "@/utils/logger";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
+
+// Hardcoded location for Apple reviewer (they're in the US, but need to see Curitiba)
+const REVIEWER_LOCATION = {
+  latitude: -25.403060638964643,
+  longitude: -49.24663288211306,
+  city: "Curitiba",
+  countryCode: "BR",
+};
 
 // Cache the user location globally
 let cachedLocation: {
@@ -26,7 +35,22 @@ export const useCachedLocation = () => {
   const [loading, setLoading] = useState(!cachedLocation);
   const { hasPermission } = useLocationPermission();
 
+  // Check if current user is the reviewer using profile hook
+  const { profile } = useProfile();
+  const isReviewer = profile?.email?.toLowerCase() === "reviewer@bumpti.com";
+
+  // Set reviewer location immediately if reviewer
   useEffect(() => {
+    if (isReviewer) {
+      setLocation(REVIEWER_LOCATION);
+      setLoading(false);
+    }
+  }, [isReviewer]);
+
+  useEffect(() => {
+    // Skip location fetch for reviewer - they use hardcoded Curitiba
+    if (isReviewer) return;
+
     const fetchLocation = async () => {
       // Only fetch if we have permission
       if (!hasPermission) {
@@ -77,7 +101,7 @@ export const useCachedLocation = () => {
     };
 
     fetchLocation();
-  }, [hasPermission]);
+  }, [hasPermission, isReviewer]);
 
   return { location, loading };
 };
