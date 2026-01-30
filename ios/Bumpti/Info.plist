@@ -36,6 +36,12 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>com.googleusercontent.apps.219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
           <string>exp+bumpti</string>
         </array>
       </dict>
