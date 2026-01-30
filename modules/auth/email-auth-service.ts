@@ -51,8 +51,44 @@ class EmailAuthService {
    */
   async verifyEmailOTP(email: string, token: string): Promise<User> {
     try {
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Check for Apple reviewer bypass (static OTP stored in database)
+      // This keeps the "master password" secure in the database, not in app source code
+      const { data: isReviewer, error: rpcError } = await supabase.rpc(
+        "check_reviewer_otp",
+        {
+          p_email: normalizedEmail,
+          p_token: token,
+        }
+      );
+
+      if (rpcError) {
+        logger.warn("Reviewer check RPC failed, continuing with normal flow:", rpcError.message);
+      }
+
+      if (isReviewer === true) {
+        logger.log("🍎 Apple reviewer bypass activated");
+
+        // Reviewer uses password-based login instead of OTP
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password: "$Rev1ewer#2026!", // Set in Supabase Dashboard
+          });
+
+        if (signInError || !signInData.user) {
+          logger.error("Reviewer login failed:", signInError?.message);
+          throw signInError || new Error("Reviewer login failed");
+        }
+
+        this.verificationEmail = null;
+        return signInData.user;
+      }
+
+      // Normal flow: verify OTP with Supabase Auth
       const { data, error } = await supabase.auth.verifyOtp({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         token,
         type: "email",
       });
