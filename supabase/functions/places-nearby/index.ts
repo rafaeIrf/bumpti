@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
@@ -80,11 +81,19 @@ serve(async (req) => {
 
     const pageOffset = (pageNumber - 1) * pageSizeNumber;
 
+    // Fetch active categories from app_config for feature flag enforcement
+    const activeCategories = await getActiveCategories(supabase);
+
+    // If categories requested, use them; otherwise use active categories for "all" queries
+    const filterCategories = categoriesArray && categoriesArray.length > 0 
+      ? categoriesArray 
+      : activeCategories;
+
     const { data: places, error } = await supabase.rpc("search_places_nearby", {
       user_lat: latNum,
       user_lng: lngNum,
       radius_meters: 50 * 1000,
-      filter_categories: categoriesArray,
+      filter_categories: filterCategories,
       max_results: 60,
       requesting_user_id: requestingUserId,
       sort_by: sortByValue,

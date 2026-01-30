@@ -32,6 +32,7 @@ import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
@@ -265,8 +266,25 @@ export default function HomeScreen() {
     },
   ];
 
-  const featuredCategoriesItems = categories.slice(0, 4);
-  const browseCategories = categories.slice(4);
+  const activeCategories = useActiveCategories();
+
+  // Filter categories based on active categories from remote config
+  // Keep special categories (favorites, community_favorites, most_frequent) always visible
+  // For location-based categories, only show if at least one of its backend categories is active
+  const filteredCategories = categories.filter((cat) => {
+    // Special categories without backend mapping are always shown
+    if (!cat.category || cat.category.length === 0) {
+      return true;
+    }
+
+    // Check if any of this category's backend types are active
+    return cat.category.some((backendCat) =>
+      activeCategories.includes(backendCat as any),
+    );
+  });
+
+  const featuredCategoriesItems = filteredCategories.slice(0, 4);
+  const browseCategories = filteredCategories.slice(4);
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);

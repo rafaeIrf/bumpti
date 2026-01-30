@@ -9,13 +9,13 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
 import { AnimatedBootSplash } from "@/components/animated-bootsplash";
+import { AppConfigGuard } from "@/components/AppConfigGuard";
 import BottomSheetProvider from "@/components/BottomSheetProvider";
 import { ChatRealtimeProvider } from "@/components/chat-realtime-provider";
 import { DatabaseProvider } from "@/components/DatabaseProvider";
 import { ReduxProvider } from "@/components/redux-provider";
 import { RootNavigator } from "@/components/root-navigator";
 import { VerificationListener } from "@/components/verification-listener";
-import { VersionGuard } from "@/components/VersionGuard";
 import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
@@ -114,14 +114,14 @@ export default function RootLayout() {
               <IAPProvider>
                 <DatabaseProvider>
                   <BottomSheetProvider>
-                    <VersionGuard>
+                    <AppConfigGuard>
                       <ChatRealtimeProvider>
                         <SessionProvider>
                           <RootNavigator />
                         </SessionProvider>
                         <StatusBar style="auto" />
                       </ChatRealtimeProvider>
-                    </VersionGuard>
+                    </AppConfigGuard>
                   </BottomSheetProvider>
                 </DatabaseProvider>
               </IAPProvider>
