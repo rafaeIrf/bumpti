@@ -48,6 +48,8 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>GIDClientID</key>
+    <string>219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSApplicationQueriesSchemes</key>
