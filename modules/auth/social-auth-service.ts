@@ -47,6 +47,7 @@ class SocialAuthService {
 
     GoogleSignin.configure({
       webClientId,
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       offlineAccess: false,
     });
 
