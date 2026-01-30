@@ -864,6 +864,16 @@
       "completeFindPlaces": "Encontre\nlugares",
       "completeConnectPeople": "Conecte-se\ncom pessoas"
     },
+    "auth": {
+      "continueWithEmail": "Continuar com E-mail",
+      "emailInputTitle": "Entrar com seu e-mail",
+      "emailInputSubtitle": "Enviaremos um código de verificação para seu e-mail",
+      "emailPlaceholder": "seuemail@exemplo.com",
+      "invalidEmail": "Por favor, insira um e-mail válido",
+      "emailInfo": "Ao continuar, você receberá um código de 6 dígitos por e-mail.",
+      "verifyEmailSubtitle": "Enviamos um código de 6 dígitos para",
+      "emailCodeSent": "Novo código enviado para {{email}}"
+    },
     "categoryResults": {
       "subtitle": "Veja os lugares mais populares da região",
       "mostPopular": "Mais populares perto de você",

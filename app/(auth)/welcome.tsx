@@ -67,6 +67,10 @@ export default function WelcomeScreen() {
     router.push("/(auth)/phone-auth");
   };
 
+  const handleEmailAuth = () => {
+    router.push("/(auth)/email-input");
+  };
+
   const handleTermsPress = async () => {
     await openTermsOfUse();
   };
@@ -173,6 +177,19 @@ export default function WelcomeScreen() {
               }
             >
               {t("screens.onboarding.googleAuth")}
+            </Button>
+
+            {/* Email Auth Button (Ghost/Outline) */}
+            <Button
+              onPress={handleEmailAuth}
+              variant="ghost"
+              size="lg"
+              fullWidth
+              style={styles.emailButton}
+              textStyle={styles.emailButtonText}
+              disabled={isLoading !== null}
+            >
+              {t("screens.auth.continueWithEmail")}
             </Button>
 
             {/* LEGACY: Phone auth button - hidden but functional
@@ -306,6 +323,16 @@ const styles = StyleSheet.create({
   googleButtonText: {
     ...typography.body1,
     color: "#1F1F1F",
+  },
+  // Email Button - Ghost/Outline style for secondary option
+  emailButton: {
+    minHeight: 56,
+    borderRadius: 28,
+    backgroundColor: "transparent",
+  },
+  emailButtonText: {
+    ...typography.body1,
+    color: "#A8B3BF",
   },
   // LEGACY: Phone button styles kept for reference
   primaryButton: {

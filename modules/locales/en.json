@@ -861,6 +861,16 @@
       "completeFindPlaces": "Find\nplaces",
       "completeConnectPeople": "Connect\nwith people"
     },
+    "auth": {
+      "continueWithEmail": "Continue with Email",
+      "emailInputTitle": "Sign in with your email",
+      "emailInputSubtitle": "We'll send a verification code to your email",
+      "emailPlaceholder": "youremail@example.com",
+      "invalidEmail": "Please enter a valid email",
+      "emailInfo": "By continuing, you'll receive a 6-digit code via email.",
+      "verifyEmailSubtitle": "We sent a 6-digit code to",
+      "emailCodeSent": "New code sent to {{email}}"
+    },
     "categoryResults": {
       "subtitle": "See the most popular places in the region",
       "mostPopular": "Most popular near you",

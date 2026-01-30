@@ -5,9 +5,10 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { phoneAuthService } from "@/modules/auth";
+import { emailAuthService, phoneAuthService } from "@/modules/auth";
 import { t } from "@/modules/locales";
 import { fetchAndSetUserProfile } from "@/modules/profile/index";
+import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -23,8 +24,10 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 export default function VerifyCodeScreen() {
   const colors = useThemeColors();
 
-  const params = useLocalSearchParams<{ phone: string }>();
+  const params = useLocalSearchParams<{ phone?: string; email?: string }>();
   const phoneNumber = params.phone || "";
+  const emailAddress = params.email || "";
+  const authMode = phoneNumber ? "phone" : "email";
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,16 +35,18 @@ export default function VerifyCodeScreen() {
   const [resendTimer, setResendTimer] = useState(60);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
-  // Format phone number for display
-  const formatPhoneForDisplay = (phone: string) => {
-    // Remove +55 and format
-    const digits = phone.replace("+55", "");
-    if (digits.length === 11) {
-      return `+55 (${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(
-        7
-      )}`;
+  // Format contact info for display
+  const formatContactForDisplay = () => {
+    if (authMode === "phone") {
+      const digits = phoneNumber.replace("+55", "");
+      if (digits.length === 11) {
+        return `+55 (${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(
+          7,
+        )}`;
+      }
+      return phoneNumber;
     }
-    return phone;
+    return emailAddress;
   };
 
   // Resend timer
@@ -87,8 +92,12 @@ export default function VerifyCodeScreen() {
     setIsLoading(true);
 
     try {
-      // Verify code with Supabase
-      await phoneAuthService.verifyCode(verificationCode);
+      // Verify code with appropriate auth service
+      if (authMode === "phone") {
+        await phoneAuthService.verifyCode(verificationCode);
+      } else {
+        await emailAuthService.verifyEmailOTP(emailAddress, verificationCode);
+      }
 
       // Fetch user profile - this populates Redux store
       // SessionContext will update isReady once profile is loaded
@@ -117,16 +126,37 @@ export default function VerifyCodeScreen() {
   };
 
   const handleResend = async () => {
-    if (!canResend) return;
+    logger.log("Resend button clicked", { canResend, authMode });
+
+    if (!canResend) {
+      logger.warn("Resend blocked - timer not expired");
+      return;
+    }
 
     try {
-      await phoneAuthService.resendVerificationCode(phoneNumber);
+      logger.log("Starting resend OTP", {
+        authMode,
+        contact: formatContactForDisplay(),
+      });
+
+      if (authMode === "phone") {
+        await phoneAuthService.resendVerificationCode(phoneNumber);
+      } else {
+        logger.log("Calling emailAuthService.resendEmailOTP", { emailAddress });
+        await emailAuthService.resendEmailOTP(emailAddress);
+      }
+
+      logger.log("Resend successful");
 
       Alert.alert(
         "Sucesso",
-        t("screens.onboarding.newCodeSent", {
-          phone: formatPhoneForDisplay(phoneNumber),
-        })
+        authMode === "phone"
+          ? t("screens.onboarding.newCodeSent", {
+              phone: formatContactForDisplay(),
+            })
+          : t("screens.auth.emailCodeSent", {
+              email: formatContactForDisplay(),
+            }),
       );
 
       setCanResend(false);
@@ -134,7 +164,11 @@ export default function VerifyCodeScreen() {
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } catch (error: any) {
-      Alert.alert("Erro", error.message);
+      logger.error("Resend failed", error);
+      Alert.alert(
+        "Erro",
+        error.message || "Não foi possível reenviar o código",
+      );
     }
   };
 
@@ -168,10 +202,12 @@ export default function VerifyCodeScreen() {
           style={styles.subtitleContainer}
         >
           <ThemedText style={styles.subtitle}>
-            {t("screens.onboarding.verifyCodeSubtitle")}
+            {authMode === "phone"
+              ? t("screens.onboarding.verifyCodeSubtitle")
+              : t("screens.auth.verifyEmailSubtitle")}
           </ThemedText>
           <ThemedText style={styles.phoneNumber}>
-            {formatPhoneForDisplay(phoneNumber)}
+            {formatContactForDisplay()}
           </ThemedText>
         </Animated.View>
 

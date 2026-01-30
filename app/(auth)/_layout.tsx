@@ -15,6 +15,7 @@ export default function AuthLayout() {
     >
       <Stack.Screen name="welcome" />
       <Stack.Screen name="phone-auth" />
+      <Stack.Screen name="email-input" />
       <Stack.Screen name="verify-code" />
     </Stack>
   );
