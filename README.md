@@ -65,3 +65,14 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Change place status
+
+SELECT p.name, p.category, pr.reason, pr.description
+FROM places p
+JOIN place_reports pr ON p.id = pr.place_id
+WHERE p.active = true;
+
+UPDATE public.places
+SET active = false, updated_at = now()
+WHERE id IN (SELECT place_id FROM public.place_reports);
