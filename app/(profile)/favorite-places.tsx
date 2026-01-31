@@ -62,7 +62,7 @@ export default function EditFavoritePlacesScreen() {
     initialPlacesMap:
       initialFavorites.reduce(
         (acc: any, p: any) => ({ ...acc, [p.placeId || p.id]: p.name }),
-        {}
+        {},
       ) || {},
   });
 
@@ -83,7 +83,7 @@ export default function EditFavoritePlacesScreen() {
           dispatch(
             placesApi.util.invalidateTags([
               { type: "FavoritePlaces", id: "list" },
-            ])
+            ]),
           );
         })
         .catch((error) => {
@@ -104,6 +104,7 @@ export default function EditFavoritePlacesScreen() {
 
   return (
     <BaseTemplateScreen
+      isModal
       contentContainerStyle={{
         paddingBottom: spacing.xxl * 4,
       }}

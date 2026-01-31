@@ -30,7 +30,7 @@ export default function FavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
-  } = useFavoritePlaces({});
+  } = useFavoritePlaces({ searchPath: "./place-search" });
 
   // Check if we have no suggested places after loading completes (city not supported)
   const hasSuggestedPlaces = suggestedPlaces && suggestedPlaces.length > 0;

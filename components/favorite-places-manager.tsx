@@ -37,11 +37,13 @@ const MAX_SELECTIONS = 12;
 export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];
   initialPlacesMap?: Record<string, string>;
+  searchPath?: string; // Path to place-search screen, e.g. "/main/place-search" or "./place-search"
 }
 
 export function useFavoritePlaces({
   initialSelectedIds = [],
   initialPlacesMap = {},
+  searchPath = "/(modals)/place-search", // Default to modals/place-search so it appears on top
 }: UseFavoritePlacesProps) {
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
@@ -68,7 +70,7 @@ export function useFavoritePlaces({
           longitude: userLocation.longitude,
           categories: CATEGORIES,
         }
-      : skipToken
+      : skipToken,
   );
 
   // Treat uninitialized or fetching as loading to prevent flicker
@@ -82,7 +84,7 @@ export function useFavoritePlaces({
 
   const suggestedPlaces = React.useMemo(
     () => suggestedPlacesResponse?.data ?? [],
-    [suggestedPlacesResponse?.data]
+    [suggestedPlacesResponse?.data],
   );
 
   // Handle places selected from search screen
@@ -91,7 +93,7 @@ export function useFavoritePlaces({
       const newIds = places.map((p) => p.id);
       const newPlacesMap = places.reduce(
         (acc, p) => ({ ...acc, [p.id]: p.name }),
-        {} as Record<string, string>
+        {} as Record<string, string>,
       );
 
       setSelectedPlaceIds(newIds);
@@ -103,10 +105,10 @@ export function useFavoritePlaces({
       logger.log(
         "[FavoritePlaces] Updated selection:",
         places.length,
-        "places"
+        "places",
       );
     },
-    []
+    [],
   );
 
   const togglePlace = (placeId: string, placeName: string) => {
@@ -141,9 +143,9 @@ export function useFavoritePlaces({
       .filter((id) => placesMap[id])
       .map((id) => ({ id, name: placesMap[id] }));
 
-    // Use relative path - works from both (onboarding) and main
+    // Use provided searchPath (supports both absolute and relative paths)
     router.push({
-      pathname: "./place-search",
+      pathname: searchPath as any,
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),
@@ -310,7 +312,7 @@ export function FavoritePlacesContent({
                   <View style={styles.placeCards}>
                     {places.map((place) => {
                       const isSelected = selectedPlaceIds.includes(
-                        place.placeId
+                        place.placeId,
                       );
                       return (
                         <Pressable

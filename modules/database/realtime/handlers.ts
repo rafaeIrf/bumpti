@@ -76,6 +76,12 @@ export async function handleNewMessageBroadcast(
           const isFirstMessage = !chat.lastMessageAt;
           
           const updatedChat = chat.prepareUpdate((c: any) => {
+            logger.log(`📝 Updating chat ${chat_id}:`, {
+              lastMessageAt: created_at,
+              unreadCount: sender_id !== currentUserId ? (c.unreadCount || 0) + 1 : c.unreadCount,
+              senderId: sender_id,
+              currentUserId,
+            });
             c.lastMessageContent = content;
             c.lastMessageAt = new Date(created_at);
             if (sender_id !== currentUserId) {

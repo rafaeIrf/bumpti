@@ -265,10 +265,7 @@ const ChatListEnhanced = withObservables([], ({ database }) => ({
   // This ensures re-render when these fields change, not just when records are added/removed
   chats: database.collections
     .get<Chat>("chats")
-    .query(
-      Q.where("last_message_content", Q.notEq(null)),
-      Q.sortBy("last_message_at", Q.desc),
-    )
+    .query(Q.where("last_message_content", Q.notEq(null)))
     .observeWithColumns([
       "last_message_at",
       "unread_count",

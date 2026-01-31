@@ -138,16 +138,18 @@ export default function EditFieldScreen() {
 
       if (nextFieldKey) {
         if (nextFieldKey === "spots") {
-          router.replace("/main/favorite-places");
+          router.replace("/(profile)/favorite-places");
+        } else if (nextFieldKey === "university") {
+          router.replace("/(profile)/university");
         } else {
           router.setParams({ field: nextFieldKey });
         }
       } else {
         // All fields complete - go back to edit profile
-        router.replace("/(profile)/edit");
+        router.back();
       }
     } else {
-      router.replace("/(profile)/edit");
+      router.back();
     }
   };
 
@@ -156,7 +158,9 @@ export default function EditFieldScreen() {
     if (currentIndex !== -1 && currentIndex < PROFILE_FIELDS_ORDER.length - 1) {
       const nextField = PROFILE_FIELDS_ORDER[currentIndex + 1];
       if (nextField === "spots") {
-        router.replace("/main/favorite-places");
+        router.replace("/(profile)/favorite-places");
+      } else if (nextField === "university") {
+        router.replace("/(profile)/university");
       } else {
         router.setParams({ field: nextField });
       }

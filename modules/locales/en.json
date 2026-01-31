@@ -312,6 +312,8 @@
           "highSchoolStudent": "High school student",
           "collegeStudent": "College student",
           "graduate": "Graduate",
+          "postgraduateStudent": "Postgraduate student",
+          "postgraduateDegree": "Postgraduate degree",
           "mastersStudent": "Master's student",
           "mastersDegree": "Master's degree",
           "doctorateStudent": "Doctorate student",
@@ -710,7 +712,7 @@
         },
         "slide2": {
           "title": "Places you already know",
-          "text": "Bars, cafes, gyms, parks. Connect with people who frequent the same spots as you."
+          "text": "Bars, nightclubs, universities, cafes, gyms, and parks. Connect with people who frequent the same spots as you."
         },
         "slide3": {
           "title": "Privacy in your control",
