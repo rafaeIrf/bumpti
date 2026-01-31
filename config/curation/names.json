@@ -52,8 +52,7 @@
     "strip",
     "zona",
     "estacionamento",
-    "parking",
-    "garagem"
+    "parking"
   ],
   "suffixes_to_remove": [
     " LTDA",
