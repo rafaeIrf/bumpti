@@ -1,15 +1,20 @@
 -- Migration: Update get_current_place_candidate to return complete place info
+-- and filter by active categories passed from edge function
 -- This migration ensures the RPC returns all fields needed for PlaceDetailsBottomSheet
+-- and respects feature flags for active categories
 
 -- Drop all versions of the function (in case there are multiple signatures)
 DROP FUNCTION IF EXISTS get_current_place_candidate(uuid, float, float);
 DROP FUNCTION IF EXISTS get_current_place_candidate(float, float);
 
+
 -- Create updated function with complete place information
+-- Categories are passed from edge function (which uses getActiveCategories with built-in fallback)
 CREATE OR REPLACE FUNCTION get_current_place_candidate(
   p_user_id uuid,
   user_lat float,
-  user_lng float
+  user_lng float,
+  p_active_categories text[]
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -29,6 +34,9 @@ BEGIN
   ) THEN
     RETURN NULL; -- No suggestion if already checked in
   END IF;
+
+  -- Filter by active categories (passed from edge function)
+  -- Edge function already has fallback logic in getActiveCategories
 
   -- Return the best candidate place with full information matching places-nearby format
   -- Dismissal filtering is handled client-side
@@ -85,6 +93,7 @@ BEGIN
   ) reviews ON true
   WHERE p.boundary IS NOT NULL
     AND p.active = true
+    AND p.category = ANY(p_active_categories) -- Filter by active categories from edge function
     AND ST_Contains(
       p.boundary,
       ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)
@@ -97,7 +106,7 @@ END;
 $$;
 
 -- Grant execute permissions
-GRANT EXECUTE ON FUNCTION get_current_place_candidate(uuid, float, float) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_current_place_candidate(uuid, float, float, text[]) TO authenticated, service_role;
 
 -- Add comment
-COMMENT ON FUNCTION get_current_place_candidate IS 'Returns complete place information for detected location. Checks for active presence. Returns format compatible with PlaceDetailsBottomSheet.';
+COMMENT ON FUNCTION get_current_place_candidate IS 'Returns complete place information for detected location. Checks for active presence and filters by active categories from app_config. Returns format compatible with PlaceDetailsBottomSheet.';

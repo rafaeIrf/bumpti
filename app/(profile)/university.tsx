@@ -209,6 +209,7 @@ export default function UniversityEditScreen() {
   return (
     <BaseTemplateScreen
       hasStackHeader={false}
+      isModal
       useKeyboardAvoidingView
       contentContainerStyle={{
         paddingBottom: spacing.xxl * 3,

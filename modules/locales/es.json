@@ -312,6 +312,8 @@
           "highSchoolStudent": "Cursando secundaria",
           "collegeStudent": "Haciendo universidad",
           "graduate": "Graduado",
+          "postgraduateStudent": "Haciendo posgrado",
+          "postgraduateDegree": "Posgrado concluido",
           "mastersStudent": "Haciendo maestría",
           "mastersDegree": "Maestría completada",
           "doctorateStudent": "Haciendo doctorado",
@@ -710,7 +712,7 @@
         },
         "slide2": {
           "title": "Lugares que ya conoces",
-          "text": "Bares, cafés, gimnasios, parques. Conéctate con personas que frecuentan los mismos spots que tú."
+          "text": "Bares, discotecas, universidades, cafés, gimnasios y parques. Conéctate con personas que frecuentan los mismos spots que tú."
         },
         "slide3": {
           "title": "Privacidad bajo tu control",

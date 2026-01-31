@@ -12,6 +12,7 @@ export const PROFILE_FIELDS_ORDER = [
   "education",
   "university",
   "location",
+  "languages",
   "zodiac",
 ];
 
@@ -39,6 +40,8 @@ export function getNextMissingField(
 
     if (nextFieldKey === "spots") {
       isEmpty = !profile.favoritePlaces || profile.favoritePlaces.length === 0;
+    } else if (nextFieldKey === "languages") {
+      isEmpty = !profile.languages || profile.languages.length === 0;
     } else if (nextFieldKey === "profession") {
       const jobTitle = (profile as any).job_title;
       const companyName = (profile as any).company_name;
@@ -57,6 +60,15 @@ export function getNextMissingField(
   return null;
 }
 
+// Fields that are full screens (not modals)
+// NOTE: spots and university are now modals too (but full-screen modals with their own toolbar/bottom bar)
+const SCREEN_FIELDS = ["spots", "university"];
+
+// Check if a field is a screen-like modal or a simple field modal
+function isScreenField(field: string): boolean {
+  return SCREEN_FIELDS.includes(field);
+}
+
 export function navigateToNextProfileField(
   currentField: string,
   profile: ProfileData
@@ -64,21 +76,39 @@ export function navigateToNextProfileField(
   const nextFieldKey = getNextMissingField(currentField, profile);
 
   if (nextFieldKey) {
+    const currentIsScreen = isScreenField(currentField);
+
+    // All within the same (profile) stack now - much simpler!
     if (nextFieldKey === "spots") {
-      router.push("/main/favorite-places");
+      // Navigate to favorite-places modal
+      if (currentIsScreen) {
+        // Screen-like modal → Screen-like modal: replace
+        router.replace("/(profile)/favorite-places");
+      } else {
+        // Simple modal → Screen-like modal: replace
+        router.replace("/(profile)/favorite-places");
+      }
     } else if (nextFieldKey === "university") {
-      router.push("/main/university");
+      // Navigate to university modal
+      if (currentIsScreen) {
+        // Screen-like modal → Screen-like modal: replace
+        router.replace("/(profile)/university");
+      } else {
+        // Simple modal → Screen-like modal: replace
+        router.replace("/(profile)/university");
+      }
     } else {
-      // For modal screens, go back first
-      // The edit profile screen will handle showing the next field
-      router.back();
-      // Then push the modal
-      setTimeout(() => {
-        router.push({
+      // Navigate to simple field modal
+      if (currentIsScreen) {
+        // Screen-like modal → Simple modal: replace to field modal
+        router.replace({
           pathname: "/(profile)/edit/[field]",
           params: { field: nextFieldKey },
         });
-      }, 100);
+      } else {
+        // Simple modal → Simple modal: just update params
+        router.setParams({ field: nextFieldKey });
+      }
     }
     return;
   }

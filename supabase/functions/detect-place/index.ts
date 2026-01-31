@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
@@ -118,6 +119,9 @@ Deno.serve(async (req) => {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Fetch active categories from app_config
+    const activeCategories = await getActiveCategories(supabase);
+
     if (!user) {
       console.warn("No authenticated user found");
       return new Response(
@@ -138,6 +142,7 @@ Deno.serve(async (req) => {
         p_user_id: user.id,
         user_lat: lat,
         user_lng: lng,
+        p_active_categories: activeCategories,
       }
     );
 

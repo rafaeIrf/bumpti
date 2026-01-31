@@ -64,68 +64,35 @@ serve(async (req: Request) => {
       console.error("Error deactivating old tokens:", deactivateError);
     }
 
-    // Step 2: Check if token exists for this user
-    const { data: existingDevice, error: selectError } = await supabase
+    // Step 2: Use UPSERT to handle token registration
+    // The UNIQUE constraint on fcm_token ensures no duplicates
+    // If token exists, it updates to new user_id and reactivates
+    // If token is new, it inserts a new record
+    const { error: upsertError } = await supabase
       .from("user_devices")
-      .select("id")
-      .eq("fcm_token", fcm_token)
-      .eq("user_id", userId)
-      .maybeSingle();
+      .upsert(
+        {
+          fcm_token,
+          user_id: userId,
+          platform,
+          active: true,
+          last_active_at: now,
+        },
+        {
+          onConflict: "fcm_token",
+          ignoreDuplicates: false, // Update existing record instead of ignoring
+        }
+      );
 
-    if (selectError) {
-      console.error("Error checking existing device:", { 
-        error: selectError, 
-        userId, 
-        fcm_token: fcm_token.substring(0, 20) + "..." 
-      });
+    if (upsertError) {
+      console.error("Error upserting device:", upsertError);
       return new Response(
-        JSON.stringify({ error: "Database error" }),
+        JSON.stringify({ error: "Failed to register device" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (existingDevice) {
-      // Step 3a: Token exists for this user - update it
-      const { error: updateError } = await supabase
-        .from("user_devices")
-        .update({
-          active: true,
-          last_active_at: now,
-          platform, // Update platform in case it changed
-        })
-        .eq("id", existingDevice.id);
-
-      if (updateError) {
-        console.error("Error updating device:", updateError);
-        return new Response(
-          JSON.stringify({ error: "Failed to update device" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      console.log(`Device updated for user ${userId}`);
-    } else {
-      // Step 3b: New token - insert it
-      const { error: insertError } = await supabase
-        .from("user_devices")
-        .insert({
-          user_id: userId,
-          fcm_token,
-          platform,
-          active: true,
-          last_active_at: now,
-        });
-
-      if (insertError) {
-        console.error("Error inserting device:", insertError);
-        return new Response(
-          JSON.stringify({ error: "Failed to register device" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      console.log(`New device registered for user ${userId}`);
-    }
+    console.log(`Device registered successfully for user ${userId}`);
 
     return new Response(
       JSON.stringify({ success: true }),

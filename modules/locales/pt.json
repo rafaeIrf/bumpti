@@ -315,6 +315,8 @@
           "highSchoolStudent": "Cursando ensino médio",
           "collegeStudent": "Fazendo faculdade",
           "graduate": "Bacharelado concluído",
+          "postgraduateStudent": "Fazendo pós graduação",
+          "postgraduateDegree": "Pós concluída",
           "mastersStudent": "Fazendo mestrado",
           "mastersDegree": "Mestrado concluído",
           "doctorateStudent": "Fazendo doutorado",
@@ -713,7 +715,7 @@
         },
         "slide2": {
           "title": "Lugares que você já conhece",
-          "text": "Bares, cafés, academias, parques. Conecte-se com pessoas que frequentam os mesmos spots que você."
+          "text": "Bares, baladas, universidades, cafés, academias e parques. Conecte-se com pessoas que frequentam os mesmos spots que você."
         },
         "slide3": {
           "title": "Privacidade no seu controle",
