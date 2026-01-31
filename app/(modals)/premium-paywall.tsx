@@ -139,13 +139,11 @@ export default function PremiumPaywallScreen() {
         {/* Hero Image Section */}
         <View style={styles.heroSection}>
           <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1746003625451-fb19865e19b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
-            }}
+            source={require("@/assets/images/premium-paywall-hero.png")}
             style={styles.heroImage}
           />
           <LinearGradient
-            colors={["rgba(0, 0, 0, 0.3)", "rgba(0, 0, 0, 0.8)"]}
+            colors={["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.95)"]}
             style={styles.heroOverlay}
           />
 
