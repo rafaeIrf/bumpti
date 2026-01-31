@@ -11,7 +11,7 @@ concurrency:
 jobs:
   hydrate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90 # Increased for megacities (São Paulo ~15-20k POIs)
 
     steps:
       - name: Checkout code
