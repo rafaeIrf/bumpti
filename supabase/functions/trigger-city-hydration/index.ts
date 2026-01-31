@@ -36,19 +36,9 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const githubToken = Deno.env.get("GH_HYDRATION_TOKEN")!;
-
-    console.log(`🌍 Proactive hydration request: (${latitude}, ${longitude})`);
-
-    // Use shared helper for consistent hydration logic
     const result = await triggerCityHydrationIfNeeded(
-      supabaseUrl,
-      serviceRoleKey,
       latitude.toString(),
       longitude.toString(),
-      githubToken
     );
 
     console.log(`✅ Hydration result:`, result);
