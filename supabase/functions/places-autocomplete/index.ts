@@ -4,7 +4,6 @@ import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,17 +51,6 @@ serve(async (req) => {
       ? category.split(',').map((c: string) => c.trim())
       : activeCategories;
 
-
-
-    // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
-    // Even if results exist, trigger hydration if city is stale (>60 days)
-    if (latNum && lngNum) {
-      // Trigger in background (don't wait for result, don't block response)
-      triggerCityHydrationIfNeeded(
-        latNum.toString(),
-        lngNum.toString()
-      ).catch((err) => console.error("Hydration trigger failed:", err));
-    }
 
 
     const { data: localPlaces, error: rpcError } = await supabase.rpc("search_places_autocomplete", {

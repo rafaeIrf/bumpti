@@ -2,6 +2,8 @@ export const EDUCATION_OPTIONS = [
   { id: "high_school_student", labelKey: "screens.profile.options.education.highSchoolStudent" },
   { id: "college_student", labelKey: "screens.profile.options.education.collegeStudent" },
   { id: "graduate", labelKey: "screens.profile.options.education.graduate" },
+  { id: "postgraduate_student", labelKey: "screens.profile.options.education.postgraduateStudent" },
+  { id: "postgraduate_degree", labelKey: "screens.profile.options.education.postgraduateDegree" },
   { id: "masters_student", labelKey: "screens.profile.options.education.mastersStudent" },
   { id: "masters_degree", labelKey: "screens.profile.options.education.mastersDegree" },
   { id: "doctorate_student", labelKey: "screens.profile.options.education.doctorateStudent" },

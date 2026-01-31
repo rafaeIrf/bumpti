@@ -4,7 +4,6 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,12 +56,6 @@ serve(async (req) => {
         });
     }
     
-    // Trigger city hydration check in background
-    triggerCityHydrationIfNeeded(
-      latNum.toString(),
-      lngNum.toString()
-    ).catch((err) => console.error("Hydration trigger failed:", err));
-
     const parsedPage = Number(page);
     const pageNumber =
       Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
