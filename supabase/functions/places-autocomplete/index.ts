@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getActiveCategories } from "../_shared/get-active-categories.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { triggerCityHydrationIfNeeded } from "../_shared/triggerCityHydration.ts";
 
@@ -37,14 +38,21 @@ serve(async (req) => {
     const latNum = lat ? parseFloat(lat) : undefined;
     const lngNum = lng ? parseFloat(lng) : undefined;
     const radiusNum = 50; // Default radius 50km
-    
-    // Parse category filter (can be comma-separated for multiple categories)
-    const filterCategories = category ? category.split(',').map((c: string) => c.trim()) : null;
 
     // 1. Local Search (RPC)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch active categories from app_config
+    const activeCategories = await getActiveCategories(supabase);
+    
+    // Use user filter if provided, otherwise use active categories from feature flags
+    const filterCategories = category 
+      ? category.split(',').map((c: string) => c.trim())
+      : activeCategories;
+
+
 
     // 🔥 SWR AUTO-REFRESH: Always check city age for background updates
     // Even if results exist, trigger hydration if city is stale (>60 days)
