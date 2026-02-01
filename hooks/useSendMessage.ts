@@ -52,6 +52,12 @@ export function useSendMessage(chatId: string, currentUserId: string) {
           const isFirstMessage = !chat.lastMessageAt;
 
           // Use batch for atomic operations
+          // NOTE: We intentionally do NOT update the chat's lastMessageContent here
+          // because prepareUpdate marks the record as "dirty" for sync.
+          // When sync happens, WatermelonDB would preserve local dirty changes
+          // instead of applying server data, causing stale lastMessageContent.
+          // The realtime broadcast handler in handlers.ts will update the chat
+          // when the server confirms the message.
           const batch: any[] = [
             messagesCollection.prepareCreate((message: any) => {
               message._raw.id = messageId; // Use our generated UUID directly
@@ -60,10 +66,6 @@ export function useSendMessage(chatId: string, currentUserId: string) {
               message.content = content.trim();
               message.status = "pending";
               message.createdAt = new Date();
-            }),
-            chat.prepareUpdate((c: any) => {
-              c.lastMessageContent = content.trim();
-              c.lastMessageAt = new Date();
             }),
           ];
 
@@ -105,7 +107,10 @@ export function useSendMessage(chatId: string, currentUserId: string) {
         if (error) throw error;
         if (!data) throw new Error("No data returned from backend");
 
-        // 3. Mark as sent (no ID replacement needed!)
+        // 3. Mark message as sent
+        // NOTE: We no longer update chat.lastMessageContent here
+        // The ChatListItem derives the preview directly from the latest message
+        // via withObservables, avoiding sync conflicts
         const serverTimestamp = data?.messages?.created?.[0]?.created_at;
 
         await database.write(async () => {

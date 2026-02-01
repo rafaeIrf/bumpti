@@ -1,5 +1,5 @@
 import { Model, Q, Query } from '@nozbe/watermelondb';
-import { children, date, field, readonly } from '@nozbe/watermelondb/decorators';
+import { children, date, field, lazy, readonly } from '@nozbe/watermelondb/decorators';
 import Message from './Message';
 
 export default class Chat extends Model {
@@ -22,6 +22,15 @@ export default class Chat extends Model {
   @readonly @date('synced_at') syncedAt!: Date;
 
   @children('messages') messages!: Query<Message>;
+
+  /**
+   * Query para obter a última mensagem do chat (para preview)
+   * Usando @lazy para evitar recriação desnecessária da query
+   */
+  @lazy latestMessageQuery = this.messages.extend(
+    Q.sortBy('created_at', Q.desc),
+    Q.take(1)
+  );
 
   /**
    * Marca todas as mensagens do chat como lidas
