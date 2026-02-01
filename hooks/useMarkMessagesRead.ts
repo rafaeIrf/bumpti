@@ -38,6 +38,26 @@ export function useMarkMessagesRead() {
 
         logger.log(`✅ Marked ${unreadMessages.length} messages as read`);
 
+        // Update iOS app badge to reflect remaining unread count
+        // Import dynamically to avoid circular dependencies
+        import('@/modules/notifications').then(async ({ setAppBadge }) => {
+          try {
+            // Query remaining unread messages from other users
+            const { Q } = await import('@nozbe/watermelondb');
+            const remainingUnread = await database
+              .get<Message>('messages')
+              .query(
+                Q.where('read_at', null),
+                Q.where('sender_id', Q.notEq(userId))
+              )
+              .fetchCount();
+            
+            await setAppBadge(remainingUnread);
+          } catch (e) {
+            logger.warn('Failed to update app badge:', e);
+          }
+        });
+
         // Notify backend (non-blocking)
         markMessagesReadApi({ chatId }).catch((err) => {
           logger.error('Failed to mark messages read on backend:', err);

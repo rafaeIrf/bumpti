@@ -177,6 +177,30 @@ export async function cancelAllNotifications() {
 }
 
 /**
+ * Clear the app icon badge count (sets to 0)
+ * Call this when the app comes to foreground or when messages are read
+ */
+export async function clearAppBadge() {
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    console.error("Error clearing app badge:", error);
+  }
+}
+
+/**
+ * Set the app icon badge count to a specific number
+ * Use this to reflect the actual unread message count
+ */
+export async function setAppBadge(count: number) {
+  try {
+    await Notifications.setBadgeCountAsync(Math.max(0, count));
+  } catch (error) {
+    console.error("Error setting app badge:", error);
+  }
+}
+
+/**
  * Open device settings for notification permissions
  */
 export async function openNotificationSettings() {
