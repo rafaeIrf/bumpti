@@ -53,28 +53,16 @@ export async function handleNewMessageBroadcast(
           batch.push(newMessage);
         }
 
-        // 2. Prepare chat update (ONLY unreadCount)
-        // NOTE: We no longer update lastMessageContent/lastMessageAt here.
-        // The ChatListItem derives the preview directly from the latest message
-        // via withObservables, avoiding sync conflicts where local updates
-        // would be preserved over server data.
+        // 2. Handle first message match update and chat lookup
+        // NOTE: We no longer update unreadCount or lastMessageContent here.
+        // - The ChatListItem derives the preview from the latest message via withObservables
+        // - The unread badge is derived from messages with read_at = null
+        // This avoids sync conflicts where local updates would block server values.
         try {
           const chat = await chatsCollection.find(chat_id);
           const isFirstMessage = !chat.lastMessageAt;
           
-          // Only increment unread count for messages from others
-          if (sender_id !== currentUserId) {
-            const updatedChat = chat.prepareUpdate((c: any) => {
-              logger.log(`📝 Updating chat unread count ${chat_id}:`, {
-                unreadCount: (c.unreadCount || 0) + 1,
-                senderId: sender_id,
-              });
-              c.unreadCount = (c.unreadCount || 0) + 1;
-            });
-            batch.push(updatedChat);
-          }
-          
-          // 3. If first message, also update the match
+          // If first message, update the match with first_message_at
           if (isFirstMessage && chat.matchId) {
             try {
               const matchesCollection = database.collections.get<Match>('matches');
@@ -93,7 +81,7 @@ export async function handleNewMessageBroadcast(
           shouldSyncAfter = true;
         }
 
-        // 4. Execute all operations atomically
+        // 3. Execute all operations atomically
         if (batch.length > 0) {
           await database.batch(...batch);
         }
@@ -103,40 +91,28 @@ export async function handleNewMessageBroadcast(
       if (error?.message?.includes('UNIQUE constraint failed') || 
           error?.message?.includes('SQLITE_CONSTRAINT_PRIMARYKEY')) {
         // Silently ignore - this is expected when broadcast and sync arrive simultaneously
-        // But still update the unread count for messages from others
-        if (sender_id !== currentUserId) {
-          try {
-            await database.write(async () => {
-              const chat = await chatsCollection.find(chat_id);
-              const isFirstMessage = !chat.lastMessageAt;
-              const batchForConstraint: any[] = [];
-              
-              // Only update unread count - preview is derived from messages
-              const updatedChat = chat.prepareUpdate((c: any) => {
-                c.unreadCount = (c.unreadCount || 0) + 1;
-              });
-              batchForConstraint.push(updatedChat);
-              
-              // If first message, also update the match
-              if (isFirstMessage && chat.matchId) {
-                try {
-                  const matchesCollection = database.collections.get<Match>('matches');
-                  const match = await matchesCollection.find(chat.matchId);
-                  const updatedMatch = match.prepareUpdate((m: any) => {
-                    m.firstMessageAt = new Date(created_at);
-                  });
-                  batchForConstraint.push(updatedMatch);
-                  logger.log(`✅ Will update match ${chat.matchId} with first_message_at (constraint error path)`);
-                } catch (matchError) {
-                  logger.warn(`Could not find match ${chat.matchId} to update:`, matchError);
-                }
+        // The message was already inserted by sync, so we just need to potentially update the match
+        try {
+          await database.write(async () => {
+            const chat = await chatsCollection.find(chat_id);
+            const isFirstMessage = !chat.lastMessageAt;
+            
+            // If first message, update the match with first_message_at
+            if (isFirstMessage && chat.matchId) {
+              try {
+                const matchesCollection = database.collections.get<Match>('matches');
+                const match = await matchesCollection.find(chat.matchId);
+                await match.update((m: any) => {
+                  m.firstMessageAt = new Date(created_at);
+                });
+                logger.log(`✅ Updated match ${chat.matchId} with first_message_at (constraint error path)`);
+              } catch (matchError) {
+                logger.warn(`Could not find match ${chat.matchId} to update:`, matchError);
               }
-              
-              await database.batch(...batchForConstraint);
-            });
-          } catch (chatError) {
-            logger.error('Failed to update chat after constraint error:', chatError);
-          }
+            }
+          });
+        } catch (chatError) {
+          logger.error('Failed to update match after constraint error:', chatError);
         }
       } else {
         // Re-throw other errors

@@ -33,6 +33,16 @@ export default class Chat extends Model {
   );
 
   /**
+   * Query para obter mensagens não lidas (para badge/indicator)
+   * Filtra mensagens onde read_at é null
+   * Nota: O filtro por sender_id (não ser o usuário atual) é feito no componente
+   * pois o model não tem acesso ao userId atual
+   */
+  @lazy unreadMessagesQuery = this.messages.extend(
+    Q.where('read_at', null)
+  );
+
+  /**
    * Marca todas as mensagens do chat como lidas
    */
   async markAllAsRead(): Promise<void> {

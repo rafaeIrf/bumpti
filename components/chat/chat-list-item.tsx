@@ -5,6 +5,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import type Chat from "@/modules/database/models/Chat";
 import type Message from "@/modules/database/models/Message";
 import { t } from "@/modules/locales";
+import { getUserId } from "@/modules/profile";
 import { withObservables } from "@nozbe/watermelondb/react";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -16,18 +17,28 @@ type Props = {
 
 type EnhancedProps = Props & {
   readonly latestMessage: Message[];
+  readonly unreadMessages: Message[];
 };
 
 /**
  * Inner component that receives the observed data
  */
-function ChatListItemInner({ chat, onPress, latestMessage }: EnhancedProps) {
+function ChatListItemInner({
+  chat,
+  onPress,
+  latestMessage,
+  unreadMessages,
+}: EnhancedProps) {
   const colors = useThemeColors();
+  const userId = getUserId();
 
   // Derive preview from latest message (reactive) with fallback to stored field
   const previewContent = latestMessage[0]?.content ?? chat.lastMessageContent;
   const previewTime =
     latestMessage[0]?.createdAt ?? chat.lastMessageAt ?? chat.createdAt;
+
+  // Derive hasUnread from unread messages (only count messages from others)
+  const hasUnread = unreadMessages.some((m) => m.senderId !== userId);
 
   return (
     <Pressable onPress={() => onPress(chat)}>
@@ -35,7 +46,7 @@ function ChatListItemInner({ chat, onPress, latestMessage }: EnhancedProps) {
         <UserAvatar
           name={chat.otherUserName}
           photoUrl={chat.otherUserPhotoUrl ?? undefined}
-          hasUnread={chat.unreadCount > 0}
+          hasUnread={hasUnread}
         />
         <View style={styles.chatInfo}>
           <ThemedText style={[typography.body1, { color: colors.text }]}>
@@ -64,12 +75,13 @@ function ChatListItemInner({ chat, onPress, latestMessage }: EnhancedProps) {
 }
 
 /**
- * HOC that observes the latest message for this chat
- * This makes the preview reactive to message changes without updating the Chat model
+ * HOC that observes the latest message and unread messages for this chat
+ * This makes the preview and badge reactive to message changes without updating the Chat model
  */
 const enhance = withObservables(["chat"], ({ chat }: Props) => ({
   chat,
   latestMessage: chat.latestMessageQuery.observe(),
+  unreadMessages: chat.unreadMessagesQuery.observe(),
 }));
 
 export const ChatListItem = enhance(ChatListItemInner);
