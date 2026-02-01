@@ -70,8 +70,6 @@ export async function sendPushNotification({
       .neq("sender_id", userId)  // Messages not sent by this user = received messages
       .is("read_at", null);
     
-    console.log(`[Push] Unread count for ${userId}: ${count}, error: ${error?.message}`);
-    
     if (count !== null && count > 0) {
       unreadBadgeCount = count;
     }
