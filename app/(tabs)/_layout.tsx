@@ -16,37 +16,38 @@ import { usePendingLikesPrefetch } from "@/hooks/use-pending-likes-prefetch";
 import { useProfile } from "@/hooks/use-profile";
 import { useProfilePrefetch } from "@/hooks/use-profile-prefetch";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
-import type Chat from "@/modules/database/models/Chat";
+import type Message from "@/modules/database/models/Message";
+import { Q } from "@nozbe/watermelondb";
 import { View } from "react-native";
-
-// ... existing imports
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  useProfile(); // Preload profile data into Redux
+  const { profile } = useProfile(); // Preload profile data into Redux
   useProfilePrefetch(); // Background prefetch images
   usePendingLikesPrefetch();
 
   const database = useDatabase();
   const [unreadCount, setUnreadCount] = useState(0);
+  const userId = profile?.id;
 
+  // Derive unread count directly from messages table
+  // This avoids WatermelonDB sync conflicts where local updates to Chat.unreadCount
+  // would be preserved over server values due to "per-column client-wins" strategy
   useEffect(() => {
+    if (!userId) return;
+
     const subscription = database.collections
-      .get<Chat>("chats")
-      .query()
-      .observe()
-      .subscribe((chats) => {
-        const count = chats.reduce(
-          (acc, chat) => acc + (chat.unreadCount || 0),
-          0,
-        );
+      .get<Message>("messages")
+      .query(Q.where("read_at", null), Q.where("sender_id", Q.notEq(userId)))
+      .observeCount()
+      .subscribe((count) => {
         setUnreadCount(count);
       });
 
     return () => subscription.unsubscribe();
-  }, [database]);
+  }, [database, userId]);
 
   return (
     <Tabs

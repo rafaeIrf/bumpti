@@ -7,27 +7,6 @@ import { requestReviewAfterFirstMatch } from '@/utils/review';
 import { Database, Q } from '@nozbe/watermelondb';
 
 /**
- * Debounce para agrupar múltiplos syncs em um único
- * Útil quando vários matches/chats são criados rapidamente
- */
-let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const SYNC_DEBOUNCE_MS = 500; // 500ms de debounce
-
-function debouncedSync(database: Database): void {
-  if (syncDebounceTimer) {
-    clearTimeout(syncDebounceTimer);
-  }
-  
-  syncDebounceTimer = setTimeout(() => {
-    logger.log('🔄 Executing debounced sync...');
-    syncDatabase(database).catch((err) => {
-      logger.error('Debounced sync failed:', err);
-    });
-    syncDebounceTimer = null;
-  }, SYNC_DEBOUNCE_MS);
-}
-
-/**
  * Processa broadcast de nova mensagem
  * Insere diretamente no WatermelonDB
  */
@@ -41,9 +20,13 @@ export async function handleNewMessageBroadcast(
   try {
     const { id, chat_id, sender_id, content, created_at, status } = payload;
 
-    // Ignore own messages to avoid duplicate handling (already in local DB)
+    // For own messages: skip entirely
+    // We intentionally do NOT update the chat here because prepareUpdate marks
+    // the record as "dirty" for WatermelonDB sync. When sync happens later,
+    // WatermelonDB preserves dirty local changes instead of applying server data,
+    // causing stale lastMessageContent. The sender's chat will be updated by sync.
     if (sender_id === currentUserId) {
-      logger.log('Ignoring own message from broadcast:', id);
+      logger.log('Skipping own message broadcast (chat will sync from server):', id);
       return;
     }
 
@@ -70,27 +53,16 @@ export async function handleNewMessageBroadcast(
           batch.push(newMessage);
         }
 
-        // 2. Prepare chat update
+        // 2. Handle first message match update and chat lookup
+        // NOTE: We no longer update unreadCount or lastMessageContent here.
+        // - The ChatListItem derives the preview from the latest message via withObservables
+        // - The unread badge is derived from messages with read_at = null
+        // This avoids sync conflicts where local updates would block server values.
         try {
           const chat = await chatsCollection.find(chat_id);
           const isFirstMessage = !chat.lastMessageAt;
           
-          const updatedChat = chat.prepareUpdate((c: any) => {
-            logger.log(`📝 Updating chat ${chat_id}:`, {
-              lastMessageAt: created_at,
-              unreadCount: sender_id !== currentUserId ? (c.unreadCount || 0) + 1 : c.unreadCount,
-              senderId: sender_id,
-              currentUserId,
-            });
-            c.lastMessageContent = content;
-            c.lastMessageAt = new Date(created_at);
-            if (sender_id !== currentUserId) {
-              c.unreadCount = (c.unreadCount || 0) + 1;
-            }
-          });
-          batch.push(updatedChat);
-          
-          // 3. If first message, also update the match
+          // If first message, update the match with first_message_at
           if (isFirstMessage && chat.matchId) {
             try {
               const matchesCollection = database.collections.get<Match>('matches');
@@ -109,7 +81,7 @@ export async function handleNewMessageBroadcast(
           shouldSyncAfter = true;
         }
 
-        // 4. Execute all operations atomically
+        // 3. Execute all operations atomically
         if (batch.length > 0) {
           await database.batch(...batch);
         }
@@ -119,41 +91,28 @@ export async function handleNewMessageBroadcast(
       if (error?.message?.includes('UNIQUE constraint failed') || 
           error?.message?.includes('SQLITE_CONSTRAINT_PRIMARYKEY')) {
         // Silently ignore - this is expected when broadcast and sync arrive simultaneously
-        // But still update the chat
+        // The message was already inserted by sync, so we just need to potentially update the match
         try {
           await database.write(async () => {
             const chat = await chatsCollection.find(chat_id);
             const isFirstMessage = !chat.lastMessageAt;
-            const batchForConstraint: any[] = [];
             
-            const updatedChat = chat.prepareUpdate((c: any) => {
-              c.lastMessageContent = content;
-              c.lastMessageAt = new Date(created_at);
-              if (sender_id !== currentUserId) {
-                c.unreadCount = (c.unreadCount || 0) + 1;
-              }
-            });
-            batchForConstraint.push(updatedChat);
-            
-            // If first message, also update the match
+            // If first message, update the match with first_message_at
             if (isFirstMessage && chat.matchId) {
               try {
                 const matchesCollection = database.collections.get<Match>('matches');
                 const match = await matchesCollection.find(chat.matchId);
-                const updatedMatch = match.prepareUpdate((m: any) => {
+                await match.update((m: any) => {
                   m.firstMessageAt = new Date(created_at);
                 });
-                batchForConstraint.push(updatedMatch);
-                logger.log(`✅ Will update match ${chat.matchId} with first_message_at (constraint error path)`);
+                logger.log(`✅ Updated match ${chat.matchId} with first_message_at (constraint error path)`);
               } catch (matchError) {
                 logger.warn(`Could not find match ${chat.matchId} to update:`, matchError);
               }
             }
-            
-            await database.batch(...batchForConstraint);
           });
         } catch (chatError) {
-          logger.error('Failed to update chat after constraint error:', chatError);
+          logger.error('Failed to update match after constraint error:', chatError);
         }
       } else {
         // Re-throw other errors

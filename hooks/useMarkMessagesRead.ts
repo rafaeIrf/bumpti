@@ -1,6 +1,5 @@
 import { useDatabase } from '@/components/DatabaseProvider';
 import { markMessagesRead as markMessagesReadApi } from '@/modules/chats/api';
-import Chat from '@/modules/database/models/Chat';
 import type Message from '@/modules/database/models/Message';
 import { logger } from '@/utils/logger';
 import { useCallback } from 'react';
@@ -24,27 +23,40 @@ export function useMarkMessagesRead() {
       if (unreadMessages.length === 0) return;
 
       try {
-        const chatsCollection = database.collections.get<Chat>('chats');
-        const chat = await chatsCollection.find(chatId);
-
-        // Use batch for atomic operation: mark messages + zero unread count
+        // Mark messages as read locally
+        // The unread badge is derived from messages with read_at = null,
+        // so updating read_at here will automatically update the badge
         await database.write(async () => {
           const now = new Date();
-          const batch = [
-            ...unreadMessages.map((msg) =>
-              msg.prepareUpdate((m) => {
-                m.readAt = now;
-              })
-            ),
-            // Zero unread count locally
-            chat.prepareUpdate((c: any) => {
-              c.unreadCount = 0;
-            }),
-          ];
+          const batch = unreadMessages.map((msg) =>
+            msg.prepareUpdate((m) => {
+              m.readAt = now;
+            })
+          );
           await database.batch(...batch);
         });
 
         logger.log(`✅ Marked ${unreadMessages.length} messages as read`);
+
+        // Update iOS app badge to reflect remaining unread count
+        // Import dynamically to avoid circular dependencies
+        import('@/modules/notifications').then(async ({ setAppBadge }) => {
+          try {
+            // Query remaining unread messages from other users
+            const { Q } = await import('@nozbe/watermelondb');
+            const remainingUnread = await database
+              .get<Message>('messages')
+              .query(
+                Q.where('read_at', null),
+                Q.where('sender_id', Q.notEq(userId))
+              )
+              .fetchCount();
+            
+            await setAppBadge(remainingUnread);
+          } catch (e) {
+            logger.warn('Failed to update app badge:', e);
+          }
+        });
 
         // Notify backend (non-blocking)
         markMessagesReadApi({ chatId }).catch((err) => {
@@ -59,4 +71,3 @@ export function useMarkMessagesRead() {
 
   return { markMessagesAsRead };
 }
-

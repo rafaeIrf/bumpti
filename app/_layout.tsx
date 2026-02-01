@@ -21,6 +21,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
+import { clearAppBadge } from "@/modules/notifications";
 import { prefetchImage } from "@/utils/image-prefetch";
 import {
   Poppins_400Regular,
@@ -30,7 +31,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/poppins";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { AppState, type AppStateStatus, StyleSheet, View } from "react-native";
 import RNBootSplash from "react-native-bootsplash";
 import { WELCOME_BG_IMAGE } from "./(auth)/welcome";
 
@@ -60,6 +61,25 @@ export default function RootLayout() {
 
   // Initialize FCM registration
   useFCMRegistration();
+
+  // Clear iOS app badge when app comes to foreground
+  // iOS badge is independent from notification center - must be cleared explicitly
+  useEffect(() => {
+    // Clear badge on mount (app opened)
+    clearAppBadge();
+
+    // Clear badge when app returns from background
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextState: AppStateStatus) => {
+        if (nextState === "active") {
+          clearAppBadge();
+        }
+      },
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   // Start animated splash hide when fonts are loaded and navigation is ready
   // Following best practices from react-native-bootsplash documentation

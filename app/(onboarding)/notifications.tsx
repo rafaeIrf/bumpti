@@ -7,6 +7,7 @@ import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { registerDeviceToken } from "@/modules/notifications";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -42,10 +43,10 @@ export default function NotificationsScreen() {
           withTiming(10, { duration: 100 }),
           withTiming(-10, { duration: 100 }),
           withTiming(0, { duration: 100 }),
-          withTiming(0, { duration: 2000 })
+          withTiming(0, { duration: 2000 }),
         ),
-        -1
-      )
+        -1,
+      ),
     );
   }, [bellRotation]);
 
@@ -61,6 +62,10 @@ export default function NotificationsScreen() {
       if (result.status === "granted") {
         onboardingActions.setNotificationPermission(true);
 
+        // Register FCM token immediately after permission granted
+        // This ensures the user doesn't need to restart the app
+        registerDeviceToken();
+
         setTimeout(() => {
           completeCurrentStep("notifications");
           setIsRequesting(false);
@@ -69,7 +74,7 @@ export default function NotificationsScreen() {
         // Permissão negada
         Alert.alert(
           t("screens.onboarding.notificationsDeniedTitle"),
-          t("screens.onboarding.notificationsDeniedMessage")
+          t("screens.onboarding.notificationsDeniedMessage"),
         );
         setIsRequesting(false);
       }
@@ -77,7 +82,7 @@ export default function NotificationsScreen() {
       console.error("Error requesting notification permission:", error);
       Alert.alert(
         t("common.error"),
-        t("screens.onboarding.notificationsError")
+        t("screens.onboarding.notificationsError"),
       );
       setIsRequesting(false);
     }

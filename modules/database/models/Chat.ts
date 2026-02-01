@@ -1,5 +1,5 @@
 import { Model, Q, Query } from '@nozbe/watermelondb';
-import { children, date, field, readonly } from '@nozbe/watermelondb/decorators';
+import { children, date, field, lazy, readonly } from '@nozbe/watermelondb/decorators';
 import Message from './Message';
 
 export default class Chat extends Model {
@@ -22,6 +22,25 @@ export default class Chat extends Model {
   @readonly @date('synced_at') syncedAt!: Date;
 
   @children('messages') messages!: Query<Message>;
+
+  /**
+   * Query para obter a última mensagem do chat (para preview)
+   * Usando @lazy para evitar recriação desnecessária da query
+   */
+  @lazy latestMessageQuery = this.messages.extend(
+    Q.sortBy('created_at', Q.desc),
+    Q.take(1)
+  );
+
+  /**
+   * Query para obter mensagens não lidas (para badge/indicator)
+   * Filtra mensagens onde read_at é null
+   * Nota: O filtro por sender_id (não ser o usuário atual) é feito no componente
+   * pois o model não tem acesso ao userId atual
+   */
+  @lazy unreadMessagesQuery = this.messages.extend(
+    Q.where('read_at', null)
+  );
 
   /**
    * Marca todas as mensagens do chat como lidas

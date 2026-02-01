@@ -59,6 +59,24 @@ export async function sendPushNotification({
     return { skipped: true, reason: "user_settings" };
   }
 
+  // Get real unread message count for badge (Apple/Google best practice for chat apps)
+  // Badge should reflect actual unread count, not just "1"
+  // Note: messages table has sender_id but not receiver_id - we count unread messages NOT sent by this user
+  let unreadBadgeCount = 1; // Default fallback
+  try {
+    const { count, error } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .neq("sender_id", userId)  // Messages not sent by this user = received messages
+      .is("read_at", null);
+    
+    if (count !== null && count > 0) {
+      unreadBadgeCount = count;
+    }
+  } catch (e) {
+    console.warn("[Push] Failed to get unread count, using default badge", e);
+  }
+
   // 2. Anti-Spam (TTL Check)
   // Only for activity types, messages/matches are immediate
   if (type.includes("activity")) {
@@ -155,7 +173,7 @@ export async function sendPushNotification({
         payload: {
           aps: {
             sound: "default",
-            badge: 1,
+            badge: unreadBadgeCount,
             contentAvailable: 1
           }
         }
