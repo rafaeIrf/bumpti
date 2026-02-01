@@ -1,6 +1,7 @@
 import { SearchIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { LocationPermissionState } from "@/components/location-permission-state";
+import { MapDataAttribution } from "@/components/map-data-attribution";
 import { PlaceCard } from "@/components/place-card";
 import { PlacesEmptyState } from "@/components/places-empty-state";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -471,6 +472,7 @@ export function PlaceSearchContent({
         renderItem={renderResult}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
+        ListFooterComponent={<MapDataAttribution />}
       />
     );
   } else {
