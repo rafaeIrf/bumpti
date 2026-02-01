@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import React from "react";
@@ -24,6 +25,7 @@ export function MapDataAttribution() {
 
 const styles = StyleSheet.create({
   attribution: {
+    marginTop: spacing.xxl + spacing.sm, // 30px (xxl = 24px + sm = 6px)
     fontSize: 10,
     textAlign: "center",
     lineHeight: 14,
