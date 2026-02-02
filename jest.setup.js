@@ -1,4 +1,14 @@
 global.__DEV__ = true;
+
+// Mock WatermelonDB decorators to prevent initialization errors in tests
+jest.mock("@nozbe/watermelondb/decorators/lazy", () => ({
+  __esModule: true,
+  default: () => (target, key, descriptor) => {
+    // Return a simple decorator that doesn't try to access properties during class definition
+    return descriptor || {};
+  },
+}));
+
 jest.mock("@nozbe/watermelondb/adapters/sqlite", () => ({
   __esModule: true,
   default: function MockSQLiteAdapter() {},
@@ -11,7 +21,9 @@ jest.mock("expo-crypto", () => ({
 
 jest.mock("react-native-keychain", () => ({
   __esModule: true,
-  ACCESSIBLE: { WHEN_UNLOCKED_THIS_DEVICE_ONLY: "WHEN_UNLOCKED_THIS_DEVICE_ONLY" },
+  ACCESSIBLE: {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: "WHEN_UNLOCKED_THIS_DEVICE_ONLY",
+  },
   getGenericPassword: async () => null,
   setGenericPassword: async () => true,
   resetGenericPassword: async () => true,
@@ -29,7 +41,6 @@ jest.mock("expo-image", () => ({
   },
 }));
 
-jest.mock(
-  "@react-native-async-storage/async-storage",
-  () => require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
 );
