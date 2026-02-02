@@ -1,8 +1,8 @@
 import type LikerId from "@/modules/database/models/LikerId";
+import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import type { Database } from "@nozbe/watermelondb";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { supabase } from "@/modules/supabase/client";
 
 function registerLikerIdsRealtime(params: {
   channel: RealtimeChannel;
