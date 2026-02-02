@@ -137,22 +137,22 @@ async function checkTriggerConditions(): Promise<TriggerCheckResult> {
   try {
     const data = await getRatingData();
 
-    // If user already rated positively, never show again
-    if (data.hasRatedPositively) {
-      logger.log("User already rated positively, skipping");
-      return { shouldShow: false, triggerType: null };
-    }
+    // TEMP: Commented for testing - re-enable for production
+    // if (data.hasRatedPositively) {
+    //   logger.log("User already rated positively, skipping");
+    //   return { shouldShow: false, triggerType: null };
+    // }
 
-    // Check 90-day cooldown
-    if (data.lastRequestAt) {
-      const daysSinceLastRequest = daysSince(data.lastRequestAt);
-      if (daysSinceLastRequest < COOLDOWN_DAYS) {
-        logger.log(
-          `Cooldown active: ${daysSinceLastRequest} days since last request (${COOLDOWN_DAYS} required)`
-        );
-        return { shouldShow: false, triggerType: null };
-      }
-    }
+    // TEMP: Commented for testing - re-enable for production
+    // if (data.lastRequestAt) {
+    //   const daysSinceLastRequest = daysSince(data.lastRequestAt);
+    //   if (daysSinceLastRequest < COOLDOWN_DAYS) {
+    //     logger.log(
+    //       `Cooldown active: ${daysSinceLastRequest} days since last request (${COOLDOWN_DAYS} required)`
+    //     );
+    //     return { shouldShow: false, triggerType: null };
+    //   }
+    // }
 
     // Trigger A: First match (immediate success)
     if (data.matchesCount === 1) {
@@ -160,8 +160,8 @@ async function checkTriggerConditions(): Promise<TriggerCheckResult> {
       return { shouldShow: true, triggerType: "first_match" };
     }
 
-    // Trigger B: Retention (10+ sessions)
-    if (data.sessionCount >= RETENTION_TRIGGER_SESSIONS) {
+    // TEMP: Lowered to 1 for testing - production value is 10
+    if (data.sessionCount >= 1) {
       logger.log(`Trigger B met: ${data.sessionCount} sessions`);
       return { shouldShow: true, triggerType: "retention" };
     }
