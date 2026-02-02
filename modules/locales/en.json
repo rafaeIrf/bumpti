@@ -173,6 +173,7 @@
       "negativeButton": "Could be better...",
       "feedbackQuestion": "What can we do to make your experience a 10/10?",
       "feedbackPlaceholder": "Share your suggestions...",
+      "skipFeedback": "Skip feedback",
       "thankYouTitle": "Thank you!",
       "thankYouMessage": "Your feedback helps us improve.",
       "submit": "Submit"

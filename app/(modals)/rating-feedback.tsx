@@ -1,4 +1,6 @@
 import { StarIcon, XIcon } from "@/assets/icons";
+import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ActionButton } from "@/components/ui/action-button";
 import { BrandIcon } from "@/components/ui/brand-icon";
@@ -6,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { t } from "@/modules/locales";
+import { isIOS } from "@/utils";
 import type { RatingTriggerType } from "@/utils/rating-service";
 import {
   recordNegativeFeedback,
@@ -45,6 +48,7 @@ export default function RatingFeedbackModal() {
   const iconScale = useSharedValue(0.5);
   const textOpacity = useSharedValue(0);
   const buttonsTranslateY = useSharedValue(100);
+  const contentOpacity = useSharedValue(1);
 
   useEffect(() => {
     // Icon smooth entrance
@@ -72,12 +76,12 @@ export default function RatingFeedbackModal() {
     // Text fade in
     textOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
 
-    // Buttons slide up
+    // Buttons slide up - faster and smoother with timing
     buttonsTranslateY.value = withDelay(
-      500,
-      withSpring(0, {
-        damping: 20,
-        stiffness: 100,
+      400,
+      withTiming(0, {
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
       }),
     );
   }, [iconTranslateY, iconScale, textOpacity, buttonsTranslateY]);
@@ -97,11 +101,15 @@ export default function RatingFeedbackModal() {
     transform: [{ translateY: buttonsTranslateY.value }],
   }));
 
+  const contentOpacityStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+  }));
+
   const handlePositiveFeedback = async () => {
     setIsSubmitting(true);
 
     try {
-      await recordPositiveFeedback();
+      recordPositiveFeedback();
       router.dismissAll();
     } finally {
       setIsSubmitting(false);
@@ -117,13 +125,23 @@ export default function RatingFeedbackModal() {
 
     try {
       await recordNegativeFeedback(message.trim() || undefined);
-      setStage("thankYou");
+
+      // Fade out current content
+      contentOpacity.value = withTiming(0, { duration: 300 });
+
+      // Wait for fade out, then change stage
+      setTimeout(() => {
+        setStage("thankYou");
+        // Fade in new content
+        contentOpacity.value = withTiming(1, { duration: 400 });
+      }, 300);
 
       setTimeout(() => {
         router.dismissAll();
-      }, 4000);
+      }, 1500);
     } catch (error) {
       setIsSubmitting(false);
+      contentOpacity.value = 1;
     }
   };
 
@@ -149,10 +167,11 @@ export default function RatingFeedbackModal() {
 
         {/* Content */}
         {stage === "choice" && (
-          <View
+          <Animated.View
             style={[
               styles.choiceContainer,
               { paddingTop: insets.top + height * 0.15 },
+              contentOpacityStyle,
             ]}
           >
             {/* Animated icon */}
@@ -194,64 +213,68 @@ export default function RatingFeedbackModal() {
                 textStyle={styles.secondaryButtonText}
               />
             </Animated.View>
-          </View>
+          </Animated.View>
         )}
 
         {stage === "feedback" && (
-          <View
-            style={[
-              styles.feedbackWrapper,
-              { paddingTop: insets.top + height * 0.1 },
-            ]}
-          >
-            {/* Skip button in top-right */}
-            <Animated.View
-              entering={FadeIn.duration(400).delay(200)}
-              style={[styles.skipButton, { top: 24 }]}
+          <Animated.View style={[{ flex: 1 }, contentOpacityStyle]}>
+            <BaseTemplateScreen
+              scrollEnabled={true}
+              isModal
+              useKeyboardAvoidingView={true}
+              ignoreBottomSafeArea={true}
+              contentContainerStyle={{
+                paddingTop: isIOS ? insets.top : insets.top + spacing.md * 2,
+              }}
+              BottomBar={
+                <ScreenBottomBar
+                  primaryLabel={t("feedback.modal.submit")}
+                  onPrimaryPress={handleSubmitFeedback}
+                  primaryDisabled={isSubmitting}
+                  showBorder={false}
+                />
+              }
             >
-              <ActionButton
-                icon={XIcon}
-                onPress={() => router.dismissAll()}
-                ariaLabel="Skip feedback"
-                size="sm"
-                variant="default"
-              />
-            </Animated.View>
+              {/* Skip button in top-right */}
+              <Animated.View
+                entering={FadeIn.duration(400).delay(200)}
+                style={[styles.skipButton, { top: spacing.md }]}
+                pointerEvents="box-none"
+              >
+                <ActionButton
+                  icon={XIcon}
+                  onPress={() => router.dismissAll()}
+                  ariaLabel={t("feedback.modal.skipFeedback")}
+                  size="sm"
+                  variant="default"
+                />
+              </Animated.View>
 
-            <Animated.View
-              entering={FadeIn.duration(400)}
-              style={styles.feedbackContainer}
-            >
-              <ThemedText style={styles.feedbackTitle}>
-                {t("feedback.modal.feedbackQuestion")}
-              </ThemedText>
+              <Animated.View
+                entering={FadeIn.duration(400)}
+                style={styles.feedbackContainer}
+              >
+                <ThemedText style={styles.feedbackTitle}>
+                  {t("feedback.modal.feedbackQuestion")}
+                </ThemedText>
 
-              <InputText
-                value={message}
-                onChangeText={setMessage}
-                placeholder={t("feedback.modal.feedbackPlaceholder")}
-                multiline
-                maxLength={500}
-                showCharacterCounter
-                containerStyle={styles.inputContainer}
-                autoFocus
-              />
-
-              <Button
-                variant="default"
-                size="lg"
-                fullWidth
-                onPress={handleSubmitFeedback}
-                loading={isSubmitting}
-                label={t("feedback.modal.submit")}
-                style={styles.submitButton}
-              />
-            </Animated.View>
-          </View>
+                <InputText
+                  value={message}
+                  onChangeText={setMessage}
+                  placeholder={t("feedback.modal.feedbackPlaceholder")}
+                  multiline
+                  maxLength={500}
+                  showCharacterCounter
+                  containerStyle={styles.inputContainer}
+                  autoFocus
+                />
+              </Animated.View>
+            </BaseTemplateScreen>
+          </Animated.View>
         )}
 
         {stage === "thankYou" && (
-          <View style={styles.thankYouWrapper}>
+          <Animated.View style={[styles.thankYouWrapper, contentOpacityStyle]}>
             <Animated.View
               entering={FadeIn.duration(600)}
               style={styles.thankYouContainer}
@@ -264,7 +287,7 @@ export default function RatingFeedbackModal() {
                 {t("feedback.modal.thankYouMessage")}
               </ThemedText>
             </Animated.View>
-          </View>
+          </Animated.View>
         )}
       </LinearGradient>
     </View>
@@ -332,13 +355,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: "rgba(255, 255, 255, 0.5)",
   },
-  feedbackWrapper: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
   feedbackContainer: {
-    flex: 1,
     gap: spacing.lg,
   },
   feedbackTitle: {
@@ -354,7 +371,6 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     minHeight: 56,
-    marginTop: spacing.md,
   },
   thankYouWrapper: {
     flex: 1,
