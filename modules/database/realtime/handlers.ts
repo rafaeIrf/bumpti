@@ -53,16 +53,21 @@ export async function handleNewMessageBroadcast(
           batch.push(newMessage);
         }
 
-        // 2. Handle first message match update and chat lookup
-        // NOTE: We no longer update unreadCount or lastMessageContent here.
-        // - The ChatListItem derives the preview from the latest message via withObservables
-        // - The unread badge is derived from messages with read_at = null
-        // This avoids sync conflicts where local updates would block server values.
+        // 2. Update chat and match for realtime visibility
+        // We MUST update chat.lastMessageContent so the chat appears in the list
+        // (the query filters by lastMessageContent != null)
         try {
           const chat = await chatsCollection.find(chat_id);
           const isFirstMessage = !chat.lastMessageAt;
           
-          // If first message, update the match with first_message_at
+          // Always update chat with last message info for list visibility
+          const updatedChat = chat.prepareUpdate((c: any) => {
+            c.lastMessageContent = content;
+            c.lastMessageAt = new Date(created_at);
+          });
+          batch.push(updatedChat);
+          
+          // If first message, also update the match with first_message_at
           if (isFirstMessage && chat.matchId) {
             try {
               const matchesCollection = database.collections.get<Match>('matches');
