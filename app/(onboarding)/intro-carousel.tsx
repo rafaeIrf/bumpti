@@ -15,6 +15,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import Carousel from "react-native-reanimated-carousel";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -28,6 +29,7 @@ export default function IntroCarouselScreen() {
   const colors = useThemeColors();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useSharedValue(0);
+  const insets = useSafeAreaInsets();
 
   // Slides minimalistas sem imagens
   const slides = [
@@ -103,7 +105,10 @@ export default function IntroCarouselScreen() {
       {currentIndex === slides.length - 1 && (
         <Animated.View
           entering={FadeInDown.delay(300).duration(600)}
-          style={styles.buttonContainer}
+          style={[
+            styles.buttonContainer,
+            { bottom: insets.bottom + spacing.md },
+          ]}
         >
           <Button
             label={t("screens.onboarding.introCarousel.finalButton")}
@@ -134,14 +139,14 @@ function PaginationDot({
       currentIndex,
       inputRange,
       [8, 24, 8],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     const opacity = interpolate(
       currentIndex,
       inputRange,
       [0.3, 1, 0.3],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     return {
@@ -184,7 +189,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     position: "absolute",
-    bottom: spacing.xxl,
     left: spacing.xl,
     right: spacing.xl,
   },

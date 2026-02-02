@@ -14,9 +14,9 @@ const STEP_ORDER: OnboardingStep[] = [
   "intention",
   "user-photos",
   "user-bio",
-  "university",
   "location",
   "favorite-places",
+  "university",
   "notifications",
   "complete",
 ];
