@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { t } from "@/modules/locales";
+import { isIOS } from "@/utils";
 import type { RatingTriggerType } from "@/utils/rating-service";
 import {
   recordNegativeFeedback,
@@ -108,7 +109,7 @@ export default function RatingFeedbackModal() {
     setIsSubmitting(true);
 
     try {
-      await recordPositiveFeedback();
+      recordPositiveFeedback();
       router.dismissAll();
     } finally {
       setIsSubmitting(false);
@@ -137,7 +138,7 @@ export default function RatingFeedbackModal() {
 
       setTimeout(() => {
         router.dismissAll();
-      }, 2500);
+      }, 1500);
     } catch (error) {
       setIsSubmitting(false);
       contentOpacity.value = 1;
@@ -219,11 +220,11 @@ export default function RatingFeedbackModal() {
           <Animated.View style={[{ flex: 1 }, contentOpacityStyle]}>
             <BaseTemplateScreen
               scrollEnabled={true}
+              isModal
               useKeyboardAvoidingView={true}
-              useSafeArea={false}
               ignoreBottomSafeArea={true}
               contentContainerStyle={{
-                paddingTop: insets.top + spacing.md,
+                paddingTop: isIOS ? insets.top : insets.top + spacing.md * 2,
               }}
               BottomBar={
                 <ScreenBottomBar
@@ -237,7 +238,7 @@ export default function RatingFeedbackModal() {
               {/* Skip button in top-right */}
               <Animated.View
                 entering={FadeIn.duration(400).delay(200)}
-                style={[styles.skipButton, { top: 24 }]}
+                style={[styles.skipButton, { top: spacing.md }]}
                 pointerEvents="box-none"
               >
                 <ActionButton
