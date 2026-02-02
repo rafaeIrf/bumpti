@@ -16,6 +16,9 @@
     "waze": "Waze",
     "cancel": "Cancelar"
   },
+  "legal": {
+    "map_data": "Map data © OpenStreetMap contributors\nOverture Maps Foundation"
+  },
   "actions": {
     "report": "Reportar",
     "block": "Bloquear",

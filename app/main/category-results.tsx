@@ -10,6 +10,7 @@ import {
   FilterChip,
 } from "@/components/category-filter-list";
 import { LocationPermissionState } from "@/components/location-permission-state";
+import { MapDataAttribution } from "@/components/map-data-attribution";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceLoadingSkeleton } from "@/components/place-loading-skeleton";
 import { PlacesEmptyState } from "@/components/places-empty-state";
@@ -572,13 +573,13 @@ export default function CategoryResultsScreen() {
     !favoritesMode && !trendingMode && !communityFavoritesMode;
 
   const listFooterComponent = useMemo(() => {
-    if (isFetchingMore) {
-      return <PlaceLoadingSkeleton count={2} />;
-    }
-    if (shouldShowSearchFooter && !hasMore) {
-      return searchFooterComponent;
-    }
-    return null;
+    return (
+      <>
+        {isFetchingMore && <PlaceLoadingSkeleton count={2} />}
+        {shouldShowSearchFooter && !hasMore && searchFooterComponent}
+        <MapDataAttribution />
+      </>
+    );
   }, [hasMore, isFetchingMore, searchFooterComponent, shouldShowSearchFooter]);
 
   const [filterHeight, setFilterHeight] = useState(0);
