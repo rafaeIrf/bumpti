@@ -180,10 +180,13 @@ Deno.serve(async (req) => {
 
     console.log("[didit-session] Verification URL found, updating profile status to pending");
 
-    // Update profile status to 'pending'
+    // Update profile status to 'pending' AND save session_id for future deletion
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .update({ verification_status: "pending" })
+      .update({ 
+        verification_status: "pending",
+        didit_session_id: diditData.session_id  // Save for GDPR-compliant deletion
+      })
       .eq("id", userId);
 
     if (updateError) {

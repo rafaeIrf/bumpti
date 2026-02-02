@@ -7,6 +7,7 @@ import { t } from "@/modules/locales";
 import { router } from "expo-router";
 import { StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * Welcome Screen - Tela de recepção do onboarding
@@ -15,12 +16,15 @@ import Animated, { FadeInDown } from "react-native-reanimated";
  * Apresenta o Bumpti com uma ilustração e um botão para começar.
  */
 export default function WelcomeScreen() {
+  const insets = useSafeAreaInsets();
   const handleStart = () => {
     router.push("/(onboarding)/intro-carousel");
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={[styles.container, { paddingBottom: insets.bottom + spacing.md }]}
+    >
       {/* Ilustração unDraw Nature fun */}
       <Animated.View
         entering={FadeInDown.delay(200).duration(600)}
@@ -64,7 +68,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xxl,
-    paddingBottom: spacing.xxl,
   },
   illustrationContainer: {
     flex: 0.5,

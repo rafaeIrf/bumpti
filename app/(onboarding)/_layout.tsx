@@ -21,10 +21,10 @@ const OnboardingHeader = React.memo(() => {
       "intention",
       "user-photos",
       "user-bio",
-      "university",
     ];
     if (shouldShowLocation) base.push("location");
     base.push("favorite-places");
+    base.push("university");
     if (shouldShowNotifications) base.push("notifications");
     return base;
   }, [shouldShowLocation, shouldShowNotifications]);

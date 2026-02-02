@@ -33,7 +33,14 @@ export default function FavoritePlacesScreen() {
   } = useFavoritePlaces({ searchPath: "./place-search" });
 
   // Check if we have no suggested places after loading completes (city not supported)
-  const hasSuggestedPlaces = suggestedPlaces && suggestedPlaces.length > 0;
+  // Need to check if any category has actual places, not just if the categories array exists
+  const hasSuggestedPlaces =
+    suggestedPlaces &&
+    suggestedPlaces.length > 0 &&
+    suggestedPlaces.some(
+      (category) => category.places && category.places.length > 0,
+    );
+
   const isCityNotAvailable =
     !isLoadingPlaces && !locationLoading && userLocation && !hasSuggestedPlaces;
 
