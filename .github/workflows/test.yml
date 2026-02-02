@@ -3,7 +3,7 @@ name: Run Tests
 on:
   pull_request:
     branches:
-      - dev
+      - main
 
 env:
   NODE_VERSION: "22"
