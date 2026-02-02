@@ -165,6 +165,19 @@
     "generic": "Algo deu errado. Por favor, tente novamente.",
     "profileUnavailable": "Perfil indisponível"
   },
+  "feedback": {
+    "modal": {
+      "titleFirstMatch": "O match aconteceu! O Bumpti está sendo útil para você?",
+      "titleRetention": "Está curtindo sua experiência no Bumpti?",
+      "positiveButton": "Sim, estou adorando!",
+      "negativeButton": "Pode melhorar...",
+      "feedbackQuestion": "O que podemos fazer para sua experiência ser nota 10?",
+      "feedbackPlaceholder": "Conte-nos suas sugestões...",
+      "thankYouTitle": "Obrigado!",
+      "thankYouMessage": "Sua opinião nos ajuda a melhorar.",
+      "submit": "Enviar"
+    }
+  },
   "screens": {
     "ratePlace": {
       "header": {

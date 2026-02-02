@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AppState, type AppStateStatus } from "react-native";
 
 import {
   CompassIcon,
@@ -17,6 +18,10 @@ import { useProfile } from "@/hooks/use-profile";
 import { useProfilePrefetch } from "@/hooks/use-profile-prefetch";
 import useSafeAreaInsets from "@/hooks/use-safe-area-insets";
 import type Message from "@/modules/database/models/Message";
+import {
+  checkAndShowRatingModal,
+  incrementSessionCount,
+} from "@/utils/rating-service";
 import { Q } from "@nozbe/watermelondb";
 import { View } from "react-native";
 
@@ -31,6 +36,28 @@ export default function TabLayout() {
   const database = useDatabase();
   const [unreadCount, setUnreadCount] = useState(0);
   const userId = profile?.id;
+
+  // Track sessions and check rating modal (only when user is authenticated and in main app)
+  useEffect(() => {
+    // Increment session count on mount (user reached tabs)
+    incrementSessionCount().then(() => {
+      checkAndShowRatingModal();
+    });
+
+    // Also check on app foreground
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextState: AppStateStatus) => {
+        if (nextState === "active") {
+          incrementSessionCount().then(() => {
+            checkAndShowRatingModal();
+          });
+        }
+      },
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   // Derive unread count directly from messages table
   // This avoids WatermelonDB sync conflicts where local updates to Chat.unreadCount
