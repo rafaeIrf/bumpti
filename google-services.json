@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "219202844049-2ar3ovg6s3ors8rkstu55htn59g2klhr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bumpti",
+            "certificate_hash": "9c7ef686faa1cf0fb42b8e911e1d8bf46c076007"
+          }
+        },
+        {
+          "client_id": "219202844049-c2hmic2mt2ehqn83uiaqcac6ragrjovo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bumpti",
+            "certificate_hash": "edb9cb3819f952d6d28ad0e0c226bb2b1d5db371"
+          }
+        },
+        {
+          "client_id": "219202844049-qtt9n643petdak1okqsdvm16i82dgidj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bumpti",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "219202844049-tgonpatrjrn2h1av9imafpc47rka9cbk.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +53,13 @@
             {
               "client_id": "219202844049-tgonpatrjrn2h1av9imafpc47rka9cbk.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bumpti"
+              }
             }
           ]
         }
