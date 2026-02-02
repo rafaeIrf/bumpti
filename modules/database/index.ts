@@ -8,12 +8,12 @@ import { resetSyncTimestamps } from "./sync/types";
 
 // Models
 import Chat from "./models/Chat";
+import DiscoveryProfile from "./models/DiscoveryProfile";
+import LikerId from "./models/LikerId";
 import Match from "./models/Match";
 import Message from "./models/Message";
 import Profile from "./models/Profile";
-import DiscoveryProfile from "./models/DiscoveryProfile";
 import SwipeQueue from "./models/SwipeQueue";
-import LikerId from "./models/LikerId";
 
 let database: Database | null = null;
 
@@ -31,13 +31,13 @@ export async function initDatabase(): Promise<Database> {
     const adapter = new SQLiteAdapter({
       schema,
       migrations,
-      // @ts-ignore - react-native-quick-sqlite suporta encryption
+      // WatermelonDB's JSI adapter works on both iOS and Android (v0.26+)
       jsi: true,
       onSetUpError: (error) => {
         logger.error('Database setup error:', error);
       },
-      // Passar chave de criptografia para SQLCipher
-      // @ts-ignore
+      // Encryption key for SQLCipher support
+      // @ts-ignore - encryptionKey is supported but not typed in all adapters
       encryptionKey,
     });
 

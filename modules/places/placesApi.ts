@@ -603,7 +603,6 @@ export const {
   useGetSuggestedPlacesQuery,
   useSaveReviewMutation,
   useUpdateProfileSettingsMutation,
-  useGetPlaceByIdQuery,
 } = placesApi;
 
 /**
