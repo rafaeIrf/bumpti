@@ -1,5 +1,28 @@
+// Mock expo-constants before any imports that use it
 import { handleNewMatchBroadcast, handleNewMessageBroadcast } from "@/modules/database/realtime/handlers";
 import type { Database } from "@nozbe/watermelondb";
+
+jest.mock("expo-constants", () => ({
+  __esModule: true,
+  default: {
+    expoConfig: {
+      extra: {
+        eas: {
+          projectId: "test-project-id",
+        },
+      },
+    },
+    platform: {
+      ios: {},
+    },
+  },
+}));
+
+// Mock rating service to prevent initialization
+jest.mock("@/utils/rating-service", () => ({
+  incrementMatchCount: jest.fn().mockResolvedValue(undefined),
+  checkAndShowRatingModal: jest.fn().mockResolvedValue(undefined),
+}));
 
 // Mock dependencies
 jest.mock("@/modules/database/sync", () => ({
