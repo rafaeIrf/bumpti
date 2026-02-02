@@ -23,6 +23,7 @@ import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
 import { clearAppBadge } from "@/modules/notifications";
 import { prefetchImage } from "@/utils/image-prefetch";
+import { initializeRatingTracking } from "@/utils/rating-service";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -61,6 +62,11 @@ export default function RootLayout() {
 
   // Initialize FCM registration
   useFCMRegistration();
+
+  // Initialize rating tracking on first mount
+  useEffect(() => {
+    initializeRatingTracking();
+  }, []);
 
   // Clear iOS app badge when app comes to foreground
   // iOS badge is independent from notification center - must be cleared explicitly

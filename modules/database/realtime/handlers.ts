@@ -3,7 +3,7 @@ import type Match from '@/modules/database/models/Match';
 import type Message from '@/modules/database/models/Message';
 import { syncDatabase } from '@/modules/database/sync';
 import { logger } from '@/utils/logger';
-import { requestReviewAfterFirstMatch } from '@/utils/review';
+import { checkAndShowRatingModal, incrementMatchCount } from '@/utils/rating-service';
 import { Database, Q } from '@nozbe/watermelondb';
 
 /**
@@ -252,10 +252,13 @@ export async function handleNewMatchBroadcast(
         });
         logger.log('✅ Match created from broadcast:', matchId);
         
-        // Request review after first match (with delay)
-        // This will only execute once per user, tracked via AsyncStorage
-        requestReviewAfterFirstMatch().catch((err) => {
-          logger.error('Failed to request review after match:', err);
+        // Increment match count and check if rating modal should be shown
+        incrementMatchCount().then(() => {
+          checkAndShowRatingModal().catch((err: unknown) => {
+            logger.error('Failed to check/show rating modal:', err);
+          });
+        }).catch((err: unknown) => {
+          logger.error('Failed to increment match count:', err);
         });
         
         return;
