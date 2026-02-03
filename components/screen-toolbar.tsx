@@ -58,7 +58,7 @@ export function ScreenToolbar({
       scrollY.value,
       [0, 50],
       [0, 0.8],
-      "clamp"
+      "clamp",
     );
 
     return {
@@ -142,7 +142,7 @@ export function ScreenToolbar({
                     styles.title,
                     !hasLeftAction && { ...typography.heading },
                   ]}
-                  numberOfLines={hasLeftAction ? 1 : undefined}
+                  numberOfLines={1}
                   ellipsizeMode={hasLeftAction ? "tail" : undefined}
                 >
                   {title}

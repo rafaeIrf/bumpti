@@ -7,7 +7,6 @@ import {
 import { PowerUpBottomSheet } from "@/components/power-up-bottom-sheet";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { enterPlace } from "@/modules/presence/api";
-import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
@@ -41,14 +40,13 @@ export function usePlaceClick() {
   // ───────────────────────────────────────────────────────────────────────────
 
   const navigateToPlacePeople = useCallback(
-    (placeId: string, placeName: string, distance: number) => {
+    (placeId: string, placeName: string, distance?: number) => {
+      const distanceKm = distance ?? 0;
       router.push({
         pathname: "/(modals)/place-people",
         params: {
           placeId,
           placeName,
-          distance: formatDistance(distance),
-          distanceKm: distance.toString(),
         },
       });
     },

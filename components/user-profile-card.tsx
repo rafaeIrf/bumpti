@@ -45,21 +45,14 @@ export interface UserProfile {
   location?: string;
 }
 
-interface PlaceData {
-  id: string;
-  name: string;
-}
-
 interface UserProfileCardProps {
   readonly profile: ActiveUserAtPlace;
   readonly currentPlaceId?: string;
-  readonly places?: Record<string, PlaceData>;
   onBlockSuccess?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // Use nearly full screen width for "Hero" feel, slightly padded if needed or full width
-const CARD_PADDING = 0;
 const IMAGE_WIDTH = SCREEN_WIDTH;
 const IMAGE_HEIGHT = IMAGE_WIDTH * 1.4; // Taller hero aspect ratio
 
@@ -67,7 +60,6 @@ export function UserProfileCard({
   profile,
   currentPlaceId,
   onBlockSuccess,
-  places,
 }: UserProfileCardProps) {
   const colors = useThemeColors();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -465,7 +457,7 @@ export function UserProfileCard({
                 const placeName =
                   typeof place !== "string" && place.name
                     ? place.name
-                    : (places?.[placeId]?.name ?? placeId);
+                    : placeId;
                 const isMatch = isMatchPlace(placeId);
 
                 return renderTag(
