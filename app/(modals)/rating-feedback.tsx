@@ -110,9 +110,23 @@ export default function RatingFeedbackModal() {
 
     try {
       recordPositiveFeedback();
-      router.dismissAll();
-    } finally {
+
+      // Fade out current content
+      contentOpacity.value = withTiming(0, { duration: 300 });
+
+      // Wait for fade out, then change stage
+      setTimeout(() => {
+        setStage("thankYou");
+        // Fade in new content
+        contentOpacity.value = withTiming(1, { duration: 400 });
+      }, 300);
+
+      setTimeout(() => {
+        router.dismissAll();
+      }, 1500);
+    } catch (error) {
       setIsSubmitting(false);
+      contentOpacity.value = 1;
     }
   };
 
