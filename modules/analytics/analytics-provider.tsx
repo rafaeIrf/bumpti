@@ -7,7 +7,7 @@
 
 import Constants from "expo-constants";
 import { PostHogProvider, usePostHog } from "posthog-react-native";
-import { useEffect, useRef, type ReactNode } from "react";
+import React, { useEffect, useRef, type ReactNode } from "react";
 
 import { logger } from "@/utils/logger";
 import { setPostHogClient } from "./analytics-service";
