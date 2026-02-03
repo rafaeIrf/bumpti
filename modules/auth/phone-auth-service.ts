@@ -118,6 +118,11 @@ class PhoneAuthService {
    */
   async deleteAccount(): Promise<void> {
     try {
+      // Track account deletion BEFORE calling the edge function
+      // This is critical - must happen before session is destroyed
+      const { trackAccountDeletion } = await import("@/modules/analytics");
+      await trackAccountDeletion();
+
       const { error } = await supabase.functions.invoke("delete-account");
 
       if (error) {

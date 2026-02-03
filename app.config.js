@@ -15,6 +15,8 @@ module.exports = {
       bundleIdentifier: "com.bumpti",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSUserTrackingUsageDescription:
+          "We use this identifier to personalize ads and measure ad campaign performance.",
         NSLocationWhenInUseUsageDescription:
           "We use your location to show nearby venues.",
         NSPhotoLibraryUsageDescription:
@@ -86,6 +88,7 @@ module.exports = {
       "@react-native-firebase/auth",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/messaging",
+      "expo-tracking-transparency",
       [
         "expo-build-properties",
         {

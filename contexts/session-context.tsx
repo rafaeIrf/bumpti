@@ -1,3 +1,4 @@
+import { identify, trackLogin, trackLogout } from "@/modules/analytics";
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
 import { fetchAndSetUserProfile } from "@/modules/profile/index";
 import { useAppSelector } from "@/modules/store/hooks";
@@ -94,6 +95,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
         // Reset profile fetch state when auth changes
         if (wasAuthenticated !== nowAuthenticated) {
           setProfileFetched(false);
+        }
+
+        // Analytics: track login with method, reset on logout
+        if (nowAuthenticated && session?.user?.id) {
+          trackLogin(session.user.app_metadata?.provider);
+
+          // Also identify the user
+          identify(session.user.id, {
+            email: session.user.email ?? "",
+          });
+        } else if (!nowAuthenticated && wasAuthenticated) {
+          // trackLogout already calls reset internally
+          trackLogout();
         }
       },
     );

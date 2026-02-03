@@ -2,6 +2,7 @@ import { store } from "@/modules/store";
 import { setCheckinCredits } from "@/modules/store/slices/profileSlice";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
+import { trackCheckin } from "../analytics";
 
 export type PresenceRecord = {
   id: string;
@@ -91,6 +92,14 @@ export async function enterPlace(params: {
     // Update Redux state with remaining credits if returned (indicates check-in+ was used)
     if (typeof data?.remaining_credits === "number") {
       store.dispatch(setCheckinCredits(data.remaining_credits));
+    }
+
+    // Track analytics conversion event
+    if (data?.presence) {
+      trackCheckin({
+        placeId: params.placeId,
+        entryType: params.isCheckinPlus ? "checkin_plus" : "physical",
+      });
     }
 
     return data?.presence ?? null;

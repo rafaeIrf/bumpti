@@ -1,3 +1,4 @@
+import { trackMatch } from "@/modules/analytics";
 import { supabase } from "@/modules/supabase/client";
 import { extractEdgeErrorMessage } from "@/modules/supabase/edge-error";
 import { logger } from "@/utils/logger";
@@ -52,6 +53,11 @@ export async function interactUser(params: {
 
     if (!data) {
       throw new Error("No response from interact-user.");
+    }
+
+    // Track match analytics conversion event
+    if (data.status === "liked" && data.match) {
+      trackMatch({ matchId: data.match_id, placeId });
     }
 
     return data;

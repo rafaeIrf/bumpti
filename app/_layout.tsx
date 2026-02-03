@@ -19,6 +19,7 @@ import { VerificationListener } from "@/components/verification-listener";
 import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
+import { AnalyticsProvider } from "@/modules/analytics";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
 import { clearAppBadge } from "@/modules/notifications";
@@ -130,39 +131,41 @@ export default function RootLayout() {
 
   return (
     <ReduxProvider>
-      <VerificationListener />
-      <I18nProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <KeyboardProvider>
-              <IAPProvider>
-                <DatabaseProvider>
-                  <BottomSheetProvider>
-                    <AppConfigGuard>
-                      <ChatRealtimeProvider>
-                        <SessionProvider>
-                          <RootNavigator />
-                        </SessionProvider>
-                        <StatusBar style="auto" />
-                      </ChatRealtimeProvider>
-                    </AppConfigGuard>
-                  </BottomSheetProvider>
-                </DatabaseProvider>
-              </IAPProvider>
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </ThemeProvider>
-        {showAnimatedSplash && (
-          <View style={styles.splashOverlay} pointerEvents="none">
-            <AnimatedBootSplash
-              ready={splashReady}
-              onAnimationEnd={handleAnimationEnd}
-            />
-          </View>
-        )}
-      </I18nProvider>
+      <AnalyticsProvider>
+        <VerificationListener />
+        <I18nProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <KeyboardProvider>
+                <IAPProvider>
+                  <DatabaseProvider>
+                    <BottomSheetProvider>
+                      <AppConfigGuard>
+                        <ChatRealtimeProvider>
+                          <SessionProvider>
+                            <RootNavigator />
+                          </SessionProvider>
+                          <StatusBar style="auto" />
+                        </ChatRealtimeProvider>
+                      </AppConfigGuard>
+                    </BottomSheetProvider>
+                  </DatabaseProvider>
+                </IAPProvider>
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </ThemeProvider>
+          {showAnimatedSplash && (
+            <View style={styles.splashOverlay} pointerEvents="none">
+              <AnimatedBootSplash
+                ready={splashReady}
+                onAnimationEnd={handleAnimationEnd}
+              />
+            </View>
+          )}
+        </I18nProvider>
+      </AnalyticsProvider>
     </ReduxProvider>
   );
 }
