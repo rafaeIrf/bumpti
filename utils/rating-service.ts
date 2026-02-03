@@ -230,8 +230,6 @@ export async function recordPositiveFeedback(message?: string): Promise<void> {
       message: message || undefined,
     }).catch((error) => logger.error("Error submitting positive feedback:", error));
 
-    // Request native review
-    await requestNativeReview();
   } catch (error) {
     logger.error("Error recording positive feedback:", error);
   }
@@ -258,7 +256,7 @@ export async function recordNegativeFeedback(message?: string): Promise<void> {
  * Request native App Store / Google Play review
  * Only call after positive feedback
  */
-async function requestNativeReview(): Promise<void> {
+export async function requestNativeReview(): Promise<void> {
   try {
     const isAvailable = await StoreReview.isAvailableAsync();
 

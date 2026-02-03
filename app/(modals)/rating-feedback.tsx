@@ -13,6 +13,7 @@ import type { RatingTriggerType } from "@/utils/rating-service";
 import {
   recordNegativeFeedback,
   recordPositiveFeedback,
+  requestNativeReview,
 } from "@/utils/rating-service";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -123,6 +124,7 @@ export default function RatingFeedbackModal() {
 
       setTimeout(() => {
         router.dismissAll();
+        requestNativeReview();
       }, 1500);
     } catch (error) {
       setIsSubmitting(false);
