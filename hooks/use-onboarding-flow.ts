@@ -18,6 +18,7 @@ const STEP_ORDER: OnboardingStep[] = [
   "favorite-places",
   "university",
   "notifications",
+  "tracking",
   "complete",
 ];
 
@@ -34,6 +35,7 @@ const STEP_ROUTES: Record<OnboardingStep, string> = {
   location: "/(onboarding)/location",
   "favorite-places": "/(onboarding)/favorite-places",
   notifications: "/(onboarding)/notifications",
+  tracking: "/(onboarding)/tracking",
   complete: "/(onboarding)/complete",
 };
 

@@ -1,6 +1,7 @@
 import { OnboardingProgressBar } from "@/components/onboarding-progress-bar";
 import { OnboardingProgressProvider } from "@/components/onboarding-progress-context";
 import { useOnboardingSteps } from "@/hooks/use-onboarding-steps";
+import { isIOS } from "@/utils";
 import { Stack, useSegments } from "expo-router";
 import React, { useMemo } from "react";
 
@@ -26,6 +27,8 @@ const OnboardingHeader = React.memo(() => {
     base.push("favorite-places");
     base.push("university");
     if (shouldShowNotifications) base.push("notifications");
+    // Tracking permission is iOS-only (App Tracking Transparency)
+    if (isIOS) base.push("tracking");
     return base;
   }, [shouldShowLocation, shouldShowNotifications]);
 
@@ -108,6 +111,7 @@ export default function OnboardingLayout() {
           }}
         />
         <Stack.Screen name="notifications" />
+        <Stack.Screen name="tracking" />
         <Stack.Screen name="complete" />
       </Stack>
     </OnboardingProgressProvider>

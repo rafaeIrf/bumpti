@@ -22,7 +22,7 @@ interface PermissionPromptViewProps {
   canAskAgain: boolean;
   onEnable: () => void;
   onSkip: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings?: () => void; // Optional for tracking permission
   hideSkip?: boolean;
 }
 
@@ -45,7 +45,7 @@ export function PermissionPromptView({
   const handleAction = () => {
     if (canAskAgain) {
       onEnable();
-    } else {
+    } else if (onOpenSettings) {
       onOpenSettings();
     }
   };
@@ -53,8 +53,8 @@ export function PermissionPromptView({
   const primaryButtonText = isRequesting
     ? requestingText || t("common.loading")
     : canAskAgain
-    ? enableButtonText || t("common.enable")
-    : t("actions.openSettings");
+      ? enableButtonText || t("common.enable")
+      : t("actions.openSettings");
 
   return (
     <View style={styles.container}>

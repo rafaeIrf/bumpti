@@ -44,3 +44,21 @@ jest.mock("expo-image", () => ({
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
 );
+
+// Mock analytics module to prevent Jest from parsing expo-constants
+jest.mock("@/modules/analytics", () => ({
+  AnalyticsProvider: ({ children }) => children,
+  trackEvent: jest.fn(),
+  identify: jest.fn(),
+  reset: jest.fn(),
+  trackLogin: jest.fn(),
+  trackLogout: jest.fn(),
+  trackAccountDeletion: jest.fn(),
+  trackOnboardingComplete: jest.fn(),
+  trackCheckin: jest.fn(),
+  trackMatch: jest.fn(),
+  getTrackingStatus: jest.fn(async () => "authorized"),
+  isTrackingAllowed: jest.fn(async () => true),
+  requestTrackingPermission: jest.fn(async () => "authorized"),
+  ANALYTICS_EVENTS: {},
+}));

@@ -3,6 +3,7 @@ import { supabase } from "@/modules/supabase/client";
 import { clearPrefetchCache } from "@/utils/image-prefetch";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthError, User } from "@supabase/supabase-js";
+import { trackAccountDeletion } from "../analytics";
 import { resetDatabase } from "../database";
 import { resetGlobalStore } from "../store";
 
@@ -118,6 +119,10 @@ class PhoneAuthService {
    */
   async deleteAccount(): Promise<void> {
     try {
+      // Track account deletion BEFORE calling the edge function
+      // This is critical - must happen before session is destroyed
+      await trackAccountDeletion();
+
       const { error } = await supabase.functions.invoke("delete-account");
 
       if (error) {

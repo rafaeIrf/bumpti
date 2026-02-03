@@ -13,7 +13,7 @@ interface PermissionBottomSheetProps {
   canAskAgain: boolean;
   onEnable: () => void;
   onSkip: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings?: () => void; // Optional for tracking permission
   hideSkip?: boolean;
 }
 

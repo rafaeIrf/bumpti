@@ -1,6 +1,7 @@
 import { processProfileImage } from "@/modules/media/image-processor";
 import { OnboardingUserData } from "@/modules/store/slices/onboardingSlice";
 import { supabase } from "@/modules/supabase/client";
+import { trackOnboardingComplete } from "../analytics";
 
 
 
@@ -92,4 +93,7 @@ export async function saveOnboarding(userData: OnboardingUserData) {
   if (error) {
     throw new Error(error.message || "Não foi possível salvar seus dados.");
   }
+
+  // Track onboarding completion analytics event
+  trackOnboardingComplete();
 }

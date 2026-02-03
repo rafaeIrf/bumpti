@@ -99,9 +99,15 @@ export default function HomeScreen() {
   const {
     showLocationSheet,
     showNotificationSheet,
+    showTrackingSheet,
     locationHandled,
     notificationHandled,
   } = usePermissionSheet();
+
+  // Show ATT education sheet for returning users (who skip intro carousel)
+  useEffect(() => {
+    showTrackingSheet();
+  }, [showTrackingSheet]);
 
   useEffect(() => {
     // Show location sheet first if not yet handled (granted or dismissed)

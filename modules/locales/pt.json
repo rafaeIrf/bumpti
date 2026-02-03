@@ -7,6 +7,13 @@
       "buttonSettings": "Abrir Configurações",
       "requesting": "Solicitando...",
       "skip": "Agora não"
+    },
+    "tracking": {
+      "title": "Quer uma experiência personalizada? Ative o rastreamento.",
+      "subtitle": "Sua autorização nos ajuda a criar uma experiência mais completa e sugerir funcionalidades personalizadas que você vai amar.",
+      "button": "Permitir",
+      "requesting": "Solicitando...",
+      "skip": "Agora não"
     }
   },
   "maps": {
@@ -854,6 +861,14 @@
       "notificationsSubtitle": "Usamos notificações para avisar você sobre novidades importantes no app.",
       "notificationsEnable": "Permitir notificações",
       "notificationsSkip": "Agora não",
+      "trackingTitle": "Ajude-nos a personalizar sua experiência",
+      "trackingSubtitle": "Permita o rastreamento para que possamos mostrar conteúdo melhor e aprimorar sua experiência.",
+      "trackingEnable": "Ativar rastreamento",
+      "trackingRequesting": "Solicitando...",
+      "trackingSkip": "Agora não",
+      "trackingDeniedTitle": "Rastreamento negado",
+      "trackingDeniedMessage": "Você pode ativar o rastreamento mais tarde nas Configurações para nos ajudar a personalizar sua experiência.",
+      "trackingError": "Falha ao solicitar permissão de rastreamento. Por favor, tente novamente.",
       "notificationsRequesting": "Solicitando permissão...",
       "notificationsDeniedTitle": "Permissão negada",
       "notificationsDeniedMessage": "Você negou a permissão de notificações. Pode ativar depois nas configurações do app.",
