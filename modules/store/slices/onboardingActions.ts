@@ -12,6 +12,7 @@ import {
     setLocationPermission as setLocationPermissionAction,
     setNotificationPermission as setNotificationPermissionAction,
     setPhotoUris as setPhotoUrisAction,
+    setTrackingPermission as setTrackingPermissionAction,
     setUniversityData as setUniversityDataAction,
     setUserBirthdate as setUserBirthdateAction,
     setUserGender as setUserGenderAction,
@@ -66,6 +67,10 @@ export const onboardingActions = {
 
   setNotificationPermission: (hasPermission: boolean) => {
     store.dispatch(setNotificationPermissionAction(hasPermission));
+  },
+
+  setTrackingPermission: (hasPermission: boolean) => {
+    store.dispatch(setTrackingPermissionAction(hasPermission));
   },
 
   setUniversityData: (data: {

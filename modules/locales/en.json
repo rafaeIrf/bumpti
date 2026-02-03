@@ -7,6 +7,13 @@
       "buttonSettings": "Open Settings",
       "requesting": "Requesting...",
       "skip": "Not now"
+    },
+    "tracking": {
+      "title": "Want personalised experience? Turn on tracking.",
+      "subtitle": "Your permission helps us create a more complete experience and suggest personalized features you'll love.",
+      "button": "Allow",
+      "requesting": "Requesting...",
+      "skip": "Not now"
     }
   },
   "maps": {
@@ -851,6 +858,14 @@
       "notificationsSubtitle": "We use notifications to alert you about important updates in the app.",
       "notificationsEnable": "Enable notifications",
       "notificationsSkip": "Not now",
+      "trackingTitle": "Help us personalize your experience",
+      "trackingSubtitle": "Allow tracking so we can show you better content and improve your experience.",
+      "trackingEnable": "Enable tracking",
+      "trackingRequesting": "Requesting...",
+      "trackingSkip": "Not now",
+      "trackingDeniedTitle": "Tracking denied",
+      "trackingDeniedMessage": "You can enable tracking later in Settings to help us personalize your experience.",
+      "trackingError": "Failed to request tracking permission. Please try again.",
       "notificationsRequesting": "Requesting permission...",
       "notificationsDeniedTitle": "Permission denied",
       "notificationsDeniedMessage": "You denied notification permission. You can enable it later in app settings.",

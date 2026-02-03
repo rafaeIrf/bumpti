@@ -2,6 +2,7 @@ import { IllustratedSlide } from "@/components/illustrated-slide";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
+import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { router } from "expo-router";
@@ -30,6 +31,7 @@ export default function IntroCarouselScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
+  const { showTrackingSheet } = usePermissionSheet();
 
   // Slides minimalistas sem imagens
   const slides = [
@@ -55,14 +57,13 @@ export default function IntroCarouselScreen() {
     },
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < slides.length - 1) {
       // Navega para próximo slide
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       scrollX.value = nextIndex * SCREEN_WIDTH;
     } else {
-      // Último slide: navega para próxima tela do onboarding
       router.replace("/(onboarding)/user-name");
     }
   };

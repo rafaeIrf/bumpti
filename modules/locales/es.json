@@ -7,6 +7,13 @@
       "buttonSettings": "Abrir Configuración",
       "requesting": "Solicitando...",
       "skip": "Ahora no"
+    },
+    "tracking": {
+      "title": "¿Quieres una experiencia personalizada? Activa el seguimiento.",
+      "subtitle": "Tu autorización nos ayuda a crear una experiencia más completa y sugerir funcionalidades personalizadas que te encantarán.",
+      "button": "Permitir",
+      "requesting": "Solicitando...",
+      "skip": "Ahora no"
     }
   },
   "maps": {
@@ -851,6 +858,14 @@
       "notificationsSubtitle": "Usamos notificaciones para avisarte sobre novedades importantes en la app.",
       "notificationsEnable": "Permitir notificaciones",
       "notificationsSkip": "Ahora no",
+      "trackingTitle": "Ayúdanos a personalizar tu experiencia",
+      "trackingSubtitle": "Permite el seguimiento para que podamos mostrarte mejor contenido y mejorar tu experiencia.",
+      "trackingEnable": "Activar seguimiento",
+      "trackingRequesting": "Solicitando...",
+      "trackingSkip": "Ahora no",
+      "trackingDeniedTitle": "Seguimiento denegado",
+      "trackingDeniedMessage": "Puedes activar el seguimiento más tarde en Configuración para ayudarnos a personalizar tu experiencia.",
+      "trackingError": "No se pudo solicitar permiso de seguimiento. Por favor, inténtalo de nuevo.",
       "notificationsRequesting": "Solicitando permiso...",
       "notificationsDeniedTitle": "Permiso denegado",
       "notificationsDeniedMessage": "Has denegado el permiso de notificaciones. Puedes activarlo después en la configuración de la app.",

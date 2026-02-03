@@ -16,7 +16,7 @@ module.exports = {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSUserTrackingUsageDescription:
-          "We use this identifier to personalize ads and measure ad campaign performance.",
+          "Sua autorização nos ajuda a aprimorar nossos serviços e sugerir funcionalidades personalizadas que você vai amar",
         NSLocationWhenInUseUsageDescription:
           "We use your location to show nearby venues.",
         NSPhotoLibraryUsageDescription:

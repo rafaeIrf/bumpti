@@ -12,6 +12,7 @@ export type OnboardingStep =
   | "favorite-places"
   | "location"
   | "notifications"
+  | "tracking"
   | "complete";
 
 export interface OnboardingUserData {
@@ -32,6 +33,7 @@ export interface OnboardingUserData {
   favoritePlaces?: string[];
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
+  hasTrackingPermission?: boolean;
 }
 
 export interface OnboardingState {
@@ -90,6 +92,9 @@ const onboardingSlice = createSlice({
     setNotificationPermission: (state, action: PayloadAction<boolean>) => {
       state.userData.hasNotificationPermission = action.payload;
     },
+    setTrackingPermission: (state, action: PayloadAction<boolean>) => {
+      state.userData.hasTrackingPermission = action.payload;
+    },
     completeOnboarding: (state) => {
       state.isOnboardingComplete = true;
       state.currentStep = "complete";
@@ -147,6 +152,7 @@ export const {
   setFavoritePlaces,
   setLocationPermission,
   setNotificationPermission,
+  setTrackingPermission,
   completeOnboarding,
   setUniversityData,
   resetOnboarding,

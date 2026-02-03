@@ -12,6 +12,7 @@
 import analytics from "@react-native-firebase/analytics";
 import type { PostHog } from "posthog-react-native";
 
+import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { isTrackingAllowed } from "./tracking-consent";
 
@@ -94,6 +95,19 @@ export async function reset(): Promise<void> {
 export type LoginMethod = "apple" | "google" | "email_otp";
 
 /**
+ * Normalize provider string to LoginMethod.
+ * @param provider - Raw provider from session.user.app_metadata.provider
+ * @returns Normalized LoginMethod
+ */
+function normalizeProvider(provider: string | undefined): LoginMethod {
+  return provider === "apple"
+    ? "apple"
+    : provider === "google"
+      ? "google"
+      : "email_otp";
+}
+
+/**
  * Track successful login.
  * Should be called after authentication completes successfully.
  *
@@ -110,12 +124,7 @@ export async function trackLogin(
     }
 
     // Normalize provider to LoginMethod
-    const method: LoginMethod =
-      provider === "apple"
-        ? "apple"
-        : provider === "google"
-          ? "google"
-          : "email_otp";
+    const method = normalizeProvider(provider);
 
     // PostHog
     if (posthog) {
@@ -202,6 +211,7 @@ export async function trackAccountDeletion(
 /**
  * Track onboarding completion.
  * Fired when user successfully completes the signup flow.
+ * Auto-detects authentication method from current session.
  *
  * Firebase: sign_up (standard GA4 event for Google Ads)
  * PostHog: onboarding_complete
@@ -214,15 +224,20 @@ export async function trackOnboardingComplete(): Promise<void> {
       return;
     }
 
+    // Auto-detect method from current session
+    const { data } = await supabase.auth.getSession();
+    const provider = data.session?.user.app_metadata?.provider;
+    const method = normalizeProvider(provider);
+
     // PostHog
     if (posthog) {
-      posthog.capture("onboarding_complete");
-      logger.debug("Analytics: PostHog onboarding_complete");
+      posthog.capture("onboarding_complete", { method });
+      logger.debug("Analytics: PostHog onboarding_complete", { method });
     }
 
     // Firebase - use standard sign_up event for Google Ads
-    await analytics().logSignUp({ method: "email" });
-    logger.debug("Analytics: Firebase sign_up");
+    await analytics().logSignUp({ method });
+    logger.debug("Analytics: Firebase sign_up", { method });
   } catch (error) {
     logger.error("Analytics: trackOnboardingComplete error", { error });
   }

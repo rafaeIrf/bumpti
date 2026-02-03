@@ -11,11 +11,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import { logger } from "@/utils/logger";
 import { setPostHogClient } from "./analytics-service";
-import {
-  isTrackingAllowed,
-  requestTrackingPermission,
-  shouldRequestTracking,
-} from "./tracking-consent";
+import { isTrackingAllowed } from "./tracking-consent";
 
 // Get PostHog credentials from environment
 const POSTHOG_API_KEY =
@@ -45,13 +41,7 @@ function AnalyticsInitializer({ children }: Props) {
 
     const initialize = async () => {
       try {
-        // Request ATT permission if needed (iOS only)
-        const shouldRequest = await shouldRequestTracking();
-        if (shouldRequest) {
-          await requestTrackingPermission();
-        }
-
-        // Check if tracking is allowed after ATT decision
+        // Check if tracking is allowed (permission will be requested in intro carousel)
         const canTrack = await isTrackingAllowed();
 
         if (!canTrack) {
