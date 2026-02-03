@@ -28,7 +28,6 @@ interface ProfileSwiperProps {
   readonly profiles: ActiveUserAtPlace[];
   readonly currentIndex: number;
   readonly currentPlaceId?: string;
-  readonly places?: Record<string, { name: string; emoji: string }>;
   readonly onLike?: (profile: ActiveUserAtPlace) => void;
   readonly onPass?: (profile: ActiveUserAtPlace) => void;
   readonly onComplete?: () => void;
@@ -59,7 +58,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       profiles,
       currentIndex,
       currentPlaceId,
-      places,
       onLike,
       onPass,
       onComplete,
@@ -68,7 +66,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
       emptyStateDescription,
       emptyStateAction,
     },
-    ref
+    ref,
   ) => {
     const colors = useThemeColors();
     const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
@@ -296,7 +294,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
               <UserProfileCard
                 profile={profiles[currentIndex + 1]}
                 currentPlaceId={currentPlaceId}
-                places={places}
               />
             </Animated.View>
           )}
@@ -308,7 +305,6 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
                 <UserProfileCard
                   profile={currentProfile}
                   currentPlaceId={currentPlaceId}
-                  places={places}
                   onBlockSuccess={handleSkip}
                 />
               </Animated.View>
@@ -317,7 +313,7 @@ export const ProfileSwiper = forwardRef<ProfileSwiperRef, ProfileSwiperProps>(
         </View>
       </View>
     );
-  }
+  },
 );
 
 ProfileSwiper.displayName = "ProfileSwiper";

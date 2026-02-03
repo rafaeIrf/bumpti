@@ -1,4 +1,4 @@
-import { CheckIcon, SparklesIcon, UsersIcon, XIcon } from "@/assets/icons";
+import { UsersIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useDatabase } from "@/components/DatabaseProvider";
 import { ItsMatchModal } from "@/components/its-match-modal";
@@ -21,7 +21,6 @@ import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { prefetchNextCards } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
-import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -29,15 +28,7 @@ import { Alert, StyleSheet, View } from "react-native";
 interface Place {
   id: string;
   name: string;
-  distance?: string;
 }
-
-const mockPlaces = {
-  "1": { name: "Bar do João", emoji: "🍸" },
-  "2": { name: "The Irish Pub", emoji: "🍺" },
-  "6": { name: "Café Central", emoji: "☕" },
-  "4": { name: "Universidade Central", emoji: "🎓" },
-};
 
 export default function PlacePeopleScreen() {
   const colors = useThemeColors();
@@ -48,13 +39,11 @@ export default function PlacePeopleScreen() {
   const params = useLocalSearchParams<{
     placeId: string;
     placeName: string;
-    distance?: string;
-    distanceKm?: string;
     initialUsers?: string;
   }>();
   const [isHydratingInitialUsers, setIsHydratingInitialUsers] = useState(false);
   const [matchProfile, setMatchProfile] = useState<ActiveUserAtPlace | null>(
-    null
+    null,
   );
   const [deck, setDeck] = useState<ActiveUserAtPlace[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -75,12 +64,9 @@ export default function PlacePeopleScreen() {
   const placeId = params.placeId;
   const hasInitialUsers = Boolean(params.initialUsers);
 
-  const isUserHere = true;
-
   const place: Place = {
     id: placeId,
     name: params.placeName,
-    distance: params.distanceKm,
   };
 
   const {
@@ -125,7 +111,7 @@ export default function PlacePeopleScreen() {
       setIsHydratingInitialUsers(true);
       try {
         const parsedUsers = JSON.parse(
-          params.initialUsers
+          params.initialUsers,
         ) as ActiveUserAtPlace[];
         await upsertDiscoveryProfiles({
           database,
@@ -151,7 +137,7 @@ export default function PlacePeopleScreen() {
     setDeck((prev) => {
       if (prev.length === 0) {
         const initial = availableProfiles.filter(
-          (profile) => !swipedIdsRef.current.has(profile.user_id)
+          (profile) => !swipedIdsRef.current.has(profile.user_id),
         );
         deckIdsRef.current = new Set(initial.map((profile) => profile.user_id));
         setIsDeckExhausted(initial.length === 0);
@@ -161,12 +147,12 @@ export default function PlacePeopleScreen() {
       const nextProfiles = availableProfiles.filter(
         (profile) =>
           !deckIdsRef.current.has(profile.user_id) &&
-          !swipedIdsRef.current.has(profile.user_id)
+          !swipedIdsRef.current.has(profile.user_id),
       );
       if (nextProfiles.length === 0) return prev;
 
       nextProfiles.forEach((profile) =>
-        deckIdsRef.current.add(profile.user_id)
+        deckIdsRef.current.add(profile.user_id),
       );
       if (pendingRefillRef.current) {
         lastRefillHadNewRef.current = true;
@@ -257,7 +243,7 @@ export default function PlacePeopleScreen() {
     if (lastSwipeWasMatch) {
       Alert.alert(
         t("placePeople.rewindBlockedTitle"),
-        t("placePeople.rewindBlockedDescription")
+        t("placePeople.rewindBlockedDescription"),
       );
       return;
     }
@@ -280,11 +266,6 @@ export default function PlacePeopleScreen() {
     logger.info("No more profiles");
   };
 
-  const handleUpgradeToPremium = () => {
-    logger.info("Navigate to premium subscription");
-    // TODO: Navigate to premium screen
-  };
-
   const handleBack = () => {
     router.back();
   };
@@ -296,14 +277,6 @@ export default function PlacePeopleScreen() {
       setSwipeX(sharedValue);
     }
   }, []);
-
-  // Parse distance from string to number
-  const distanceInKm = params.distanceKm
-    ? Number.parseFloat(params.distanceKm)
-    : undefined;
-  const isFarAway = distanceInKm && distanceInKm > 3;
-
-  // No more profiles or Premium logic handled within unified return
 
   const toolbar = (
     <ScreenToolbar
@@ -326,19 +299,17 @@ export default function PlacePeopleScreen() {
       availableProfiles.some(
         (profile) =>
           !deckIdsRef.current.has(profile.user_id) &&
-          !swipedIdsRef.current.has(profile.user_id)
+          !swipedIdsRef.current.has(profile.user_id),
       ),
-    [availableProfiles]
+    [availableProfiles],
   );
 
-  const showPremium = !isUserHere && isFarAway && !isPremium;
   const showEmpty =
     !loading &&
-    !showPremium &&
     (deck.length === 0 || isDeckExhausted) &&
     !hasAvailableToAppend &&
     !isRefilling;
-  const showSwiper = !loading && !showPremium && !showEmpty && remaining > 0;
+  const showSwiper = !loading && !showEmpty && remaining > 0;
 
   useEffect(() => {
     if (!showSwiper) return;
@@ -397,109 +368,6 @@ export default function PlacePeopleScreen() {
       >
         {loading && <LoadingView />}
 
-        {showPremium && (
-          <ThemedView style={styles.premiumContainer}>
-            <View style={styles.premiumContent}>
-              <LinearGradient
-                colors={["#FFD700", "#FFA500"]}
-                style={styles.premiumIcon}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <SparklesIcon width={40} height={40} color="#000000" />
-              </LinearGradient>
-
-              <ThemedText style={styles.premiumTitle}>
-                {t("placePeople.premiumRequired")}
-              </ThemedText>
-              <ThemedText
-                style={[
-                  styles.premiumDescription,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                {t("placePeople.premiumDescription")}
-              </ThemedText>
-
-              <View
-                style={[
-                  styles.benefitsContainer,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.benefitRow}>
-                  <View
-                    style={[
-                      styles.checkIcon,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  >
-                    <CheckIcon width={16} height={16} color="#FFFFFF" />
-                  </View>
-                  <ThemedText style={styles.benefitText}>
-                    {t("placePeople.benefit1")}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.benefitRow}>
-                  <View
-                    style={[
-                      styles.checkIcon,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  >
-                    <CheckIcon width={16} height={16} color="#FFFFFF" />
-                  </View>
-                  <ThemedText style={styles.benefitText}>
-                    {t("placePeople.benefit2")}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.benefitRow}>
-                  <View
-                    style={[
-                      styles.checkIcon,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  >
-                    <CheckIcon width={16} height={16} color="#FFFFFF" />
-                  </View>
-                  <ThemedText style={styles.benefitText}>
-                    {t("placePeople.benefit3")}
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.premiumActions}>
-                <LinearGradient
-                  colors={["#FFD700", "#FFA500"]}
-                  style={styles.premiumButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Button
-                    onPress={handleUpgradeToPremium}
-                    style={styles.premiumButton}
-                    textStyle={styles.premiumButtonText}
-                  >
-                    <SparklesIcon width={20} height={20} color="#000000" />
-                    <ThemedText style={styles.premiumButtonTextContent}>
-                      {t("placePeople.subscribePremium")}
-                    </ThemedText>
-                  </Button>
-                </LinearGradient>
-
-                <Button onPress={handleBack} variant="secondary">
-                  {t("placePeople.backToPlaces")}
-                </Button>
-              </View>
-            </View>
-          </ThemedView>
-        )}
-
         {showEmpty && (
           <ThemedView style={styles.emptyContainer}>
             <View
@@ -530,7 +398,6 @@ export default function PlacePeopleScreen() {
             profiles={deck}
             currentIndex={currentIndex}
             currentPlaceId={place.id}
-            places={mockPlaces}
             onLike={handleLike}
             onPass={handlePass}
             onComplete={handleComplete}
