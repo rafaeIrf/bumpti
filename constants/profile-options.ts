@@ -32,22 +32,18 @@ export const SMOKING_OPTIONS = [
   {
     id: "social",
     labelKey: "screens.profile.options.smoking.social",
-    descriptionKey: "screens.profile.options.smoking.socialDesc",
   },
   {
     id: "no",
     labelKey: "screens.profile.options.smoking.no",
-    descriptionKey: "screens.profile.options.smoking.noDesc",
   },
   {
     id: "yes",
     labelKey: "screens.profile.options.smoking.yes",
-    descriptionKey: "screens.profile.options.smoking.yesDesc",
   },
   {
     id: "quitting",
     labelKey: "screens.profile.options.smoking.quitting",
-    descriptionKey: "screens.profile.options.smoking.quittingDesc",
   },
 ];
 

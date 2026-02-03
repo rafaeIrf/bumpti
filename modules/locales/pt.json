@@ -356,13 +356,9 @@
         },
         "smoking": {
           "social": "Fumo socialmente",
-          "socialDesc": "Apenas em eventos ou ocasiões especiais",
           "no": "Eu não fumo",
-          "noDesc": "Não sou fumante",
           "yes": "Eu fumo",
-          "yesDesc": "Fumante regular",
-          "quitting": "Tentando parar de fumar",
-          "quittingDesc": "Em processo de parar"
+          "quitting": "Tentando parar de fumar"
         },
         "gender": {
           "female": "Mulher",
