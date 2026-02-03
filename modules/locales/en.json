@@ -353,13 +353,9 @@
         },
         "smoking": {
           "social": "I smoke socially",
-          "socialDesc": "Only at events or special occasions",
           "no": "I don't smoke",
-          "noDesc": "Non-smoker",
           "yes": "I smoke",
-          "yesDesc": "Regular smoker",
-          "quitting": "Trying to quit",
-          "quittingDesc": "In the process of quitting"
+          "quitting": "Trying to quit"
         },
         "gender": {
           "female": "Woman",
