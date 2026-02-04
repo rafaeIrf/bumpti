@@ -6,6 +6,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { triggerCityHydration } from "@/modules/places/api";
@@ -25,6 +26,12 @@ export default function LocationScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
   const { request } = useLocationPermission();
   const { location: cachedCoords } = useCachedLocation();
+
+  // Track screen view
+  useScreenTracking("onboarding_location", {
+    onboarding_step: 8,
+    step_name: "location",
+  });
 
   const handleEnableLocation = async () => {
     setIsRequesting(true);
@@ -48,7 +55,7 @@ export default function LocationScreen() {
         // Permissão negada
         Alert.alert(
           t("screens.onboarding.locationDeniedTitle"),
-          t("screens.onboarding.locationDeniedMessage")
+          t("screens.onboarding.locationDeniedMessage"),
         );
         setIsRequesting(false);
       }

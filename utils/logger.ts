@@ -32,7 +32,7 @@ export const logger = {
 
   debug: (...args: any[]) => {
     if (isDevelopment) {
-      console.debug(...args);
+      console.log(...args);
     }
   },
 };

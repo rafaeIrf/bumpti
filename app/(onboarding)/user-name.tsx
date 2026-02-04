@@ -4,6 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -14,6 +15,12 @@ export default function UserNameScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
   const [name, setName] = useState(userData.name || "");
+
+  // Track screen view
+  useScreenTracking("onboarding_name", {
+    onboarding_step: 1,
+    step_name: "name",
+  });
 
   const handleContinue = () => {
     if (name.trim()) {

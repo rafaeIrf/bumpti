@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -17,6 +18,12 @@ import { Platform, StyleSheet, View } from "react-native";
 export default function UserAgeScreen() {
   const colors = useThemeColors();
   const { completeCurrentStep } = useOnboardingFlow();
+
+  // Track screen view
+  useScreenTracking("onboarding_age", {
+    onboarding_step: 2,
+    step_name: "age",
+  });
 
   const [birthDate, setBirthDate] = useState<Moment | null>(null);
   const [dateText, setDateText] = useState<string>("");

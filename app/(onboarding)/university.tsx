@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -30,6 +31,12 @@ export default function UniversityScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const { userData, completeCurrentStep } = useOnboardingFlow();
+
+  // Track screen view
+  useScreenTracking("onboarding_university", {
+    onboarding_step: 10,
+    step_name: "university",
+  });
 
   // State
   const [selectedUniversity, setSelectedUniversity] =

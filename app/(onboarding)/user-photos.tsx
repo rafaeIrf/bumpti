@@ -4,6 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { UserPhotoGrid } from "@/components/user-photo-grid";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -14,6 +15,12 @@ export default function UserPhotosScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
   const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
+
+  // Track screen view
+  useScreenTracking("onboarding_photos", {
+    onboarding_step: 6,
+    step_name: "photos",
+  });
 
   const handleContinue = () => {
     if (photos.length >= 3) {

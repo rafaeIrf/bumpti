@@ -3,6 +3,7 @@ import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -16,6 +17,12 @@ export default function UserBioScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
   const [bio, setBio] = useState(userData.bio || "");
+
+  // Track screen view
+  useScreenTracking("onboarding_bio", {
+    onboarding_step: 7,
+    step_name: "bio",
+  });
 
   const handleContinue = () => {
     // Save bio to Redux (even if empty, it's optional)
