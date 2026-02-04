@@ -214,6 +214,7 @@
           "devicePermission": "Permitir notificaciones",
           "devicePermissionDescription": "Autoriza notificaciones en el dispositivo",
           "matches": "Matches",
+          "likes": "Me gusta",
           "messages": "Mensajes",
           "nearbyActivity": "Actividad cercana",
           "favoritePlaces": "Lugares favoritos"

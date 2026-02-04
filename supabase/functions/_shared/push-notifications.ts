@@ -43,6 +43,8 @@ export async function sendPushNotification({
         return settings.messages ?? true;
       case "match_created":
         return settings.matches ?? true;
+      case "like_received":
+        return settings.likes ?? true;
       // Activity / Places
       case "favorite_activity_started":
       case "favorite_activity_heating":

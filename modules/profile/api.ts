@@ -66,6 +66,8 @@ export type UpdateProfilePayload = {
   university_name_custom?: string | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean;
+  last_lat?: number;
+  last_lng?: number;
   [key: string]: unknown;
 };
 

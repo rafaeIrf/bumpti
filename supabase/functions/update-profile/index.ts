@@ -45,6 +45,8 @@ type UpdateProfilePayload = {
   university_name_custom?: string | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean;
+  last_lat?: number; // GPS latitude for nearby notifications
+  last_lng?: number; // GPS longitude for nearby notifications
   [key: string]: unknown;
 };
 
@@ -140,6 +142,8 @@ Deno.serve(async (req) => {
       university_name_custom,
       graduation_year,
       show_university_on_home,
+      last_lat,
+      last_lng,
       ...rest
     } = payload;
 
@@ -400,6 +404,32 @@ Deno.serve(async (req) => {
     // Show university on home preference
     if (show_university_on_home !== undefined) {
       updates.show_university_on_home = show_university_on_home;
+    }
+
+    // Last known location for nearby activity notifications
+    // When location is updated, automatically set the timestamp
+    if (last_lat !== undefined || last_lng !== undefined) {
+      // Validate coordinates
+      if (last_lat !== undefined) {
+        if (last_lat < -90 || last_lat > 90) {
+          return new Response(
+            JSON.stringify({ error: "invalid_last_lat", message: "last_lat must be between -90 and 90" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        updates.last_lat = last_lat;
+      }
+      if (last_lng !== undefined) {
+        if (last_lng < -180 || last_lng > 180) {
+          return new Response(
+            JSON.stringify({ error: "invalid_last_lng", message: "last_lng must be between -180 and 180" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        updates.last_lng = last_lng;
+      }
+      // Automatically set timestamp when location is updated
+      updates.last_location_updated_at = new Date().toISOString();
     }
 
     // Basic validations
