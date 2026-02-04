@@ -33,14 +33,14 @@ const PLAN_DEFAULTS = [
     id: "1-semana",
     nameKey: "screens.premiumPaywall.plans.week",
     period: null,
-    badgeKey: "screens.premiumPaywall.plans.mostPopular",
+    badgeKey: null,
     isHighlighted: false,
   },
   {
     id: "1-mes",
     nameKey: "screens.premiumPaywall.plans.month",
     period: "screens.premiumPaywall.plans.perMonth",
-    badgeKey: null,
+    badgeKey: "screens.premiumPaywall.plans.mostPopular",
     isHighlighted: true,
   },
   {
