@@ -101,10 +101,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
         if (nowAuthenticated && session?.user?.id) {
           trackLogin(session.user.app_metadata?.provider);
 
-          // Also identify the user
-          identify(session.user.id, {
-            email: session.user.email ?? "",
-          });
+          // Also identify the user (only by ID for privacy)
+          identify(session.user.id);
         } else if (!nowAuthenticated && wasAuthenticated) {
           // trackLogout already calls reset internally
           trackLogout();
