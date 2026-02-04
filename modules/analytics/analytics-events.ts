@@ -55,6 +55,15 @@ export const SOCIAL_EVENTS = {
 } as const;
 
 // =============================================================================
+// SCREEN TRACKING
+// =============================================================================
+
+export const SCREEN_EVENTS = {
+  /** User viewed a screen */
+  SCREEN_VIEW: "screen_view",
+} as const;
+
+// =============================================================================
 // CONSOLIDATED EXPORT
 // =============================================================================
 
@@ -63,6 +72,7 @@ export const ANALYTICS_EVENTS = {
   ONBOARDING: ONBOARDING_EVENTS,
   TRACKING: TRACKING_EVENTS,
   SOCIAL: SOCIAL_EVENTS,
+  SCREEN: SCREEN_EVENTS,
 } as const;
 
 // =============================================================================
