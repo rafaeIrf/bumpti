@@ -7,6 +7,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { getRelativeDate } from "@/utils/date";
 import { StyleSheet, View } from "react-native";
+import { BrandIcon } from "./ui/brand-icon";
 
 type MatchPlaceCardProps = {
   placeName: string;
@@ -25,6 +26,7 @@ export function MatchPlaceCard({
   return (
     <View style={styles.container}>
       <ThemedView style={[styles.card]}>
+        <BrandIcon icon={MapPinIcon} color={colors.accent} />
         {/* Título */}
         <ThemedText
           style={[
@@ -32,21 +34,20 @@ export function MatchPlaceCard({
             {
               color: colors.textSecondary,
               textAlign: "center",
-              marginBottom: spacing.sm,
+              marginVertical: spacing.sm,
             },
           ]}
         >
           {t("screens.chatMessages.connectedHere")}
         </ThemedText>
 
-        {/* Local com ícone */}
         <View style={styles.placeRow}>
-          <MapPinIcon width={16} height={16} color={colors.accent} />
           <ThemedText
             style={[
               typography.body1,
               {
                 color: colors.text,
+                textAlign: "center",
                 marginLeft: spacing.xs,
               },
             ]}

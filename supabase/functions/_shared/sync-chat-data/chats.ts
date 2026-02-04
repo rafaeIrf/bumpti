@@ -1,10 +1,11 @@
 import { decryptMessage } from "../encryption.ts";
-import type { SyncChanges } from "./types.ts";
+import { detectDeletedItems } from "./helpers.ts";
 import {
   fetchPhotosInBatch,
   signPhotoUrl,
   signPhotoUrlsInBatch,
 } from "./media.ts";
+import type { SyncChanges } from "./types.ts";
 
 export async function fetchChatsChanges(
   supabase: any,
@@ -13,7 +14,8 @@ export async function fetchChatsChanges(
   sinceDate: string | null,
   encryptionKey: CryptoKey,
   forceUpdates: boolean,
-  usersWithPhotoUpdates: string[]
+  usersWithPhotoUpdates: string[],
+  localChatIds: string[] = []
 ): Promise<SyncChanges> {
   const allChats = await fetchChatsFromRPC(
     supabase,
@@ -24,6 +26,7 @@ export async function fetchChatsChanges(
   );
 
   console.log("[Chats] Found:", allChats.length);
+  console.log("[Chats] Local IDs received:", localChatIds.length);
 
   const userIds = allChats.map((c: any) => c.other_user_id);
   const photosMap = await fetchPhotosInBatch(supabaseAdmin, userIds);
@@ -34,7 +37,7 @@ export async function fetchChatsChanges(
     )
   );
 
-  return classifyChats(processedChats, sinceDate, forceUpdates, usersWithPhotoUpdates);
+  return classifyChats(processedChats, sinceDate, forceUpdates, usersWithPhotoUpdates, localChatIds);
 }
 
 export async function fetchChatsForMediaRefresh(
@@ -151,10 +154,14 @@ function classifyChats(
   chats: any[],
   sinceDate: string | null,
   forceUpdates: boolean,
-  usersWithPhotoUpdates: string[]
+  usersWithPhotoUpdates: string[],
+  localChatIds: string[] = []
 ): SyncChanges {
   const created: any[] = [];
   const updated: any[] = [];
+  
+  // Detect CASCADE deleted chats using shared helper
+  const deleted = detectDeletedItems(localChatIds, chats, "[Chats]");
 
   for (const chat of chats) {
     const hasPhotoUpdate = usersWithPhotoUpdates.includes(chat.other_user_id);
@@ -170,7 +177,7 @@ function classifyChats(
     }
   }
 
-  return { created, updated, deleted: [] };
+  return { created, updated, deleted };
 }
 
 async function decryptChatMessage(

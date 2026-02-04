@@ -1,4 +1,4 @@
-import { SmartphoneIcon } from "@/assets/icons";
+import { ArrowLeftIcon, SmartphoneIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { PermissionBottomSheet } from "@/components/permission-bottom-sheet";
@@ -94,7 +94,7 @@ export default function NotificationSettingsScreen() {
         <ScreenToolbar
           title={t("screens.profile.settingsPage.notifications.title")}
           leftAction={{
-            icon: BackIcon,
+            icon: ArrowLeftIcon,
             onClick: () => router.back(),
             ariaLabel: t("common.back"),
           }}
