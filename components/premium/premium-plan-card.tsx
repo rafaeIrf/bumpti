@@ -185,7 +185,7 @@ export function PremiumPlanCard({
           borderColor:
             isSelected && !plan.isHighlighted
               ? isCurrentPlan
-                ? colors.success ?? "#34C759"
+                ? (colors.success ?? "#34C759")
                 : colors.accent
               : "transparent",
           opacity: disabled && !isCurrentPlan ? 0.5 : 1, // Dim other plans if everything is disabled, but usually current plan is disabled but full opacity
@@ -199,14 +199,18 @@ export function PremiumPlanCard({
             style={[
               styles.planBadge,
               {
-                backgroundColor: plan.isHighlighted ? "#000000" : colors.accent,
+                backgroundColor: plan.isHighlighted ? "#FFFFFF" : colors.accent,
               },
             ]}
           >
             <ThemedText
               style={[
                 typography.caption,
-                { color: "#FFFFFF", fontWeight: "600", fontSize: 10 },
+                {
+                  color: plan.isHighlighted ? "#000000" : "#FFFFFF",
+                  fontWeight: "600",
+                  fontSize: 10,
+                },
               ]}
             >
               {t(plan.badgeKey)}
