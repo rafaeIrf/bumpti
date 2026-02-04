@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CONNECT_WITH_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -28,6 +29,12 @@ export default function ConnectWithScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
+  // Track screen view
+  useScreenTracking("onboarding_connect_with", {
+    onboarding_step: 4,
+    step_name: "connect_with",
+  });
+
   const [selectedOptions, setSelectedOptions] = useState<
     ConnectWithOptionKey[]
   >((userData.connectWith as ConnectWithOptionKey[]) || []);
@@ -37,7 +44,7 @@ export default function ConnectWithScreen() {
   useEffect(() => {
     const validKeys = CONNECT_WITH_OPTIONS.map((opt) => opt.id);
     setSelectedOptions((current) =>
-      current.filter((key) => validKeys.includes(key) || key === "all")
+      current.filter((key) => validKeys.includes(key) || key === "all"),
     );
   }, []);
 
@@ -61,7 +68,7 @@ export default function ConnectWithScreen() {
   const handleContinue = () => {
     if (selectedOptions.length > 0) {
       const allGenderKeys = CONNECT_WITH_OPTIONS.filter(
-        (o) => o.id !== "all"
+        (o) => o.id !== "all",
       ).map((opt) => opt.id as ConnectWithOptionKey);
 
       const selectedKeys = selectedOptions.includes("all")
@@ -141,7 +148,7 @@ export default function ConnectWithScreen() {
                   </Pressable>
                 </Animated.View>
               );
-            }
+            },
           )}
 
           {/* All option */}

@@ -3,6 +3,7 @@ import { BumptiWideLogo } from "@/assets/images";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { Colors, spacing, typography } from "@/constants/theme";
+import { useScreenTracking } from "@/modules/analytics";
 import { socialAuthService } from "@/modules/auth";
 import { t } from "@/modules/locales";
 import { openPrivacyPolicy, openTermsOfUse } from "@/utils";
@@ -30,6 +31,11 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 export default function WelcomeScreen() {
   const [isAppleAvailable, setIsAppleAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState<"apple" | "google" | null>(null);
+
+  // Track screen view
+  useScreenTracking("auth_welcome", {
+    screen_class: "WelcomeScreen",
+  });
 
   useEffect(() => {
     // Configure Google Sign-In on mount

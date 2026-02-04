@@ -4,7 +4,9 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { trackOnboardingComplete } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
 import { fetchAndSetUserProfile } from "@/modules/profile/index";
@@ -25,12 +27,21 @@ export default function CompleteScreen() {
   const { userData } = useOnboardingFlow();
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track screen view
+  useScreenTracking("onboarding_complete", {
+    onboarding_step: 13,
+    step_name: "complete",
+  });
+
   const handleComplete = async () => {
     if (isSaving) return;
 
     try {
       setIsSaving(true);
       await saveOnboarding(userData);
+
+      // Track onboarding completion
+      await trackOnboardingComplete();
 
       // Sync profile state in Redux
       await fetchAndSetUserProfile();
@@ -39,7 +50,7 @@ export default function CompleteScreen() {
     } catch (error: any) {
       Alert.alert(
         t("common.error"),
-        error?.message || "Não foi possível salvar seu onboarding."
+        error?.message || "Não foi possível salvar seu onboarding.",
       );
     } finally {
       setIsSaving(false);

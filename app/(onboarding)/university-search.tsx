@@ -1,9 +1,16 @@
 import { PlaceSearchContent } from "@/components/place-search/place-search-content";
+import { useScreenTracking } from "@/modules/analytics";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 
 export default function UniversitySearchModal() {
   const router = useRouter();
+
+  // Track screen view
+  useScreenTracking("onboarding_university_search", {
+    onboarding_step: 10,
+    step_name: "university_search",
+  });
 
   const handleUniversitySelect = (place: {
     id: string;

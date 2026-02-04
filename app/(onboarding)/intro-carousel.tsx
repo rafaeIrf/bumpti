@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { router } from "expo-router";
@@ -32,6 +33,12 @@ export default function IntroCarouselScreen() {
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
   const { showTrackingSheet } = usePermissionSheet();
+
+  // Track screen view
+  useScreenTracking("onboarding_intro_carousel", {
+    onboarding_step: 0,
+    step_name: "intro_carousel",
+  });
 
   // Slides minimalistas sem imagens
   const slides = [

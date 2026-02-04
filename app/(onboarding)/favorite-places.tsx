@@ -10,6 +10,7 @@ import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React from "react";
@@ -17,6 +18,12 @@ import React from "react";
 export default function FavoritePlacesScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
   const { location: userLocation } = useCachedLocation();
+
+  // Track screen view
+  useScreenTracking("onboarding_favorite_places", {
+    onboarding_step: 9,
+    step_name: "favorite_places",
+  });
 
   const {
     selectedPlaceIds,

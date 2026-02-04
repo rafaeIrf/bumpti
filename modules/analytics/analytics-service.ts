@@ -40,14 +40,14 @@ export async function identify(
   try {
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
-      logger.debug("Analytics: identify skipped (tracking denied)");
+      logger.info("Analytics: identify skipped (tracking denied)");
       return;
     }
 
     // PostHog identify
     if (posthog) {
       posthog.identify(userId, traits);
-      logger.debug("Analytics: PostHog identify", { userId });
+      logger.info("Analytics: PostHog identify", { userId });
     }
 
     // Firebase setUserId
@@ -62,7 +62,7 @@ export async function identify(
       }
       await analytics().setUserProperties(firebaseTraits);
     }
-    logger.debug("Analytics: Firebase setUserId", { userId });
+    logger.info("Analytics: Firebase setUserId", { userId });
   } catch (error) {
     logger.error("Analytics: identify error", { error });
   }
@@ -77,12 +77,12 @@ export async function reset(): Promise<void> {
     // PostHog reset
     if (posthog) {
       posthog.reset();
-      logger.debug("Analytics: PostHog reset");
+      logger.info("Analytics: PostHog reset");
     }
 
     // Firebase reset
     await analytics().resetAnalyticsData();
-    logger.debug("Analytics: Firebase reset");
+    logger.info("Analytics: Firebase reset");
   } catch (error) {
     logger.error("Analytics: reset error", { error });
   }
@@ -370,8 +370,70 @@ export async function trackEvent(
     }
     await analytics().logEvent(firebaseEventName, firebaseParams);
 
-    logger.debug(`Analytics: trackEvent ${eventName}`, { properties });
+    logger.info(`📊 Analytics: ${eventName}`, properties);
   } catch (error) {
-    logger.error("Analytics: trackEvent error", { error, eventName });
   }
 }
+
+// =============================================================================
+// ONBOARDING FUNNEL EVENTS
+// =============================================================================
+
+/**
+ * Track onboarding step completion.
+ * Fired when user successfully completes a step and moves to the next one.
+ *
+ * Use this to measure step-by-step conversion rates in the funnel.
+ *
+ * @param stepNumber - Sequential step number (1-13)
+ * @param stepName - Semantic name of the step (e.g., 'name', 'photos', 'complete')
+ */
+export async function trackOnboardingStepComplete(
+  stepNumber: number,
+  stepName: string
+): Promise<void> {
+  try {
+    const canTrack = await isTrackingAllowed();
+    if (!canTrack) {
+      logger.info("Analytics: trackOnboardingStepComplete skipped (tracking denied)");
+      return;
+    }
+
+    await trackEvent("onboarding_step_complete", {
+      step_number: stepNumber,
+      step_name: stepName,
+    });
+  } catch (error) {
+    logger.error("Analytics: trackOnboardingStepComplete error", { error });
+  }
+}
+
+/**
+ * Track onboarding permission events.
+ * Fired when user grants or denies a permission during onboarding.
+ *
+ * Critical for understanding permission acceptance rates.
+ *
+ * @param permissionType - Type of permission requested
+ * @param granted - Whether user granted the permission
+ */
+export async function trackOnboardingPermission(
+  permissionType: "location" | "notifications" | "tracking",
+  granted: boolean
+): Promise<void> {
+  try {
+    const canTrack = await isTrackingAllowed();
+    if (!canTrack) {
+      logger.info("Analytics: trackOnboardingPermission skipped (tracking denied)");
+      return;
+    }
+
+    await trackEvent("onboarding_permission", {
+      permission_type: permissionType,
+      permission_granted: granted,
+    });
+  } catch (error) {
+    logger.error("Analytics: trackOnboardingPermission error", { error });
+  }
+}
+

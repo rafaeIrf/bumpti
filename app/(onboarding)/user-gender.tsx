@@ -6,6 +6,7 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import { GENDER_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices";
@@ -22,6 +23,12 @@ export default function UserGenderScreen() {
   const { userData, completeCurrentStep } = useOnboardingFlow();
   // Removed useOnboardingOptions usage
 
+  // Track screen view
+  useScreenTracking("onboarding_gender", {
+    onboarding_step: 3,
+    step_name: "gender",
+  });
+
   const normalizeInitialGender = (value?: string | null) => {
     if (!value) return "";
     const lower = value.toLowerCase();
@@ -34,7 +41,7 @@ export default function UserGenderScreen() {
   };
 
   const [gender, setGender] = useState<string>(
-    normalizeInitialGender(userData.gender)
+    normalizeInitialGender(userData.gender),
   );
 
   const genderOptions =

@@ -22,9 +22,11 @@ export {
     trackLogin,
     trackLogout,
     trackMatch,
-    trackOnboardingComplete,
-    type LoginMethod
+    trackOnboardingComplete, trackOnboardingPermission, trackOnboardingStepComplete, type LoginMethod
 } from "./analytics-service";
+
+// Hooks (for screen tracking)
+export { useScreenTracking } from "./hooks";
 
 // Consent utilities (for settings screen opt-out)
 export {

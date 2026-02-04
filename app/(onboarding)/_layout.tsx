@@ -50,12 +50,21 @@ const OnboardingHeader = React.memo(() => {
     ? steps.indexOf(currentScreenName) + 1
     : 0;
 
+  const totalSteps = steps.length;
+
+  // Debug logging
+  console.log("[OnboardingHeader] Progress calculation:", {
+    currentScreenName,
+    steps,
+    indexOf: currentScreenName ? steps.indexOf(currentScreenName) : -1,
+    currentStep,
+    totalSteps,
+  });
+
   // Fallback to step 1 when navigating to onboarding for the first time
   if (!currentStep && (segments as string[]).includes("(onboarding)")) {
     currentStep = 1;
   }
-
-  const totalSteps = steps.length;
 
   if (!currentStep) {
     return null;

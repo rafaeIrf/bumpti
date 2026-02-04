@@ -6,6 +6,7 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import { INTENTION_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -31,6 +32,12 @@ const intentionIconMap: Record<
 export default function IntentionScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
+
+  // Track screen view
+  useScreenTracking("onboarding_intention", {
+    onboarding_step: 5,
+    step_name: "intention",
+  });
 
   const [selectedIntentions, setSelectedIntentions] = useState<
     IntentionOptionKey[]

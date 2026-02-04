@@ -3,6 +3,7 @@ import { hasNotificationPermission } from "@/modules/notifications";
 import { useAppSelector } from "@/modules/store/hooks";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { OnboardingStep } from "@/modules/store/slices/onboardingSlice";
+import { isIOS } from "@/utils";
 import { useRouter } from "expo-router";
 
 // Define the step order and routes
@@ -79,6 +80,13 @@ export function useOnboardingFlow() {
           next = getNextStep("notifications");
           continue;
         }
+      }
+
+      // Skip tracking step on Android (iOS-only App Tracking Transparency)
+      if (next === "tracking" && !isIOS) {
+        onboardingActions.completeStep("tracking");
+        next = getNextStep("tracking");
+        continue;
       }
 
       break;

@@ -4,6 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
@@ -23,6 +24,12 @@ export default function TrackingScreen() {
   const colors = useThemeColors();
   const [isRequesting, setIsRequesting] = useState(false);
   const { completeCurrentStep } = useOnboardingFlow();
+
+  // Track screen view
+  useScreenTracking("onboarding_tracking", {
+    onboarding_step: 12,
+    step_name: "tracking",
+  });
 
   const handleEnableTracking = async () => {
     setIsRequesting(true);

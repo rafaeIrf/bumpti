@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { registerDeviceToken } from "@/modules/notifications";
@@ -30,6 +31,12 @@ export default function NotificationsScreen() {
   const [isRequesting, setIsRequesting] = useState(false);
   const { completeCurrentStep } = useOnboardingFlow();
   const { request } = useNotificationPermission();
+
+  // Track screen view
+  useScreenTracking("onboarding_notifications", {
+    onboarding_step: 11,
+    step_name: "notifications",
+  });
 
   // Animação de balanço do sino
   const bellRotation = useSharedValue(0);
