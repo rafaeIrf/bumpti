@@ -103,7 +103,7 @@
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>NSUserTrackingUsageDescription</key>
-    <string>We use this identifier to personalize ads and measure ad campaign performance.</string>
+    <string>Sua autorização nos ajuda a aprimorar nossos serviços e sugerir funcionalidades personalizadas que você vai amar</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>
