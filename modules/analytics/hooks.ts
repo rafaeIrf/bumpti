@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ANALYTICS_EVENTS } from "./analytics-events";
 import { trackEvent } from "./analytics-service";
 
 /**
@@ -27,7 +28,7 @@ export function useScreenTracking(
   params?: Record<string, string | number | boolean>
 ): void {
   useEffect(() => {
-    trackEvent("screen_view", {
+    trackEvent(ANALYTICS_EVENTS.SCREEN.SCREEN_VIEW, {
       screen_name: screenName,
       ...params,
     });
