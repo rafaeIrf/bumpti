@@ -1,21 +1,37 @@
 import { supabase } from '@/modules/supabase/client';
 import { logger } from '@/utils/logger';
+import type { Database } from '@nozbe/watermelondb';
 import { SyncDatabaseChangeSet } from '@nozbe/watermelondb/sync';
 import type { PullChangesResponse } from './types';
 
 /**
  * Puxa mudanças incrementais do backend
  * Chama o endpoint unificado sync-chat-data
+ * Envia IDs locais de chats para detectar deleções
  */
 export async function pullChanges(
-  lastPulledAt: number | null
+  lastPulledAt: number | null,
+  database: Database
 ): Promise<PullChangesResponse> {
   try {
     logger.log('🔽 Pulling changes from backend...', { lastPulledAt });
 
+    // Fetch local IDs in parallel for better performance
+    const [localChats, localMatches] = await Promise.all([
+      database.collections.get('chats').query().fetch(),
+      database.collections.get('matches').query().fetch(),
+    ]);
+
+    const localChatIds = localChats.map((chat: any) => chat.id);
+    const localMatchIds = localMatches.map((match: any) => match.id);
+    
+    logger.log(`📋 Sending ${localChatIds.length} chat IDs and ${localMatchIds.length} match IDs for deletion detection`);
+
     const { data, error } = await supabase.functions.invoke('sync-chat-data', {
       body: {
         last_pulled_at: lastPulledAt,
+        local_chat_ids: localChatIds,
+        local_match_ids: localMatchIds,
       },
     });
 

@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     ...typography.caption,
-    lineHeight: 0,
+    lineHeight: 10,
     fontSize: 10,
   },
 });

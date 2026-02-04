@@ -1,6 +1,7 @@
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useProfile } from "@/hooks/use-profile";
 import { getUserPosition } from "@/modules/places";
+import { syncLocationToBackend } from "@/modules/profile/helpers";
 import { logger } from "@/utils/logger";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
@@ -23,6 +24,7 @@ let cachedLocation: {
 } | null = null;
 let lastFetchTime = 0;
 const LOCATION_CACHE_TIME = 1 * 60 * 1000; // 1 minute in milliseconds
+
 
 export const useCachedLocation = () => {
   const [location, setLocation] = useState<{
@@ -93,6 +95,9 @@ export const useCachedLocation = () => {
 
         logger.info("Fresh location obtained:", newLocation);
         setLocation(newLocation);
+
+        // Sync to backend for nearby activity notifications
+        syncLocationToBackend(latitude, longitude, accuracy);
       } catch (error) {
         logger.error("Failed to get user location:", error);
       } finally {
@@ -111,3 +116,4 @@ export const invalidateLocationCache = () => {
   cachedLocation = null;
   lastFetchTime = 0;
 };
+

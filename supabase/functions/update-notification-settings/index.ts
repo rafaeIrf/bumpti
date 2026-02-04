@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const { supabase, user } = await requireAuth(req);
 
     const body = await req.json();
-    const { favorite_places, nearby_activity, messages, matches } = body;
+    const { favorite_places, nearby_activity, messages, matches, likes } = body;
 
     // Construct update data, filtering undefined values to allow partial updates if needed
     // However, the requirement says "UPDATE registro se existir (upsert)"
@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
     if (typeof nearby_activity === "boolean") settings.nearby_activity = nearby_activity;
     if (typeof messages === "boolean") settings.messages = messages;
     if (typeof matches === "boolean") settings.matches = matches;
+    if (typeof likes === "boolean") settings.likes = likes;
     settings.updated_at = new Date().toISOString() as any; // Type casting for postgres timestamp
 
     // Upsert into notification_settings

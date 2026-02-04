@@ -1,4 +1,4 @@
-import { SmartphoneIcon } from "@/assets/icons";
+import { ArrowLeftIcon, SmartphoneIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { PermissionBottomSheet } from "@/components/permission-bottom-sheet";
@@ -94,7 +94,7 @@ export default function NotificationSettingsScreen() {
         <ScreenToolbar
           title={t("screens.profile.settingsPage.notifications.title")}
           leftAction={{
-            icon: BackIcon,
+            icon: ArrowLeftIcon,
             onClick: () => router.back(),
             ariaLabel: t("common.back"),
           }}
@@ -105,16 +105,16 @@ export default function NotificationSettingsScreen() {
         {/* Device Permission Section */}
         <SectionHeader
           title={t(
-            "screens.profile.settingsPage.notifications.devicePermission"
+            "screens.profile.settingsPage.notifications.devicePermission",
           )}
         />
         <View style={styles.sectionGap}>
           <SettingItem
             title={t(
-              "screens.profile.settingsPage.notifications.devicePermission"
+              "screens.profile.settingsPage.notifications.devicePermission",
             )}
             description={t(
-              "screens.profile.settingsPage.notifications.devicePermissionDescription"
+              "screens.profile.settingsPage.notifications.devicePermissionDescription",
             )}
             showChevron={false}
             rightContent={
@@ -144,6 +144,17 @@ export default function NotificationSettingsScreen() {
             }
           />
           <SettingItem
+            title={t("screens.profile.settingsPage.notifications.likes")}
+            showChevron={false}
+            rightContent={
+              <ToggleSwitch
+                value={settings.likes}
+                onValueChange={() => toggleSetting("likes")}
+                colors={colors}
+              />
+            }
+          />
+          <SettingItem
             title={t("screens.profile.settingsPage.notifications.messages")}
             showChevron={false}
             rightContent={
@@ -156,7 +167,7 @@ export default function NotificationSettingsScreen() {
           />
           <SettingItem
             title={t(
-              "screens.profile.settingsPage.notifications.nearbyActivity"
+              "screens.profile.settingsPage.notifications.nearbyActivity",
             )}
             showChevron={false}
             rightContent={
@@ -169,7 +180,7 @@ export default function NotificationSettingsScreen() {
           />
           <SettingItem
             title={t(
-              "screens.profile.settingsPage.notifications.favoritePlaces"
+              "screens.profile.settingsPage.notifications.favoritePlaces",
             )}
             showChevron={false}
             rightContent={

@@ -57,6 +57,7 @@ export interface NotificationSettings {
   nearby_activity: boolean;
   messages: boolean;
   matches: boolean;
+  likes: boolean;
 }
 
 export interface ProfileState {

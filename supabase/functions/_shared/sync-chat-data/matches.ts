@@ -1,3 +1,4 @@
+import { detectDeletedItems } from "./helpers.ts";
 import {
   fetchPhotosInBatch,
   signPhotoUrl,
@@ -10,7 +11,8 @@ export async function fetchMatchesChanges(
   userId: string,
   sinceDate: string | null,
   forceUpdates: boolean,
-  usersWithPhotoUpdates: string[]
+  usersWithPhotoUpdates: string[],
+  localMatchIds: string[] = []
 ): Promise<SyncChanges> {
   const matches = await fetchMatchesFromDB(
     supabaseAdmin,
@@ -21,6 +23,7 @@ export async function fetchMatchesChanges(
   );
 
   console.log("[fetchMatchesChanges] Total matches fetched:", matches.length);
+  console.log("[Matches] Local IDs received:", localMatchIds.length);
 
   const userIds = matches.map((m: any) =>
     m.user_a === userId ? m.user_b : m.user_a
@@ -34,7 +37,8 @@ export async function fetchMatchesChanges(
     forceUpdates,
     usersWithPhotoUpdates,
     photosMap,
-    supabaseAdmin
+    supabaseAdmin,
+    localMatchIds
   );
 }
 
@@ -161,13 +165,18 @@ async function transformAndClassifyMatches(
   forceUpdates: boolean,
   usersWithPhotoUpdates: string[],
   photosMap: Map<string, string>,
-  supabaseAdmin: any
+  supabaseAdmin: any,
+  localMatchIds: string[] = []
 ): Promise<SyncChanges> {
   const created: any[] = [];
   const updated: any[] = [];
-  const deleted: any[] = [];
+  const deleted: string[] = [];
+
+  // Detect CASCADE deleted matches using shared helper
+  deleted.push(...detectDeletedItems(localMatchIds, matches, "[Matches]"));
 
   for (const match of matches) {
+    // Process unmatched status (soft delete)
     if (match.status === "unmatched") {
       if (
         forceUpdates ||

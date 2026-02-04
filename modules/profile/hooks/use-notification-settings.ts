@@ -16,6 +16,7 @@ export function useNotificationSettings() {
     nearby_activity: true,
     messages: true,
     matches: true,
+    likes: true,
   };
 
   const toggleSetting = async (key: keyof NotificationSettings) => {

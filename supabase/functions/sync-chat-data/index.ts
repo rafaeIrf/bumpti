@@ -2,22 +2,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { getEncryptionKey } from "../_shared/encryption.ts";
 import {
-  counts,
-  jsonResponse,
-  optionsResponse,
-} from "../_shared/sync-chat-data/response.ts";
-import { detectPhotoUpdates } from "../_shared/sync-chat-data/photo-updates.ts";
+  fetchChatsChanges,
+  fetchChatsForMediaRefresh,
+} from "../_shared/sync-chat-data/chats.ts";
 import {
   fetchMatchesChanges,
   fetchMatchesForMediaRefresh,
   fetchUnmatchedChatIdsForDeletion,
 } from "../_shared/sync-chat-data/matches.ts";
-import {
-  fetchChatsChanges,
-  fetchChatsForMediaRefresh,
-} from "../_shared/sync-chat-data/chats.ts";
-import { fetchMessagesChanges } from "../_shared/sync-chat-data/messages.ts";
 import { mergeUpdated } from "../_shared/sync-chat-data/media.ts";
+import { fetchMessagesChanges } from "../_shared/sync-chat-data/messages.ts";
+import { detectPhotoUpdates } from "../_shared/sync-chat-data/photo-updates.ts";
+import {
+  counts,
+  jsonResponse,
+  optionsResponse,
+} from "../_shared/sync-chat-data/response.ts";
 
 /**
  * Unified Sync Edge Function for WatermelonDB
@@ -67,13 +67,13 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "unauthorized" }, 401);
     }
 
-    const { last_pulled_at, force_updates = false } = await req.json();
+    const { last_pulled_at, force_updates = false, local_chat_ids = [], local_match_ids = [] } = await req.json();
     const sinceDate = last_pulled_at ? new Date(last_pulled_at).toISOString() : null;
     const shouldRefreshMedia =
       typeof last_pulled_at === "number" &&
       Date.now() - last_pulled_at > MEDIA_REFRESH_THRESHOLD;
 
-    console.log("[Sync] Start:", { userId: user.id, sinceDate, force_updates });
+    console.log("[Sync] Start:", { userId: user.id, sinceDate, force_updates, localChatIds: local_chat_ids.length, localMatchIds: local_match_ids.length });
 
     const usersWithPhotoUpdates = sinceDate && !force_updates && !shouldRefreshMedia
       ? await detectPhotoUpdates(supabaseAdmin, user.id, sinceDate)
@@ -85,7 +85,8 @@ Deno.serve(async (req) => {
         user.id,
         sinceDate,
         force_updates,
-        usersWithPhotoUpdates
+        usersWithPhotoUpdates,
+        local_match_ids
       ),
       chats: await fetchChatsChanges(
         supabase,
@@ -94,7 +95,8 @@ Deno.serve(async (req) => {
         sinceDate,
         encryptionKey,
         force_updates,
-        usersWithPhotoUpdates
+        usersWithPhotoUpdates,
+        local_chat_ids
       ),
       messages: await fetchMessagesChanges(
         supabase,

@@ -59,7 +59,7 @@ export function StackedAvatars({
               },
             ]}
             contentFit="cover"
-            blurRadius={50}
+            blurRadius={2}
           />
         </View>
       ))}

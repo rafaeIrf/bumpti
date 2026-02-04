@@ -44,16 +44,16 @@ serve(async (req) => {
 
       switch (item.notification_type) {
         case "favorite_activity_started":
-          title = "Movimento começando!";
+          title = "Movimento começando 🔥";
           body = `Alguém iniciou a conexão em ${item.target_place_name}`;
           break;
         case "favorite_activity_heating":
-          title = "Tá esquentando!";
+          title = "Tá esquentando  🚀";
           body = `O ${item.target_place_name} está começando a se movimentar.`;
           break;
         case "nearby_activity_heating":
-          title = "Movimentado agora";
-          body = `Tem movimento rolando no ${item.target_place_name}`;
+          title = "Movimentado agora 📍";
+          body = `Tem movimento rolando em ${item.target_place_name}`;
           break;
         default:
           continue;

@@ -4,7 +4,7 @@ import { calculateAge } from "@/utils/calculate-age";
 import { logger } from "@/utils/logger";
 
 // Export helpers
-export { getUserId } from "./helpers";
+export { getUserId, syncLocationToBackend } from "./helpers";
 
 // Export API methods
 export { createVerificationSession, updateProfile } from "./api";

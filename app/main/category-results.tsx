@@ -40,12 +40,7 @@ import {
   useGetRankedPlacesQuery,
   useGetTrendingPlacesQuery,
 } from "@/modules/places/placesApi";
-import {
-  Place,
-  PLACE_VIBES,
-  PlaceCategory,
-  PlaceVibe,
-} from "@/modules/places/types";
+import { Place, PlaceCategory } from "@/modules/places/types";
 import { useAppSelector } from "@/modules/store/hooks";
 import { router, useLocalSearchParams } from "expo-router";
 import React, {
@@ -79,11 +74,6 @@ export default function CategoryResultsScreen() {
   const bottomSheet = useCustomBottomSheet();
 
   // Utility constants
-  const getRandomVibes = (): PlaceVibe[] => {
-    const shuffled = [...PLACE_VIBES].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3);
-  };
-
   const PAGE_SIZE = 20;
   const MAX_RESULTS = 60;
   const MAX_PAGES = Math.ceil(MAX_RESULTS / PAGE_SIZE);
@@ -342,16 +332,7 @@ export default function CategoryResultsScreen() {
   // Transform API results to Place format
   const places: Place[] = useMemo(() => {
     if (trendingMode) {
-      return (
-        trendingData?.places?.map((place: Place) => ({
-          ...place,
-          review: place.review || {
-            average: 0,
-            count: 0,
-            tags: getRandomVibes(),
-          },
-        })) || []
-      );
+      return trendingData?.places || [];
     }
     if (favoritesMode) {
       return favoritePlacesData;
