@@ -26,17 +26,60 @@ Deno.serve(async (req) => {
 
     console.log(`[Like Notification] Processing for user ${liked_user_id}, interaction ${interaction_id}`);
 
+    // Fetch liker info and check if both users are at the same place
+    let isAtSamePlace = false;
+    let likerName = "";
+    
+    if (interaction_id) {
+      // Single query: Get interaction with liker's profile and presence
+      const { data: interaction } = await supabase
+        .from("user_interactions")
+        .select(`
+          from_user_id,
+          from_user:profiles!user_interactions_from_user_id_fkey(name),
+          liker_presence:user_presences!user_presences_user_id_fkey(place_id, active)
+        `)
+        .eq("id", interaction_id)
+        .single();
+      
+      if (interaction) {
+        likerName = interaction.from_user?.name || "";
+        
+        // Check same place if liker has active presence
+        const likerPlaceId = interaction.liker_presence?.find((p: any) => p.active)?.place_id;
+        
+        if (likerPlaceId) {
+          const { data: likedPresence } = await supabase
+            .from("user_presences")
+            .select("place_id")
+            .eq("user_id", liked_user_id)
+            .eq("active", true)
+            .single();
+          
+          isAtSamePlace = likedPresence?.place_id === likerPlaceId;
+        }
+      }
+    }
+
+    console.log(`[Like Notification] likerName: ${likerName}, isAtSamePlace: ${isAtSamePlace}`);
+
+    // Customize notification based on context
+    const title = likerName ? `${likerName} curtiu você!` : "Você recebeu um like!";
+    const body = isAtSamePlace 
+      ? "Essa pessoa está aqui no local com você. Veja quem é!" 
+      : "Confira quem está na sua sintonia e prepare o próximo encontro.";
+
     // Send push notification
-    // Note: We don't reveal who liked them - just a generic "you have a new like"
     const result = await sendPushNotification({
       supabase,
       userId: liked_user_id,
       type: "like_received",
-      title: "Você recebeu um like!",
-      body: "Alguém curtiu você. Confira no app!",
+      title,
+      body,
       data: {
         type: "like_received",
         interaction_id: interaction_id || "",
+        is_at_same_place: isAtSamePlace ? "true" : "false",
       },
     });
 

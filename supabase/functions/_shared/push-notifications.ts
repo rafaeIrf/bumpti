@@ -1,7 +1,7 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { FCMPayload, generateFCMToken, sendFCMMessage } from "./fcm.ts";
 
-export type NotificationType = "message_received" | "match_created" | "favorite_activity_started" | "favorite_activity_heating" | "nearby_activity_heating" | "like_received";
+export type NotificationType = "message_received" | "match_created" | "favorite_activity_started" | "favorite_activity_heating" | "nearby_activity_started" | "nearby_activity_heating" | "like_received";
 
 interface SendPushOptions {
   supabase: SupabaseClient; // Service Role client
@@ -49,6 +49,7 @@ export async function sendPushNotification({
       case "favorite_activity_started":
       case "favorite_activity_heating":
         return settings.favorite_places ?? true;
+      case "nearby_activity_started":
       case "nearby_activity_heating":
         return settings.nearby_activity ?? true;
       default:

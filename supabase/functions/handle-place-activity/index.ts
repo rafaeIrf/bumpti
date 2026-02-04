@@ -37,23 +37,28 @@ serve(async (req) => {
 
     // 2. Process Candidates
     for (const item of candidates) {
-      // item = { target_user_id, notification_type, target_place_id, target_place_name }
+      // item = { target_user_id, notification_type, target_place_id, target_place_name, active_count }
       
       let title = "";
       let body = "";
+      const count = item.active_count || 0;
 
       switch (item.notification_type) {
         case "favorite_activity_started":
-          title = "Movimento começando 🔥";
-          body = `Alguém iniciou a conexão em ${item.target_place_name}`;
+          title = "Conexão no seu pico! 📍";
+          body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}`;
           break;
         case "favorite_activity_heating":
-          title = "Tá esquentando  🚀";
-          body = `O ${item.target_place_name} está começando a se movimentar.`;
+          title = `${item.target_place_name} está bombando 🔥`;
+          body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} já ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+          break;
+        case "nearby_activity_started":
+          title = "Conexão próxima! 📍";
+          body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}`;
           break;
         case "nearby_activity_heating":
-          title = "Movimentado agora 📍";
-          body = `Tem movimento rolando em ${item.target_place_name}`;
+          title = `${item.target_place_name} está bombando 🔥`;
+          body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in`;
           break;
         default:
           continue;
