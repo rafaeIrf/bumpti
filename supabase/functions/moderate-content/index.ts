@@ -256,7 +256,7 @@ async function callBatchHumanDetection(
     const content: { type: string; text?: string; image_url?: { url: string; detail: string } }[] = [
       { 
         type: "text", 
-        text: "Check each photo: Human or Pet (true) vs Landscape/Object/Cartoon (false)? Reply only JSON: {\"results\":[true,false,...]}" 
+        text: "Check each photo: contains Human or any Animal (true) vs Landscape/Object/Cartoon with no person or animal (false)? Reply only JSON: {\"results\":[true,false,...]}" 
       },
     ];
 
