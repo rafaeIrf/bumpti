@@ -180,7 +180,11 @@
     "photosRejected": "{{count}} photos don't follow our safety guidelines and were not added.",
     "somePhotosRejected": "One or more photos don't follow our guidelines and were not added.",
     "bioContentRejected": "Your bio contains inappropriate terms. Focus on sharing your interests.",
-    "bioPersonalDataRejected": "For safety, don't include phone numbers or external links in your bio."
+    "bioPersonalDataRejected": "For safety, don't include phone numbers or external links in your bio.",
+    "professionContentRejected": "Your job title contains inappropriate terms. Please use a professional title.",
+    "professionPersonalDataRejected": "For safety, don't include personal data in your job title.",
+    "companyContentRejected": "The company name contains inappropriate terms. Please use an appropriate name.",
+    "companyPersonalDataRejected": "For safety, don't include personal data in the company name."
   },
   "feedback": {
     "modal": {

@@ -180,7 +180,11 @@
     "photosRejected": "{{count}} fotos no siguen nuestras directrices de seguridad y no fueron agregadas.",
     "somePhotosRejected": "Una o más fotos no siguen nuestras directrices y no fueron agregadas.",
     "bioContentRejected": "Tu biografía contiene términos inadecuados. Enfócate en contar sobre tus intereses.",
-    "bioPersonalDataRejected": "Por seguridad, no incluyas números de teléfono o enlaces externos en tu bio."
+    "bioPersonalDataRejected": "Por seguridad, no incluyas números de teléfono o enlaces externos en tu bio.",
+    "professionContentRejected": "Tu cargo contiene términos inadecuados. Por favor, usa un título profesional apropiado.",
+    "professionPersonalDataRejected": "Por seguridad, no incluyas datos personales en el campo de cargo.",
+    "companyContentRejected": "El nombre de la empresa contiene términos inadecuados. Por favor, usa un nombre apropiado.",
+    "companyPersonalDataRejected": "Por seguridad, no incluyas datos personales en el nombre de la empresa."
   },
   "feedback": {
     "modal": {

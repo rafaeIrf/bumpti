@@ -4,3 +4,4 @@ export {
     type ModerationRejectionReason, type ModerationResult
 } from "./api";
 
+export { moderateTextContent, type TextModerationConfig } from "./helpers";

@@ -17,7 +17,7 @@ import {
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { moderateBioText } from "@/modules/moderation";
+import { moderateTextContent } from "@/modules/moderation";
 import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
@@ -84,7 +84,7 @@ export default function EditFieldScreen() {
   };
 
   const [value, setValue] = useState<any>(getInitialValue);
-  const [isModeratingBio, setIsModeratingBio] = useState(false);
+  const [isModeratingText, setIsModeratingText] = useState(false);
   const [errorModal, setErrorModal] = useState({ visible: false, message: "" });
 
   useEffect(() => {
@@ -97,29 +97,62 @@ export default function EditFieldScreen() {
       const trimmedBio = value.trim();
 
       if (trimmedBio) {
-        setIsModeratingBio(true);
+        const isApproved = await moderateTextContent(
+          {
+            text: trimmedBio,
+            contentRejectedKey: "moderation.bioContentRejected",
+            personalDataRejectedKey: "moderation.bioPersonalDataRejected",
+            errorContext: "Bio moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
 
-        try {
-          const result = await moderateBioText(trimmedBio);
+        if (!isApproved) return;
+      }
+    }
 
-          if (!result.approved) {
-            setIsModeratingBio(false);
+    // Profession moderation check (job title and company name)
+    if (field === "profession") {
+      const currentValue =
+        (value as { jobTitle?: string; companyName?: string }) || {};
+      const jobTitle = currentValue.jobTitle?.trim() || "";
+      const companyName = currentValue.companyName?.trim() || "";
 
-            // Show semantic error message based on rejection reason
-            const errorMessage =
-              result.reason === "personal_data_detected"
-                ? t("moderation.bioPersonalDataRejected")
-                : t("moderation.bioContentRejected");
+      // Moderate job title if not empty
+      if (jobTitle) {
+        const isApproved = await moderateTextContent(
+          {
+            text: jobTitle,
+            contentRejectedKey: "moderation.professionContentRejected",
+            personalDataRejectedKey:
+              "moderation.professionPersonalDataRejected",
+            errorContext: "Job title moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
 
-            setErrorModal({ visible: true, message: errorMessage });
-            return;
-          }
-        } catch (error) {
-          logger.error("Bio moderation error:", error);
-          // Fail-safe: continue on error
-        }
+        if (!isApproved) return;
+      }
 
-        setIsModeratingBio(false);
+      // Moderate company name if not empty
+      if (companyName) {
+        const isApproved = await moderateTextContent(
+          {
+            text: companyName,
+            contentRejectedKey: "moderation.companyContentRejected",
+            personalDataRejectedKey: "moderation.companyPersonalDataRejected",
+            errorContext: "Company name moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
+
+        if (!isApproved) return;
       }
     }
 
@@ -394,7 +427,7 @@ export default function EditFieldScreen() {
           secondaryLabel={t("common.skip")}
           onSecondaryPress={handleSkip}
           onPrimaryPress={handleSave}
-          primaryDisabled={isModeratingBio}
+          primaryDisabled={isModeratingText}
           primaryIcon={
             nextField ? (
               <ArrowRightIcon width={24} height={24} color="#FFF" />
