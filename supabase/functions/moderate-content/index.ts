@@ -256,7 +256,7 @@ async function callBatchHumanDetection(
     const content: { type: string; text?: string; image_url?: { url: string; detail: string } }[] = [
       { 
         type: "text", 
-        text: "Check each photo: contains Human or any Animal (true) vs Landscape/Object/Cartoon with no person or animal (false)? Reply only JSON: {\"results\":[true,false,...]}" 
+        text: "Check each photo: real photo of Human or real Animal (true) vs Landscape/Objects/Cartoon/Drawing/Illustration/AI-generated (false)? Reply only JSON: {\"results\":[true,false,...]}" 
       },
     ];
 
@@ -268,44 +268,48 @@ async function callBatchHumanDetection(
       });
     }
 
-    const response = await fetch(OPENAI_CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_VISION_MODEL,
-        messages: [{ role: "user", content }],
-        max_tokens: 100,
-        temperature: 0,
-      }),
-    });
+    // Timeout for resilience (30 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI Vision API error:", response.status, errorText);
-      return { success: false, error: `OpenAI Vision API error: ${response.status}` };
-    }
-
-    const data = await response.json();
-    const messageContent = data.choices?.[0]?.message?.content ?? "";
-    
-    // Log token usage for billing
-    const promptTokens = data.usage?.prompt_tokens ?? 0;
-    const completionTokens = data.usage?.completion_tokens ?? 0;
-    console.log(`[BILLING] Batch human detection: ${images.length} photos. Tokens: ${promptTokens} prompt + ${completionTokens} completion = ${promptTokens + completionTokens} total.`);
-
-    // Parse JSON response
     try {
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = messageContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.error("No JSON found in response:", messageContent);
-        return { success: false, error: "Invalid response format" };
+      const response = await fetch(OPENAI_CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: OPENAI_VISION_MODEL,
+          messages: [
+            { role: "system", content: "You are a strict data classifier. Always return valid JSON only, no extra text." },
+            { role: "user", content }
+          ],
+          max_tokens: 150,
+          temperature: 0,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("OpenAI Vision API error:", response.status, errorText);
+        return { success: false, error: `OpenAI Vision API error: ${response.status}` };
       }
+
+      const data = await response.json();
+      const messageContent = data.choices?.[0]?.message?.content ?? "";
       
-      const parsed = JSON.parse(jsonMatch[0]);
+      // Log token usage for billing
+      const promptTokens = data.usage?.prompt_tokens ?? 0;
+      const completionTokens = data.usage?.completion_tokens ?? 0;
+      console.log(`[BILLING] Batch human detection: ${images.length} photos. Tokens: ${promptTokens} prompt + ${completionTokens} completion = ${promptTokens + completionTokens} total.`);
+
+      // Parse JSON response (with json_object mode, should be clean)
+      const parsed = JSON.parse(messageContent);
       const results = parsed.results;
       
       if (!Array.isArray(results) || results.length !== images.length) {
@@ -314,9 +318,13 @@ async function callBatchHumanDetection(
       }
       
       return { success: true, results };
-    } catch (parseError) {
-      console.error("Failed to parse vision response:", messageContent, parseError);
-      return { success: false, error: "Failed to parse response" };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        console.error("Vision API timeout after 30 seconds");
+        return { success: false, error: "Vision API timeout" };
+      }
+      throw fetchError; // Re-throw for outer catch
     }
   } catch (error) {
     console.error("Batch human detection failed:", error);
