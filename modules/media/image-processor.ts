@@ -1,5 +1,8 @@
+import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import { Image } from "react-native";
+
+import { logger } from "@/utils/logger";
 
 type ProcessedImage = {
   uri: string;
@@ -52,4 +55,42 @@ export async function processProfileImage(
     name: name ?? `${Date.now()}.jpg`,
     type: "image/jpeg",
   };
+}
+
+/**
+ * Compresses an image and converts it to base64 format for moderation API.
+ * Uses lower quality for moderation since high fidelity isn't needed.
+ *
+ * @param uri - Local file URI of the image
+ * @param quality - JPEG compression quality (0-1), default 0.7
+ * @returns Base64-encoded string of the compressed image
+ */
+export async function imageToBase64(
+  uri: string,
+  quality: number = 0.7
+): Promise<string> {
+  try {
+    // Compress image to JPEG with specified quality, resize for moderation
+    const manipulatedImage = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 800 } }],
+      { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
+    );
+
+    // Read the compressed file as base64 using new FileSystem API
+    const file = new FileSystem.File(manipulatedImage.uri);
+    const base64 = await file.base64();
+
+    return base64;
+  } catch (error) {
+    logger.error("Failed to convert image to base64:", error);
+    throw error;
+  }
+}
+
+/**
+ * Checks if a URI is a remote URL (http/https)
+ */
+export function isRemoteUri(uri: string): boolean {
+  return uri.startsWith("http://") || uri.startsWith("https://");
 }

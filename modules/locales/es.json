@@ -129,6 +129,7 @@
     "skip": "Omitir",
     "select": "Seleccionar",
     "loading": "Cargando...",
+    "understood": "Entendido",
     "of": "de",
     "placeCategories": {
       "bar": "Bares",
@@ -171,6 +172,15 @@
   "errors": {
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
     "profileUnavailable": "Perfil no disponible"
+  },
+  "moderation": {
+    "validatingPhoto": "Validando tu foto...",
+    "validatingBio": "Validando tu bio...",
+    "photoRejected": "Esta imagen no sigue nuestras directrices de seguridad. Por favor, elige otra.",
+    "photosRejected": "{{count}} fotos no siguen nuestras directrices de seguridad y no fueron agregadas.",
+    "somePhotosRejected": "Una o más fotos no siguen nuestras directrices y no fueron agregadas.",
+    "bioContentRejected": "Tu biografía contiene términos inadecuados. Enfócate en contar sobre tus intereses.",
+    "bioPersonalDataRejected": "Por seguridad, no incluyas números de teléfono o enlaces externos en tu bio."
   },
   "feedback": {
     "modal": {

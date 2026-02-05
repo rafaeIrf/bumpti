@@ -1,5 +1,6 @@
 import { XIcon } from "@/assets/icons";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { PhotoActionsBottomSheet } from "@/components/photo-actions-bottom-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { RemoteImage } from "@/components/ui/remote-image";
@@ -7,18 +8,24 @@ import { spacing, typography } from "@/constants/theme";
 import { useImagePicker } from "@/hooks/use-image-picker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { imageToBase64, isRemoteUri } from "@/modules/media/image-processor";
+import { moderateProfilePhoto } from "@/modules/moderation";
 import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   View,
+  ViewStyle,
   useWindowDimensions,
 } from "react-native";
 import Sortable from "react-native-sortables";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface UserPhotoGridProps {
   photos: string[];
@@ -29,6 +36,64 @@ interface UserPhotoGridProps {
   isUploading?: boolean;
 }
 
+interface PhotoItem {
+  key: string;
+  uri: string;
+}
+
+interface StaticItem {
+  type: "loading" | "add" | "empty";
+  index: number;
+}
+
+interface ErrorModalState {
+  visible: boolean;
+  message: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const COLUMNS = 3;
+const ASPECT_RATIO = 4 / 3;
+const BORDER_RADIUS = 18;
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+/**
+ * Generates a stable key for a photo URI.
+ * Handles duplicate URIs by appending occurrence index.
+ */
+function generatePhotoKey(uri: string, occurrenceIndex: number): string {
+  const urlWithoutQuery = uri.split("?")[0];
+  const filename = urlWithoutQuery.split("/").pop() || uri;
+
+  // Simple hash for additional uniqueness
+  let hash = 0;
+  for (let i = 0; i < uri.length; i++) {
+    hash = (hash << 5) - hash + uri.charCodeAt(i);
+    hash |= 0;
+  }
+
+  return occurrenceIndex > 0
+    ? `${filename}-${hash}-${occurrenceIndex}`
+    : `${filename}-${hash}`;
+}
+
+/**
+ * Checks if a URI is a local file (not yet uploaded).
+ */
+function isLocalUri(uri: string): boolean {
+  return uri.startsWith("file://") || uri.startsWith("ph://");
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
 export function UserPhotoGrid({
   photos,
   onPhotosChange,
@@ -37,30 +102,77 @@ export function UserPhotoGrid({
   showInfo = true,
   isUploading = false,
 }: UserPhotoGridProps) {
+  // ---------------------------------------------------------------------------
+  // Hooks
+  // ---------------------------------------------------------------------------
   const colors = useThemeColors();
-  const { isLoading, pickFromLibrary } = useImagePicker();
+  const { width: screenWidth } = useWindowDimensions();
+  const { pickFromLibrary } = useImagePicker();
   const { expand, close } = useCustomBottomSheet();
-  const { width } = useWindowDimensions();
-  const photosRef = useRef(photos);
-  photosRef.current = photos;
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  const [errorModal, setErrorModal] = useState<ErrorModalState>({
+    visible: false,
+    message: "",
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Calculate item dimensions
+  // Ref to access latest photos in callbacks without stale closures
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
+  // ---------------------------------------------------------------------------
+  // Derived Values
+  // ---------------------------------------------------------------------------
   const containerPadding = spacing.md * 2;
   const columnGap = spacing.sm;
   const rowGap = spacing.md;
-  const columns = 3;
-  const itemWidth =
-    (width - containerPadding - (columns - 1) * columnGap) / columns;
-  const itemHeight = itemWidth * (4 / 3);
 
-  // Calculate total height for the container
-  const totalRows = Math.ceil(maxPhotos / columns);
+  const itemWidth =
+    (screenWidth - containerPadding - (COLUMNS - 1) * columnGap) / COLUMNS;
+  const itemHeight = itemWidth * ASPECT_RATIO;
+
+  const totalRows = Math.ceil(maxPhotos / COLUMNS);
   const containerHeight = totalRows * itemHeight + (totalRows - 1) * rowGap;
 
   const remainingPhotos = Math.max(0, minPhotos - photos.length);
+  const showLoading = isUploading || isProcessing;
+  const canAddMore = photos.length < maxPhotos && !showLoading;
 
-  const handleAddPhoto = async () => {
+  // ---------------------------------------------------------------------------
+  // Memoized Data
+  // ---------------------------------------------------------------------------
+  const sortableData = useMemo<PhotoItem[]>(() => {
+    const uriOccurrences: Record<string, number> = {};
+
+    return photos.map((uri) => {
+      const occurrence = uriOccurrences[uri] || 0;
+      uriOccurrences[uri] = occurrence + 1;
+
+      return {
+        key: generatePhotoKey(uri, occurrence),
+        uri,
+      };
+    });
+  }, [photos]);
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
+  const showError = useCallback((message: string) => {
+    setErrorModal({ visible: true, message });
+  }, []);
+
+  const hideError = useCallback(() => {
+    setErrorModal({ visible: false, message: "" });
+  }, []);
+
+  const handleAddPhoto = useCallback(async () => {
+    if (isProcessing || isUploading) return;
+
     const currentPhotos = photosRef.current;
     if (currentPhotos.length >= maxPhotos) return;
 
@@ -75,100 +187,249 @@ export function UserPhotoGrid({
         selectionLimit: remainingSlots,
       });
 
-      if (result.success && result.uris) {
-        // Use the latest photos from ref to ensure we have the correct state
-        // even if a removal happened recently
-        onPhotosChange([...photosRef.current, ...result.uris]);
-      } else if (result.error === "permission_denied") {
-        Alert.alert(
-          t("common.error"),
-          t("components.userPhotoGrid.permissionDenied")
+      // User cancelled
+      if (!result.success || !result.uris || result.uris.length === 0) {
+        if (result.error === "permission_denied") {
+          showError(t("components.userPhotoGrid.permissionDenied"));
+        }
+        return;
+      }
+
+      setIsProcessing(true);
+
+      const newUris = result.uris;
+      const approvedUris: string[] = [];
+      let rejectedCount = 0;
+
+      // Moderate each photo
+      for (const uri of newUris) {
+        if (isRemoteUri(uri)) {
+          approvedUris.push(uri);
+          continue;
+        }
+
+        try {
+          const base64 = await imageToBase64(uri, 0.7);
+          const modResult = await moderateProfilePhoto(base64);
+
+          if (modResult.approved) {
+            approvedUris.push(uri);
+          } else {
+            rejectedCount++;
+          }
+        } catch (modError) {
+          logger.warn("Moderation failed, allowing photo:", modError);
+          approvedUris.push(uri);
+        }
+      }
+
+      // Update photos if any were approved
+      if (approvedUris.length > 0) {
+        const finalPhotos = [...photosRef.current, ...approvedUris].slice(
+          0,
+          maxPhotos,
+        );
+        onPhotosChange(finalPhotos);
+      }
+
+      // Show error if any were rejected
+      if (rejectedCount > 0) {
+        const hasApprovedPhotos = approvedUris.length > 0;
+        showError(
+          hasApprovedPhotos
+            ? t("moderation.somePhotosRejected")
+            : rejectedCount === 1
+              ? t("moderation.photoRejected")
+              : t("moderation.photosRejected", { count: rejectedCount }),
         );
       }
     } catch (error) {
-      logger.error("Erro ao adicionar foto:", error);
-      Alert.alert(
-        t("common.error"),
-        t("components.userPhotoGrid.addPhotoError")
-      );
+      logger.error("Error adding photo:", error);
+      showError(t("components.userPhotoGrid.addPhotoError"));
+    } finally {
+      setIsProcessing(false);
     }
-  };
+  }, [
+    isProcessing,
+    isUploading,
+    maxPhotos,
+    pickFromLibrary,
+    showError,
+    onPhotosChange,
+  ]);
 
-  const handleReplacePhoto = async (index: number) => {
-    try {
-      // Small delay to ensure bottom sheet is closed before opening picker
-      await new Promise((resolve) => setTimeout(resolve, 300));
+  const handleReplacePhoto = useCallback(
+    async (index: number) => {
+      try {
+        // Delay to ensure bottom sheet closes before picker opens
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const result = await pickFromLibrary({
-        aspect: [3, 4],
-        quality: 0.8,
-        allowsEditing: true,
-        allowsMultipleSelection: false,
-      });
+        const result = await pickFromLibrary({
+          aspect: [3, 4],
+          quality: 0.8,
+          allowsEditing: true,
+          allowsMultipleSelection: false,
+        });
 
-      if (result.success) {
-        const newUri = result.uri || (result.uris && result.uris[0]);
-        if (newUri) {
-          const newPhotos = [...photosRef.current];
-          newPhotos[index] = newUri;
-          onPhotosChange(newPhotos);
+        if (!result.success) return;
+
+        const newUri = result.uri || result.uris?.[0];
+        if (!newUri) return;
+
+        // Moderate if local file
+        if (!isRemoteUri(newUri)) {
+          try {
+            const base64 = await imageToBase64(newUri, 0.7);
+            const modResult = await moderateProfilePhoto(base64);
+
+            if (!modResult.approved) {
+              showError(t("moderation.photoRejected"));
+              return;
+            }
+          } catch (modError) {
+            logger.warn("Moderation failed, allowing photo:", modError);
+          }
         }
+
+        const newPhotos = [...photosRef.current];
+        newPhotos[index] = newUri;
+        onPhotosChange(newPhotos);
+      } catch (error) {
+        logger.error("Error replacing photo:", error);
       }
-    } catch (error) {
-      logger.error("Erro ao substituir foto:", error);
-    }
-  };
+    },
+    [pickFromLibrary, showError, onPhotosChange],
+  );
 
-  const handlePhotoAction = (index: number) => {
-    const currentPhotos = photosRef.current;
-    const canRemove = currentPhotos.length > minPhotos;
+  const handleRemovePhoto = useCallback(
+    (index: number) => {
+      onPhotosChange(photosRef.current.filter((_, i) => i !== index));
+    },
+    [onPhotosChange],
+  );
 
-    expand({
-      content: () => (
-        <PhotoActionsBottomSheet
-          canRemove={canRemove}
-          onReplace={() => {
-            close();
-            handleReplacePhoto(index);
-          }}
-          onRemove={() => {
-            close();
-            onPhotosChange(photosRef.current.filter((_, i) => i !== index));
-          }}
-          onAdd={() => {
-            close();
-            handleAddPhoto();
-          }}
-          onCancel={() => close()}
-        />
-      ),
-    });
-  };
+  const handlePhotoAction = useCallback(
+    (index: number) => {
+      const currentPhotos = photosRef.current;
+      const canRemove = currentPhotos.length > minPhotos;
 
-  // Only photos are sortable
-  const sortableData = photos.map((uri) => ({ key: uri, uri, type: "photo" }));
+      expand({
+        content: () => (
+          <PhotoActionsBottomSheet
+            canRemove={canRemove}
+            onReplace={() => {
+              close();
+              handleReplacePhoto(index);
+            }}
+            onRemove={() => {
+              close();
+              handleRemovePhoto(index);
+            }}
+            onAdd={() => {
+              close();
+              handleAddPhoto();
+            }}
+            onCancel={() => close()}
+          />
+        ),
+      });
+    },
+    [
+      minPhotos,
+      expand,
+      close,
+      handleReplacePhoto,
+      handleRemovePhoto,
+      handleAddPhoto,
+    ],
+  );
 
-  const renderStaticItems = () => {
-    const items = [];
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    ({ data }: { data: PhotoItem[] }) => {
+      setIsDragging(false);
+      const newPhotos = data.map((item) => item.uri);
+      onPhotosChange(newPhotos);
+    },
+    [onPhotosChange],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Render Helpers
+  // ---------------------------------------------------------------------------
+  const getStaticItems = useCallback((): StaticItem[] => {
+    const items: StaticItem[] = [];
     const startIndex = photos.length;
 
     // Loading or Add button
-    if (isUploading) {
-      items.push({ type: "loading", index: startIndex });
-    } else if (photos.length < maxPhotos) {
-      items.push({ type: "add", index: startIndex });
+    if (photos.length < maxPhotos) {
+      if (isUploading || isProcessing) {
+        items.push({ type: "loading", index: startIndex });
+      } else {
+        items.push({ type: "add", index: startIndex });
+      }
     }
 
     // Empty slots
-    const nextIndex =
-      startIndex + (isUploading || photos.length < maxPhotos ? 1 : 0);
+    const nextIndex = startIndex + (photos.length < maxPhotos ? 1 : 0);
     for (let i = nextIndex; i < maxPhotos; i++) {
       items.push({ type: "empty", index: i });
     }
 
+    return items;
+  }, [photos.length, maxPhotos, isUploading, isProcessing]);
+
+  const renderStaticItemContent = useCallback(
+    (type: StaticItem["type"]) => {
+      const baseStyle: ViewStyle = {
+        ...styles.addPhotoButton,
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+      };
+
+      if (type === "loading") {
+        return (
+          <View style={[baseStyle, styles.centeredContent]}>
+            <ActivityIndicator size="small" color={colors.accent} />
+          </View>
+        );
+      }
+
+      if (type === "add") {
+        return (
+          <Pressable
+            onPress={handleAddPhoto}
+            disabled={!canAddMore}
+            style={baseStyle}
+          >
+            {showLoading ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <Ionicons
+                name="camera-outline"
+                size={32}
+                color={colors.textSecondary}
+              />
+            )}
+          </Pressable>
+        );
+      }
+
+      // Empty slot
+      return <View style={[baseStyle, styles.emptySlot]} />;
+    },
+    [colors, handleAddPhoto, canAddMore, showLoading],
+  );
+
+  const renderStaticItems = useCallback(() => {
+    const items = getStaticItems();
+
     return items.map((item) => {
-      const row = Math.floor(item.index / columns);
-      const col = item.index % columns;
+      const row = Math.floor(item.index / COLUMNS);
+      const col = item.index % COLUMNS;
       const left = col * (itemWidth + columnGap);
       const top = row * (itemHeight + rowGap);
 
@@ -184,100 +445,33 @@ export function UserPhotoGrid({
             zIndex: 2,
           }}
         >
-          {renderStaticItemContent(item.type, item.index)}
+          {renderStaticItemContent(item.type)}
         </View>
       );
     });
-  };
+  }, [
+    getStaticItems,
+    itemWidth,
+    itemHeight,
+    columnGap,
+    rowGap,
+    renderStaticItemContent,
+  ]);
 
-  const renderStaticItemContent = (type: string, index: number) => {
-    const itemStyle = { width: "100%", height: "100%" };
-
-    if (type === "loading") {
-      return (
-        <View
-          style={[
-            styles.addPhotoButton,
-            itemStyle,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              justifyContent: "center",
-              alignItems: "center",
-            },
-          ]}
-        >
-          <ActivityIndicator size="small" color={colors.accent} />
-        </View>
-      );
-    }
-
-    if (type === "add") {
-      return (
-        <Pressable
-          onPress={handleAddPhoto}
-          disabled={isLoading}
-          style={[
-            styles.addPhotoButton,
-            itemStyle,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} />
-          ) : (
-            <>
-              <Ionicons
-                name="camera-outline"
-                size={32}
-                color={colors.textSecondary}
-              />
-              {index === 0 && (
-                <ThemedText
-                  style={[
-                    styles.addPhotoLabel,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {t("screens.onboarding.photosMainLabel")}
-                </ThemedText>
-              )}
-            </>
-          )}
-        </Pressable>
-      );
-    }
-
-    // Empty
-    return (
-      <View
-        style={[
-          styles.addPhotoButton,
-          itemStyle,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            opacity: 0.5,
-          },
-        ]}
-      />
-    );
-  };
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: any; index: number }) => {
-      const itemStyle = { width: itemWidth, height: itemHeight };
+  const renderPhotoItem = useCallback(
+    ({ item, index }: { item: PhotoItem; index: number }) => {
+      const isLocal = isLocalUri(item.uri);
 
       return (
-        <View style={[styles.photoContainer, itemStyle]}>
+        <View style={{ width: itemWidth, height: itemHeight }}>
           <View style={styles.photoWrapper}>
             <RemoteImage
+              key={item.key}
               source={{ uri: item.uri }}
               style={styles.photo}
               contentFit="cover"
+              cachePolicy={isLocal ? "none" : "memory-disk"}
+              transition={0}
             />
             {index === 0 && (
               <View
@@ -305,19 +499,12 @@ export function UserPhotoGrid({
         </View>
       );
     },
-    [colors, itemWidth, itemHeight]
+    [itemWidth, itemHeight, colors, handlePhotoAction],
   );
 
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = ({ data }: { data: typeof sortableData }) => {
-    setIsDragging(false);
-    const newPhotos = data.map((item) => item.uri);
-    onPhotosChange(newPhotos);
-  };
-
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
     <View>
       <View style={[styles.gridContainer, { height: containerHeight }]}>
@@ -332,10 +519,9 @@ export function UserPhotoGrid({
           }}
         >
           <Sortable.Grid
-            key={`grid-${photos.length}`}
-            columns={3}
+            columns={COLUMNS}
             data={sortableData}
-            renderItem={renderItem}
+            renderItem={renderPhotoItem}
             columnGap={spacing.sm}
             rowGap={spacing.md}
             onDragStart={handleDragStart}
@@ -366,21 +552,35 @@ export function UserPhotoGrid({
           )}
         </View>
       )}
+
+      <ConfirmationModal
+        isOpen={errorModal.visible}
+        onClose={hideError}
+        title={t("common.error")}
+        description={errorModal.message}
+        actions={[
+          {
+            label: t("common.understood"),
+            onPress: hideError,
+          },
+        ]}
+      />
     </View>
   );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
   gridContainer: {
     marginBottom: spacing.lg,
   },
-  photoContainer: {
-    // Dimensions set dynamically
-  },
   photoWrapper: {
     width: "100%",
     height: "100%",
-    borderRadius: 18,
+    borderRadius: BORDER_RADIUS,
     overflow: "hidden",
     position: "relative",
   },
@@ -418,16 +618,21 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   addPhotoButton: {
-    // Dimensions set dynamically
-    borderRadius: 18,
+    width: "100%",
+    height: "100%",
+    borderRadius: BORDER_RADIUS,
     borderWidth: 2,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.xs,
   },
-  addPhotoLabel: {
-    ...typography.caption,
+  centeredContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptySlot: {
+    opacity: 0.5,
   },
   infoContainer: {
     alignItems: "center",

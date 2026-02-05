@@ -59,16 +59,13 @@ export const updateProfilePhotosAction = async (newPhotos: string[]) => {
   
   if (!currentProfile) return;
 
-  const isAddition = newPhotos.length > (currentProfile.photos?.length || 0);
+  // Always apply optimistic update for immediate UI feedback
+  const optimisticPhotos = newPhotos.map((url, index) => ({
+    url,
+    position: index,
+  }));
 
-  if (!isAddition) {
-    const optimisticPhotos = newPhotos.map((url, index) => ({
-      url,
-      position: index,
-    }));
-
-    store.dispatch(setProfileAction({ ...currentProfile, photos: optimisticPhotos }));
-  }
+  store.dispatch(setProfileAction({ ...currentProfile, photos: optimisticPhotos }));
 
   try {
     // 2. API Call

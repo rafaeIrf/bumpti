@@ -15,6 +15,6 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/$1",
   },
   transformIgnorePatterns: [
-    "node_modules/(?!(expo-image-manipulator|expo-modules-core|expo-constants|posthog-react-native|@react-native|react-native)/)",
+    "node_modules/(?!(expo-file-system|expo-image-manipulator|expo-modules-core|expo-constants|posthog-react-native|@react-native|react-native)/)",
   ],
 };
