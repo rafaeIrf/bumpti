@@ -107,25 +107,39 @@ export function useSendMessage(chatId: string, currentUserId: string) {
         if (error) throw error;
         if (!data) throw new Error("No data returned from backend");
 
-        // 3. Mark message as sent
-        // NOTE: We no longer update chat.lastMessageContent here
-        // The ChatListItem derives the preview directly from the latest message
-        // via withObservables, avoiding sync conflicts
+        // 3. Mark message as sent AND update chat with lastMessageContent
+        // This ensures the chat appears in the list immediately for the sender
+        // (the realtime handler skips own messages to avoid sync conflicts)
         const serverTimestamp = data?.messages?.created?.[0]?.created_at;
+        const messageTimestamp = serverTimestamp ? new Date(serverTimestamp) : new Date();
 
         await database.write(async () => {
           const messagesCollection = database.collections.get<Message>("messages");
+          const chatsCollection = database.collections.get<Chat>("chats");
+          
           try {
             const message = await messagesCollection.find(messageId);
             await message.update((m: any) => {
               m.status = "sent";
               if (serverTimestamp) {
-                m.createdAt = new Date(serverTimestamp);
+                m.createdAt = messageTimestamp;
               }
             });
             logger.log("✅ Message marked as sent:", messageId);
           } catch {
             logger.warn("Message already processed or not found:", messageId);
+          }
+          
+          // Update chat so it appears in the chat list
+          try {
+            const chat = await chatsCollection.find(chatId);
+            await chat.update((c: any) => {
+              c.lastMessageContent = content.trim();
+              c.lastMessageAt = messageTimestamp;
+            });
+            logger.log("✅ Chat updated with lastMessageContent");
+          } catch {
+            logger.warn("Could not update chat:", chatId);
           }
         });
       } catch (error) {
