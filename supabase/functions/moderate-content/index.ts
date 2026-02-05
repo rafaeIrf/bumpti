@@ -499,7 +499,13 @@ async function handleSingleModeration(
 }
 /**
  * Handles batch image moderation with human/pet detection
- * Uses the same moderateSingleImage helper as single moderation for consistency
+ * OPTIMIZED: Single Vision API call for all images instead of N calls
+ * 
+ * Flow:
+ * 1. Run safety moderation on all images in parallel (free/cheap)
+ * 2. Collect images that passed safety
+ * 3. ONE call to Vision API for human/pet detection on all passed images
+ * 4. Map results back to original indices
  */
 async function handleBatchModeration(
   supabase: ReturnType<typeof createClient>,
@@ -508,24 +514,89 @@ async function handleBatchModeration(
 ): Promise<Response> {
   const imageCount = images.length;
   
-  // Billing log for image tokens
-  const estimatedImageTokens = imageCount * TOKENS_PER_LOW_DETAIL_IMAGE;
-  console.log(`[BILLING] Batch moderation started: ${imageCount} photos. Estimated image tokens: ${estimatedImageTokens}`);
+  console.log(`[BILLING] Batch moderation started: ${imageCount} photos`);
 
-  // Process all images using the shared helper
-  const results = await Promise.all(
-    images.map(async (base64) => {
-      const result = await moderateSingleImage(base64);
-      return {
-        approved: result.approved,
-        reason: result.reason,
-      };
+  // Step 1: Run safety moderation on ALL images in parallel (cheap/free)
+  const safetyResults = await Promise.all(
+    images.map(async (base64, index) => {
+      const result = await callOpenAIModeration("image", base64);
+      
+      if (!result.success) {
+        console.warn(`[SAFETY] Image ${index}: API error, rejecting`);
+        return { approved: false, reason: "content_flagged" as const };
+      }
+
+      const { flagged, category_scores } = result.result!;
+      
+      if (flagged) {
+        console.log(`[SAFETY] Image ${index}: Flagged by OpenAI`);
+        return { approved: false, reason: "content_flagged" as const };
+      }
+
+      const thresholdReason = checkContentThresholds(category_scores, "image");
+      if (thresholdReason) {
+        console.log(`[SAFETY] Image ${index}: Failed threshold - ${thresholdReason}`);
+        return { approved: false, reason: "sensitive_content" as const };
+      }
+
+      return { approved: true, reason: null };
     })
   );
 
-  // Count results for logging
-  const approvedCount = results.filter(r => r.approved).length;
-  const rejectedCount = results.filter(r => !r.approved).length;
+  // Step 2: Collect indices of images that passed safety
+  const safeIndices: number[] = [];
+  const safeImages: string[] = [];
+  
+  safetyResults.forEach((result, index) => {
+    if (result.approved) {
+      safeIndices.push(index);
+      safeImages.push(images[index]);
+    }
+  });
+
+  console.log(`[BATCH] Safety check complete: ${safeImages.length}/${imageCount} passed`);
+
+  // Step 3: ONE Vision API call for human/pet detection on all safe images
+  let humanResults: boolean[] = [];
+  
+  if (safeImages.length > 0) {
+    const humanDetection = await callBatchHumanDetection(safeImages);
+    
+    if (humanDetection.success && humanDetection.results) {
+      humanResults = humanDetection.results;
+      console.log(`[BILLING] Vision Batch complete: ${safeImages.length} photos processed in ONE call.`);
+    } else {
+      // Fail-safe: approve all on detection error
+      console.warn("[BATCH] Vision detection failed, approving all safe images");
+      humanResults = safeImages.map(() => true);
+    }
+  }
+
+  // Step 4: Build final results array, mapping Vision results back to original indices
+  const finalResults: BatchModerationResponse["results"] = [];
+  let humanResultIndex = 0;
+  let approvedCount = 0;
+  let rejectedCount = 0;
+
+  for (let i = 0; i < imageCount; i++) {
+    const safetyResult = safetyResults[i];
+    
+    if (!safetyResult.approved) {
+      // Failed safety check
+      finalResults.push({ approved: false, reason: safetyResult.reason });
+      rejectedCount++;
+    } else {
+      // Passed safety - check Vision result
+      const isHumanOrAnimal = humanResults[humanResultIndex++];
+      if (isHumanOrAnimal) {
+        finalResults.push({ approved: true, reason: null });
+        approvedCount++;
+      } else {
+        finalResults.push({ approved: false, reason: "not_human" });
+        rejectedCount++;
+      }
+    }
+  }
 
   // Log batch result
   await logModerationResult(
@@ -538,10 +609,10 @@ async function handleBatchModeration(
     imageCount
   );
 
-  console.log(`[BILLING] Batch moderation complete: ${approvedCount} approved, ${rejectedCount} rejected`);
+  console.log(`[BILLING] Batch complete: ${approvedCount} approved, ${rejectedCount} rejected`);
 
   const response: BatchModerationResponse = {
-    results: results,
+    results: finalResults,
     processedCount: imageCount,
   };
 
