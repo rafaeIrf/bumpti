@@ -18,7 +18,7 @@ import { t } from "@/modules/locales";
 import { useGetPendingLikesQuery } from "@/modules/pendingLikes/pendingLikesApi";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
-import { Q } from "@nozbe/watermelondb";
+import { Database, Q } from "@nozbe/watermelondb";
 import { withObservables } from "@nozbe/watermelondb/react";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -39,6 +39,31 @@ function ChatListScreen({
   const { markMatchAsOpened } = useMarkMatchOpened();
   const database = useDatabase();
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Debug: Log when observables emit new data
+  useEffect(() => {
+    logger.log("[ChatList] Chats observable emitted:", {
+      count: chats.length,
+      chats: chats.map((c) => ({
+        id: c.id,
+        lastMessageAt: c.lastMessageAt,
+        unreadCount: c.unreadCount,
+        lastMessageContent: c.lastMessageContent?.substring(0, 30),
+      })),
+    });
+  }, [chats]);
+
+  useEffect(() => {
+    logger.log("[ChatList] Matches observable emitted:", {
+      count: matches.length,
+      matches: matches.map((m) => ({
+        id: m.id,
+        matchedAt: m.matchedAt,
+        chatId: m.chatId,
+        firstMessageAt: m.firstMessageAt,
+      })),
+    });
+  }, [matches]);
 
   // Prefetch all chat and match images when screen loads
   useEffect(() => {
@@ -260,34 +285,37 @@ function ChatListScreen({
 
 // Enhanced component with WatermelonDB reactive queries
 // CRITICAL: Use observeWithColumns for sorted lists to detect field changes
-const ChatListEnhanced = withObservables([], ({ database }) => ({
-  // Observe ONLY chats WITH messages (last_message_content is NOT NULL)
-  // This ensures re-render when these fields change, not just when records are added/removed
-  chats: database.collections
-    .get<Chat>("chats")
-    .query(Q.where("last_message_content", Q.notEq(null)))
-    .observeWithColumns([
-      "last_message_at",
-      "unread_count",
-      "last_message_content",
-      "synced_at",
-    ]),
-  // Observe ALL matches returned by backend
-  // Backend already filters to only return matches without messages (first_message_at = null)
-  // Observe ONLY matches WITHOUT messages (first_message_at = null)
-  // Backend always returns chat_id (needed to send messages) and first_message_at
-  // When first message is sent, sync updates match.first_message_at and it disappears from this list
-  matches: database.collections
-    .get<Match>("matches")
-    .query(Q.where("first_message_at", null), Q.sortBy("matched_at", Q.desc))
-    .observeWithColumns([
-      "user_a_opened_at",
-      "user_b_opened_at",
-      "chat_id",
-      "first_message_at",
-      "synced_at",
-    ]),
-}))(ChatListScreen);
+const ChatListEnhanced = withObservables(
+  [],
+  ({ database }: { database: Database }) => ({
+    // Observe ONLY chats WITH messages (last_message_content is NOT NULL)
+    // This ensures re-render when these fields change, not just when records are added/removed
+    chats: database.collections
+      .get<Chat>("chats")
+      .query(Q.where("last_message_content", Q.notEq(null)))
+      .observeWithColumns([
+        "last_message_at",
+        "unread_count",
+        "last_message_content",
+        "synced_at",
+      ]),
+    // Observe ALL matches returned by backend
+    // Backend already filters to only return matches without messages (first_message_at = null)
+    // Observe ONLY matches WITHOUT messages (first_message_at = null)
+    // Backend always returns chat_id (needed to send messages) and first_message_at
+    // When first message is sent, sync updates match.first_message_at and it disappears from this list
+    matches: database.collections
+      .get<Match>("matches")
+      .query(Q.where("first_message_at", null), Q.sortBy("matched_at", Q.desc))
+      .observeWithColumns([
+        "user_a_opened_at",
+        "user_b_opened_at",
+        "chat_id",
+        "first_message_at",
+        "synced_at",
+      ]),
+  }),
+)(ChatListScreen);
 
 /**
  * Wrapper that provides database from context

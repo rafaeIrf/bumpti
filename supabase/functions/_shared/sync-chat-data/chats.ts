@@ -1,5 +1,5 @@
 import { decryptMessage } from "../encryption.ts";
-import { detectDeletedItems } from "./helpers.ts";
+import { fetchCascadeDeletions } from "./deletions.ts";
 import {
   fetchPhotosInBatch,
   signPhotoUrl,
@@ -15,7 +15,7 @@ export async function fetchChatsChanges(
   encryptionKey: CryptoKey,
   forceUpdates: boolean,
   usersWithPhotoUpdates: string[],
-  localChatIds: string[] = []
+  _localChatIds: string[] = [] // Not used - kept for API compatibility
 ): Promise<SyncChanges> {
   const allChats = await fetchChatsFromRPC(
     supabase,
@@ -26,7 +26,6 @@ export async function fetchChatsChanges(
   );
 
   console.log("[Chats] Found:", allChats.length);
-  console.log("[Chats] Local IDs received:", localChatIds.length);
 
   const userIds = allChats.map((c: any) => c.other_user_id);
   const photosMap = await fetchPhotosInBatch(supabaseAdmin, userIds);
@@ -37,7 +36,7 @@ export async function fetchChatsChanges(
     )
   );
 
-  return classifyChats(processedChats, sinceDate, forceUpdates, usersWithPhotoUpdates, localChatIds);
+  return await classifyChats(processedChats, sinceDate, forceUpdates, usersWithPhotoUpdates, supabaseAdmin, userId);
 }
 
 export async function fetchChatsForMediaRefresh(
@@ -150,18 +149,26 @@ async function processChatWithSignedMap(
   return buildChatPayload(chat, decryptedMessage, signedPhotoUrl);
 }
 
-function classifyChats(
+async function classifyChats(
   chats: any[],
   sinceDate: string | null,
   forceUpdates: boolean,
   usersWithPhotoUpdates: string[],
-  localChatIds: string[] = []
-): SyncChanges {
+  supabaseAdmin: any,
+  userId: string
+): Promise<SyncChanges> {
   const created: any[] = [];
   const updated: any[] = [];
-  
-  // Detect CASCADE deleted chats using shared helper
-  const deleted = detectDeletedItems(localChatIds, chats, "[Chats]");
+  const deleted: string[] = [];
+
+  // Query CASCADE deletions from audit table (e.g., when other user deleted account)
+  const cascadeDeletedIds = await fetchCascadeDeletions(
+    supabaseAdmin,
+    "chats",
+    userId,
+    sinceDate
+  );
+  deleted.push(...cascadeDeletedIds);
 
   for (const chat of chats) {
     const hasPhotoUpdate = usersWithPhotoUpdates.includes(chat.other_user_id);
