@@ -130,19 +130,22 @@ function checkContentThresholds(
 
 /**
  * Logs moderation result to database for audit
+ * Does not store raw content (base64/text) for privacy and disk savings
  */
 async function logModerationResult(
   supabase: ReturnType<typeof createClient>,
   userId: string,
   contentType: "text" | "image",
-  result: "approved" | "rejected" | "pending",
-  reason: string | null
+  status: "approved" | "rejected" | "passed_by_error",
+  rejectionReason: string | null,
+  aiScores: Record<string, number> | null
 ): Promise<void> {
   await supabase.from("content_moderation_logs").insert({
     user_id: userId,
     content_type: contentType,
-    result,
-    reason,
+    status,
+    rejection_reason: rejectionReason,
+    ai_scores: aiScores,
   });
 }
 
@@ -268,7 +271,7 @@ Deno.serve(async (req) => {
 
     // Check for personal data in text content first (before calling OpenAI)
     if (type === "text" && containsPersonalData(content)) {
-      await logModerationResult(supabase, user.id, type, "rejected", "personal_data_detected");
+      await logModerationResult(supabase, user.id, type, "rejected", "personal_data_detected", null);
 
       const response: ModerationResponse = {
         approved: false,
@@ -287,7 +290,7 @@ Deno.serve(async (req) => {
     // FAIL-SAFE: If OpenAI fails, approve but log as pending for manual review
     if (!moderationResult.success) {
       console.warn("OpenAI moderation failed, applying fail-safe approval:", moderationResult.error);
-      await logModerationResult(supabase, user.id, type, "pending", moderationResult.error ?? "openai_unavailable");
+      await logModerationResult(supabase, user.id, type, "passed_by_error", moderationResult.error ?? "openai_unavailable", null);
 
       const response: ModerationResponse = {
         approved: true,
@@ -327,13 +330,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Log the result
+    // Log the result with full AI scores for analytics
     await logModerationResult(
       supabase,
       user.id,
       type,
       approved ? "approved" : "rejected",
-      reason
+      reason,
+      category_scores
     );
 
     const response: ModerationResponse = { approved, reason };
