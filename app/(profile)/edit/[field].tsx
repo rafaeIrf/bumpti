@@ -16,6 +16,7 @@ import {
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { moderateBioText } from "@/modules/moderation";
 import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
@@ -27,7 +28,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Platform, StyleSheet, TextInput, View } from "react-native";
+import { Alert, Platform, StyleSheet, TextInput, View } from "react-native";
 
 const HEIGHT_OPTIONS = [
   { label: "< 91 cm", value: 90 },
@@ -82,12 +83,44 @@ export default function EditFieldScreen() {
   };
 
   const [value, setValue] = useState<any>(getInitialValue);
+  const [isModeratingBio, setIsModeratingBio] = useState(false);
 
   useEffect(() => {
     setValue(getInitialValue());
   }, [field, profile]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Bio moderation check
+    if (field === "bio" && value && typeof value === "string") {
+      const trimmedBio = value.trim();
+
+      if (trimmedBio) {
+        setIsModeratingBio(true);
+
+        try {
+          const result = await moderateBioText(trimmedBio);
+
+          if (!result.approved) {
+            setIsModeratingBio(false);
+
+            // Show semantic error message based on rejection reason
+            const errorMessage =
+              result.reason === "personal_data_detected"
+                ? t("moderation.bioPersonalDataRejected")
+                : t("moderation.bioContentRejected");
+
+            Alert.alert(t("common.error"), errorMessage);
+            return;
+          }
+        } catch (error) {
+          logger.error("Bio moderation error:", error);
+          // Fail-safe: continue on error
+        }
+
+        setIsModeratingBio(false);
+      }
+    }
+
     if (profile) {
       let updatedProfile = { ...profile };
       let apiPayload: any = {};
@@ -359,6 +392,7 @@ export default function EditFieldScreen() {
           secondaryLabel={t("common.skip")}
           onSecondaryPress={handleSkip}
           onPrimaryPress={handleSave}
+          primaryDisabled={isModeratingBio}
           primaryIcon={
             nextField ? (
               <ArrowRightIcon width={24} height={24} color="#FFF" />

@@ -129,6 +129,7 @@
     "skip": "Skip",
     "select": "Select",
     "loading": "Loading...",
+    "understood": "Got it",
     "of": "of",
     "placeCategories": {
       "bar": "Bars",
@@ -171,6 +172,15 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "profileUnavailable": "Profile unavailable"
+  },
+  "moderation": {
+    "validatingPhoto": "Validating your photo...",
+    "validatingBio": "Validating your bio...",
+    "photoRejected": "This image doesn't follow our safety guidelines. Please choose another.",
+    "photosRejected": "{{count}} photos don't follow our safety guidelines and were not added.",
+    "somePhotosRejected": "One or more photos don't follow our guidelines and were not added.",
+    "bioContentRejected": "Your bio contains inappropriate terms. Focus on sharing your interests.",
+    "bioPersonalDataRejected": "For safety, don't include phone numbers or external links in your bio."
   },
   "feedback": {
     "modal": {

@@ -2,6 +2,8 @@ import { useAppSelector } from "@/modules/store/hooks";
 import { updateProfilePhotosAction } from "@/modules/store/slices/profileActions";
 import { useState } from "react";
 
+const MAX_PHOTOS = 9;
+
 export function useProfileEdit() {
   const profile = useAppSelector((state) => state.profile.data);
   const [isUploading, setIsUploading] = useState(false);
@@ -24,15 +26,19 @@ export function useProfileEdit() {
   const updatePhotos = async (newPhotos: string[]) => {
     if (!profile) return;
     
-    // Check if it's an addition
-    const isAddition = newPhotos.length > photos.length;
+    // Enforce max photo limit as a safety guard
+    const limitedPhotos = newPhotos.slice(0, MAX_PHOTOS);
+    
+    // Capture current length BEFORE action updates the store
+    const currentPhotosLength = photos.length;
+    const isAddition = limitedPhotos.length > currentPhotosLength;
 
     try {
       if (isAddition) {
         setIsUploading(true);
       }
       
-      await updateProfilePhotosAction(newPhotos);
+      await updateProfilePhotosAction(limitedPhotos);
     } catch (error) {
        // Error is handled in the action
     } finally {

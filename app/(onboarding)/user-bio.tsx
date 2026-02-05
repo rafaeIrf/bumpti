@@ -1,11 +1,13 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
+import { moderateBioText } from "@/modules/moderation";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { logger } from "@/utils/logger";
 import React, { useState } from "react";
@@ -15,8 +17,13 @@ const MAX_BIO_LENGTH = 500;
 
 export default function UserBioScreen() {
   const colors = useThemeColors();
+  const [errorModal, setErrorModal] = useState<{
+    visible: boolean;
+    message: string;
+  }>({ visible: false, message: "" });
   const { userData, completeCurrentStep } = useOnboardingFlow();
   const [bio, setBio] = useState(userData.bio || "");
+  const [isValidating, setIsValidating] = useState(false);
 
   // Track screen view
   useScreenTracking("onboarding_bio", {
@@ -24,10 +31,39 @@ export default function UserBioScreen() {
     step_name: "bio",
   });
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    const trimmedBio = bio.trim();
+
+    // Skip moderation for empty bios (bio is optional)
+    if (trimmedBio) {
+      setIsValidating(true);
+
+      try {
+        const result = await moderateBioText(trimmedBio);
+
+        if (!result.approved) {
+          setIsValidating(false);
+
+          // Show semantic error message based on rejection reason
+          const errorMessage =
+            result.reason === "personal_data_detected"
+              ? t("moderation.bioPersonalDataRejected")
+              : t("moderation.bioContentRejected");
+
+          setErrorModal({ visible: true, message: errorMessage });
+          return;
+        }
+      } catch (error) {
+        logger.error("Bio moderation error:", error);
+        // Fail-safe: continue on error
+      }
+
+      setIsValidating(false);
+    }
+
     // Save bio to Redux (even if empty, it's optional)
-    onboardingActions.setBio(bio.trim());
-    logger.log("Bio saved:", bio.trim());
+    onboardingActions.setBio(trimmedBio);
+    logger.log("Bio saved:", trimmedBio);
 
     // Complete this step and navigate to next
     completeCurrentStep("user-bio");
@@ -45,8 +81,13 @@ export default function UserBioScreen() {
       scrollEnabled
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          primaryLabel={
+            isValidating
+              ? t("moderation.validatingBio")
+              : t("screens.onboarding.continue")
+          }
           onPrimaryPress={handleContinue}
+          primaryDisabled={isValidating}
         />
       }
     >
@@ -80,6 +121,7 @@ export default function UserBioScreen() {
         textAlignVertical="top"
         maxLength={MAX_BIO_LENGTH}
         autoFocus
+        editable={!isValidating}
       />
       <ThemedText
         style={[styles.characterCount, { color: colors.textSecondary }]}
@@ -88,6 +130,20 @@ export default function UserBioScreen() {
           count: characterCount,
         })}
       </ThemedText>
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        isOpen={errorModal.visible}
+        onClose={() => setErrorModal({ visible: false, message: "" })}
+        title={t("common.error")}
+        description={errorModal.message}
+        actions={[
+          {
+            label: t("common.ok"),
+            onPress: () => setErrorModal({ visible: false, message: "" }),
+          },
+        ]}
+      />
     </BaseTemplateScreen>
   );
 }
