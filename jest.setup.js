@@ -62,3 +62,23 @@ jest.mock("@/modules/analytics", () => ({
   requestTrackingPermission: jest.fn(async () => "authorized"),
   ANALYTICS_EVENTS: {},
 }));
+
+// Mock expo-file-system to prevent native module errors in tests
+jest.mock("expo-file-system", () => ({
+  __esModule: true,
+  downloadAsync: jest.fn(),
+  getInfoAsync: jest.fn(async () => ({ exists: true, size: 1024 })),
+  readAsStringAsync: jest.fn(async () => "base64content"),
+  writeAsStringAsync: jest.fn(),
+  deleteAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(),
+  cacheDirectory: "/cache/",
+  documentDirectory: "/documents/",
+}));
+
+// Mock image-processor module to prevent import chain issues
+jest.mock("@/modules/media/image-processor", () => ({
+  __esModule: true,
+  processProfileImage: jest.fn(async (uri) => uri),
+  ImageProcessingError: class ImageProcessingError extends Error {},
+}));
