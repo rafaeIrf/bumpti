@@ -1,6 +1,6 @@
 export {
     moderateBioText, moderateContent,
-    moderateProfilePhoto, type ModerationContentType,
+    moderateProfilePhoto, moderateProfilePhotosBatch, type BatchModerationReason, type BatchModerationResult, type BatchModerationResultItem, type ModerationContentType,
     type ModerationRejectionReason, type ModerationResult
 } from "./api";
 

@@ -1,17 +1,20 @@
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
+import type {
+  BatchModerationResult,
+  ModerationContentType,
+  ModerationResult,
+} from "./types";
 
-export type ModerationContentType = "text" | "image";
-
-export type ModerationRejectionReason =
-  | "content_flagged"
-  | "sensitive_content"
-  | "personal_data_detected";
-
-export interface ModerationResult {
-  approved: boolean;
-  reason: ModerationRejectionReason | null;
-}
+// Re-export types for consumers
+export type {
+  BatchModerationReason,
+  BatchModerationResult,
+  BatchModerationResultItem,
+  ModerationContentType,
+  ModerationRejectionReason,
+  ModerationResult
+} from "./types";
 
 /**
  * Moderates content (text or image) using the backend moderation service.
@@ -77,4 +80,58 @@ export async function moderateBioText(
   }
 
   return moderateContent("text", bioText);
+}
+
+// ============================================================================
+// Batch Moderation (for multiple profile photos)
+// ============================================================================
+
+/**
+ * Moderates multiple profile photos in a single batch request.
+ * Uses GPT-4o-mini with low detail for cost-efficient human/pet detection.
+ *
+ * @param base64Images - Array of base64-encoded images (max 9)
+ * @returns BatchModerationResult with approval status for each image
+ */
+export async function moderateProfilePhotosBatch(
+  base64Images: string[]
+): Promise<BatchModerationResult> {
+  if (base64Images.length === 0) {
+    return { results: [], processedCount: 0 };
+  }
+
+  if (base64Images.length > 9) {
+    logger.warn("Batch moderation: truncating to 9 images");
+    base64Images = base64Images.slice(0, 9);
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke<BatchModerationResult>(
+      "moderate-content",
+      {
+        body: { type: "batch-images", images: base64Images },
+      }
+    );
+
+    if (error) {
+      logger.error("Batch moderation API error:", error);
+      // Fail-safe: approve all on error
+      return {
+        results: base64Images.map(() => ({ approved: true, reason: null })),
+        processedCount: base64Images.length,
+      };
+    }
+
+    return data ?? {
+        results: base64Images.map(() => ({ approved: true, reason: null })),
+        processedCount: base64Images.length,
+      };
+  } catch (error) {
+    logger.error("Batch moderation service call failed:", error);
+    // Fail-safe: approve all on error
+    return {
+      results: base64Images.map(() => ({ approved: true, reason: null })),
+      processedCount: base64Images.length,
+    };
+  }
 }
