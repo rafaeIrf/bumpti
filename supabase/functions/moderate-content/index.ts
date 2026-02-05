@@ -20,9 +20,6 @@ const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODERATION_MODEL = "omni-moderation-latest";
 const OPENAI_VISION_MODEL = "gpt-4o-mini";
 
-// Cost constants for billing logs
-const TOKENS_PER_LOW_DETAIL_IMAGE = 85;
-
 // Sensitivity thresholds for various categories (even if not flagged by OpenAI)
 // Lower = more strict. These apply even when OpenAI doesn't flag the content.
 // 
@@ -85,6 +82,16 @@ interface OpenAIModerationResult {
 // ============================================================================
 // Utility Functions
 // ============================================================================
+
+/**
+ * Creates a JSON response with proper headers
+ */
+function createJsonResponse<T>(data: T, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 /**
  * Checks if text contains personal data (phone numbers or external links)
@@ -411,16 +418,7 @@ async function handleSingleModeration(
   // Check for personal data in text content first (before calling OpenAI)
   if (type === "text" && containsPersonalData(content)) {
     await logModerationResult(supabase, userId, type, "rejected", "personal_data_detected", null);
-
-    const response: SingleModerationResponse = {
-      approved: false,
-      reason: "personal_data_detected",
-    };
-
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createJsonResponse<SingleModerationResponse>({ approved: false, reason: "personal_data_detected" });
   }
 
   // For images, use the shared helper (safety + human/pet detection)
@@ -436,15 +434,7 @@ async function handleSingleModeration(
       result.scores
     );
 
-    const response: SingleModerationResponse = {
-      approved: result.approved,
-      reason: result.reason,
-    };
-
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createJsonResponse<SingleModerationResponse>({ approved: result.approved, reason: result.reason });
   }
 
   // For text, use safety check only
@@ -453,16 +443,7 @@ async function handleSingleModeration(
   if (!moderationResult.success) {
     console.error("[MODERATION] Text safety check failed, rejecting:", moderationResult.error);
     await logModerationResult(supabase, userId, type, "rejected", "content_flagged", null);
-
-    const response: SingleModerationResponse = {
-      approved: false,
-      reason: "content_flagged",
-    };
-
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createJsonResponse<SingleModerationResponse>({ approved: false, reason: "content_flagged" });
   }
 
   const { flagged, category_scores } = moderationResult.result!;
@@ -490,12 +471,7 @@ async function handleSingleModeration(
     category_scores
   );
 
-  const response: SingleModerationResponse = { approved, reason };
-
-  return new Response(JSON.stringify(response), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return createJsonResponse<SingleModerationResponse>({ approved, reason });
 }
 /**
  * Handles batch image moderation with human/pet detection
@@ -543,13 +519,11 @@ async function handleBatchModeration(
     })
   );
 
-  // Step 2: Collect indices of images that passed safety
-  const safeIndices: number[] = [];
+  // Step 2: Collect images that passed safety
   const safeImages: string[] = [];
   
   safetyResults.forEach((result, index) => {
     if (result.approved) {
-      safeIndices.push(index);
       safeImages.push(images[index]);
     }
   });
@@ -611,14 +585,9 @@ async function handleBatchModeration(
 
   console.log(`[BILLING] Batch complete: ${approvedCount} approved, ${rejectedCount} rejected`);
 
-  const response: BatchModerationResponse = {
+  return createJsonResponse<BatchModerationResponse>({
     results: finalResults,
     processedCount: imageCount,
-  };
-
-  return new Response(JSON.stringify(response), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -644,18 +613,12 @@ Deno.serve(async (req) => {
   const token = authHeader?.replace("Bearer ", "");
 
   if (!token) {
-    return new Response(
-      JSON.stringify({ error: "unauthorized", message: "Missing access token" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createJsonResponse({ error: "unauthorized", message: "Missing access token" }, 401);
   }
 
   if (!openaiApiKey) {
     console.error("Missing OPENAI_API_KEY");
-    return new Response(
-      JSON.stringify({ error: "server_error", message: "Moderation service unavailable" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createJsonResponse({ error: "server_error", message: "Moderation service unavailable" }, 500);
   }
 
   const supabase = createClient(supabaseUrl, serviceKey);
@@ -665,10 +628,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user?.id) {
-      return new Response(
-        JSON.stringify({ error: "unauthorized", message: "Invalid or expired token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createJsonResponse({ error: "unauthorized", message: "Invalid or expired token" }, 401);
     }
 
     // Parse request body
@@ -679,17 +639,11 @@ Deno.serve(async (req) => {
       const { images } = body as BatchModerationRequest;
       
       if (!images || !Array.isArray(images) || images.length === 0) {
-        return new Response(
-          JSON.stringify({ error: "bad_request", message: "Missing or empty images array" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return createJsonResponse({ error: "bad_request", message: "Missing or empty images array" }, 400);
       }
 
       if (images.length > 9) {
-        return new Response(
-          JSON.stringify({ error: "bad_request", message: "Maximum 9 images allowed per batch" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return createJsonResponse({ error: "bad_request", message: "Maximum 9 images allowed per batch" }, 400);
       }
 
       return handleBatchModeration(supabase, user.id, images);
@@ -699,29 +653,17 @@ Deno.serve(async (req) => {
     const { type, content } = body as SingleModerationRequest;
 
     if (!type || !content) {
-      return new Response(
-        JSON.stringify({ error: "bad_request", message: "Missing type or content" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createJsonResponse({ error: "bad_request", message: "Missing type or content" }, 400);
     }
 
     if (type !== "text" && type !== "image") {
-      return new Response(
-        JSON.stringify({ error: "bad_request", message: "Type must be 'text', 'image', or 'batch-images'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createJsonResponse({ error: "bad_request", message: "Type must be 'text', 'image', or 'batch-images'" }, 400);
     }
 
     return handleSingleModeration(supabase, user.id, type, content);
   } catch (error) {
     console.error("moderate-content error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unable to moderate content";
-    return new Response(
-      JSON.stringify({
-        error: "server_error",
-        message: errorMessage,
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createJsonResponse({ error: "server_error", message: errorMessage }, 500);
   }
 });
