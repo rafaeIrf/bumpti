@@ -155,7 +155,7 @@ export async function syncDatabase(database: Database, forceFullSync: boolean = 
         pullChanges: async ({ lastPulledAt: serverLastPulledAt }) => {
           // Se forceFullSync, passa null para puxar todos os dados
           const timestamp = forceFullSync ? null : (lastPulledAt || serverLastPulledAt || null);
-          const { changes, timestamp: newTimestamp } = await pullChanges(timestamp, database);
+          const { changes, timestamp: newTimestamp } = await pullChanges(timestamp);
 
           // Se for force sync, detectar registros locais que não existem mais no backend
           let processedChanges = changes;

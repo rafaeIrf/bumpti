@@ -1,4 +1,5 @@
-import { detectDeletedItems } from "./helpers.ts";
+// Deletion detection via soft delete (status=unmatched) and sync_deletions audit table
+import { fetchCascadeDeletions } from "./deletions.ts";
 import {
   fetchPhotosInBatch,
   signPhotoUrl,
@@ -12,7 +13,7 @@ export async function fetchMatchesChanges(
   sinceDate: string | null,
   forceUpdates: boolean,
   usersWithPhotoUpdates: string[],
-  localMatchIds: string[] = []
+  _localMatchIds: string[] = [] // Not used - kept for API compatibility
 ): Promise<SyncChanges> {
   const matches = await fetchMatchesFromDB(
     supabaseAdmin,
@@ -23,7 +24,6 @@ export async function fetchMatchesChanges(
   );
 
   console.log("[fetchMatchesChanges] Total matches fetched:", matches.length);
-  console.log("[Matches] Local IDs received:", localMatchIds.length);
 
   const userIds = matches.map((m: any) =>
     m.user_a === userId ? m.user_b : m.user_a
@@ -37,8 +37,7 @@ export async function fetchMatchesChanges(
     forceUpdates,
     usersWithPhotoUpdates,
     photosMap,
-    supabaseAdmin,
-    localMatchIds
+    supabaseAdmin
   );
 }
 
@@ -165,15 +164,20 @@ async function transformAndClassifyMatches(
   forceUpdates: boolean,
   usersWithPhotoUpdates: string[],
   photosMap: Map<string, string>,
-  supabaseAdmin: any,
-  localMatchIds: string[] = []
+  supabaseAdmin: any
 ): Promise<SyncChanges> {
   const created: any[] = [];
   const updated: any[] = [];
   const deleted: string[] = [];
 
-  // Detect CASCADE deleted matches using shared helper
-  deleted.push(...detectDeletedItems(localMatchIds, matches, "[Matches]"));
+  // Query CASCADE deletions from audit table (e.g., when other user deleted account)
+  const cascadeDeletedIds = await fetchCascadeDeletions(
+    supabaseAdmin,
+    "user_matches",
+    userId,
+    sinceDate
+  );
+  deleted.push(...cascadeDeletedIds);
 
   for (const match of matches) {
     // Process unmatched status (soft delete)
