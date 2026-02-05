@@ -71,9 +71,10 @@ export async function imageToBase64(
 ): Promise<string> {
   try {
     // Compress image to JPEG with specified quality, resize for moderation
+    // Note: OpenAI's low detail mode only uses 512px max, so we optimize bandwidth
     const manipulatedImage = await ImageManipulator.manipulateAsync(
       uri,
-      [{ resize: { width: 800 } }],
+      [{ resize: { width: 512 } }],
       { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
     );
 

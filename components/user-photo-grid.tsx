@@ -9,7 +9,10 @@ import { useImagePicker } from "@/hooks/use-image-picker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { imageToBase64, isRemoteUri } from "@/modules/media/image-processor";
-import { moderateProfilePhoto } from "@/modules/moderation";
+import {
+  moderateProfilePhoto,
+  moderateProfilePhotosBatch,
+} from "@/modules/moderation";
 import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -201,25 +204,44 @@ export function UserPhotoGrid({
       const approvedUris: string[] = [];
       let rejectedCount = 0;
 
-      // Moderate each photo
-      for (const uri of newUris) {
-        if (isRemoteUri(uri)) {
-          approvedUris.push(uri);
-          continue;
-        }
+      // Separate remote (already approved) from local (need moderation)
+      const remoteUris = newUris.filter(isRemoteUri);
+      const localUris = newUris.filter((uri) => !isRemoteUri(uri));
 
+      // Remote images don't need moderation
+      approvedUris.push(...remoteUris);
+
+      // Process local images with batch moderation (single API call)
+      if (localUris.length > 0) {
         try {
-          const base64 = await imageToBase64(uri, 0.7);
-          const modResult = await moderateProfilePhoto(base64);
+          // Convert all local images to base64 in parallel
+          const base64Images = await Promise.all(
+            localUris.map((uri) => imageToBase64(uri, 0.7)),
+          );
 
-          if (modResult.approved) {
-            approvedUris.push(uri);
+          // Use batch moderation for multiple images (1 API call instead of N)
+          if (base64Images.length > 1) {
+            const batchResult = await moderateProfilePhotosBatch(base64Images);
+
+            for (let i = 0; i < localUris.length; i++) {
+              if (batchResult.results[i]?.approved) {
+                approvedUris.push(localUris[i]);
+              } else {
+                rejectedCount++;
+              }
+            }
           } else {
-            rejectedCount++;
+            // Single image - use regular moderation
+            const modResult = await moderateProfilePhoto(base64Images[0]);
+            if (modResult.approved) {
+              approvedUris.push(localUris[0]);
+            } else {
+              rejectedCount++;
+            }
           }
         } catch (modError) {
-          logger.warn("Moderation failed, allowing photo:", modError);
-          approvedUris.push(uri);
+          logger.warn("Moderation failed, allowing photos:", modError);
+          approvedUris.push(...localUris);
         }
       }
 

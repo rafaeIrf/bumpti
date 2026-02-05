@@ -12,8 +12,16 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const openaiApiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
 
+// OpenAI API endpoints
 const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations";
-const OPENAI_MODEL = "omni-moderation-latest";
+const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
+
+// Models
+const OPENAI_MODERATION_MODEL = "omni-moderation-latest";
+const OPENAI_VISION_MODEL = "gpt-4o-mini";
+
+// Cost constants for billing logs
+const TOKENS_PER_LOW_DETAIL_IMAGE = 85;
 
 // Sensitivity thresholds for various categories (even if not flagged by OpenAI)
 // Lower = more strict. These apply even when OpenAI doesn't flag the content.
@@ -39,14 +47,33 @@ const IMAGE_SELF_HARM_THRESHOLD = 0.5;   // Apple compliance
 const PHONE_REGEX = /(\+?\d{1,3}[-.\s]?)?\(?\d{2,3}\)?[-.\s]?\d{4,5}[-.\s]?\d{4}/g;
 const URL_REGEX = /https?:\/\/[^\s]+|www\.[^\s]+|[a-z0-9]+\.(com|net|org|io|me|br|co)[^\s]*/gi;
 
-interface ModerationRequest {
+// ============================================================================
+// Types
+// ============================================================================
+
+interface SingleModerationRequest {
   type: "text" | "image";
   content: string;
 }
 
-interface ModerationResponse {
+interface BatchModerationRequest {
+  type: "batch-images";
+  images: string[];
+}
+
+type ModerationRequest = SingleModerationRequest | BatchModerationRequest;
+
+interface SingleModerationResponse {
   approved: boolean;
-  reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | null;
+  reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | "not_human" | null;
+}
+
+interface BatchModerationResponse {
+  results: {
+    approved: boolean;
+    reason: "content_flagged" | "sensitive_content" | "not_human" | null;
+  }[];
+  processedCount: number;
 }
 
 interface OpenAIModerationResult {
@@ -54,6 +81,10 @@ interface OpenAIModerationResult {
   categories: Record<string, boolean>;
   category_scores: Record<string, number>;
 }
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
 
 /**
  * Checks if text contains personal data (phone numbers or external links)
@@ -135,10 +166,11 @@ function checkContentThresholds(
 async function logModerationResult(
   supabase: ReturnType<typeof createClient>,
   userId: string,
-  contentType: "text" | "image",
+  contentType: "text" | "image" | "batch-images",
   status: "approved" | "rejected" | "passed_by_error",
   rejectionReason: string | null,
-  aiScores: Record<string, number> | null
+  aiScores: Record<string, number> | null,
+  imageCount?: number
 ): Promise<void> {
   await supabase.from("content_moderation_logs").insert({
     user_id: userId,
@@ -146,11 +178,16 @@ async function logModerationResult(
     status,
     rejection_reason: rejectionReason,
     ai_scores: aiScores,
+    image_count: imageCount,
   });
 }
 
+// ============================================================================
+// OpenAI API Functions
+// ============================================================================
+
 /**
- * Calls OpenAI Moderation API
+ * Calls OpenAI Moderation API (for text and single image safety check)
  */
 async function callOpenAIModeration(
   type: "text" | "image",
@@ -181,7 +218,7 @@ async function callOpenAIModeration(
         Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
+        model: OPENAI_MODERATION_MODEL,
         input,
       }),
     });
@@ -202,9 +239,313 @@ async function callOpenAIModeration(
     return { success: true, result };
   } catch (error) {
     console.error("OpenAI moderation call failed:", error);
-    return { success: false, error: error?.message ?? "Unknown error" };
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: errorMessage };
   }
 }
+
+/**
+ * Calls OpenAI Chat Completions API with vision for batch human/pet detection
+ * Uses gpt-4o-mini with detail: "low" for cost optimization
+ */
+async function callBatchHumanDetection(
+  images: string[]
+): Promise<{ success: boolean; results?: boolean[]; error?: string }> {
+  try {
+    // Build content array with all images
+    const content: { type: string; text?: string; image_url?: { url: string; detail: string } }[] = [
+      { 
+        type: "text", 
+        text: "Check each photo: Human or Pet (true) vs Landscape/Object/Cartoon (false)? Reply only JSON: {\"results\":[true,false,...]}" 
+      },
+    ];
+
+    for (const base64 of images) {
+      const url = base64.startsWith("data:") ? base64 : `data:image/jpeg;base64,${base64}`;
+      content.push({
+        type: "image_url",
+        image_url: { url, detail: "low" },
+      });
+    }
+
+    const response = await fetch(OPENAI_CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: OPENAI_VISION_MODEL,
+        messages: [{ role: "user", content }],
+        max_tokens: 100,
+        temperature: 0,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenAI Vision API error:", response.status, errorText);
+      return { success: false, error: `OpenAI Vision API error: ${response.status}` };
+    }
+
+    const data = await response.json();
+    const messageContent = data.choices?.[0]?.message?.content ?? "";
+    
+    // Log token usage for billing
+    const promptTokens = data.usage?.prompt_tokens ?? 0;
+    const completionTokens = data.usage?.completion_tokens ?? 0;
+    console.log(`[BILLING] Batch human detection: ${images.length} photos. Tokens: ${promptTokens} prompt + ${completionTokens} completion = ${promptTokens + completionTokens} total.`);
+
+    // Parse JSON response
+    try {
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = messageContent.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("No JSON found in response:", messageContent);
+        return { success: false, error: "Invalid response format" };
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      const results = parsed.results;
+      
+      if (!Array.isArray(results) || results.length !== images.length) {
+        console.error("Results array mismatch:", results);
+        return { success: false, error: "Results count mismatch" };
+      }
+      
+      return { success: true, results };
+    } catch (parseError) {
+      console.error("Failed to parse vision response:", messageContent, parseError);
+      return { success: false, error: "Failed to parse response" };
+    }
+  } catch (error) {
+    console.error("Batch human detection failed:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: errorMessage };
+  }
+}
+
+// ============================================================================
+// Shared Image Moderation Helper
+// ============================================================================
+
+interface ImageModerationResult {
+  approved: boolean;
+  reason: "content_flagged" | "sensitive_content" | "not_human" | null;
+  scores: Record<string, number> | null;
+}
+
+/**
+ * Performs complete moderation on a single image:
+ * 1. Safety check (sexual, violence, etc.)
+ * 2. Human/Pet detection
+ * 
+ * This is the single source of truth for image moderation logic.
+ * Used by both single and batch handlers.
+ */
+async function moderateSingleImage(base64Image: string): Promise<ImageModerationResult> {
+  // Step 1: Safety check
+  const safetyResult = await callOpenAIModeration("image", base64Image);
+  
+  if (!safetyResult.success) {
+    console.error("[MODERATION] Safety check failed, rejecting:", safetyResult.error);
+    return { approved: false, reason: "content_flagged", scores: null };
+  }
+
+  const { flagged, category_scores } = safetyResult.result!;
+
+  // Check if flagged by OpenAI
+  if (flagged) {
+    console.log("[MODERATION] Image flagged by OpenAI safety check");
+    return { approved: false, reason: "content_flagged", scores: category_scores };
+  }
+
+  // Check thresholds
+  const thresholdReason = checkContentThresholds(category_scores, "image");
+  if (thresholdReason) {
+    console.log("[MODERATION] Image failed threshold check:", thresholdReason);
+    return { approved: false, reason: "sensitive_content", scores: category_scores };
+  }
+
+  // Step 2: Human/Pet detection
+  const humanDetection = await callBatchHumanDetection([base64Image]);
+  
+  console.log("[DEBUG] Human detection result:", JSON.stringify(humanDetection));
+  
+  if (!humanDetection.success || !humanDetection.results) {
+    console.error("[MODERATION] Human detection failed, rejecting:", humanDetection.error);
+    return { approved: false, reason: "not_human", scores: category_scores };
+  }
+
+  const isHumanOrPet = humanDetection.results[0];
+  if (!isHumanOrPet) {
+    console.log("[MODERATION] Image rejected: not human/pet");
+    return { approved: false, reason: "not_human", scores: category_scores };
+  }
+
+  console.log("[MODERATION] Image approved: passed safety and human/pet check");
+  return { approved: true, reason: null, scores: category_scores };
+}
+
+// ============================================================================
+// Request Handlers
+// ============================================================================
+
+/**
+ * Handles single content moderation (text or image)
+ */
+async function handleSingleModeration(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  type: "text" | "image",
+  content: string
+): Promise<Response> {
+  // Check for personal data in text content first (before calling OpenAI)
+  if (type === "text" && containsPersonalData(content)) {
+    await logModerationResult(supabase, userId, type, "rejected", "personal_data_detected", null);
+
+    const response: SingleModerationResponse = {
+      approved: false,
+      reason: "personal_data_detected",
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // For images, use the shared helper (safety + human/pet detection)
+  if (type === "image") {
+    const result = await moderateSingleImage(content);
+    
+    await logModerationResult(
+      supabase,
+      userId,
+      type,
+      result.approved ? "approved" : "rejected",
+      result.reason,
+      result.scores
+    );
+
+    const response: SingleModerationResponse = {
+      approved: result.approved,
+      reason: result.reason,
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // For text, use safety check only
+  const moderationResult = await callOpenAIModeration(type, content);
+
+  if (!moderationResult.success) {
+    console.error("[MODERATION] Text safety check failed, rejecting:", moderationResult.error);
+    await logModerationResult(supabase, userId, type, "rejected", "content_flagged", null);
+
+    const response: SingleModerationResponse = {
+      approved: false,
+      reason: "content_flagged",
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const { flagged, category_scores } = moderationResult.result!;
+
+  let approved = true;
+  let reason: SingleModerationResponse["reason"] = null;
+
+  if (flagged) {
+    approved = false;
+    reason = "content_flagged";
+  } else {
+    const thresholdReason = checkContentThresholds(category_scores, type);
+    if (thresholdReason) {
+      approved = false;
+      reason = thresholdReason as SingleModerationResponse["reason"];
+    }
+  }
+
+  await logModerationResult(
+    supabase,
+    userId,
+    type,
+    approved ? "approved" : "rejected",
+    reason,
+    category_scores
+  );
+
+  const response: SingleModerationResponse = { approved, reason };
+
+  return new Response(JSON.stringify(response), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+/**
+ * Handles batch image moderation with human/pet detection
+ * Uses the same moderateSingleImage helper as single moderation for consistency
+ */
+async function handleBatchModeration(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  images: string[]
+): Promise<Response> {
+  const imageCount = images.length;
+  
+  // Billing log for image tokens
+  const estimatedImageTokens = imageCount * TOKENS_PER_LOW_DETAIL_IMAGE;
+  console.log(`[BILLING] Batch moderation started: ${imageCount} photos. Estimated image tokens: ${estimatedImageTokens}`);
+
+  // Process all images using the shared helper
+  const results = await Promise.all(
+    images.map(async (base64) => {
+      const result = await moderateSingleImage(base64);
+      return {
+        approved: result.approved,
+        reason: result.reason,
+      };
+    })
+  );
+
+  // Count results for logging
+  const approvedCount = results.filter(r => r.approved).length;
+  const rejectedCount = results.filter(r => !r.approved).length;
+
+  // Log batch result
+  await logModerationResult(
+    supabase,
+    userId,
+    "batch-images",
+    rejectedCount > 0 ? "rejected" : "approved",
+    rejectedCount > 0 ? `${rejectedCount} rejected` : null,
+    null,
+    imageCount
+  );
+
+  console.log(`[BILLING] Batch moderation complete: ${approvedCount} approved, ${rejectedCount} rejected`);
+
+  const response: BatchModerationResponse = {
+    results: results,
+    processedCount: imageCount,
+  };
+
+  return new Response(JSON.stringify(response), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -253,7 +594,30 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body = await req.json() as ModerationRequest;
-    const { type, content } = body;
+
+    // Handle batch images
+    if (body.type === "batch-images") {
+      const { images } = body as BatchModerationRequest;
+      
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "bad_request", message: "Missing or empty images array" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (images.length > 9) {
+        return new Response(
+          JSON.stringify({ error: "bad_request", message: "Maximum 9 images allowed per batch" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return handleBatchModeration(supabase, user.id, images);
+    }
+
+    // Handle single moderation (text or image)
+    const { type, content } = body as SingleModerationRequest;
 
     if (!type || !content) {
       return new Response(
@@ -264,94 +628,19 @@ Deno.serve(async (req) => {
 
     if (type !== "text" && type !== "image") {
       return new Response(
-        JSON.stringify({ error: "bad_request", message: "Type must be 'text' or 'image'" }),
+        JSON.stringify({ error: "bad_request", message: "Type must be 'text', 'image', or 'batch-images'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check for personal data in text content first (before calling OpenAI)
-    if (type === "text" && containsPersonalData(content)) {
-      await logModerationResult(supabase, user.id, type, "rejected", "personal_data_detected", null);
-
-      const response: ModerationResponse = {
-        approved: false,
-        reason: "personal_data_detected",
-      };
-
-      return new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Call OpenAI Moderation API
-    const moderationResult = await callOpenAIModeration(type, content);
-
-    // FAIL-SAFE: If OpenAI fails, approve but log as pending for manual review
-    if (!moderationResult.success) {
-      console.warn("OpenAI moderation failed, applying fail-safe approval:", moderationResult.error);
-      await logModerationResult(supabase, user.id, type, "passed_by_error", moderationResult.error ?? "openai_unavailable", null);
-
-      const response: ModerationResponse = {
-        approved: true,
-        reason: null,
-      };
-
-      return new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { flagged, category_scores } = moderationResult.result!;
-
-    // LOG ALL SCORES FOR DEBUGGING
-    console.log("OpenAI moderation scores:", JSON.stringify({
-      flagged,
-      scores: category_scores,
-      content_type: type,
-    }));
-
-    // Decision logic
-    let approved = true;
-    let reason: ModerationResponse["reason"] = null;
-
-    // Check 1: Auto-reject if flagged by OpenAI
-    if (flagged) {
-      approved = false;
-      reason = "content_flagged";
-    }
-    // Check 2: Check all category thresholds (even if not flagged)
-    else {
-      const thresholdReason = checkContentThresholds(category_scores, type);
-      if (thresholdReason) {
-        approved = false;
-        reason = thresholdReason as ModerationResponse["reason"];
-      }
-    }
-
-    // Log the result with full AI scores for analytics
-    await logModerationResult(
-      supabase,
-      user.id,
-      type,
-      approved ? "approved" : "rejected",
-      reason,
-      category_scores
-    );
-
-    const response: ModerationResponse = { approved, reason };
-
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return handleSingleModeration(supabase, user.id, type, content);
   } catch (error) {
     console.error("moderate-content error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unable to moderate content";
     return new Response(
       JSON.stringify({
         error: "server_error",
-        message: error?.message ?? "Unable to moderate content",
+        message: errorMessage,
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
