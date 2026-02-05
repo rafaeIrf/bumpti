@@ -645,6 +645,10 @@ Deno.serve(async (req) => {
 
     // Manage photos
     if (photosToUpdate && photosToUpdate.length > 0) {
+      // Backend enforcement: limit to 9 photos max (prevents bypass attacks)
+      const MAX_PHOTOS = 9;
+      const limitedPhotos = photosToUpdate.slice(0, MAX_PHOTOS);
+      
       // Fetch current photos to identify what needs to be deleted later
       const { data: currentPhotos } = await supabase
         .from("profile_photos")
@@ -653,8 +657,8 @@ Deno.serve(async (req) => {
 
       const newPhotos: { url: string; position: number }[] = [];
 
-      for (let i = 0; i < photosToUpdate.length; i++) {
-        const item = photosToUpdate[i];
+      for (let i = 0; i < limitedPhotos.length; i++) {
+        const item = limitedPhotos[i];
 
         if (typeof item === "string") {
           // Existing photo URL (likely signed)

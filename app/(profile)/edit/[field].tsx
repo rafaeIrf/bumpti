@@ -1,5 +1,6 @@
 import { ArrowRightIcon, CheckIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { LanguagesStep } from "@/components/profile-edit/languages-step";
 import { LocationStep } from "@/components/profile-edit/location-step";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -28,7 +29,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Platform, StyleSheet, TextInput, View } from "react-native";
+import { Platform, StyleSheet, TextInput, View } from "react-native";
 
 const HEIGHT_OPTIONS = [
   { label: "< 91 cm", value: 90 },
@@ -84,6 +85,7 @@ export default function EditFieldScreen() {
 
   const [value, setValue] = useState<any>(getInitialValue);
   const [isModeratingBio, setIsModeratingBio] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     setValue(getInitialValue());
@@ -109,7 +111,7 @@ export default function EditFieldScreen() {
                 ? t("moderation.bioPersonalDataRejected")
                 : t("moderation.bioContentRejected");
 
-            Alert.alert(t("common.error"), errorMessage);
+            setErrorModal({ visible: true, message: errorMessage });
             return;
           }
         } catch (error) {
@@ -404,6 +406,19 @@ export default function EditFieldScreen() {
       }
     >
       {renderContent()}
+
+      <ConfirmationModal
+        isOpen={errorModal.visible}
+        onClose={() => setErrorModal({ visible: false, message: "" })}
+        title={t("common.error")}
+        description={errorModal.message}
+        actions={[
+          {
+            label: t("common.understood"),
+            onPress: () => setErrorModal({ visible: false, message: "" }),
+          },
+        ]}
+      />
     </BaseTemplateScreen>
   );
 }
