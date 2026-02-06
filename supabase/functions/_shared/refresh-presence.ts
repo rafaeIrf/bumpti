@@ -19,7 +19,7 @@ export async function refreshPresenceForPlace(
   placeId: string
 ): Promise<PresenceRecord | null> {
   const nowIso = new Date().toISOString();
-  const newExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  const newExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
   const { data: presence, error } = await supabase
     .from("user_presences")
