@@ -62,13 +62,13 @@ type ModerationRequest = SingleModerationRequest | BatchModerationRequest;
 
 interface SingleModerationResponse {
   approved: boolean;
-  reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | "not_human" | null;
+  reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | "not_human" | "underage_detected" | null;
 }
 
 interface BatchModerationResponse {
   results: {
     approved: boolean;
-    reason: "content_flagged" | "sensitive_content" | "not_human" | null;
+    reason: "content_flagged" | "sensitive_content" | "not_human" | "underage_detected" | null;
   }[];
   processedCount: number;
 }
@@ -263,7 +263,7 @@ async function callBatchHumanDetection(
     const content: { type: string; text?: string; image_url?: { url: string; detail: string } }[] = [
       { 
         type: "text", 
-        text: "Check each photo: real photo of Human or real Animal (true) vs Landscape/Objects/Cartoon/Drawing/Illustration/AI-generated (false)? Reply only JSON: {\"results\":[true,false,...]}" 
+        text: "Analyze each photo and determine if it meets our community standards.\n\nAPPROVE (return true) if:\n- Photo shows a real ADULT human)\n- Photo shows a real PET ANIMAL (dog, cat, etc.)\n\nREJECT (return false) if:\n- Photo contains BABIES, YOUNG CHILDREN, or INFANTS (child safety priority)\n- Photo shows landscapes, objects, memes, drawings, illustrations, or AI-generated images\n- Photo is blurry, offensive, or contains nudity\n\nReturn strict JSON format: {\"results\": [true, false, ...]} respecting exact image order." 
       },
     ];
 
@@ -346,7 +346,7 @@ async function callBatchHumanDetection(
 
 interface ImageModerationResult {
   approved: boolean;
-  reason: "content_flagged" | "sensitive_content" | "not_human" | null;
+  reason: "content_flagged" | "sensitive_content" | "not_human" | "underage_detected" | null;
   scores: Record<string, number> | null;
 }
 
