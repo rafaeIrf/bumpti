@@ -1,405 +1,41 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Shared modules
+import { logModerationResult } from "../_shared/moderate/logging.ts";
+import { moderateSingleImage } from "../_shared/moderate/moderator.ts";
+import { callModerationAPI, callVisionAPI } from "../_shared/moderate/openai-client.ts";
+import { containsPersonalData } from "../_shared/moderate/personal-data.ts";
+import { checkContentThresholds } from "../_shared/moderate/thresholds.ts";
+import type {
+  BatchModerationRequest,
+  BatchModerationResponse,
+  ModerationRequest,
+  SingleModerationRequest,
+  SingleModerationResponse,
+} from "../_shared/moderate/types.ts";
 
+// Environment
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const openaiApiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
 
-// OpenAI API endpoints
-const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations";
-const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
-
-// Models
-const OPENAI_MODERATION_MODEL = "omni-moderation-latest";
-const OPENAI_VISION_MODEL = "gpt-4o-mini";
-
-// Sensitivity thresholds for various categories (even if not flagged by OpenAI)
-// Lower = more strict. These apply even when OpenAI doesn't flag the content.
-// 
-// TEXT thresholds are STRICTER because explicit terms in PT/ES get lower scores
-// IMAGE thresholds are LESS STRICT to avoid false positives on normal photos
-
-// Text moderation thresholds (stricter)
-const TEXT_SEXUAL_THRESHOLD = 0.25;     // Catches explicit terms in PT/ES
-const TEXT_VIOLENCE_THRESHOLD = 0.25;   // Violence references
-const TEXT_HARASSMENT_THRESHOLD = 0.25; // Harassment, bullying
-const TEXT_HATE_THRESHOLD = 0.25;       // Hate speech
-const TEXT_SELF_HARM_THRESHOLD = 0.3;   // Self-harm references
-
-// Image moderation thresholds (less strict to avoid false positives)
-const IMAGE_SEXUAL_THRESHOLD = 0.45;     // Higher - visual content scores higher
-const IMAGE_VIOLENCE_THRESHOLD = 0.35;   // Weapons, gore
-const IMAGE_HARASSMENT_THRESHOLD = 0.4;  // Offensive imagery
-const IMAGE_HATE_THRESHOLD = 0.4;        // Hate symbols
-const IMAGE_SELF_HARM_THRESHOLD = 0.5;   // Apple compliance
-
-// Regex patterns for personal data detection
-const PHONE_REGEX = /(\+?\d{1,3}[-.\s]?)?\(?\d{2,3}\)?[-.\s]?\d{4,5}[-.\s]?\d{4}/g;
-const URL_REGEX = /https?:\/\/[^\s]+|www\.[^\s]+|[a-z0-9]+\.(com|net|org|io|me|br|co)[^\s]*/gi;
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface SingleModerationRequest {
-  type: "text" | "image";
-  content: string;
-}
-
-interface BatchModerationRequest {
-  type: "batch-images";
-  images: string[];
-}
-
-type ModerationRequest = SingleModerationRequest | BatchModerationRequest;
-
-interface SingleModerationResponse {
-  approved: boolean;
-  reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | "not_human" | "underage_detected" | null;
-}
-
-interface BatchModerationResponse {
-  results: {
-    approved: boolean;
-    reason: "content_flagged" | "sensitive_content" | "not_human" | "underage_detected" | null;
-  }[];
-  processedCount: number;
-}
-
-interface OpenAIModerationResult {
-  flagged: boolean;
-  categories: Record<string, boolean>;
-  category_scores: Record<string, number>;
-}
+// CORS configuration
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 // ============================================================================
 // Utility Functions
 // ============================================================================
 
-/**
- * Creates a JSON response with proper headers
- */
 function createJsonResponse<T>(data: T, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-/**
- * Checks if text contains personal data (phone numbers or external links)
- */
-function containsPersonalData(text: string): boolean {
-  return PHONE_REGEX.test(text) || URL_REGEX.test(text);
-}
-
-/**
- * Checks if content scores exceed our sensitivity thresholds
- * Returns the reason if threshold is exceeded, null otherwise
- */
-function checkContentThresholds(
-  scores: Record<string, number>,
-  contentType: "text" | "image"
-): string | null {
-  // Select thresholds based on content type
-  const isText = contentType === "text";
-  const sexualThreshold = isText ? TEXT_SEXUAL_THRESHOLD : IMAGE_SEXUAL_THRESHOLD;
-  const violenceThreshold = isText ? TEXT_VIOLENCE_THRESHOLD : IMAGE_VIOLENCE_THRESHOLD;
-  const harassmentThreshold = isText ? TEXT_HARASSMENT_THRESHOLD : IMAGE_HARASSMENT_THRESHOLD;
-  const hateThreshold = isText ? TEXT_HATE_THRESHOLD : IMAGE_HATE_THRESHOLD;
-  const selfHarmThreshold = isText ? TEXT_SELF_HARM_THRESHOLD : IMAGE_SELF_HARM_THRESHOLD;
-
-  // Sexual content (including minors and suggestive - zero tolerance for minors)
-  const sexualScore = scores["sexual"] ?? 0;
-  const sexualMinorsScore = scores["sexual/minors"] ?? 0;
-  const sexualSuggestiveScore = scores["sexual/suggestive"] ?? 0;
-  if (
-    sexualScore > sexualThreshold || 
-    sexualMinorsScore > sexualThreshold ||
-    sexualSuggestiveScore > sexualThreshold
-  ) {
-    return "sensitive_content";
-  }
-
-  // Violence (weapons, gore, graphic content)
-  const violenceScore = scores["violence"] ?? 0;
-  const violenceGraphicScore = scores["violence/graphic"] ?? 0;
-  if (violenceScore > violenceThreshold || violenceGraphicScore > violenceThreshold) {
-    return "sensitive_content";
-  }
-
-  // Harassment and hate speech
-  const harassmentScore = scores["harassment"] ?? 0;
-  const harassmentThreateningScore = scores["harassment/threatening"] ?? 0;
-  const hateScore = scores["hate"] ?? 0;
-  const hateThreateningScore = scores["hate/threatening"] ?? 0;
-  
-  if (
-    harassmentScore > harassmentThreshold ||
-    harassmentThreateningScore > harassmentThreshold ||
-    hateScore > hateThreshold ||
-    hateThreateningScore > hateThreshold
-  ) {
-    return "sensitive_content";
-  }
-
-  // Self-harm (Apple compliance requirement)
-  const selfHarmScore = scores["self-harm"] ?? 0;
-  const selfHarmIntentScore = scores["self-harm/intent"] ?? 0;
-  const selfHarmInstructionsScore = scores["self-harm/instructions"] ?? 0;
-  
-  if (
-    selfHarmScore > selfHarmThreshold ||
-    selfHarmIntentScore > selfHarmThreshold ||
-    selfHarmInstructionsScore > selfHarmThreshold
-  ) {
-    return "sensitive_content";
-  }
-
-  return null;
-}
-
-/**
- * Logs moderation result to database for audit
- * Does not store raw content (base64/text) for privacy and disk savings
- */
-async function logModerationResult(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  contentType: "text" | "image" | "batch-images",
-  status: "approved" | "rejected" | "passed_by_error",
-  rejectionReason: string | null,
-  aiScores: Record<string, number> | null,
-  imageCount?: number
-): Promise<void> {
-  await supabase.from("content_moderation_logs").insert({
-    user_id: userId,
-    content_type: contentType,
-    status,
-    rejection_reason: rejectionReason,
-    ai_scores: aiScores,
-    image_count: imageCount,
-  });
-}
-
-// ============================================================================
-// OpenAI API Functions
-// ============================================================================
-
-/**
- * Calls OpenAI Moderation API (for text and single image safety check)
- */
-async function callOpenAIModeration(
-  type: "text" | "image",
-  content: string
-): Promise<{ success: boolean; result?: OpenAIModerationResult; error?: string }> {
-  try {
-    let input: unknown;
-
-    if (type === "image") {
-      // Format for image moderation
-      input = [
-        {
-          type: "image_url",
-          image_url: {
-            url: content.startsWith("data:") ? content : `data:image/jpeg;base64,${content}`,
-          },
-        },
-      ];
-    } else {
-      // Text moderation
-      input = content;
-    }
-
-    const response = await fetch(OPENAI_MODERATION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODERATION_MODEL,
-        input,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
-      return { success: false, error: `OpenAI API error: ${response.status}` };
-    }
-
-    const data = await response.json();
-    const result = data.results?.[0] as OpenAIModerationResult;
-
-    if (!result) {
-      return { success: false, error: "No moderation result returned" };
-    }
-
-    return { success: true, result };
-  } catch (error) {
-    console.error("OpenAI moderation call failed:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return { success: false, error: errorMessage };
-  }
-}
-
-/**
- * Calls OpenAI Chat Completions API with vision for batch human/pet detection
- * Uses gpt-4o-mini with detail: "low" for cost optimization
- */
-async function callBatchHumanDetection(
-  images: string[]
-): Promise<{ success: boolean; results?: boolean[]; error?: string }> {
-  try {
-    // Build content array with all images
-    const content: { type: string; text?: string; image_url?: { url: string; detail: string } }[] = [
-      { 
-        type: "text", 
-        text: "Analyze each photo and determine if it meets our community standards.\n\nAPPROVE (return true) if:\n- Photo shows a real ADULT human)\n- Photo shows a real PET ANIMAL (dog, cat, etc.)\n\nREJECT (return false) if:\n- Photo contains BABIES, YOUNG CHILDREN, or INFANTS (child safety priority)\n- Photo shows landscapes, objects, memes, drawings, illustrations, or AI-generated images\n- Photo is blurry, offensive, or contains nudity\n\nReturn strict JSON format: {\"results\": [true, false, ...]} respecting exact image order." 
-      },
-    ];
-
-    for (const base64 of images) {
-      const url = base64.startsWith("data:") ? base64 : `data:image/jpeg;base64,${base64}`;
-      content.push({
-        type: "image_url",
-        image_url: { url, detail: "low" },
-      });
-    }
-
-    // Timeout for resilience (30 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    try {
-      const response = await fetch(OPENAI_CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: OPENAI_VISION_MODEL,
-          messages: [
-            { role: "system", content: "You are a strict data classifier. Always return valid JSON only, no extra text." },
-            { role: "user", content }
-          ],
-          max_tokens: 150,
-          temperature: 0,
-          response_format: { type: "json_object" },
-        }),
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("OpenAI Vision API error:", response.status, errorText);
-        return { success: false, error: `OpenAI Vision API error: ${response.status}` };
-      }
-
-      const data = await response.json();
-      const messageContent = data.choices?.[0]?.message?.content ?? "";
-      
-      // Log token usage for billing
-      const promptTokens = data.usage?.prompt_tokens ?? 0;
-      const completionTokens = data.usage?.completion_tokens ?? 0;
-      console.log(`[BILLING] Batch human detection: ${images.length} photos. Tokens: ${promptTokens} prompt + ${completionTokens} completion = ${promptTokens + completionTokens} total.`);
-
-      // Parse JSON response (with json_object mode, should be clean)
-      const parsed = JSON.parse(messageContent);
-      const results = parsed.results;
-      
-      if (!Array.isArray(results) || results.length !== images.length) {
-        console.error("Results array mismatch:", results);
-        return { success: false, error: "Results count mismatch" };
-      }
-      
-      return { success: true, results };
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      if (fetchError instanceof Error && fetchError.name === "AbortError") {
-        console.error("Vision API timeout after 30 seconds");
-        return { success: false, error: "Vision API timeout" };
-      }
-      throw fetchError; // Re-throw for outer catch
-    }
-  } catch (error) {
-    console.error("Batch human detection failed:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return { success: false, error: errorMessage };
-  }
-}
-
-// ============================================================================
-// Shared Image Moderation Helper
-// ============================================================================
-
-interface ImageModerationResult {
-  approved: boolean;
-  reason: "content_flagged" | "sensitive_content" | "not_human" | "underage_detected" | null;
-  scores: Record<string, number> | null;
-}
-
-/**
- * Performs complete moderation on a single image:
- * 1. Safety check (sexual, violence, etc.)
- * 2. Human/Pet detection
- * 
- * This is the single source of truth for image moderation logic.
- * Used by both single and batch handlers.
- */
-async function moderateSingleImage(base64Image: string): Promise<ImageModerationResult> {
-  // Step 1: Safety check
-  const safetyResult = await callOpenAIModeration("image", base64Image);
-  
-  if (!safetyResult.success) {
-    console.error("[MODERATION] Safety check failed, rejecting:", safetyResult.error);
-    return { approved: false, reason: "content_flagged", scores: null };
-  }
-
-  const { flagged, category_scores } = safetyResult.result!;
-
-  // Check if flagged by OpenAI
-  if (flagged) {
-    console.log("[MODERATION] Image flagged by OpenAI safety check");
-    return { approved: false, reason: "content_flagged", scores: category_scores };
-  }
-
-  // Check thresholds
-  const thresholdReason = checkContentThresholds(category_scores, "image");
-  if (thresholdReason) {
-    console.log("[MODERATION] Image failed threshold check:", thresholdReason);
-    return { approved: false, reason: "sensitive_content", scores: category_scores };
-  }
-
-  // Step 2: Human/Pet detection
-  const humanDetection = await callBatchHumanDetection([base64Image]);
-  
-  console.log("[DEBUG] Human detection result:", JSON.stringify(humanDetection));
-  
-  if (!humanDetection.success || !humanDetection.results) {
-    console.error("[MODERATION] Human detection failed, rejecting:", humanDetection.error);
-    return { approved: false, reason: "not_human", scores: category_scores };
-  }
-
-  const isHumanOrPet = humanDetection.results[0];
-  if (!isHumanOrPet) {
-    console.log("[MODERATION] Image rejected: not human/pet");
-    return { approved: false, reason: "not_human", scores: category_scores };
-  }
-
-  console.log("[MODERATION] Image approved: passed safety and human/pet check");
-  return { approved: true, reason: null, scores: category_scores };
 }
 
 // ============================================================================
@@ -418,12 +54,15 @@ async function handleSingleModeration(
   // Check for personal data in text content first (before calling OpenAI)
   if (type === "text" && containsPersonalData(content)) {
     await logModerationResult(supabase, userId, type, "rejected", "personal_data_detected", null);
-    return createJsonResponse<SingleModerationResponse>({ approved: false, reason: "personal_data_detected" });
+    return createJsonResponse<SingleModerationResponse>({ 
+      approved: false, 
+      reason: "personal_data_detected" 
+    });
   }
 
-  // For images, use the shared helper (safety + human/pet detection)
+  // For images, use the shared moderation logic (safety + human/pet detection)
   if (type === "image") {
-    const result = await moderateSingleImage(content);
+    const result = await moderateSingleImage(openaiApiKey, content);
     
     await logModerationResult(
       supabase,
@@ -434,19 +73,25 @@ async function handleSingleModeration(
       result.scores
     );
 
-    return createJsonResponse<SingleModerationResponse>({ approved: result.approved, reason: result.reason });
+    return createJsonResponse<SingleModerationResponse>({ 
+      approved: result.approved, 
+      reason: result.reason 
+    });
   }
 
   // For text, use safety check only
-  const moderationResult = await callOpenAIModeration(type, content);
+  const moderationResult = await callModerationAPI(openaiApiKey, type, content);
 
   if (!moderationResult.success) {
     console.error("[MODERATION] Text safety check failed, rejecting:", moderationResult.error);
     await logModerationResult(supabase, userId, type, "rejected", "content_flagged", null);
-    return createJsonResponse<SingleModerationResponse>({ approved: false, reason: "content_flagged" });
+    return createJsonResponse<SingleModerationResponse>({ 
+      approved: false, 
+      reason: "content_flagged" 
+    });
   }
 
-  const { flagged, category_scores } = moderationResult.result!;
+  const { flagged, category_scores } = moderationResult.results![0];
 
   let approved = true;
   let reason: SingleModerationResponse["reason"] = null;
@@ -473,15 +118,16 @@ async function handleSingleModeration(
 
   return createJsonResponse<SingleModerationResponse>({ approved, reason });
 }
+
 /**
- * Handles batch image moderation with human/pet detection
- * OPTIMIZED: Single Vision API call for all images instead of N calls
+ * Handles batch image moderation with optimized API calls
  * 
- * Flow:
- * 1. Run safety moderation on all images in parallel (free/cheap)
+ * OPTIMIZED Flow:
+ * 1. Parallel Moderation API calls for safety (OpenAI limit: 1 image per request)
  * 2. Collect images that passed safety
- * 3. ONE call to Vision API for human/pet detection on all passed images
- * 4. Map results back to original indices
+ * 3. ONE Vision API call for human/pet detection on all passed images
+ * 
+ * Cost: N safety calls (parallel) + 1 Vision call
  */
 async function handleBatchModeration(
   supabase: ReturnType<typeof createClient>,
@@ -492,32 +138,34 @@ async function handleBatchModeration(
   
   console.log(`[BILLING] Batch moderation started: ${imageCount} photos`);
 
-  // Step 1: Run safety moderation on ALL images in parallel (cheap/free)
+  // Step 1: Parallel Moderation API calls (OpenAI doesn't support batch for moderation)
   const safetyResults = await Promise.all(
     images.map(async (base64, index) => {
-      const result = await callOpenAIModeration("image", base64);
+      const result = await callModerationAPI(openaiApiKey, "image", base64);
       
-      if (!result.success) {
+      if (!result.success || !result.results) {
         console.warn(`[SAFETY] Image ${index}: API error, rejecting`);
-        return { approved: false, reason: "content_flagged" as const };
+        return { approved: false, reason: "content_flagged" as const, scores: null };
       }
 
-      const { flagged, category_scores } = result.result!;
+      const { flagged, category_scores } = result.results[0];
       
       if (flagged) {
         console.log(`[SAFETY] Image ${index}: Flagged by OpenAI`);
-        return { approved: false, reason: "content_flagged" as const };
+        return { approved: false, reason: "content_flagged" as const, scores: category_scores };
       }
 
       const thresholdReason = checkContentThresholds(category_scores, "image");
       if (thresholdReason) {
         console.log(`[SAFETY] Image ${index}: Failed threshold - ${thresholdReason}`);
-        return { approved: false, reason: "sensitive_content" as const };
+        return { approved: false, reason: "sensitive_content" as const, scores: category_scores };
       }
 
-      return { approved: true, reason: null };
+      return { approved: true, reason: null, scores: category_scores };
     })
   );
+
+  console.log(`[BILLING] Batch safety check: ${imageCount} photos in ${imageCount} parallel API calls`);
 
   // Step 2: Collect images that passed safety
   const safeImages: string[] = [];
@@ -534,11 +182,11 @@ async function handleBatchModeration(
   let humanResults: boolean[] = [];
   
   if (safeImages.length > 0) {
-    const humanDetection = await callBatchHumanDetection(safeImages);
+    const humanDetection = await callVisionAPI(openaiApiKey, safeImages);
     
     if (humanDetection.success && humanDetection.results) {
       humanResults = humanDetection.results;
-      console.log(`[BILLING] Vision Batch complete: ${safeImages.length} photos processed in ONE call.`);
+      console.log(`[BILLING] Vision Batch complete: ${safeImages.length} photos in ONE call.`);
     } else {
       // Fail-safe: approve all on detection error
       console.warn("[BATCH] Vision detection failed, approving all safe images");
@@ -546,7 +194,7 @@ async function handleBatchModeration(
     }
   }
 
-  // Step 4: Build final results array, mapping Vision results back to original indices
+  // Step 4: Build final results array and log each image individually
   const finalResults: BatchModerationResponse["results"] = [];
   let humanResultIndex = 0;
   let approvedCount = 0;
@@ -554,34 +202,55 @@ async function handleBatchModeration(
 
   for (let i = 0; i < imageCount; i++) {
     const safetyResult = safetyResults[i];
+    const aiScores = safetyResult.scores;  // scores included in parallel results
     
     if (!safetyResult.approved) {
-      // Failed safety check
+      // Image failed safety check
       finalResults.push({ approved: false, reason: safetyResult.reason });
       rejectedCount++;
+      
+      // Log individual rejection
+      await logModerationResult(
+        supabase,
+        userId,
+        "image",
+        "rejected",
+        safetyResult.reason,
+        aiScores
+      );
     } else {
-      // Passed safety - check Vision result
+      // Image passed safety, check human/pet detection
       const isHumanOrAnimal = humanResults[humanResultIndex++];
+      
       if (isHumanOrAnimal) {
         finalResults.push({ approved: true, reason: null });
         approvedCount++;
+        
+        // Log individual approval
+        await logModerationResult(
+          supabase,
+          userId,
+          "image",
+          "approved",
+          null,
+          aiScores
+        );
       } else {
         finalResults.push({ approved: false, reason: "not_human" });
         rejectedCount++;
+        
+        // Log individual rejection (not human/pet)
+        await logModerationResult(
+          supabase,
+          userId,
+          "image",
+          "rejected",
+          "not_human",
+          aiScores
+        );
       }
     }
   }
-
-  // Log batch result
-  await logModerationResult(
-    supabase,
-    userId,
-    "batch-images",
-    rejectedCount > 0 ? "rejected" : "approved",
-    rejectedCount > 0 ? `${rejectedCount} rejected` : null,
-    null,
-    imageCount
-  );
 
   console.log(`[BILLING] Batch complete: ${approvedCount} approved, ${rejectedCount} rejected`);
 
