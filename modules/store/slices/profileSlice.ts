@@ -42,6 +42,7 @@ export type ProfileData = {
   university_active_users?: number | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean | null;
+  interests?: string[] | null;
 };
 
 export interface SubscriptionData {

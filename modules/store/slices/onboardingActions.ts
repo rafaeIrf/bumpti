@@ -9,6 +9,7 @@ import {
     setCurrentStep as setCurrentStepAction,
     setFavoritePlaces as setFavoritePlacesAction,
     setIntentions as setIntentionsAction,
+    setInterests as setInterestsAction,
     setLocationPermission as setLocationPermissionAction,
     setNotificationPermission as setNotificationPermissionAction,
     setPhotoUris as setPhotoUrisAction,
@@ -59,6 +60,10 @@ export const onboardingActions = {
 
   setFavoritePlaces: (favoritePlaces: string[]) => {
     store.dispatch(setFavoritePlacesAction(favoritePlaces));
+  },
+
+  setInterests: (interests: string[]) => {
+    store.dispatch(setInterestsAction(interests));
   },
 
   setLocationPermission: (hasPermission: boolean) => {

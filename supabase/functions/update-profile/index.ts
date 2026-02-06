@@ -39,6 +39,7 @@ type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
+  interests?: string[]; // interest keys
   is_invisible?: boolean; // Invisible mode flag
   filter_only_verified?: boolean; // Trust Circle filter flag
   university_id?: string | null;
@@ -136,6 +137,7 @@ Deno.serve(async (req) => {
       height_cm,
       languages,
       favoritePlaces,
+      interests,
       is_invisible,
       filter_only_verified,
       university_id,
@@ -266,6 +268,27 @@ Deno.serve(async (req) => {
           );
         }
         validIntentionIds = (intentionRows ?? []).map((r) => r.id);
+      }
+    }
+
+    // Resolve Interest Keys to IDs
+    let validInterestIds: string[] | undefined;
+    if (Array.isArray(interests)) {
+      if (interests.length === 0) {
+        validInterestIds = [];
+      } else {
+        const { data: interestRows, error: interestError } = await supabase
+          .from("interests")
+          .select("id")
+          .in("key", interests);
+
+        if (interestError) {
+          return new Response(
+            JSON.stringify({ error: "invalid_interests" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        validInterestIds = (interestRows ?? []).map((r) => r.id);
       }
     }
 
@@ -598,6 +621,48 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Manage interests
+    if (validInterestIds) {
+      const { error: deleteError } = await supabase
+        .from("profile_interests")
+        .delete()
+        .eq("profile_id", userId);
+      if (deleteError) {
+        return new Response(
+          JSON.stringify({
+            error: "interests_delete_failed",
+            message: deleteError.message,
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      if (validInterestIds.length > 0) {
+        const { error: insertError } = await supabase
+          .from("profile_interests")
+          .insert(
+            validInterestIds.map((id) => ({
+              profile_id: userId,
+              interest_id: id,
+            }))
+          );
+        if (insertError) {
+          return new Response(
+            JSON.stringify({
+              error: "interests_insert_failed",
+              message: insertError.message,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      }
+    }
+
     // Manage favorite places
     if (Array.isArray(favoritePlaces)) {
       const { error: deleteError } = await supabase
@@ -750,6 +815,7 @@ Deno.serve(async (req) => {
       intentionResult,
       photosResult,
       favoritePlacesResult,
+      interestsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -783,6 +849,10 @@ Deno.serve(async (req) => {
         .from("profile_favorite_places")
         .select("place_id, places:places(id, name, category)")
         .eq("user_id", userId),
+      supabase
+        .from("profile_interests")
+        .select("interest:interests(key)")
+        .eq("profile_id", userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -791,12 +861,14 @@ Deno.serve(async (req) => {
     const { data: photoRows, error: photoError } = photosResult;
     const { data: favoritePlacesRows, error: favoritePlacesError } =
       favoritePlacesResult;
+    const { data: interestRows, error: interestsQueryError } = interestsResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
     if (favoritePlacesError) throw favoritePlacesError;
+    if (interestsQueryError) throw interestsQueryError;
 
     const connectWithIds = (connectRows ?? [])
       .map((row: any) => row.gender?.key)
@@ -807,6 +879,9 @@ Deno.serve(async (req) => {
     const favoritePlacesIds = (favoritePlacesRows ?? [])
       .map((row: any) => row.place_id)
       .filter((id: string | null) => id != null);
+    const interestKeys = (interestRows ?? [])
+      .map((row: any) => row.interest?.key)
+      .filter((key: string | null) => key != null);
 
     let photos =
       (photoRows ?? [])
@@ -884,6 +959,7 @@ Deno.serve(async (req) => {
         university_name: university?.name ?? null,
         university_lat: university?.lat ?? null,
         university_lng: university?.lng ?? null,
+        interests: interestKeys,
       };
     }
 

@@ -70,6 +70,11 @@ export async function saveOnboarding(userData: OnboardingUserData) {
     formData.append("showUniversityOnHome", String(userData.showUniversityOnHome ?? true));
   }
 
+  // Interests
+  if (userData.interests?.length) {
+    formData.append("interests", JSON.stringify(userData.interests));
+  }
+
   if (userData.photoUris?.length) {
     const processedPhotos = await Promise.all(
       userData.photoUris.map((uri, index) =>

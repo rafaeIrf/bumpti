@@ -37,6 +37,7 @@ type FieldType =
   | "bio"
   | "connectWith"
   | "lookingFor"
+  | "interests"
   | "spots"
   | "profession"
   | "height"
@@ -321,6 +322,18 @@ export default function ProfileEditScreen() {
           <SectionHeader
             title={t("screens.profile.profileEdit.interests.title")}
             subtitle={t("screens.profile.profileEdit.interests.subtitle")}
+          />
+          <EditRow
+            icon={SparklesIcon}
+            label={t("screens.profile.profileEdit.interests.vibes")}
+            value={
+              profile?.interests && profile.interests.length > 0
+                ? t("screens.profile.profileEdit.interests.vibesCount", {
+                    count: profile.interests.length,
+                  })
+                : ""
+            }
+            onPress={() => handleFieldPress("interests")}
           />
           <EditRow
             icon={MapIcon}

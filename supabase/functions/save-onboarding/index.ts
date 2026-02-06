@@ -119,6 +119,10 @@ Deno.serve(async (req) => {
         ? JSON.parse(formData.get("favoritePlaces") as string)
         : [];
     const bio = (formData.get("bio") as string | null) || null;
+    const interests =
+      (formData.get("interests") as string | null)?.length
+        ? JSON.parse(formData.get("interests") as string)
+        : [];
     
     // University fields (name/lat/lng come from places table via university_id FK)
     const universityId = (formData.get("universityId") as string | null) || null;
@@ -157,19 +161,26 @@ Deno.serve(async (req) => {
       ? uploadPhotos(user.id, photos)
       : Promise.resolve({ paths: [], positions: [] });
 
+    const interestPromise = interests.length
+      ? supabase.from("interests").select("id,key").in("key", interests)
+      : Promise.resolve({ data: [], error: null });
+
     const [
       { data: connectOptions, error: connectError },
       { data: intentionOptions, error: intentionError },
       { data: genders, error: genderError },
       uploadResult,
-    ] = await Promise.all([gendersPromise, intentionPromise, genderIdPromise, uploadPromise]);
+      { data: interestOptions, error: interestError },
+    ] = await Promise.all([gendersPromise, intentionPromise, genderIdPromise, uploadPromise, interestPromise]);
 
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (genderError) throw genderError;
+    if (interestError) throw interestError;
 
     if ((connectWith.length && (connectOptions?.length ?? 0) !== connectWith.length) ||
-        (intentions.length && (intentionOptions?.length ?? 0) !== intentions.length)) {
+        (intentions.length && (intentionOptions?.length ?? 0) !== intentions.length) ||
+        (interests.length && (interestOptions?.length ?? 0) !== interests.length)) {
       return new Response(
         JSON.stringify({ error: "invalid_options", message: "Some provided options are invalid or inactive." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -178,6 +189,7 @@ Deno.serve(async (req) => {
 
     const connectIds = (connectOptions ?? []).map((o) => o.id);
     const intentionIds = (intentionOptions ?? []).map((o) => o.id);
+    const interestIds = (interestOptions ?? []).map((o) => o.id);
 
     // Resolve gender_id from pre-fetched data
     let genderId: number | null = null;
@@ -216,6 +228,7 @@ Deno.serve(async (req) => {
       p_university_name_custom: universityNameCustom,
       p_graduation_year: graduationYear,
       p_show_university_on_home: showUniversityOnHome,
+      p_interest_ids: interestIds,
     });
 
     if (rpcError) {

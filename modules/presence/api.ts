@@ -23,6 +23,7 @@ export type ActiveUserAtPlace = {
   age: number | null;
   bio: string | null;
   intentions: string[];
+  interests: string[];
   photos: string[];
   entered_at?: string;
   expires_at?: string;

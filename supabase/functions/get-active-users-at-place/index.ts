@@ -199,6 +199,9 @@ Deno.serve(async (req) => {
         intentions: Array.isArray(row.intentions)
           ? row.intentions.map((i: any) => (i == null ? null : String(i)))
           : [],
+        interests: Array.isArray(row.interests)
+          ? row.interests.map((i: any) => (i == null ? null : String(i)))
+          : [],
         photos: userSignedUrlsMap.get(row.user_id) || [],
         visited_places_count: 0, 
         favorite_places: favoritePlaces,

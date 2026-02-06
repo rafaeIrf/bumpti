@@ -1,6 +1,7 @@
 import { ArrowRightIcon, CheckIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import InterestsSelector from "@/components/profile-edit/interests-selector";
 import { LanguagesStep } from "@/components/profile-edit/languages-step";
 import { LocationStep } from "@/components/profile-edit/location-step";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -10,6 +11,7 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import {
   EDUCATION_OPTIONS,
   GENDER_OPTIONS,
+  MIN_INTERESTS,
   RELATIONSHIP_OPTIONS,
   SMOKING_OPTIONS,
   ZODIAC_OPTIONS,
@@ -71,6 +73,12 @@ export default function EditFieldScreen() {
         jobTitle: (profile as any).job_title ?? "",
         companyName: (profile as any).company_name ?? "",
       };
+    }
+
+    if (field === "interests") {
+      return Array.isArray((profile as any).interests)
+        ? [...(profile as any).interests]
+        : [];
     }
 
     const dbKey = FIELD_DB_KEYS[field] || field;
@@ -187,6 +195,10 @@ export default function EditFieldScreen() {
         // Also update the legacy/display field if needed, though we should probably migrate to using city_name
         updatedProfile.location = value.location || value.city_name;
         apiPayload = { ...value };
+      } else if (field === "interests") {
+        const interestKeys = Array.isArray(value) ? value : [];
+        updatedProfile = { ...updatedProfile, interests: interestKeys };
+        apiPayload = { interests: interestKeys };
       } else {
         const dbKey = FIELD_DB_KEYS[field] || field;
 
@@ -365,6 +377,15 @@ export default function EditFieldScreen() {
           />
         );
 
+      case "interests":
+        return (
+          <InterestsSelector
+            selectedKeys={Array.isArray(value) ? value : []}
+            onSelectedKeysChange={setValue}
+            showTitle={false}
+          />
+        );
+
       case "spots":
         // Handled by separate screen
         return null;
@@ -396,6 +417,8 @@ export default function EditFieldScreen() {
         return t("screens.profile.edit.languages.title");
       case "zodiac":
         return t("screens.profile.profileEdit.more.zodiac");
+      case "interests":
+        return t("screens.profile.profileEdit.interests.vibes");
       default:
         return t("screens.profile.profileEdit.title");
     }
@@ -427,7 +450,12 @@ export default function EditFieldScreen() {
           secondaryLabel={t("common.skip")}
           onSecondaryPress={handleSkip}
           onPrimaryPress={handleSave}
-          primaryDisabled={isModeratingText}
+          primaryDisabled={
+            isModeratingText ||
+            (field === "interests" &&
+              Array.isArray(value) &&
+              value.length < MIN_INTERESTS)
+          }
           primaryIcon={
             nextField ? (
               <ArrowRightIcon width={24} height={24} color="#FFF" />

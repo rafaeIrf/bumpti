@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
       notificationSettingsResult,
       subscription,
       genderOptionsResult,
+      interestsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -98,6 +99,10 @@ Deno.serve(async (req) => {
       supabase
         .from("gender_options")
         .select("id, key"),
+      supabase
+        .from("profile_interests")
+        .select("interest:interests(key)")
+        .eq("profile_id", userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -109,12 +114,14 @@ Deno.serve(async (req) => {
     const { data: notificationSettings, error: notificationError } =
       notificationSettingsResult;
     const { data: genderOptions, error: genderError } = genderOptionsResult;
+    const { data: interestRows, error: interestsError } = interestsResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
     if (intentionError) throw intentionError;
     if (photoError) throw photoError;
     if (favoritePlacesError) throw favoritePlacesError;
+    if (interestsError) throw interestsError;
     if (genderError) throw genderError;
     // notificationError is optional, if missing we can execute default logic or just ignore
     // But maybeSingle shouldn't error on no rows, just return null data.
@@ -130,6 +137,9 @@ Deno.serve(async (req) => {
       .filter((key: string | null) => key != null);
     const intentions = (intentionRows ?? [])
       .map((row: any) => row.intention?.key)
+      .filter((key: string | null) => key != null);
+    const interests = (interestRows ?? [])
+      .map((row: any) => row.interest?.key)
       .filter((key: string | null) => key != null);
     
     // Favorite places with joined data
@@ -209,6 +219,7 @@ Deno.serve(async (req) => {
         intentions,
         favoritePlaces,
         photos,
+        interests,
         subscription,
         education_key: education?.key ?? null,
         zodiac_key: zodiac?.key ?? null,

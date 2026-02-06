@@ -8,6 +8,7 @@ export const PROFILE_FIELDS_ORDER = [
   "height",
   "profession",
   "smoking",
+  "interests",
   "spots",
   "education",
   "university",
@@ -38,7 +39,9 @@ export function getNextMissingField(
   for (const nextFieldKey of fieldsToCheck) {
     let isEmpty = false;
 
-    if (nextFieldKey === "spots") {
+    if (nextFieldKey === "interests") {
+      isEmpty = !profile.interests || profile.interests.length < 3;
+    } else if (nextFieldKey === "spots") {
       isEmpty = !profile.favoritePlaces || profile.favoritePlaces.length === 0;
     } else if (nextFieldKey === "languages") {
       isEmpty = !profile.languages || profile.languages.length === 0;
@@ -62,7 +65,7 @@ export function getNextMissingField(
 
 // Fields that are full screens (not modals)
 // NOTE: spots and university are now modals too (but full-screen modals with their own toolbar/bottom bar)
-const SCREEN_FIELDS = ["spots", "university"];
+const SCREEN_FIELDS = ["interests", "spots", "university"];
 
 // Check if a field is a screen-like modal or a simple field modal
 function isScreenField(field: string): boolean {
@@ -79,22 +82,23 @@ export function navigateToNextProfileField(
     const currentIsScreen = isScreenField(currentField);
 
     // All within the same (profile) stack now - much simpler!
-    if (nextFieldKey === "spots") {
+    if (nextFieldKey === "interests") {
+      router.replace({
+        pathname: "/(profile)/edit/[field]",
+        params: { field: "interests" },
+      });
+    } else if (nextFieldKey === "spots") {
       // Navigate to favorite-places modal
       if (currentIsScreen) {
-        // Screen-like modal → Screen-like modal: replace
         router.replace("/(profile)/favorite-places");
       } else {
-        // Simple modal → Screen-like modal: replace
         router.replace("/(profile)/favorite-places");
       }
     } else if (nextFieldKey === "university") {
       // Navigate to university modal
       if (currentIsScreen) {
-        // Screen-like modal → Screen-like modal: replace
         router.replace("/(profile)/university");
       } else {
-        // Simple modal → Screen-like modal: replace
         router.replace("/(profile)/university");
       }
     } else {
