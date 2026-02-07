@@ -1175,7 +1175,10 @@
       "infoStep2Title": "Encontramos tus encuentros",
       "infoStep2Desc": "Nuestro sistema detecta quién estuvo en el mismo lugar, comparte tus intereses o frecuenta tus spots favoritos.",
       "infoStep3Title": "Revela y conecta",
-      "infoStep3Desc": "Explora tus encuentros e inicia una conversación. Los miembros premium pueden ver perfiles completos."
+      "infoStep3Desc": "Explora tus encuentros e inicia una conversación. Los miembros premium pueden ver perfiles completos.",
+      "likedConfirmation": "Te gustó {{name}}",
+      "skipLabel": "Saltar",
+      "likeLabel": "Me gusta"
     }
   },
   "venue": {

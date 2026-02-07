@@ -20,6 +20,7 @@ export interface CachedProfileData {
   age: number | null;
   bio: string | null;
   intentions: string[];
+  interests: string[];
   photos: string[];
   job_title: string | null;
   company_name: string | null;
@@ -30,7 +31,13 @@ export interface CachedProfileData {
   zodiac_sign: string | null;
   relationship_status: string | null;
   smoking_habit: string | null;
-  favorite_places: Array<{ id: string; name: string; category: string }>;
+  verification_status: string | null;
+  university_id: string | null;
+  university_name: string | null;
+  university_name_custom: string | null;
+  graduation_year: number | null;
+  show_university_on_home: boolean;
+  favorite_places: { id: string; name: string; category: string }[];
   visited_places_count: number;
 }
 
@@ -67,6 +74,7 @@ async function fetchProfileFromAPI(userId: string): Promise<CachedProfileData | 
       age: profile.age,
       bio: profile.bio,
       intentions: profile.intentions || [],
+      interests: profile.interests || [],
       photos: profile.photos || [],
       job_title: profile.job_title,
       company_name: profile.company_name,
@@ -77,6 +85,12 @@ async function fetchProfileFromAPI(userId: string): Promise<CachedProfileData | 
       zodiac_sign: profile.zodiac_sign,
       relationship_status: profile.relationship_status,
       smoking_habit: profile.smoking_habit,
+      verification_status: profile.verification_status || null,
+      university_id: profile.university_id || null,
+      university_name: profile.university_name || null,
+      university_name_custom: profile.university_name_custom || null,
+      graduation_year: profile.graduation_year || null,
+      show_university_on_home: profile.show_university_on_home ?? false,
       favorite_places: profile.favorite_places || [],
       visited_places_count: profile.visited_places_count || 0,
     };

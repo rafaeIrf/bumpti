@@ -1,20 +1,20 @@
 import { getDatabase } from "@/modules/database";
 import Profile from "@/modules/database/models/Profile";
-import { forceRefreshProfile } from "@/modules/profile/cache";
+import { forceRefreshProfile, loadProfile } from "@/modules/profile/cache";
 import { logger } from "@/utils/logger";
 import { Q } from "@nozbe/watermelondb";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Hook para OBSERVAR perfil cacheado localmente (REACTIVE)
  * 
- * NÃO faz fetch - apenas observa o banco local.
- * O fetch deve ser feito no Chat via preloadProfile().
+ * Auto-fetches via loadProfile() se não encontrar cache local.
+ * Observa mudanças no WatermelonDB para updates em tempo real.
  * 
  * Fluxo:
- * 1. Chat abre → preloadProfile() dispara fetch em background
- * 2. Dados salvos no WatermelonDB
- * 3. ProfilePreview observa e atualiza automaticamente
+ * 1. Verifica cache local no WatermelonDB
+ * 2. Se não existir → chama loadProfile() para buscar via Edge Function
+ * 3. Dados salvos no WatermelonDB → observer atualiza UI automaticamente
  * 
  * @param userId - ID do usuário cujo perfil será observado
  * @param options - Opções do hook
@@ -30,8 +30,9 @@ export function useCachedProfile(
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fetchTriggered = useRef(false);
 
-  // Função para buscar perfil inicial do cache (sem fazer fetch)
+  // Função para buscar perfil inicial do cache, e disparar fetch se necessário
   const loadInitialCache = useCallback(async () => {
     if (!userId || !enabled) {
       setIsLoading(false);
@@ -53,9 +54,21 @@ export function useCachedProfile(
         setProfile(profiles[0]);
         setIsLoading(false);
       } else {
-        logger.log(`[useCachedProfile] No initial cache for user ${userId}`);
+        logger.log(`[useCachedProfile] No initial cache for user ${userId}, auto-fetching...`);
         setProfile(null);
-        // Mantém loading até observer detectar dados
+        // Auto-fetch: dispara loadProfile para buscar e popular o cache
+        if (!fetchTriggered.current) {
+          fetchTriggered.current = true;
+          loadProfile(userId, true)
+            .then(() => {
+              logger.log(`[useCachedProfile] Auto-fetch completed for user ${userId}`);
+            })
+            .catch((err) => {
+              logger.error(`[useCachedProfile] Auto-fetch failed for user ${userId}:`, err);
+              setError("Erro ao carregar perfil");
+              setIsLoading(false);
+            });
+        }
       }
     } catch (err) {
       logger.error("[useCachedProfile] Error loading initial cache:", err);

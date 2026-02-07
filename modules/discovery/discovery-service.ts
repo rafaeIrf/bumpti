@@ -1,14 +1,14 @@
 import type DiscoveryProfile from "@/modules/database/models/DiscoveryProfile";
-import { logger } from "@/utils/logger";
-import type { Database } from "@nozbe/watermelondb";
-import { Q } from "@nozbe/watermelondb";
-import type { ActiveUserAtPlace } from "@/modules/presence/api";
-import { getActiveUsersAtPlace } from "@/modules/presence/api";
 import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import {
   clearLikerIds,
   upsertLikerIds,
 } from "@/modules/discovery/liker-ids-service";
+import type { ActiveUserAtPlace } from "@/modules/presence/api";
+import { getActiveUsersAtPlace } from "@/modules/presence/api";
+import { logger } from "@/utils/logger";
+import type { Database } from "@nozbe/watermelondb";
+import { Q } from "@nozbe/watermelondb";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LIKER_IDS_LAST_FETCH_KEY = "liker_ids_last_fetched_at";
@@ -193,3 +193,4 @@ export async function getDiscoveryProfilesForPlace(params: {
     .query(Q.where("place_id", placeId))
     .fetch();
 }
+

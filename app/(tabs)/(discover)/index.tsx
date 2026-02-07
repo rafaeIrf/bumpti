@@ -11,12 +11,35 @@ import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import DiscoverEmptyState from "@/components/discover/discover-empty-state";
 import DiscoverSection from "@/components/discover/discover-section";
 import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
+import { ItsMatchModal } from "@/components/its-match-modal";
 import { spacing, typography } from "@/constants/theme";
+import {
+  consumeActedUserIds,
+  consumePendingMatch,
+  useEncounterActions,
+} from "@/hooks/use-encounter-actions";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useGetDiscoverFeedQuery } from "@/modules/discover/discoverApi";
+import type { DiscoverEncounter } from "@/modules/discover/types";
 import { t } from "@/modules/locales";
-import React, { ComponentType, useCallback, useState } from "react";
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, {
+  ComponentType,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Dimensions,
+  InteractionManager,
+  LayoutAnimation,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -141,10 +164,91 @@ const infoStyles = StyleSheet.create({
 
 export default function DiscoverScreen() {
   const colors = useThemeColors();
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [pendingDismissIds, setPendingDismissIds] = useState<Set<string>>(
+    new Set(),
+  );
   const bottomSheet = useCustomBottomSheet();
 
   const { data, isLoading, refetch } = useGetDiscoverFeedQuery();
+  const hasMounted = useRef(false);
+
+  const {
+    handleLike: rawLike,
+    handleSkip: rawSkip,
+    matchInfo,
+    setMatchInfo,
+    clearMatch,
+  } = useEncounterActions();
+
+  // Refetch feed when screen regains focus (e.g. after profile-preview like/skip)
+  useFocusEffect(
+    useCallback(() => {
+      if (hasMounted.current) {
+        // Merge IDs acted upon from other screens (e.g. profile-preview)
+        const acted = consumeActedUserIds();
+        if (acted.size > 0) {
+          // Wait for navigation transition to complete, then mark cards as pending dismiss
+          // so each card can play its own fade-out animation
+          InteractionManager.runAfterInteractions(() => {
+            setPendingDismissIds((prev) => new Set([...prev, ...acted]));
+          });
+        }
+
+        // Check for pending match from profile-preview like
+        const pending = consumePendingMatch();
+        if (pending) {
+          // Short delay so the Discover screen is visible before showing the modal
+          setTimeout(() => {
+            setMatchInfo(pending);
+          }, 300);
+        }
+
+        refetch();
+      } else {
+        hasMounted.current = true;
+      }
+    }, [refetch, setMatchInfo]),
+  );
+
+  // Wrap handlers: run original action, then remove card from list
+  const handleLike = useCallback(
+    (encounter: DiscoverEncounter) => {
+      rawLike(encounter);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setDismissedIds((prev) => new Set(prev).add(encounter.other_user_id));
+    },
+    [rawLike],
+  );
+
+  const handleSkip = useCallback(
+    (encounter: DiscoverEncounter) => {
+      rawSkip(encounter);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setDismissedIds((prev) => new Set(prev).add(encounter.other_user_id));
+    },
+    [rawSkip],
+  );
+
+  // Called after a card finishes its pending dismiss animation
+  const handleDismissComplete = useCallback((userId: string) => {
+    setPendingDismissIds((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
+    });
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setDismissedIds((prev) => new Set(prev).add(userId));
+  }, []);
+
+  const handleMatchSendMessage = useCallback(() => {
+    clearMatch();
+    // Navigate to the Chat tab — the new match will appear there
+    // We can't go directly to /main/message because there's no chatId yet
+    router.navigate("/(tabs)/(chat)");
+  }, [clearMatch, router]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -173,7 +277,23 @@ export default function DiscoverScreen() {
   }, [bottomSheet]);
 
   const hasRecentPresence = data?.has_recent_presence ?? false;
-  const feed = data?.feed;
+  const rawFeed = data?.feed;
+
+  // Filter out dismissed cards from feed
+  const feed = useMemo(() => {
+    if (!rawFeed || dismissedIds.size === 0) return rawFeed;
+    return {
+      direct_overlap: rawFeed.direct_overlap.filter(
+        (e) => !dismissedIds.has(e.other_user_id),
+      ),
+      vibe_match: rawFeed.vibe_match.filter(
+        (e) => !dismissedIds.has(e.other_user_id),
+      ),
+      path_match: rawFeed.path_match.filter(
+        (e) => !dismissedIds.has(e.other_user_id),
+      ),
+    };
+  }, [rawFeed, dismissedIds]);
 
   const hasEncounters =
     feed &&
@@ -294,6 +414,10 @@ export default function DiscoverScreen() {
               subtitle={t("screens.discover.sectionOverlapDesc")}
               encounters={feed.direct_overlap}
               variant="large"
+              onLike={handleLike}
+              onSkip={handleSkip}
+              pendingDismissIds={pendingDismissIds}
+              onDismissComplete={handleDismissComplete}
             />
           )}
 
@@ -304,6 +428,10 @@ export default function DiscoverScreen() {
               subtitle={t("screens.discover.sectionVibeDesc")}
               encounters={feed.vibe_match}
               variant="medium"
+              onLike={handleLike}
+              onSkip={handleSkip}
+              pendingDismissIds={pendingDismissIds}
+              onDismissComplete={handleDismissComplete}
             />
           )}
 
@@ -314,6 +442,10 @@ export default function DiscoverScreen() {
               subtitle={t("screens.discover.sectionRoutineDesc")}
               encounters={feed.path_match}
               variant="medium"
+              onLike={handleLike}
+              onSkip={handleSkip}
+              pendingDismissIds={pendingDismissIds}
+              onDismissComplete={handleDismissComplete}
             />
           )}
         </>
@@ -321,7 +453,10 @@ export default function DiscoverScreen() {
 
       {/* Has presence but no encounters yet */}
       {hasRecentPresence && !hasEncounters && !isLoading && (
-        <View style={styles.noEncountersContainer}>
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={styles.noEncountersContainer}
+        >
           <SearchingEverywhere width={180} height={180} />
           <Text
             style={[
@@ -335,8 +470,17 @@ export default function DiscoverScreen() {
           >
             {t("screens.discover.noEncounters")}
           </Text>
-        </View>
+        </Animated.View>
       )}
+
+      {/* Match modal */}
+      <ItsMatchModal
+        isOpen={!!matchInfo}
+        onClose={clearMatch}
+        onSendMessage={handleMatchSendMessage}
+        name={matchInfo?.name ?? ""}
+        photoUrl={matchInfo?.photoUrl ?? null}
+      />
     </BaseTemplateScreen>
   );
 }

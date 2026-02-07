@@ -105,5 +105,17 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 8,
+      steps: [
+        // Add is_dismissed flag to discovery_profiles for soft dismiss
+        addColumns({
+          table: 'discovery_profiles',
+          columns: [
+            { name: 'is_dismissed', type: 'boolean', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

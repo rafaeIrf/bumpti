@@ -1,5 +1,6 @@
 import { XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ItsMatchModal } from "@/components/its-match-modal";
 import { LoadingView } from "@/components/loading-view";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -7,14 +8,16 @@ import { ThemedView } from "@/components/themed-view";
 import { UserProfileCard } from "@/components/user-profile-card";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedProfile } from "@/hooks/use-cached-profile";
+import { useEncounterActions } from "@/hooks/use-encounter-actions";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import type { DiscoverEncounter } from "@/modules/discover/types";
 import { t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function ProfilePreviewModal() {
   const { profile: myProfile, isLoading: isMyProfileLoading } = useProfile();
@@ -23,8 +26,11 @@ export default function ProfilePreviewModal() {
   const params = useLocalSearchParams<{
     userId?: string;
     initialProfile?: string;
+    source?: string;
+    placeId?: string;
   }>();
 
+  const isFromDiscover = params.source === "discover";
   const isScanningOther = !!params.userId;
 
   // Hook para buscar perfil cacheado de outro usuário
@@ -35,6 +41,8 @@ export default function ProfilePreviewModal() {
     refresh,
     error: cachedProfileError,
   } = useCachedProfile(params.userId, { enabled: isScanningOther });
+
+  console.log("cachedProfileData", cachedProfileData);
 
   // Estado para initialProfile vindo dos params (para compatibilidade)
   const [otherUserProfile, setOtherUserProfile] =
@@ -163,12 +171,116 @@ export default function ProfilePreviewModal() {
     }
   }, [profileCardData?.photos]);
 
+  // --- Discover action bar logic ---
+  const { handleLike, handleSkip, matchInfo, clearMatch } =
+    useEncounterActions();
+
+  // Build a minimal DiscoverEncounter for actions
+  const encounterForActions: DiscoverEncounter | null = useMemo(() => {
+    if (!isFromDiscover || !profileCardData) return null;
+    return {
+      user_a_id: "",
+      user_b_id: "",
+      place_id: params.placeId ?? "",
+      encounter_type: "direct_overlap",
+      affinity_score: 0,
+      last_encountered_at: new Date().toISOString(),
+      metadata: {},
+      shared_interests_count: 0,
+      other_user_id: profileCardData.user_id,
+      other_name: profileCardData.name,
+      other_age: profileCardData.age ?? null,
+      other_photos: profileCardData.photos,
+      other_verification_status: profileCardData.verification_status ?? null,
+      other_bio: null,
+      place_name: null,
+      additional_encounters: null,
+    } satisfies DiscoverEncounter;
+  }, [isFromDiscover, profileCardData, params.placeId]);
+
+  const onLikePress = useCallback(async () => {
+    if (!encounterForActions) return;
+    await handleLike(encounterForActions);
+    // Close after handleLike completes — pendingMatchInfo is now set
+    // so the Discover screen will show the match modal via consumePendingMatch()
+    router.back();
+  }, [encounterForActions, handleLike, router]);
+
+  const onSkipPress = useCallback(() => {
+    if (!encounterForActions) return;
+    handleSkip(encounterForActions);
+    router.back();
+  }, [encounterForActions, handleSkip, router]);
+
+  const handleMatchSendMessage = useCallback(() => {
+    if (!matchInfo) return;
+    clearMatch();
+    router.replace({
+      pathname: "/main/message",
+      params: {
+        otherUserId: matchInfo.userId,
+        name: matchInfo.name,
+        photoUrl: matchInfo.photoUrl ?? undefined,
+      },
+    });
+  }, [matchInfo, clearMatch, router]);
+
+  const actionBar =
+    isFromDiscover && profileCardData && !isLoading ? (
+      <View
+        style={[
+          styles.actionFooter,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}
+      >
+        <Pressable
+          onPress={onSkipPress}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            styles.skipBtn,
+            {
+              borderColor: colors.border,
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
+        >
+          <Text
+            style={[typography.body, { color: colors.text, fontWeight: "600" }]}
+          >
+            {t("screens.discover.skipLabel")}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={onLikePress}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            styles.likeBtn,
+            {
+              backgroundColor: colors.accent,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <Text
+            style={[typography.body, { color: "#FFFFFF", fontWeight: "600" }]}
+          >
+            {t("screens.discover.likeLabel")}
+          </Text>
+        </Pressable>
+      </View>
+    ) : undefined;
+
   return (
     <BaseTemplateScreen
       contentContainerStyle={styles.container}
       isModal
       refreshing={isRefreshing}
       onRefresh={isScanningOther ? handleRefresh : undefined}
+      BottomBar={actionBar}
       TopHeader={
         <ScreenToolbar
           title={profileCardData?.name || t("screens.profile.preview.title")}
@@ -193,6 +305,18 @@ export default function ProfilePreviewModal() {
           <UserProfileCard profile={profileCardData} />
         )}
       </ThemedView>
+
+      {/* Match modal */}
+      <ItsMatchModal
+        isOpen={!!matchInfo}
+        onClose={() => {
+          clearMatch();
+          router.back();
+        }}
+        onSendMessage={handleMatchSendMessage}
+        name={matchInfo?.name ?? ""}
+        photoUrl={matchInfo?.photoUrl ?? null}
+      />
     </BaseTemplateScreen>
   );
 }
@@ -210,4 +334,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: spacing.lg,
   },
+  actionFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  actionBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  skipBtn: {
+    borderWidth: 1.5,
+  },
+  likeBtn: {},
 });

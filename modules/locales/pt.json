@@ -1178,7 +1178,10 @@
       "infoStep2Title": "Encontramos seus encontros",
       "infoStep2Desc": "Nosso sistema detecta quem esteve no mesmo lugar, compartilha seus interesses ou frequenta os mesmos spots.",
       "infoStep3Title": "Revele e conecte",
-      "infoStep3Desc": "Navegue pelos seus encontros e inicie uma conversa. Membros premium podem ver perfis completos."
+      "infoStep3Desc": "Navegue pelos seus encontros e inicie uma conversa. Membros premium podem ver perfis completos.",
+      "likedConfirmation": "Você curtiu {{name}}",
+      "skipLabel": "Pular",
+      "likeLabel": "Curtir"
     }
   },
   "venue": {

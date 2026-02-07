@@ -16,6 +16,7 @@ export async function getPublicProfile(
     intentionResult,
     photosResult,
     favoritePlacesResult,
+    interestsResult,
   ] = await Promise.all([
     supabaseService
       .from("profiles")
@@ -26,7 +27,8 @@ export async function getPublicProfile(
           zodiac:zodiac_signs(key),
           smoking:smoking_habits(key),
           relationship:relationship_status(key),
-          profile_languages(language:languages(key))
+          profile_languages(language:languages(key)),
+          university:places!university_id(name)
         `
       )
       .eq("id", userId)
@@ -48,6 +50,10 @@ export async function getPublicProfile(
       .from("profile_favorite_places")
       .select("place_id, places:places(id, name, category)")
       .eq("user_id", userId),
+    supabaseService
+      .from("profile_interests")
+      .select("interest:interests(key)")
+      .eq("profile_id", userId),
   ]);
 
   const profile = profileResult.data;
@@ -104,12 +110,18 @@ export async function getPublicProfile(
       ?.map((pl: any) => pl.language?.key)
       .filter(Boolean) ?? [];
 
+  // Interests (vibes)
+  const interests = (interestsResult.data ?? [])
+    .map((row: any) => row.interest?.key)
+    .filter(Boolean);
+
   return {
     user_id: profile.id,
     name: profile.name,
     age,
     bio: profile.bio,
     intentions,
+    interests,
     photos,
     job_title: profile.job_title,
     company_name: profile.company_name,
@@ -121,6 +133,11 @@ export async function getPublicProfile(
     relationship_status: profile.relationship?.key,
     smoking_habit: profile.smoking?.key,
     verification_status: profile.verification_status || null,
+    university_id: profile.university_id || null,
+    university_name: profile.university?.name || profile.university_name_custom || null,
+    university_name_custom: profile.university_name_custom || null,
+    graduation_year: profile.graduation_year || null,
+    show_university_on_home: profile.show_university_on_home ?? false,
     favorite_places,
     entered_at: null, // Context specific
     expires_at: null, // Context specific

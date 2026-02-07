@@ -1,6 +1,18 @@
 
 /**
+ * A secondary encounter type that was deduplicated away by the priority system.
+ * Included in the winning row so the UI can show consolidated context.
+ */
+export type AdditionalEncounter = {
+  type: "direct_overlap" | "routine_match" | "vibe_match" | "path_match";
+  place_name: string | null;
+  affinity_score: number;
+};
+
+/**
  * A single encounter from the get_discover_feed RPC.
+ * After global dedup, each other_user_id appears exactly once.
+ * The `encounter_type` is the highest-priority type for this user.
  */
 export type DiscoverEncounter = {
   user_a_id: string;
@@ -23,7 +35,10 @@ export type DiscoverEncounter = {
   other_verification_status: string | null;
   other_bio: string | null;
   place_name: string | null;
+  /** Secondary encounter types deduplicated away by priority hierarchy */
+  additional_encounters: AdditionalEncounter[] | null;
 };
+
 
 /**
  * Categorized discover feed.
