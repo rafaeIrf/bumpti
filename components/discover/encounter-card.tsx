@@ -6,6 +6,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useHydratedProfile } from "@/hooks/use-hydrated-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { DiscoverEncounter } from "@/modules/discover/types";
+import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
@@ -45,7 +46,6 @@ export default function EncounterCard({
   encounter,
   variant,
   index,
-  isPremium = true,
   onLike,
   onSkip,
   pendingDismiss,
@@ -53,6 +53,7 @@ export default function EncounterCard({
 }: EncounterCardProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  const { isPremium } = useUserSubscription();
   const { profile, isLoading } = useHydratedProfile(encounter.other_user_id);
   const isDismissed = useRef(false);
 
