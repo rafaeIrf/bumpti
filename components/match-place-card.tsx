@@ -18,11 +18,18 @@ export type MatchOriginType =
   | null
   | undefined;
 
+type MatchMetadata = {
+  shared_interests?: number;
+  shared_places?: number;
+  overlap_seconds?: number;
+};
+
 type MatchPlaceCardProps = {
   placeName: string;
   matchedAt?: string;
   photoUrl?: string;
   matchOrigin?: MatchOriginType;
+  matchMetadata?: string | null;
 };
 
 /**
@@ -59,15 +66,56 @@ function getOriginConfig(origin: MatchOriginType) {
   }
 }
 
+function parseMetadata(raw?: string | null): MatchMetadata | null {
+  if (!raw) return null;
+  try {
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
+}
+
+function getContextLabel(
+  origin: MatchOriginType,
+  metadata: MatchMetadata | null,
+): string | null {
+  if (!metadata) return null;
+
+  if (
+    origin === "vibe_match" &&
+    metadata.shared_interests &&
+    metadata.shared_interests > 0
+  ) {
+    return t("screens.chatMessages.matchContext.sharedInterests", {
+      count: metadata.shared_interests,
+    });
+  }
+
+  if (
+    (origin === "routine_match" || origin === "path_match") &&
+    metadata.shared_places &&
+    metadata.shared_places > 0
+  ) {
+    return t("screens.chatMessages.matchContext.sharedPlaces", {
+      count: metadata.shared_places,
+    });
+  }
+
+  return null;
+}
+
 export function MatchPlaceCard({
   placeName,
   matchedAt,
   photoUrl,
   matchOrigin,
+  matchMetadata,
 }: MatchPlaceCardProps) {
   const colors = useThemeColors();
   const relativeDate = getRelativeDate(matchedAt);
   const { icon, labelKey } = getOriginConfig(matchOrigin);
+  const metadata = parseMetadata(matchMetadata);
+  const contextLabel = getContextLabel(matchOrigin, metadata);
 
   return (
     <View style={styles.container}>
@@ -86,6 +134,22 @@ export function MatchPlaceCard({
         >
           {t(labelKey)}
         </ThemedText>
+
+        {/* Contextual metadata */}
+        {contextLabel && (
+          <ThemedText
+            style={[
+              typography.caption,
+              {
+                color: colors.accent,
+                textAlign: "center",
+                marginBottom: spacing.xs,
+              },
+            ]}
+          >
+            {contextLabel}
+          </ThemedText>
+        )}
 
         <View style={styles.placeRow}>
           <ThemedText

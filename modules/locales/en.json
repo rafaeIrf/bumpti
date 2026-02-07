@@ -1125,6 +1125,10 @@
         "vibeMatch": "You share similar vibes",
         "pathMatch": "Your paths crossed"
       },
+      "matchContext": {
+        "sharedInterests": "{{count}} interests in common",
+        "sharedPlaces": "{{count}} places in common"
+      },
       "moreActions": "More actions",
       "notSent": "Not sent",
       "messageNotSent": "Message not sent",

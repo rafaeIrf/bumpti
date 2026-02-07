@@ -137,6 +137,7 @@ function ChatListScreen({
                 matchPlace: item.placeName ?? undefined,
                 matchedAt: item.matchedAt?.toISOString() ?? undefined,
                 matchOrigin: item.matchOrigin ?? undefined,
+                matchMetadata: item.matchMetadata ?? undefined,
               },
             });
           }}
