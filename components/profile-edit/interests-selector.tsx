@@ -132,6 +132,6 @@ const styles = StyleSheet.create({
   pillGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
 });
