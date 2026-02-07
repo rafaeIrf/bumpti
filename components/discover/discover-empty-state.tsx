@@ -77,7 +77,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
   },
   iconContainer: {
@@ -90,7 +89,6 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: 28,
     minWidth: 200,
