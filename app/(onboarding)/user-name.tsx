@@ -4,8 +4,8 @@ import { ThemedText } from "@/components/themed-text";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useState } from "react";
@@ -24,8 +24,11 @@ export default function UserNameScreen() {
 
   const handleContinue = () => {
     if (name.trim()) {
-      // Save name to Redux
-      onboardingActions.setUserName(name.trim());
+      // Extract only the first name (in case user enters full name)
+      const firstName = name.trim().split(/\s+/)[0];
+
+      // Save only the first name to Redux
+      onboardingActions.setUserName(firstName);
 
       // Complete this step and navigate to next
       completeCurrentStep("user-name");
