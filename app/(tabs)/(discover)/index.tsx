@@ -5,6 +5,7 @@ import {
   MapPinIcon,
   SparklesIcon,
 } from "@/assets/icons";
+import { SearchingEverywhere } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import DiscoverEmptyState from "@/components/discover/discover-empty-state";
@@ -321,18 +322,15 @@ export default function DiscoverScreen() {
       {/* Has presence but no encounters yet */}
       {hasRecentPresence && !hasEncounters && !isLoading && (
         <View style={styles.noEncountersContainer}>
-          <View
-            style={[
-              styles.noEncountersIcon,
-              { backgroundColor: `${colors.accent}15` },
-            ]}
-          >
-            <SparklesIcon width={32} height={32} color={colors.accent} />
-          </View>
+          <SearchingEverywhere width={180} height={180} />
           <Text
             style={[
               typography.body,
-              { color: colors.textSecondary, textAlign: "center" },
+              {
+                color: colors.textSecondary,
+                textAlign: "center",
+                marginTop: spacing.md,
+              },
             ]}
           >
             {t("screens.discover.noEncounters")}
