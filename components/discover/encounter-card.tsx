@@ -1,15 +1,22 @@
+import { HeartIcon } from "@/assets/icons";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
+import { ALL_INTERESTS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useHydratedProfile } from "@/hooks/use-hydrated-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { DiscoverEncounter } from "@/modules/discover/types";
-import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -20,21 +27,38 @@ export const MEDIUM_CARD_WIDTH = SCREEN_WIDTH * 0.52;
 export const MEDIUM_CARD_HEIGHT = MEDIUM_CARD_WIDTH * (4 / 3);
 export const CARD_SPACING = spacing.sm;
 
+const DISMISS_DURATION = 450;
+const DISMISS_TRANSLATE = 80;
+
 type EncounterCardProps = {
   encounter: DiscoverEncounter;
   variant: "large" | "medium";
   index: number;
+  isPremium?: boolean;
+  onLike?: (encounter: DiscoverEncounter) => void;
+  onSkip?: (encounter: DiscoverEncounter) => void;
+  pendingDismiss?: boolean;
+  onDismissComplete?: (userId: string) => void;
 };
 
 export default function EncounterCard({
   encounter,
   variant,
   index,
+  isPremium = true,
+  onLike,
+  onSkip,
+  pendingDismiss,
+  onDismissComplete,
 }: EncounterCardProps) {
   const colors = useThemeColors();
   const router = useRouter();
-  const { isPremium } = useUserSubscription();
   const { profile, isLoading } = useHydratedProfile(encounter.other_user_id);
+  const isDismissed = useRef(false);
+
+  // Animated values for dismiss (lateral fade-out)
+  const dismissProgress = useSharedValue(0);
+  const dismissDirection = useSharedValue(1); // 1 = right (like), -1 = left (skip)
 
   const cardWidth = variant === "large" ? LARGE_CARD_WIDTH : MEDIUM_CARD_WIDTH;
   const cardHeight =
@@ -59,26 +83,90 @@ export default function EncounterCard({
         : t("screens.discover.contextOverlapGeneric");
     }
     if (encounter.encounter_type === "vibe_match") {
-      const count = encounter.shared_interests_count ?? 0;
-      return t("screens.discover.contextVibe", { count: String(count) });
+      if (encounter.place_name) {
+        return t("screens.discover.contextRoutine", {
+          place: encounter.place_name,
+        });
+      }
+      // No place — fall back to interest count only if pills are not visible
+      if (interests.length === 0) {
+        const count = encounter.shared_interests_count ?? 0;
+        return t("screens.discover.contextVibe", { count: String(count) });
+      }
+      return null;
     }
     return encounter.place_name
       ? t("screens.discover.contextRoutine", {
           place: encounter.place_name,
         })
       : t("screens.discover.contextRoutineGeneric");
-  }, [encounter]);
+  }, [encounter, interests.length]);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
+    if (isDismissed.current) return;
     if (!isPremium) {
       router.push("/(modals)/premium-paywall");
       return;
     }
     router.push({
       pathname: "/(modals)/profile-preview",
-      params: { userId: encounter.other_user_id },
+      params: {
+        userId: encounter.other_user_id,
+        source: "discover",
+        placeId: encounter.place_id,
+      },
     });
-  };
+  }, [isPremium, router, encounter.other_user_id, encounter.place_id]);
+
+  const animateDismiss = useCallback(
+    (direction: 1 | -1, callback?: () => void) => {
+      if (isDismissed.current) return;
+      isDismissed.current = true;
+      dismissDirection.value = direction;
+      dismissProgress.value = withTiming(
+        1,
+        { duration: DISMISS_DURATION },
+        (finished) => {
+          if (finished && callback) {
+            runOnJS(callback)();
+          }
+        },
+      );
+    },
+    [dismissDirection, dismissProgress],
+  );
+
+  const handleLike = useCallback(() => {
+    animateDismiss(1, () => onLike?.(encounter));
+  }, [animateDismiss, encounter, onLike]);
+
+  const handleSkip = useCallback(() => {
+    animateDismiss(-1, () => onSkip?.(encounter));
+  }, [animateDismiss, encounter, onSkip]);
+
+  // Auto-dismiss when returning from profile-preview
+  useEffect(() => {
+    if (pendingDismiss) {
+      animateDismiss(1, () => onDismissComplete?.(encounter.other_user_id));
+    }
+  }, [
+    pendingDismiss,
+    animateDismiss,
+    encounter.other_user_id,
+    onDismissComplete,
+  ]);
+
+  // Animated style: lateral slide + fade out
+  const dismissStyle = useAnimatedStyle(() => ({
+    opacity: 1 - dismissProgress.value,
+    transform: [
+      {
+        translateX:
+          dismissDirection.value * dismissProgress.value * DISMISS_TRANSLATE,
+      },
+      { scale: 1 - dismissProgress.value * 0.05 },
+    ],
+  }));
 
   // Skeleton while loading
   if (isLoading && !name) {
@@ -100,7 +188,7 @@ export default function EncounterCard({
   return (
     <Animated.View
       entering={FadeIn.delay(index * 80).duration(400)}
-      style={[styles.card, { width: cardWidth }]}
+      style={[styles.card, { width: cardWidth }, dismissStyle]}
     >
       <Pressable
         onPress={handlePress}
@@ -179,33 +267,74 @@ export default function EncounterCard({
             </View>
 
             {/* Context label */}
-            <Text
-              style={[typography.caption, { color: "rgba(255,255,255,0.75)" }]}
-              numberOfLines={1}
-            >
-              {contextLabel}
-            </Text>
+            {contextLabel && (
+              <Text
+                style={[
+                  typography.caption,
+                  { color: "rgba(255,255,255,0.75)" },
+                ]}
+                numberOfLines={1}
+              >
+                {contextLabel}
+              </Text>
+            )}
 
             {/* Interest pills (vibe_match only) */}
             {encounter.encounter_type === "vibe_match" &&
-              interests.length > 0 && (
-                <View style={styles.interestsRow}>
-                  {interests.slice(0, 3).map((interest) => (
-                    <View
-                      key={interest}
-                      style={[
-                        styles.interestPill,
-                        { backgroundColor: "rgba(255,255,255,0.15)" },
-                      ]}
-                    >
-                      <Text style={[typography.caption, { color: "#FFFFFF" }]}>
-                        {interest}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+              interests.length > 0 &&
+              (() => {
+                const maxPills = 2; // Ultra-compact: always show 2
+                const visibleInterests = interests.slice(0, maxPills);
+                return (
+                  <View style={styles.interestsRow}>
+                    {visibleInterests.map((interest) => {
+                      const catalogItem = ALL_INTERESTS.find(
+                        (item) => item.key === interest,
+                      );
+                      const emoji = catalogItem?.icon ?? "";
+                      const label = t(
+                        `screens.onboarding.interests.items.${interest}` as any,
+                      );
+                      return (
+                        <View
+                          key={interest}
+                          style={[
+                            styles.interestPill,
+                            { backgroundColor: "rgba(255,255,255,0.15)" },
+                          ]}
+                        >
+                          <Text
+                            style={[typography.caption, { color: "#FFFFFF" }]}
+                          >
+                            {emoji} {label}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                );
+              })()}
           </View>
+
+          {/* Like button — top-right for medium cards, bottom-right for large */}
+          {onLike && (
+            <Pressable
+              onPress={handleLike}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.likeButton,
+                variant === "medium"
+                  ? styles.likeButtonTopRight
+                  : styles.likeButtonBottomRight,
+                {
+                  backgroundColor: colors.accent,
+                  transform: [{ scale: pressed ? 0.9 : 1 }],
+                },
+              ]}
+            >
+              <HeartIcon width={20} height={20} fill="#FFFFFF" />
+            </Pressable>
+          )}
         </View>
       </Pressable>
     </Animated.View>
@@ -242,6 +371,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 2,
   },
+
   badge: {
     marginLeft: spacing.xs,
   },
@@ -274,5 +404,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: 12,
+  },
+  likeButton: {
+    position: "absolute",
+    right: spacing.sm,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  likeButtonTopRight: {
+    top: spacing.sm,
+  },
+  likeButtonBottomRight: {
+    bottom: spacing.md,
   },
 });

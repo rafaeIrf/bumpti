@@ -9,7 +9,10 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ChatActionsBottomSheet } from "@/components/chat-actions-bottom-sheet";
 import { ConfirmationModal } from "@/components/confirmation-modal";
-import { MatchPlaceCard } from "@/components/match-place-card";
+import {
+  MatchPlaceCard,
+  type MatchOriginType,
+} from "@/components/match-place-card";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -60,6 +63,7 @@ type Params = {
   otherUserId?: string;
   unreadMessages?: string;
   firstMessageAt?: string;
+  matchOrigin?: string;
 };
 
 // --- Inner Component (Reactive) ---
@@ -96,6 +100,7 @@ function ChatMessageList({
       height: keyboardHeight > 0 ? keyboardHeight + spacing.sm : insets.bottom,
     };
   });
+  console.log("params", params);
 
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -425,6 +430,7 @@ function ChatMessageList({
                         placeName={params.matchPlace}
                         matchedAt={params.matchedAt}
                         photoUrl={params.photoUrl}
+                        matchOrigin={params.matchOrigin as MatchOriginType}
                       />
                     </Animated.View>
                   )}

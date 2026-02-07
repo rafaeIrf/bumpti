@@ -1,4 +1,5 @@
 import type { UserAvatar } from "@/modules/places/types";
+import { isAndroid } from "@/utils";
 import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -59,7 +60,7 @@ export function StackedAvatars({
               },
             ]}
             contentFit="cover"
-            blurRadius={2}
+            blurRadius={isAndroid ? 2 : 70}
           />
         </View>
       ))}

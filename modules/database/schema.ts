@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 7,
+  version: 9,
   tables: [
     // Tabela de matches
     tableSchema({
@@ -23,6 +23,8 @@ export const schema = appSchema({
         { name: 'other_user_photo_url', type: 'string', isOptional: true },
         { name: 'place_name', type: 'string', isOptional: true },
         { name: 'first_message_at', type: 'number', isOptional: true },
+        { name: 'match_origin', type: 'string', isOptional: true },
+        { name: 'match_metadata', type: 'string', isOptional: true },
       ],
     }),
     
@@ -78,6 +80,7 @@ export const schema = appSchema({
         { name: 'raw_data', type: 'string' },
         { name: 'place_id', type: 'string', isIndexed: true },
         { name: 'last_fetched_at', type: 'number', isIndexed: true },
+        { name: 'is_dismissed', type: 'boolean', isOptional: true },
         { name: 'created_at', type: 'number' },
       ],
     }),

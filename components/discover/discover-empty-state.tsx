@@ -1,10 +1,10 @@
-import { CompassIcon } from "@/assets/icons";
+import { PeopleMapPin } from "@/assets/illustrations";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 export default function DiscoverEmptyState() {
@@ -18,20 +18,12 @@ export default function DiscoverEmptyState() {
   return (
     <Animated.View entering={FadeIn.duration(500)} style={styles.container}>
       {/* Illustration icon */}
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: `${colors.accent}15` },
-        ]}
-      >
-        <CompassIcon width={40} height={40} color={colors.accent} />
-      </View>
-
+      <PeopleMapPin width={140} height={140} color={colors.accent} />
       {/* Title */}
       <Text
         style={[
           typography.heading,
-          { color: colors.text, textAlign: "center" },
+          { color: colors.text, textAlign: "center", marginTop: spacing.md },
         ]}
       >
         {t("screens.discover.emptyTitle")}
@@ -86,7 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: 80,
+    paddingTop: spacing.xl,
   },
   iconContainer: {
     width: 80,

@@ -105,5 +105,30 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 8,
+      steps: [
+        // Add is_dismissed flag to discovery_profiles for soft dismiss
+        addColumns({
+          table: 'discovery_profiles',
+          columns: [
+            { name: 'is_dismissed', type: 'boolean', isOptional: true },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 9,
+      steps: [
+        // Add match_origin and match_metadata to matches table for Smart Match Header
+        addColumns({
+          table: 'matches',
+          columns: [
+            { name: 'match_origin', type: 'string', isOptional: true },
+            { name: 'match_metadata', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

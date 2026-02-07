@@ -407,9 +407,7 @@ export function UserProfileCard({
               {profile.interests.map((key) =>
                 renderTag(
                   `${getInterestIcon(key)} ${t(`screens.onboarding.interests.items.${key}` as any)}`,
-                  isMatchInterest(key) ? (
-                    <SparklesIcon width={12} height={12} color="#2997FF" />
-                  ) : null,
+                  null,
                   isMatchInterest(key),
                 ),
               )}

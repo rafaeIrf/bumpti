@@ -36,6 +36,11 @@ module.exports = defineConfig([
           message:
             "Dynamic require() is not allowed. Use static import statements at the top of the file instead.",
         },
+        {
+          selector: "TSImportType",
+          message:
+            "Inline import('...') types are not allowed. Use a regular 'import type { ... }' at the top of the file instead.",
+        },
       ],
     },
   },

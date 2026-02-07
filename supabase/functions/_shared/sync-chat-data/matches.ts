@@ -1,9 +1,9 @@
 // Deletion detection via soft delete (status=unmatched) and sync_deletions audit table
 import { fetchCascadeDeletions } from "./deletions.ts";
 import {
-  fetchPhotosInBatch,
-  signPhotoUrl,
-  signPhotoUrlsInBatch,
+    fetchPhotosInBatch,
+    signPhotoUrl,
+    signPhotoUrlsInBatch,
 } from "./media.ts";
 import type { SyncChanges } from "./types.ts";
 
@@ -124,6 +124,7 @@ async function fetchMatchesFromDB(
     .select(`
       id, user_a, user_b, status, matched_at, unmatched_at,
       place_id, place_name, user_a_opened_at, user_b_opened_at,
+      match_origin, match_metadata,
       profile_a:profiles!user_a(id, name),
       profile_b:profiles!user_b(id, name),
       chats(
@@ -240,6 +241,8 @@ async function transformAndClassifyMatches(
       other_user_name: otherProfile?.name,
       other_user_photo_url: signedPhotoUrl,
       place_name: match.place_name,
+      match_origin: match.match_origin ?? null,
+      match_metadata: match.match_metadata ? JSON.stringify(match.match_metadata) : null,
     };
 
     if (forceUpdates || hasPhotoUpdate) {
@@ -303,6 +306,8 @@ function transformMatchesForMediaRefresh(
       other_user_name: otherProfile?.name,
       other_user_photo_url: signedPhotoMap.get(otherUserId) ?? null,
       place_name: match.place_name,
+      match_origin: match.match_origin ?? null,
+      match_metadata: match.match_metadata ? JSON.stringify(match.match_metadata) : null,
     };
   });
 }

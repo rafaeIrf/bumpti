@@ -43,6 +43,7 @@ async function buildMatchPayload(params: {
     .select(`
       id, user_a, user_b, status, matched_at, unmatched_at,
       place_id, place_name, user_a_opened_at, user_b_opened_at,
+      match_origin, match_metadata,
       profile_a:profiles!user_a(id, name),
       profile_b:profiles!user_b(id, name),
       chats(
@@ -103,6 +104,8 @@ async function buildMatchPayload(params: {
     other_user_id: otherUserId,
     other_user_name: otherProfile?.name ?? null,
     other_user_photo_url: signedPhotoUrl,
+    match_origin: matchRow.match_origin ?? null,
+    match_metadata: matchRow.match_metadata ? JSON.stringify(matchRow.match_metadata) : null,
   };
 }
 
@@ -233,14 +236,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    const results: Array<{
+    const results: {
       target_user_id: string;
       action: "like" | "dislike";
       status: "ok" | "error";
       is_match?: boolean;
       match_id?: string | null;
       error?: string;
-    }> = [];
+    }[] = [];
 
     const likes = items.filter((item) => item.action === "like");
     const dislikes = items.filter((item) => item.action === "dislike");
@@ -331,36 +334,8 @@ Deno.serve(async (req) => {
           console.error("Error checking incoming like:", incomingLikeError);
         }
 
-        if (!incomingLike) {
-          const { data: activePresence, error: presenceError } = await dbClient
-            .from("user_presences")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("place_id", item.place_id)
-            .eq("active", true)
-            .gt("expires_at", new Date().toISOString())
-            .maybeSingle();
-
-          if (presenceError) {
-            results.push({
-              target_user_id: item.to_user_id,
-              action: "like",
-              status: "error",
-              error: presenceError.message,
-            });
-            continue;
-          }
-
-          if (!activePresence) {
-            results.push({
-              target_user_id: item.to_user_id,
-              action: "like",
-              status: "error",
-              error: "place_not_active_for_user",
-            });
-            continue;
-          }
-        }
+        // incomingLike is used below only for match detection — no presence guard needed.
+        // The encounter itself already validates both users were at the location.
 
         const expiresAt = new Date(
           Date.now() + 30 * 24 * 60 * 60 * 1000
@@ -467,6 +442,25 @@ Deno.serve(async (req) => {
           status: "error",
           error: error?.message ?? "like_failed",
         });
+      }
+    }
+
+    // Clean up user_encounters for successfully processed interactions
+    const successfulOtherIds = results
+      .filter((r) => r.status === "ok")
+      .map((r) => r.target_user_id);
+
+    if (successfulOtherIds.length > 0) {
+      for (const otherId of successfulOtherIds) {
+        await dbClient
+          .from("user_encounters")
+          .delete()
+          .or(
+            `and(user_a_id.eq.${user.id},user_b_id.eq.${otherId}),and(user_a_id.eq.${otherId},user_b_id.eq.${user.id})`
+          )
+          .then(({ error: delErr }: any) => {
+            if (delErr) console.error("Failed to delete encounter:", delErr);
+          });
       }
     }
 

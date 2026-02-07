@@ -71,9 +71,9 @@ export function useHydratedProfile(userId: string | undefined): {
   const fetchAndCacheProfile = async (uid: string) => {
     try {
       const { data, error } = await supabase.functions.invoke(
-        "get-active-users-at-place",
+        "get-public-profile",
         {
-          body: { user_id: uid, mode: "profile_only" },
+          body: { userId: uid },
         }
       );
 
@@ -83,8 +83,8 @@ export function useHydratedProfile(userId: string | undefined): {
         return;
       }
 
-      // If we got profile data, cache it in WatermelonDB
-      const profileData = data?.users?.[0] ?? data?.profile;
+      // get-public-profile returns { profile: {...} }
+      const profileData = data?.profile;
       if (profileData) {
         const collection =
           database.collections.get<DiscoveryProfile>("discovery_profiles");
@@ -99,7 +99,7 @@ export function useHydratedProfile(userId: string | undefined): {
             await collection.create((record) => {
               record._raw.id = uid;
               record.rawData = JSON.stringify(profileData);
-              record.placeId = profileData.place_id ?? "";
+              record.placeId = "";
               record.lastFetchedAt = new Date();
             });
           }
