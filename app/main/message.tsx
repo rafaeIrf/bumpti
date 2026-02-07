@@ -64,6 +64,7 @@ type Params = {
   unreadMessages?: string;
   firstMessageAt?: string;
   matchOrigin?: string;
+  matchMetadata?: string;
 };
 
 // --- Inner Component (Reactive) ---
@@ -100,7 +101,7 @@ function ChatMessageList({
       height: keyboardHeight > 0 ? keyboardHeight + spacing.sm : insets.bottom,
     };
   });
-  console.log("params", params);
+  logger.log("params", params);
 
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -431,6 +432,7 @@ function ChatMessageList({
                         matchedAt={params.matchedAt}
                         photoUrl={params.photoUrl}
                         matchOrigin={params.matchOrigin as MatchOriginType}
+                        matchMetadata={params.matchMetadata}
                       />
                     </Animated.View>
                   )}
