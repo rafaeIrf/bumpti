@@ -97,24 +97,17 @@ export function PlaceCard({
         style={[styles.hoverOverlay, overlayStyle]}
       />
 
-      {/* Rank Badge - Top Left Corner */}
+      {/* Rank Indicator - Subtle Top Line */}
       {place.rank && place.rank <= 3 && (
         <View
           style={[
-            styles.rankBadge,
+            styles.rankLine,
             { backgroundColor: getRankBadgeColor(place.rank) },
           ]}
-        >
-          <ThemedText style={styles.rankText}>#{place.rank}</ThemedText>
-        </View>
+        />
       )}
 
-      <View
-        style={[
-          styles.content,
-          place.rank && place.rank <= 3 ? styles.contentWithRank : undefined,
-        ]}
-      >
+      <View style={styles.content}>
         {/* Header: Name + Favorite */}
         <View style={styles.headerRow}>
           <ThemedText style={styles.placeTitle} numberOfLines={1}>
@@ -229,9 +222,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
-  contentWithRank: {
-    paddingTop: spacing.xl,
-  },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -284,19 +274,14 @@ const styles = StyleSheet.create({
     color: "#A1A1AA",
     fontWeight: "500",
   },
-  rankBadge: {
+  rankLine: {
     position: "absolute",
     top: 0,
     left: 0,
-    borderBottomRightRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    zIndex: 10,
-  },
-  rankText: {
-    ...typography.caption,
-    fontWeight: "800",
-    color: "#000000",
-    fontSize: 10,
+    right: 0,
+    height: 5,
+    borderTopLeftRadius: spacing.lg,
+    borderTopRightRadius: spacing.lg,
+    zIndex: 1,
   },
 });
