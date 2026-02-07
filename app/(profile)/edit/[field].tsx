@@ -1,5 +1,7 @@
 import { ArrowRightIcon, CheckIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ConfirmationModal } from "@/components/confirmation-modal";
+import InterestsSelector from "@/components/profile-edit/interests-selector";
 import { LanguagesStep } from "@/components/profile-edit/languages-step";
 import { LocationStep } from "@/components/profile-edit/location-step";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -9,6 +11,7 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import {
   EDUCATION_OPTIONS,
   GENDER_OPTIONS,
+  MIN_INTERESTS,
   RELATIONSHIP_OPTIONS,
   SMOKING_OPTIONS,
   ZODIAC_OPTIONS,
@@ -16,7 +19,7 @@ import {
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { moderateBioText } from "@/modules/moderation";
+import { moderateTextContent } from "@/modules/moderation";
 import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
@@ -28,7 +31,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Platform, StyleSheet, TextInput, View } from "react-native";
+import { Platform, StyleSheet, TextInput, View } from "react-native";
 
 const HEIGHT_OPTIONS = [
   { label: "< 91 cm", value: 90 },
@@ -72,6 +75,12 @@ export default function EditFieldScreen() {
       };
     }
 
+    if (field === "interests") {
+      return Array.isArray((profile as any).interests)
+        ? [...(profile as any).interests]
+        : [];
+    }
+
     const dbKey = FIELD_DB_KEYS[field] || field;
     const profileValue = (profile as any)[dbKey];
 
@@ -83,7 +92,8 @@ export default function EditFieldScreen() {
   };
 
   const [value, setValue] = useState<any>(getInitialValue);
-  const [isModeratingBio, setIsModeratingBio] = useState(false);
+  const [isModeratingText, setIsModeratingText] = useState(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     setValue(getInitialValue());
@@ -95,29 +105,62 @@ export default function EditFieldScreen() {
       const trimmedBio = value.trim();
 
       if (trimmedBio) {
-        setIsModeratingBio(true);
+        const isApproved = await moderateTextContent(
+          {
+            text: trimmedBio,
+            contentRejectedKey: "moderation.bioContentRejected",
+            personalDataRejectedKey: "moderation.bioPersonalDataRejected",
+            errorContext: "Bio moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
 
-        try {
-          const result = await moderateBioText(trimmedBio);
+        if (!isApproved) return;
+      }
+    }
 
-          if (!result.approved) {
-            setIsModeratingBio(false);
+    // Profession moderation check (job title and company name)
+    if (field === "profession") {
+      const currentValue =
+        (value as { jobTitle?: string; companyName?: string }) || {};
+      const jobTitle = currentValue.jobTitle?.trim() || "";
+      const companyName = currentValue.companyName?.trim() || "";
 
-            // Show semantic error message based on rejection reason
-            const errorMessage =
-              result.reason === "personal_data_detected"
-                ? t("moderation.bioPersonalDataRejected")
-                : t("moderation.bioContentRejected");
+      // Moderate job title if not empty
+      if (jobTitle) {
+        const isApproved = await moderateTextContent(
+          {
+            text: jobTitle,
+            contentRejectedKey: "moderation.professionContentRejected",
+            personalDataRejectedKey:
+              "moderation.professionPersonalDataRejected",
+            errorContext: "Job title moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
 
-            Alert.alert(t("common.error"), errorMessage);
-            return;
-          }
-        } catch (error) {
-          logger.error("Bio moderation error:", error);
-          // Fail-safe: continue on error
-        }
+        if (!isApproved) return;
+      }
 
-        setIsModeratingBio(false);
+      // Moderate company name if not empty
+      if (companyName) {
+        const isApproved = await moderateTextContent(
+          {
+            text: companyName,
+            contentRejectedKey: "moderation.companyContentRejected",
+            personalDataRejectedKey: "moderation.companyPersonalDataRejected",
+            errorContext: "Company name moderation error",
+          },
+          setIsModeratingText,
+          setErrorModal,
+          t,
+        );
+
+        if (!isApproved) return;
       }
     }
 
@@ -152,6 +195,10 @@ export default function EditFieldScreen() {
         // Also update the legacy/display field if needed, though we should probably migrate to using city_name
         updatedProfile.location = value.location || value.city_name;
         apiPayload = { ...value };
+      } else if (field === "interests") {
+        const interestKeys = Array.isArray(value) ? value : [];
+        updatedProfile = { ...updatedProfile, interests: interestKeys };
+        apiPayload = { interests: interestKeys };
       } else {
         const dbKey = FIELD_DB_KEYS[field] || field;
 
@@ -330,6 +377,15 @@ export default function EditFieldScreen() {
           />
         );
 
+      case "interests":
+        return (
+          <InterestsSelector
+            selectedKeys={Array.isArray(value) ? value : []}
+            onSelectedKeysChange={setValue}
+            showTitle={false}
+          />
+        );
+
       case "spots":
         // Handled by separate screen
         return null;
@@ -361,6 +417,8 @@ export default function EditFieldScreen() {
         return t("screens.profile.edit.languages.title");
       case "zodiac":
         return t("screens.profile.profileEdit.more.zodiac");
+      case "interests":
+        return t("screens.profile.profileEdit.interests.vibes");
       default:
         return t("screens.profile.profileEdit.title");
     }
@@ -392,7 +450,12 @@ export default function EditFieldScreen() {
           secondaryLabel={t("common.skip")}
           onSecondaryPress={handleSkip}
           onPrimaryPress={handleSave}
-          primaryDisabled={isModeratingBio}
+          primaryDisabled={
+            isModeratingText ||
+            (field === "interests" &&
+              Array.isArray(value) &&
+              value.length < MIN_INTERESTS)
+          }
           primaryIcon={
             nextField ? (
               <ArrowRightIcon width={24} height={24} color="#FFF" />
@@ -404,6 +467,19 @@ export default function EditFieldScreen() {
       }
     >
       {renderContent()}
+
+      <ConfirmationModal
+        isOpen={errorModal.visible}
+        onClose={() => setErrorModal({ visible: false, message: "" })}
+        title={t("common.error")}
+        description={errorModal.message}
+        actions={[
+          {
+            label: t("common.understood"),
+            onPress: () => setErrorModal({ visible: false, message: "" }),
+          },
+        ]}
+      />
     </BaseTemplateScreen>
   );
 }

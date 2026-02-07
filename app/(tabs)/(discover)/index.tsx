@@ -1,198 +1,411 @@
-import { Platform, StyleSheet } from "react-native";
+import {
+  CompassIcon,
+  InfoRoundedIcon,
+  LockOpenIcon,
+  MapPinIcon,
+  SparklesIcon,
+} from "@/assets/icons";
+import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
+import DiscoverEmptyState from "@/components/discover/discover-empty-state";
+import DiscoverSection from "@/components/discover/discover-section";
+import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
+import { spacing, typography } from "@/constants/theme";
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useGetDiscoverFeedQuery } from "@/modules/discover/discoverApi";
+import { t } from "@/modules/locales";
+import React, { ComponentType, useCallback, useState } from "react";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { ExternalLink } from "@/components/external-link";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Button } from "@/components/ui/button";
-import { Collapsible } from "@/components/ui/collapsible";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { RemoteImage } from "@/components/ui/remote-image";
-import { Colors, Fonts } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-export default function TabTwoScreen() {
-  const scheme = useColorScheme() ?? "light";
-  const C = Colors[scheme];
+interface StepConfig {
+  icon: ComponentType<{ width: number; height: number; color: string }>;
+  titleKey: string;
+  descKey: string;
+  step: number;
+}
+
+const STEPS: StepConfig[] = [
+  {
+    icon: MapPinIcon,
+    titleKey: "screens.discover.infoStep1Title",
+    descKey: "screens.discover.infoStep1Desc",
+    step: 1,
+  },
+  {
+    icon: SparklesIcon,
+    titleKey: "screens.discover.infoStep2Title",
+    descKey: "screens.discover.infoStep2Desc",
+    step: 2,
+  },
+  {
+    icon: LockOpenIcon,
+    titleKey: "screens.discover.infoStep3Title",
+    descKey: "screens.discover.infoStep3Desc",
+    step: 3,
+  },
+];
+
+function InfoSteps() {
+  const colors = useThemeColors();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <View style={infoStyles.stepsContainer}>
+      {STEPS.map((step, index) => {
+        const Icon = step.icon;
+        const isLast = index === STEPS.length - 1;
+
+        return (
+          <View key={step.titleKey} style={infoStyles.stepRow}>
+            {/* Left column: icon + connector line */}
+            <View style={infoStyles.stepLeftCol}>
+              <View
+                style={[
+                  infoStyles.stepIconCircle,
+                  { backgroundColor: `${colors.accent}15` },
+                ]}
+              >
+                <Icon width={20} height={20} color={colors.accent} />
+              </View>
+              {!isLast && (
+                <View
+                  style={[
+                    infoStyles.stepConnector,
+                    { backgroundColor: `${colors.border}80` },
+                  ]}
+                />
+              )}
+            </View>
+
+            {/* Right column: text */}
+            <View
+              style={[
+                infoStyles.stepContent,
+                !isLast && { paddingBottom: spacing.lg },
+              ]}
+            >
+              <Text style={[typography.subheading, { color: colors.text }]}>
+                {t(step.titleKey)}
+              </Text>
+              <Text
+                style={[
+                  typography.caption,
+                  { color: colors.textSecondary, marginTop: 2 },
+                ]}
+              >
+                {t(step.descKey)}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const infoStyles = StyleSheet.create({
+  stepsContainer: {
+    width: "100%",
+    alignItems: "flex-start",
+    paddingTop: spacing.lg,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  stepLeftCol: {
+    alignItems: "center",
+    width: 40,
+    marginRight: spacing.md,
+  },
+  stepIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepConnector: {
+    width: 2,
+    flex: 1,
+    minHeight: 16,
+    borderRadius: 1,
+  },
+  stepContent: {
+    flex: 1,
+    paddingTop: 2,
+  },
+});
+
+export default function DiscoverScreen() {
+  const colors = useThemeColors();
+  const [refreshing, setRefreshing] = useState(false);
+  const bottomSheet = useCustomBottomSheet();
+
+  const { data, isLoading, refetch } = useGetDiscoverFeedQuery();
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
+  const handleOpenInfo = useCallback(() => {
+    bottomSheet?.expand({
+      content: () => (
+        <GenericConfirmationBottomSheet
+          icon={CompassIcon}
+          title={t("screens.discover.infoTitle")}
+          description={<InfoSteps />}
+          primaryButton={{
+            text: t("common.done"),
+            onClick: () => bottomSheet.close(),
+          }}
+          onClose={() => bottomSheet.close()}
         />
-      }
+      ),
+    });
+  }, [bottomSheet]);
+
+  const hasRecentPresence = data?.has_recent_presence ?? false;
+  const feed = data?.feed;
+
+  const hasEncounters =
+    feed &&
+    (feed.direct_overlap.length > 0 ||
+      feed.vibe_match.length > 0 ||
+      feed.path_match.length > 0);
+
+  return (
+    <BaseTemplateScreen
+      ignoreBottomSafeArea
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
     >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}
-        >
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>
-        This app includes example code to help you get started.
-      </ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          and{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{" "}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the
-          web version, press <ThemedText type="defaultSemiBold">w</ThemedText>{" "}
-          in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the{" "}
-          <ThemedText type="defaultSemiBold">@2x</ThemedText> and{" "}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to
-          provide files for different screen densities
-        </ThemedText>
-        <RemoteImage
-          source={require("@/assets/images/react-logo.png")}
-          style={{ width: 100, height: 100, alignSelf: "center" }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{" "}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook
-          lets you inspect what the user&apos;s current color scheme is, and so
-          you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{" "}
-          <ThemedText type="defaultSemiBold">
-            components/HelloWave.tsx
-          </ThemedText>{" "}
-          component uses the powerful{" "}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{" "}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The{" "}
-              <ThemedText type="defaultSemiBold">
-                components/ParallaxScrollView.tsx
-              </ThemedText>{" "}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-      <Collapsible title="Buttons">
-        <ThemedText style={{ marginBottom: 8 }}>Variants</ThemedText>
-        <ThemedView
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 8,
-          }}
-        >
-          <Button label="Default" onPress={() => {}} />
-          <Button
-            variant="destructive"
-            label="Destructive"
-            onPress={() => {}}
-          />
-          <Button variant="outline" label="Outline" onPress={() => {}} />
-          <Button variant="secondary" label="Secondary" onPress={() => {}} />
-          <Button variant="ghost" label="Ghost" onPress={() => {}} />
-          <Button variant="link" label="Link" onPress={() => {}} />
-        </ThemedView>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={[typography.heading, { color: colors.text }]}>
+              {t("screens.discover.title")}
+            </Text>
+            <Text
+              style={[
+                typography.body,
+                { color: colors.textSecondary, marginTop: spacing.xs },
+              ]}
+            >
+              {t("screens.discover.subtitle")}
+            </Text>
+          </View>
+          <Pressable
+            onPress={handleOpenInfo}
+            hitSlop={12}
+            style={[
+              styles.infoButton,
+              { backgroundColor: `${colors.textSecondary}15` },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("screens.discover.infoTitle")}
+          >
+            <InfoRoundedIcon
+              width={20}
+              height={20}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        </View>
+      </View>
 
-        <ThemedText style={{ marginVertical: 12 }}>Sizes</ThemedText>
-        <ThemedView
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <Button size="sm" label="Small" onPress={() => {}} />
-          <Button label="Default" onPress={() => {}} />
-          <Button size="lg" label="Large" onPress={() => {}} />
-          <Button
-            size="icon"
-            accessibilityLabel="Favorite"
-            leftIcon={<IconSymbol name="heart.fill" size={18} color={C.text} />}
-            onPress={() => {}}
-          />
-        </ThemedView>
+      {/* Loading skeleton */}
+      {isLoading && (
+        <View>
+          {/* Skeleton section 1 */}
+          <View style={styles.skeletonSection}>
+            <View
+              style={[
+                styles.skeletonTitle,
+                { backgroundColor: `${colors.textSecondary}15` },
+              ]}
+            />
+            <View
+              style={[
+                styles.skeletonSubtitle,
+                { backgroundColor: `${colors.textSecondary}10` },
+              ]}
+            />
+            <View style={styles.skeletonCards}>
+              {[1, 2].map((i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.skeletonCardLarge,
+                    { backgroundColor: `${colors.textSecondary}12` },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
 
-        <ThemedText style={{ marginVertical: 12 }}>With icons</ThemedText>
-        <ThemedView style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-          <Button
-            leftIcon={<IconSymbol name="sparkles" size={18} color="#FFFFFF" />}
-            rightIcon={
-              <IconSymbol name="chevron.right" size={18} color="#FFFFFF" />
-            }
-            label="Primary"
-            onPress={() => {}}
-          />
-          <Button
-            variant="outline"
-            leftIcon={<IconSymbol name="sparkles" size={18} color={C.text} />}
-            rightIcon={
-              <IconSymbol name="chevron.right" size={18} color={C.text} />
-            }
-            label="Outline"
-            onPress={() => {}}
-          />
-          <Button
-            disabled
-            leftIcon={<IconSymbol name="sparkles" size={18} color={C.text} />}
-            label="Disabled"
-            onPress={() => {}}
-          />
-        </ThemedView>
-      </Collapsible>
-    </ParallaxScrollView>
+          {/* Skeleton section 2 */}
+          <View style={styles.skeletonSection}>
+            <View
+              style={[
+                styles.skeletonTitle,
+                { backgroundColor: `${colors.textSecondary}15` },
+              ]}
+            />
+            <View
+              style={[
+                styles.skeletonSubtitle,
+                { backgroundColor: `${colors.textSecondary}10` },
+              ]}
+            />
+            <View style={styles.skeletonCards}>
+              {[1, 2, 3].map((i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.skeletonCardMedium,
+                    { backgroundColor: `${colors.textSecondary}12` },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Gate: no recent presence → empty state */}
+      {!isLoading && !hasRecentPresence && <DiscoverEmptyState />}
+
+      {/* Feed sections */}
+      {hasRecentPresence && hasEncounters && feed && (
+        <>
+          {/* Section 1: Cruzaram seu caminho */}
+          {feed.direct_overlap.length > 0 && (
+            <DiscoverSection
+              title={t("screens.discover.sectionOverlap")}
+              subtitle={t("screens.discover.sectionOverlapDesc")}
+              encounters={feed.direct_overlap}
+              variant="large"
+            />
+          )}
+
+          {/* Section 2: Mesma Sintonia */}
+          {feed.vibe_match.length > 0 && (
+            <DiscoverSection
+              title={t("screens.discover.sectionVibe")}
+              subtitle={t("screens.discover.sectionVibeDesc")}
+              encounters={feed.vibe_match}
+              variant="medium"
+            />
+          )}
+
+          {/* Section 3: Mesma Rotina */}
+          {feed.path_match.length > 0 && (
+            <DiscoverSection
+              title={t("screens.discover.sectionRoutine")}
+              subtitle={t("screens.discover.sectionRoutineDesc")}
+              encounters={feed.path_match}
+              variant="medium"
+            />
+          )}
+        </>
+      )}
+
+      {/* Has presence but no encounters yet */}
+      {hasRecentPresence && !hasEncounters && !isLoading && (
+        <View style={styles.noEncountersContainer}>
+          <View
+            style={[
+              styles.noEncountersIcon,
+              { backgroundColor: `${colors.accent}15` },
+            ]}
+          >
+            <SparklesIcon width={32} height={32} color={colors.accent} />
+          </View>
+          <Text
+            style={[
+              typography.body,
+              { color: colors.textSecondary, textAlign: "center" },
+            ]}
+          >
+            {t("screens.discover.noEncounters")}
+          </Text>
+        </View>
+      )}
+    </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
+  header: {
+    paddingBottom: spacing.xl,
   },
-  titleContainer: {
+  headerRow: {
     flexDirection: "row",
-    gap: 8,
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  headerText: {
+    flex: 1,
+  },
+  infoButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: spacing.sm,
+    marginTop: 2,
+  },
+  noEncountersContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 80,
+    paddingHorizontal: spacing.xl,
+  },
+  noEncountersIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  skeletonSection: {
+    marginBottom: spacing.xl,
+  },
+  skeletonTitle: {
+    width: 160,
+    height: 18,
+    borderRadius: 8,
+    marginBottom: spacing.xs,
+  },
+  skeletonSubtitle: {
+    width: 220,
+    height: 14,
+    borderRadius: 6,
+    marginBottom: spacing.md,
+  },
+  skeletonCards: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  skeletonCardLarge: {
+    width: SCREEN_WIDTH * 0.72,
+    height: SCREEN_WIDTH * 0.72 * (4 / 3),
+    borderRadius: 20,
+  },
+  skeletonCardMedium: {
+    width: SCREEN_WIDTH * 0.52,
+    height: SCREEN_WIDTH * 0.52 * (4 / 3),
+    borderRadius: 20,
   },
 });

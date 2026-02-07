@@ -9,7 +9,8 @@ export type ModerationRejectionReason =
   | "content_flagged"
   | "sensitive_content"
   | "personal_data_detected"
-  | "not_human";
+  | "not_human"
+  | "underage_detected";
 
 export interface ModerationResult {
   approved: boolean;
@@ -20,7 +21,8 @@ export interface ModerationResult {
 export type BatchModerationReason =
   | "content_flagged"
   | "sensitive_content"
-  | "not_human";
+  | "not_human"
+  | "underage_detected";
 
 export interface BatchModerationResultItem {
   approved: boolean;

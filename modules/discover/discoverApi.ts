@@ -1,0 +1,62 @@
+import { supabase } from "@/modules/supabase/client";
+import { logger } from "@/utils/logger";
+import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { DiscoverFeed } from "./types";
+
+type DiscoverFeedResponse = {
+  has_recent_presence: boolean;
+  feed: DiscoverFeed;
+};
+
+export const discoverApi = createApi({
+  reducerPath: "discoverApi",
+  baseQuery: fakeBaseQuery(),
+  tagTypes: ["DiscoverFeed"],
+  endpoints: (builder) => ({
+    /**
+     * Fetches the discover feed via get-discover-feed Edge Function.
+     * Returns presence status + categorized encounters.
+     */
+    getDiscoverFeed: builder.query<DiscoverFeedResponse, void>({
+      queryFn: async () => {
+
+        try {
+          const { data, error } =
+            await supabase.functions.invoke<DiscoverFeedResponse>(
+              "get-discover-feed",
+              { method: "POST" }
+            );
+
+          if (error) {
+            logger.error("[discoverApi] get-discover-feed error:", error);
+            return { error: { status: "CUSTOM_ERROR", error: error.message } };
+          }
+
+          if (!data) {
+            return {
+              data: {
+                has_recent_presence: false,
+                feed: { direct_overlap: [], vibe_match: [], path_match: [] },
+              },
+            };
+          }
+
+          logger.log("[discoverApi] Feed loaded:", {
+            hasPresence: data.has_recent_presence,
+            overlap: data.feed.direct_overlap.length,
+            vibe: data.feed.vibe_match.length,
+            path: data.feed.path_match.length,
+          });
+
+          return { data };
+        } catch (err) {
+          logger.error("[discoverApi] Unexpected error:", err);
+          return { error: { status: "CUSTOM_ERROR", error: String(err) } };
+        }
+      },
+      providesTags: ["DiscoverFeed"],
+    }),
+  }),
+});
+
+export const { useGetDiscoverFeedQuery } = discoverApi;

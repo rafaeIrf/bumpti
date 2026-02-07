@@ -9,6 +9,7 @@ import {
   requestTrackingPermission,
 } from "@/modules/analytics";
 import { t } from "@/modules/locales";
+import { registerDeviceToken } from "@/modules/notifications";
 import { isIOS } from "@/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -60,6 +61,12 @@ const PermissionSheetContent = ({
     setIsRequesting(false);
 
     if (result.status === "granted") {
+      // Register FCM token immediately after permission granted
+      // This ensures the user doesn't need to restart the app
+      if (!isLocation && !isTracking) {
+        registerDeviceToken();
+      }
+
       // Refresh permission state to ensure hasPermission is updated
       await perm.refresh();
       // Mark as dismissed to prevent re-opening

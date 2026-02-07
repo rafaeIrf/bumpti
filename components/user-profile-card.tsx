@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
 import {
+  ALL_INTERESTS,
   EDUCATION_OPTIONS,
   INTENTION_OPTIONS,
   SMOKING_OPTIONS,
@@ -134,15 +135,28 @@ export function UserProfileCard({
 
   // --- Logic for Common Connections ---
   const commonIntentions = useMemo(() => {
-    // Defensive checks for types
     const myIntentions = currentUserProfile?.intentions as string[] | undefined;
     const theirIntentions = profile.intentions as string[] | undefined;
-
     if (!myIntentions || !theirIntentions) return [];
-
-    // Ensure accurate string comparison
     return theirIntentions.filter((i) => myIntentions.includes(i));
   }, [currentUserProfile, profile.intentions]);
+
+  const commonInterests = useMemo(() => {
+    const myInterests = (currentUserProfile as any)?.interests as
+      | string[]
+      | undefined;
+    const theirInterests = profile.interests as string[] | undefined;
+    if (!myInterests || !theirInterests) return [];
+    return theirInterests.filter((i) => myInterests.includes(i));
+  }, [currentUserProfile, profile.interests]);
+
+  const isMatchInterest = (key: string) =>
+    !isOwnProfile && commonInterests.includes(key);
+
+  const getInterestIcon = (key: string) => {
+    const item = ALL_INTERESTS.find((i) => i.key === key);
+    return item?.icon ?? "✨";
+  };
 
   const commonPlaces = useMemo(() => {
     // Logic to compare place IDs
@@ -369,9 +383,9 @@ export function UserProfileCard({
           </Section>
         )}
 
-        {/* INTERESTS */}
+        {/* INTENTIONS (what user is looking for) */}
         {profile.intentions && profile.intentions.length > 0 && (
-          <Section title={t("userProfile.sections.interests")}>
+          <Section title={t("userProfile.sections.intentions")}>
             <View style={styles.chipsWrap}>
               {profile.intentions.map((i) =>
                 renderTag(
@@ -379,11 +393,26 @@ export function UserProfileCard({
                   isMatchIntention(i) ? (
                     <SparklesIcon width={12} height={12} color="#2997FF" />
                   ) : null,
-                  isMatchIntention(i), // Blue if match
+                  isMatchIntention(i),
                 ),
               )}
+            </View>
+          </Section>
+        )}
 
-              {/* Show fallback if empty? No, checking length above */}
+        {/* INTERESTS / VIBES */}
+        {profile.interests && profile.interests.length > 0 && (
+          <Section title={t("userProfile.sections.vibes")}>
+            <View style={styles.chipsWrap}>
+              {profile.interests.map((key) =>
+                renderTag(
+                  `${getInterestIcon(key)} ${t(`screens.onboarding.interests.items.${key}` as any)}`,
+                  isMatchInterest(key) ? (
+                    <SparklesIcon width={12} height={12} color="#2997FF" />
+                  ) : null,
+                  isMatchInterest(key),
+                ),
+              )}
             </View>
           </Section>
         )}
