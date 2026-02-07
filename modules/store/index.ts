@@ -1,3 +1,4 @@
+import { discoverApi } from "@/modules/discover/discoverApi";
 import { interactionsApi } from "@/modules/interactions/interactionsApi";
 import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
 import { placesApi } from "@/modules/places/placesApi";
@@ -33,6 +34,7 @@ const appReducer_combined = combineReducers({
   [placesApi.reducerPath]: placesApi.reducer,
   [interactionsApi.reducerPath]: interactionsApi.reducer,
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
+  [discoverApi.reducerPath]: discoverApi.reducer,
   app: appReducer,
   onboarding: onboardingReducer,
   profile: profileReducer,
@@ -60,7 +62,8 @@ export const store = configureStore({
     }).concat(
       placesApi.middleware,
       interactionsApi.middleware,
-      pendingLikesApi.middleware
+      pendingLikesApi.middleware,
+      discoverApi.middleware
     ),
 });
 

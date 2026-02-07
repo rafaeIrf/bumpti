@@ -1150,6 +1150,35 @@
     "chatUnmatch": {
       "unmatchErrorTitle": "Não foi possível desfazer o match",
       "unmatchError": "Tente novamente em instantes."
+    },
+    "discover": {
+      "title": "Descubra",
+      "subtitle": "Suas segundas chances de conexão",
+      "sectionOverlap": "Cruzaram seu caminho",
+      "sectionOverlapDesc": "Pessoas que estiveram no mesmo lugar que você",
+      "sectionVibe": "Mesma sintonia",
+      "sectionVibeDesc": "Interesses e vibes em comum",
+      "sectionRoutine": "Mesma rotina",
+      "sectionRoutineDesc": "Frequentam os mesmos lugares que você",
+      "contextOverlap": "Em {{place}}",
+      "contextOverlapGeneric": "Cruzou seu caminho recentemente",
+      "contextVibe": "{{count}} interesses em comum",
+      "contextRoutine": "Também vai ao {{place}}",
+      "contextRoutineGeneric": "Mesma rotina que você",
+      "emptyTitle": "As melhores conexões acontecem lá fora",
+      "emptySubtitle": "Visite um dos nossos hotspots para descobrir quem cruzou seu caminho. Faça check-in e desbloqueie suas Segundas Chances!",
+      "emptyCta": "Explorar lugares",
+      "noEncounters": "Nenhum encontro ainda. Continue visitando lugares e encontraremos seus matches!",
+      "blurCta": "Faça check-in para revelar",
+      "verified": "Verificado",
+      "infoTitle": "Como funciona o Discover?",
+      "infoSubtitle": "Ajudamos você a reconectar com pessoas que cruzaram seu caminho nos últimos 7 dias — suas Segundas Chances.",
+      "infoStep1Title": "Faça check-in em um lugar",
+      "infoStep1Desc": "Visite um dos nossos hotspots e faça check-in. Seu feed fica ativo por 7 dias após o último check-in.",
+      "infoStep2Title": "Encontramos seus encontros",
+      "infoStep2Desc": "Nosso sistema detecta quem esteve no mesmo lugar, compartilha seus interesses ou frequenta os mesmos spots.",
+      "infoStep3Title": "Revele e conecte",
+      "infoStep3Desc": "Navegue pelos seus encontros e inicie uma conversa. Membros premium podem ver perfis completos."
     }
   },
   "venue": {
