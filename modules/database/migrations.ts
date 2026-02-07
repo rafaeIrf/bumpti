@@ -117,5 +117,18 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 9,
+      steps: [
+        // Add match_origin and match_metadata to matches table for Smart Match Header
+        addColumns({
+          table: 'matches',
+          columns: [
+            { name: 'match_origin', type: 'string', isOptional: true },
+            { name: 'match_metadata', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

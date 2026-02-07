@@ -249,6 +249,8 @@ export async function handleNewMatchBroadcast(
           record.otherUserName = payload.other_user_name ?? null;
           record.otherUserPhotoUrl = payload.other_user_photo_url ?? null;
           record.firstMessageAt = toDateOrNull(payload.first_message_at);
+          record.matchOrigin = payload.match_origin ?? null;
+          record.matchMetadata = payload.match_metadata ?? null;
         });
         logger.log('✅ Match created from broadcast:', matchId);
         
@@ -279,6 +281,8 @@ export async function handleNewMatchBroadcast(
         record.otherUserName = payload.other_user_name ?? null;
         record.otherUserPhotoUrl = payload.other_user_photo_url ?? null;
         record.firstMessageAt = toDateOrNull(payload.first_message_at);
+        record.matchOrigin = payload.match_origin ?? null;
+        record.matchMetadata = payload.match_metadata ?? null;
       });
 
       logger.log('✅ Match updated from broadcast:', matchId);

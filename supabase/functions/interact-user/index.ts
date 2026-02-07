@@ -43,6 +43,7 @@ async function buildMatchPayload(params: {
     .select(`
       id, user_a, user_b, status, matched_at, unmatched_at,
       place_id, place_name, user_a_opened_at, user_b_opened_at,
+      match_origin, match_metadata,
       profile_a:profiles!user_a(id, name),
       profile_b:profiles!user_b(id, name),
       chats(
@@ -103,6 +104,8 @@ async function buildMatchPayload(params: {
     other_user_id: otherUserId,
     other_user_name: otherProfile?.name ?? null,
     other_user_photo_url: signedPhotoUrl,
+    match_origin: matchRow.match_origin ?? null,
+    match_metadata: matchRow.match_metadata ? JSON.stringify(matchRow.match_metadata) : null,
   };
 }
 

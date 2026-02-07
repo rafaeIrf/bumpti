@@ -136,6 +136,7 @@ function ChatListScreen({
                 photoUrl: item.otherUserPhotoUrl ?? undefined,
                 matchPlace: item.placeName ?? undefined,
                 matchedAt: item.matchedAt?.toISOString() ?? undefined,
+                matchOrigin: item.matchOrigin ?? undefined,
               },
             });
           }}

@@ -1119,6 +1119,12 @@
     "chatMessages": {
       "online": "Online",
       "connectedHere": "You connected here",
+      "matchOrigin": {
+        "live": "You're at the same place",
+        "directOverlap": "You were at the same place",
+        "vibeMatch": "You share similar vibes",
+        "pathMatch": "Your paths crossed"
+      },
       "moreActions": "More actions",
       "notSent": "Not sent",
       "messageNotSent": "Message not sent",
