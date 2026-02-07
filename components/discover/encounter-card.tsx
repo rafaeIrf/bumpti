@@ -318,7 +318,7 @@ export default function EncounterCard({
           </View>
 
           {/* Like button — top-right for medium cards, bottom-right for large */}
-          {onLike && (
+          {onLike && isPremium && (
             <Pressable
               onPress={handleLike}
               hitSlop={8}
