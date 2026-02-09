@@ -28,9 +28,12 @@ import { useFavoritePlacesList } from "@/hooks/use-favorite-places-list";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
-import { useScreenTracking } from "@/hooks/use-screen-tracking";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
