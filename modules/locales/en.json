@@ -573,6 +573,7 @@
       "detectionBanner": {
         "question": "Are you at {{placeName}}?",
         "connect": "Connect",
+        "connectEntrar": "Enter",
         "close": "Close",
         "activeUsers": "{{count}} people here"
       },
