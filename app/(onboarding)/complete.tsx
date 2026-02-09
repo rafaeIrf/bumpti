@@ -4,9 +4,11 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { trackOnboardingComplete } from "@/modules/analytics";
+import {
+  trackOnboardingComplete,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
 import { fetchAndSetUserProfile } from "@/modules/profile/index";
@@ -31,8 +33,7 @@ export default function CompleteScreen() {
   useScreenTracking({
     screenName: "onboarding_complete",
     params: {
-    onboarding_step: 13,
-    step_name: "complete",
+      step_name: "complete",
     },
   });
 

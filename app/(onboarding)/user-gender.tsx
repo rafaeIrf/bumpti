@@ -6,8 +6,8 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import { GENDER_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices";
 import { isIOS } from "@/utils";
@@ -27,8 +27,7 @@ export default function UserGenderScreen() {
   useScreenTracking({
     screenName: "onboarding_gender",
     params: {
-    onboarding_step: 3,
-    step_name: "gender",
+      step_name: "gender",
     },
   });
 

@@ -3,6 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { router } from "expo-router";
 import { StyleSheet } from "react-native";
@@ -20,6 +21,13 @@ export default function WelcomeScreen() {
   const handleStart = () => {
     router.push("/(onboarding)/intro-carousel");
   };
+
+  useScreenTracking({
+    screenName: "onboarding_welcome",
+    params: {
+      step_name: "welcome",
+    },
+  });
 
   return (
     <ThemedView

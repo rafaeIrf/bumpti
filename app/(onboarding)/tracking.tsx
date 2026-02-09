@@ -4,9 +4,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { logger } from "@/utils/logger";
@@ -29,8 +32,7 @@ export default function TrackingScreen() {
   useScreenTracking({
     screenName: "onboarding_tracking",
     params: {
-    onboarding_step: 12,
-    step_name: "tracking",
+      step_name: "tracking",
     },
   });
 

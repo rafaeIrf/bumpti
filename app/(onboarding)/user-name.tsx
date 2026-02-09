@@ -20,8 +20,7 @@ export default function UserNameScreen() {
   useScreenTracking({
     screenName: "onboarding_name",
     params: {
-    onboarding_step: 1,
-    step_name: "name",
+      step_name: "name",
     },
   });
 

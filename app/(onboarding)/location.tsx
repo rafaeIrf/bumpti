@@ -6,8 +6,8 @@ import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { triggerCityHydration } from "@/modules/places/api";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -31,8 +31,7 @@ export default function LocationScreen() {
   useScreenTracking({
     screenName: "onboarding_location",
     params: {
-    onboarding_step: 8,
-    step_name: "location",
+      step_name: "location",
     },
   });
 

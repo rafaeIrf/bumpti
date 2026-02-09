@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
   useScreenTracking({
     screenName: "auth_welcome",
     params: {
-    screen_class: "WelcomeScreen",
+      screen_class: "WelcomeScreen",
     },
   });
 

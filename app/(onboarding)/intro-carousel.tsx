@@ -33,11 +33,9 @@ export default function IntroCarouselScreen() {
   const insets = useSafeAreaInsets();
   const carouselRef = useRef<ICarouselInstance>(null);
 
-  // Track screen view
   useScreenTracking({
     screenName: "onboarding_intro_carousel",
     params: {
-      onboarding_step: 0,
       step_name: "intro_carousel",
     },
   });

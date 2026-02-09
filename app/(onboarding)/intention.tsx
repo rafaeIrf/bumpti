@@ -6,8 +6,8 @@ import { SelectionCard } from "@/components/ui/selection-card";
 import { INTENTION_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useEffect, useState } from "react";
@@ -37,8 +37,7 @@ export default function IntentionScreen() {
   useScreenTracking({
     screenName: "onboarding_intention",
     params: {
-    onboarding_step: 5,
-    step_name: "intention",
+      step_name: "intention",
     },
   });
 

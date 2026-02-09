@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useNotificationPermission } from "@/hooks/use-notification-permission";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { registerDeviceToken } from "@/modules/notifications";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -36,8 +36,7 @@ export default function NotificationsScreen() {
   useScreenTracking({
     screenName: "onboarding_notifications",
     params: {
-    onboarding_step: 11,
-    step_name: "notifications",
+      step_name: "notifications",
     },
   });
 
