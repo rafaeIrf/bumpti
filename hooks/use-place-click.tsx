@@ -86,7 +86,6 @@ export function usePlaceClick() {
       // Track credits purchase sheet shown
       trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CREDITS_PURCHASE_SHOWN, {
         placeId: placeId || "unknown",
-        hasCredits: checkinCredits > 0,
         creditsCount: checkinCredits,
       });
 
