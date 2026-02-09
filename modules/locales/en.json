@@ -1198,6 +1198,7 @@
         "subtitle": " The vibe is great!",
         "supportText": "There are amazing people connected right now. Enter to see who is nearby and chat.",
         "button": "Enter",
+        "buttonConectar": "Connect",
         "microcopy": "You will be able to see and chat with people who are at this place right now."
       },
       "quiet": {

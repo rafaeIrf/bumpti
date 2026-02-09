@@ -14,6 +14,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { PlaceReview } from "@/modules/places/types";
+import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -67,6 +68,12 @@ export function PlaceDetailsBottomSheet({
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const posthog = usePostHog();
+  const ctaVariant = useFeatureFlag("place-details-cta-test");
+  const ctaLabel =
+    ctaVariant === "variant-conectar"
+      ? t("venue.connection.active.buttonConectar")
+      : t("venue.connection.active.button");
 
   const { isFavorite: localFavorite, handleToggle: handleFavorite } =
     useOptimisticFavorite({
@@ -266,12 +273,19 @@ export function PlaceDetailsBottomSheet({
             variant="default"
             size="lg"
             fullWidth
-            label={t("venue.connection.active.button")}
+            label={ctaLabel}
             onPress={() => {
               trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.CONNECT_CLICKED, {
                 placeId,
                 distance: distance,
                 activeUsers: activeUsers || 0,
+              });
+              posthog?.capture("place_details_connect_clicked", {
+                place_id: placeId,
+                distance_meters: distance,
+                cta_variant: ctaVariant || "fallback",
+                cta_text: ctaLabel,
+                active_users: activeUsers || 0,
               });
               onConnect?.();
             }}
