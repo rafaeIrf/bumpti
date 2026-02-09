@@ -762,6 +762,7 @@
           "title": "Pronto para começar?",
           "text": "Crie seu perfil, escolha seus lugares favoritos e comece a fazer conexões reais."
         },
+        "nextButton": "Próximo",
         "finalButton": "Vamos lá"
       },
       "heroTitle1": "Conheça pessoas reais,",
@@ -1200,6 +1201,7 @@
         "subtitle": "O clima está ótimo!",
         "supportText": "Tem gente incrível conectada agora. Entre para ver quem está por perto e puxar um papo.",
         "button": "Entrar",
+        "buttonConectar": "Conectar",
         "microcopy": "Você poderá ver e conversar com pessoas que estão nesse lugar agora."
       },
       "quiet": {

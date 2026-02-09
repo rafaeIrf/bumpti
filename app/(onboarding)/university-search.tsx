@@ -7,9 +7,12 @@ export default function UniversitySearchModal() {
   const router = useRouter();
 
   // Track screen view
-  useScreenTracking("onboarding_university_search", {
+  useScreenTracking({
+    screenName: "onboarding_university_search",
+    params: {
     onboarding_step: 10,
     step_name: "university_search",
+    },
   });
 
   const handleUniversitySelect = (place: {

@@ -17,9 +17,12 @@ export default function UserNameScreen() {
   const [name, setName] = useState(userData.name || "");
 
   // Track screen view
-  useScreenTracking("onboarding_name", {
+  useScreenTracking({
+    screenName: "onboarding_name",
+    params: {
     onboarding_step: 1,
     step_name: "name",
+    },
   });
 
   const handleContinue = () => {

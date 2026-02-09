@@ -28,9 +28,12 @@ export default function CompleteScreen() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Track screen view
-  useScreenTracking("onboarding_complete", {
+  useScreenTracking({
+    screenName: "onboarding_complete",
+    params: {
     onboarding_step: 13,
     step_name: "complete",
+    },
   });
 
   const handleComplete = async () => {

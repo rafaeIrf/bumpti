@@ -33,8 +33,11 @@ export default function WelcomeScreen() {
   const [isLoading, setIsLoading] = useState<"apple" | "google" | null>(null);
 
   // Track screen view
-  useScreenTracking("auth_welcome", {
+  useScreenTracking({
+    screenName: "auth_welcome",
+    params: {
     screen_class: "WelcomeScreen",
+    },
   });
 
   useEffect(() => {

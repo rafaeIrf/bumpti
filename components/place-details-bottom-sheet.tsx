@@ -11,8 +11,10 @@ import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOptimisticFavorite } from "@/hooks/use-optimistic-favorite";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { PlaceReview } from "@/modules/places/types";
+import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -66,6 +68,12 @@ export function PlaceDetailsBottomSheet({
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const posthog = usePostHog();
+  const ctaVariant = useFeatureFlag("place-details-cta-test");
+  const ctaLabel =
+    ctaVariant === "variant-conectar"
+      ? t("venue.connection.active.buttonConectar")
+      : t("venue.connection.active.button");
 
   const { isFavorite: localFavorite, handleToggle: handleFavorite } =
     useOptimisticFavorite({
@@ -104,7 +112,13 @@ export function PlaceDetailsBottomSheet({
       ]}
     >
       <Pressable
-        onPress={onClose}
+        onPress={() => {
+          trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.DISMISSED, {
+            placeId,
+            hadInteraction: false,
+          });
+          onClose?.();
+        }}
         style={styles.closeButton}
         hitSlop={8}
         accessibilityRole="button"
@@ -259,8 +273,22 @@ export function PlaceDetailsBottomSheet({
             variant="default"
             size="lg"
             fullWidth
-            label={t("venue.connection.active.button")}
-            onPress={onConnect || (() => {})}
+            label={ctaLabel}
+            onPress={() => {
+              trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.CONNECT_CLICKED, {
+                placeId,
+                distance: distance,
+                activeUsers: activeUsers || 0,
+              });
+              posthog?.capture("place_details_connect_clicked", {
+                place_id: placeId,
+                distance_meters: distance,
+                cta_variant: ctaVariant || "fallback",
+                cta_text: ctaLabel,
+                active_users: activeUsers || 0,
+              });
+              onConnect?.();
+            }}
             loading={isLoading}
             disabled={isLoading}
           />
@@ -272,7 +300,12 @@ export function PlaceDetailsBottomSheet({
                 size={48}
                 iconSize={22}
                 variant="default"
-                onPress={onNavigate || (() => {})}
+                onPress={() => {
+                  trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.NAVIGATE_CLICKED, {
+                    placeId,
+                  });
+                  onNavigate?.();
+                }}
                 icon={(props) => <NavigationIcon {...props} />}
                 color={colors.text}
               />
@@ -289,7 +322,12 @@ export function PlaceDetailsBottomSheet({
                 size={48}
                 iconSize={22}
                 variant="default"
-                onPress={onRate || (() => {})}
+                onPress={() => {
+                  trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.RATE_CLICKED, {
+                    placeId,
+                  });
+                  onRate?.();
+                }}
                 icon={(props) => <StarIcon {...props} />}
                 color={colors.text}
               />
@@ -308,7 +346,13 @@ export function PlaceDetailsBottomSheet({
                 size={48}
                 iconSize={22}
                 variant={localFavorite ? "accent" : "default"}
-                onPress={handleFavorite}
+                onPress={() => {
+                  trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.FAVORITE_CLICKED, {
+                    placeId,
+                    action: localFavorite ? "remove" : "add",
+                  });
+                  handleFavorite();
+                }}
                 icon={(props) => (
                   <HeartIcon
                     {...props}
@@ -331,7 +375,12 @@ export function PlaceDetailsBottomSheet({
             size="default"
             textStyle={{ color: colors.textSecondary }}
             label={t("bottomSheets.placeReport.reportButton")}
-            onPress={onReport || (() => {})}
+            onPress={() => {
+              trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.REPORT_CLICKED, {
+                placeId,
+              });
+              onReport?.();
+            }}
           />
         </View>
       </View>

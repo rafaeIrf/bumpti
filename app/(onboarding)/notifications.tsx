@@ -33,9 +33,12 @@ export default function NotificationsScreen() {
   const { request } = useNotificationPermission();
 
   // Track screen view
-  useScreenTracking("onboarding_notifications", {
+  useScreenTracking({
+    screenName: "onboarding_notifications",
+    params: {
     onboarding_step: 11,
     step_name: "notifications",
+    },
   });
 
   // Animação de balanço do sino

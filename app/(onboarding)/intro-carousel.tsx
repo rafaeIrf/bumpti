@@ -2,12 +2,11 @@ import { IllustratedSlide } from "@/components/illustrated-slide";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/ui/button";
 import { spacing } from "@/constants/theme";
-import { usePermissionSheet } from "@/hooks/use-permission-sheet";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
@@ -16,7 +15,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import Carousel from "react-native-reanimated-carousel";
+import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -32,12 +31,15 @@ export default function IntroCarouselScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
-  const { showTrackingSheet } = usePermissionSheet();
+  const carouselRef = useRef<ICarouselInstance>(null);
 
   // Track screen view
-  useScreenTracking("onboarding_intro_carousel", {
-    onboarding_step: 0,
-    step_name: "intro_carousel",
+  useScreenTracking({
+    screenName: "onboarding_intro_carousel",
+    params: {
+      onboarding_step: 0,
+      step_name: "intro_carousel",
+    },
   });
 
   // Slides minimalistas sem imagens
@@ -66,10 +68,9 @@ export default function IntroCarouselScreen() {
 
   const handleNext = async () => {
     if (currentIndex < slides.length - 1) {
-      // Navega para próximo slide
+      // Navega para próximo slide programaticamente
       const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      scrollX.value = nextIndex * SCREEN_WIDTH;
+      carouselRef.current?.scrollTo({ index: nextIndex, animated: true });
     } else {
       router.replace("/(onboarding)/user-name");
     }
@@ -82,6 +83,7 @@ export default function IntroCarouselScreen() {
   return (
     <ThemedView style={styles.container}>
       <Carousel
+        ref={carouselRef}
         loop={false}
         width={SCREEN_WIDTH}
         height={SCREEN_HEIGHT}
@@ -109,23 +111,22 @@ export default function IntroCarouselScreen() {
         ))}
       </View>
 
-      {/* Navigation Button - apenas no último slide */}
-      {currentIndex === slides.length - 1 && (
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(600)}
-          style={[
-            styles.buttonContainer,
-            { bottom: insets.bottom + spacing.md },
-          ]}
-        >
-          <Button
-            label={t("screens.onboarding.introCarousel.finalButton")}
-            onPress={handleNext}
-            size="lg"
-            fullWidth
-          />
-        </Animated.View>
-      )}
+      {/* Navigation Button - agora em todos os slides */}
+      <Animated.View
+        entering={FadeInDown.delay(300).duration(600)}
+        style={[styles.buttonContainer, { bottom: insets.bottom + spacing.md }]}
+      >
+        <Button
+          label={
+            currentIndex === slides.length - 1
+              ? t("screens.onboarding.introCarousel.finalButton")
+              : t("screens.onboarding.introCarousel.nextButton")
+          }
+          onPress={handleNext}
+          size="lg"
+          fullWidth
+        />
+      </Animated.View>
     </ThemedView>
   );
 }

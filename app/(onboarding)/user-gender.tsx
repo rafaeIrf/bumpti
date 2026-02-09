@@ -24,9 +24,12 @@ export default function UserGenderScreen() {
   // Removed useOnboardingOptions usage
 
   // Track screen view
-  useScreenTracking("onboarding_gender", {
+  useScreenTracking({
+    screenName: "onboarding_gender",
+    params: {
     onboarding_step: 3,
     step_name: "gender",
+    },
   });
 
   const normalizeInitialGender = (value?: string | null) => {

@@ -5,6 +5,7 @@ import {
   VenueState,
 } from "@/components/connection-bottom-sheet";
 import { PowerUpBottomSheet } from "@/components/power-up-bottom-sheet";
+import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { enterPlace } from "@/modules/presence/api";
 import { logger } from "@/utils/logger";
@@ -76,38 +77,47 @@ export function usePlaceClick() {
   // Bottom Sheet Actions
   // ───────────────────────────────────────────────────────────────────────────
 
-  const showPowerUpSheet = useCallback(() => {
-    if (!bottomSheet) return;
+  const showPowerUpSheet = useCallback(
+    (placeId?: string) => {
+      if (!bottomSheet) return;
 
-    logger.log("[PlaceClick] Showing PowerUp purchase sheet");
+      logger.log("[PlaceClick] Showing PowerUp purchase sheet");
 
-    bottomSheet.expand({
-      content: () => (
-        <PowerUpBottomSheet
-          translationKey="screens.profile.powerUps.earlyCheckin"
-          powerUpType="earlyCheckin"
-          icon={MapPinIcon}
-          options={[
-            { quantity: 1, id: "single" },
-            {
-              quantity: 5,
-              id: "bundle",
-              badgeId: "popular",
-              isHighlighted: true,
-            },
-            { quantity: 10, id: "max" },
-          ]}
-          onClose={() => bottomSheet.close()}
-          onPurchaseComplete={() => {
-            logger.log("[PlaceClick] Check-in+ purchase completed");
-            bottomSheet.close();
-          }}
-          onUpgradeToPremium={navigateToPremiumPaywall}
-        />
-      ),
-      draggable: true,
-    });
-  }, [bottomSheet, navigateToPremiumPaywall]);
+      // Track credits purchase sheet shown
+      trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CREDITS_PURCHASE_SHOWN, {
+        placeId: placeId || "unknown",
+        creditsCount: checkinCredits,
+      });
+
+      bottomSheet.expand({
+        content: () => (
+          <PowerUpBottomSheet
+            translationKey="screens.profile.powerUps.earlyCheckin"
+            powerUpType="earlyCheckin"
+            icon={MapPinIcon}
+            options={[
+              { quantity: 1, id: "single" },
+              {
+                quantity: 5,
+                id: "bundle",
+                badgeId: "popular",
+                isHighlighted: true,
+              },
+              { quantity: 10, id: "max" },
+            ]}
+            onClose={() => bottomSheet.close()}
+            onPurchaseComplete={() => {
+              logger.log("[PlaceClick] Check-in+ purchase completed");
+              bottomSheet.close();
+            }}
+            onUpgradeToPremium={navigateToPremiumPaywall}
+          />
+        ),
+        draggable: true,
+      });
+    },
+    [bottomSheet, navigateToPremiumPaywall],
+  );
 
   const handleConnectionBottomSheet = useCallback(
     (params: PlaceInteractionParams, venueState: VenueState) => {
@@ -117,15 +127,41 @@ export function usePlaceClick() {
 
       // Handler for the main "Connect" button (normal entry without check-in+)
       const handleConnect = async () => {
+        // Track check-in attempt
+        trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_ATTEMPTED, {
+          placeId: params.placeId,
+          distance: params.distance || 0,
+          activeUsers: params.active_users || 0,
+          usedCheckinPlus: false,
+        });
+
         // Try normal entry - backend will validate distance
         const result = await tryEnterPlace(params, false);
 
         if (result) {
+          // Track success
+          trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_SUCCESS, {
+            placeId: params.placeId,
+            distance: params.distance || 0,
+            usedCheckinPlus: false,
+          });
+
           bottomSheet.close();
-          navigateToPlacePeople(params.placeId, params.name, params.distance);
+          navigateToPlacePeople(
+            params.placeId,
+            params.name || "Unknown",
+            params.distance,
+          );
         } else {
+          // Track failure
+          trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_FAILED, {
+            placeId: params.placeId,
+            distance: params.distance || 0,
+            reason: "too_far",
+          });
+
           // Entry failed - show purchase flow
-          showPowerUpSheet();
+          showPowerUpSheet(params.placeId);
         }
       };
 
@@ -133,19 +169,55 @@ export function usePlaceClick() {
       const handlePremiumPress = async () => {
         logger.log("[PlaceClick] onPremiumPress, credits:", checkinCredits);
 
+        // Track check-in+ sheet shown
+        trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_PLUS_SHOWN, {
+          placeId: params.placeId,
+          distance: params.distance || 0,
+          hasCredits: checkinCredits > 0,
+        });
+
         if (checkinCredits > 0) {
+          // Track credit usage attempt
+          trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_ATTEMPTED, {
+            placeId: params.placeId,
+            distance: params.distance || 0,
+            activeUsers: params.active_users || 0,
+            usedCheckinPlus: true,
+          });
+
+          trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_PLUS_USED, {
+            placeId: params.placeId,
+            remainingCredits: checkinCredits - 1,
+          });
+
           const result = await tryEnterPlace(params, true);
 
           if (result) {
+            // Track success with check-in+
+            trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_SUCCESS, {
+              placeId: params.placeId,
+              distance: params.distance || 0,
+              usedCheckinPlus: true,
+            });
+
             bottomSheet.close();
             // Navigate directly to place-people after successful check-in+
-            navigateToPlacePeople(params.placeId, params.name, params.distance);
+            navigateToPlacePeople(
+              params.placeId,
+              params.name || "Unknown",
+              params.distance,
+            );
           } else {
             logger.warn("[PlaceClick] Entry failed even with credits");
-            showPowerUpSheet();
+            trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.CHECKIN_FAILED, {
+              placeId: params.placeId,
+              distance: params.distance || 0,
+              reason: "unknown_error",
+            });
+            showPowerUpSheet(params.placeId);
           }
         } else {
-          showPowerUpSheet();
+          showPowerUpSheet(params.placeId);
         }
       };
 
@@ -178,6 +250,13 @@ export function usePlaceClick() {
         distance: params.distance,
       });
 
+      // Track place people navigation initiated
+      trackEvent(ANALYTICS_EVENTS.CHECKIN_FLOW.PLACE_PEOPLE_NAVIGATED, {
+        placeId: params.placeId,
+        distance: params.distance || 0,
+        activeUsers: params.active_users || 0,
+      });
+
       if (!bottomSheet) {
         logger.warn("[PlaceClick] No bottomSheet available");
         return;
@@ -198,7 +277,11 @@ export function usePlaceClick() {
           "[PlaceClick] Entry successful (existing presence or close), navigating",
         );
         bottomSheet?.close();
-        navigateToPlacePeople(params.placeId, params.name, params.distance);
+        navigateToPlacePeople(
+          params.placeId,
+          params.name || "Unknown",
+          params.distance,
+        );
         return;
       }
 

@@ -759,6 +759,7 @@
           "title": "¿Listo para empezar?",
           "text": "Crea tu perfil, elige tus lugares favoritos y comienza a hacer conexiones reales."
         },
+        "nextButton": "Siguiente",
         "finalButton": "Vamos"
       },
       "heroTitle1": "Conoce gente real,",
@@ -1197,6 +1198,7 @@
         "subtitle": "¡El ambiente está genial!",
         "supportText": "Hay gente increíble conectada ahora. Entra para ver quién está cerca y conversar.",
         "button": "Entrar",
+        "buttonConectar": "Conectar",
         "microcopy": "Podrás ver y conversar con personas que están en este lugar ahora."
       },
       "quiet": {

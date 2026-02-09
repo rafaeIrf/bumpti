@@ -29,6 +29,11 @@ import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import { shouldHaveMorePages } from "@/modules/places/nearby-pagination";
@@ -98,8 +103,10 @@ export default function CategoryResultsScreen() {
   const nearbyMode = params.nearby === "true";
   const communityFavoritesMode = params.communityFavorites === "true";
   const mostFrequentMode = params.mostFrequent === "true";
-  const { handlePlaceClick } = usePlaceClick();
+
   const insets = useSafeAreaInsets();
+  const { handlePlaceClick } = usePlaceClick();
+
   const {
     hasPermission: hasLocationPermission,
     isLoading: permissionLoading,
@@ -150,6 +157,25 @@ export default function CategoryResultsScreen() {
     }
     return category;
   }, [activeFilter, category, nearbyMode]);
+
+  // Track screen view
+  useScreenTracking({
+    screenName: "category_results",
+    params: {
+      mode: trendingMode
+        ? "trending"
+        : favoritesMode
+          ? "favorites"
+          : communityFavoritesMode
+            ? "community_favorites"
+            : mostFrequentMode
+              ? "most_frequent"
+              : nearbyMode
+                ? "nearby"
+                : "category",
+      category: categoryName || "all",
+    },
+  });
 
   const shouldFetchNearby =
     !favoritesMode &&
@@ -422,11 +448,26 @@ export default function CategoryResultsScreen() {
 
   const handleApplyFilters = useCallback(
     (nextSortBy: SortOption, nextMinRating: number | null) => {
+      // Track filter changes
+      if (nextMinRating !== minRating) {
+        trackEvent(ANALYTICS_EVENTS.CATEGORY_RESULTS.FILTER_CHANGED, {
+          filterType: "min_rating",
+          filterValue: nextMinRating?.toString() || "all",
+        });
+      }
+
+      // Track sort changes
+      if (nextSortBy !== sortBy) {
+        trackEvent(ANALYTICS_EVENTS.CATEGORY_RESULTS.SORT_CHANGED, {
+          sortBy: nextSortBy,
+        });
+      }
+
       setSortBy(nextSortBy);
       setMinRating(nextMinRating);
       bottomSheet?.close();
     },
-    [bottomSheet],
+    [bottomSheet, minRating, sortBy],
   );
 
   const handleOpenFilters = useCallback(() => {
@@ -509,7 +550,21 @@ export default function CategoryResultsScreen() {
         >
           <PlaceCard
             place={placeData}
-            onPress={() => showPlaceDetails(item)}
+            onPress={() => {
+              // Track place card click
+              trackEvent(ANALYTICS_EVENTS.CATEGORY_RESULTS.PLACE_CARD_CLICKED, {
+                placeId: item.placeId,
+                position: index,
+                context: trendingMode
+                  ? "trending"
+                  : favoritesMode
+                    ? "favorites"
+                    : nearbyMode
+                      ? "nearby"
+                      : "category",
+              });
+              showPlaceDetails(item);
+            }}
             isFavorite={favoriteIds.has(item.placeId)}
             onToggleFavorite={() =>
               handleToggle(item.placeId, {

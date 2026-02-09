@@ -1,37 +1,45 @@
-import { useEffect } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import { ANALYTICS_EVENTS } from "./analytics-events";
 import { trackEvent } from "./analytics-service";
+
+interface ScreenTrackingOptions {
+  screenName: string;
+  params?: Record<string, string | number | boolean>;
+}
 
 /**
  * Hook for automatic screen view tracking.
  *
- * Dispatches to both Firebase Analytics and PostHog when component mounts.
+ * Dispatches to both Firebase Analytics and PostHog when screen comes into focus.
  * This is the standard way to track screen navigation in the app.
  *
- * @param screenName - Name of the screen (e.g., 'onboarding_name', 'auth_welcome')
- * @param params - Optional parameters to attach to the event
+ * @param options - Screen tracking configuration
+ * @param options.screenName - Name of the screen (e.g., 'onboarding_name', 'auth_welcome')
+ * @param options.params - Optional parameters to attach to the event
  *
  * @example
  * ```tsx
  * // Basic usage
- * useScreenTracking('onboarding_name');
+ * useScreenTracking({ screenName: 'onboarding_name' });
  *
  * // With parameters
- * useScreenTracking('onboarding_name', {
- *   onboarding_step: 1,
- *   step_name: 'name',
+ * useScreenTracking({
+ *   screenName: 'category_results',
+ *   params: { mode: 'trending', category: 'cafe' }
  * });
  * ```
  */
-export function useScreenTracking(
-  screenName: string,
-  params?: Record<string, string | number | boolean>
-): void {
-  useEffect(() => {
-    trackEvent(ANALYTICS_EVENTS.SCREEN.SCREEN_VIEW, {
-      screen_name: screenName,
-      ...params,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+export function useScreenTracking({
+  screenName,
+  params,
+}: ScreenTrackingOptions): void {
+  useFocusEffect(
+    useCallback(() => {
+      trackEvent(ANALYTICS_EVENTS.SCREEN.SCREEN_VIEW, {
+        screen_name: screenName,
+        ...params,
+      });
+    }, [screenName, params]),
+  );
 }

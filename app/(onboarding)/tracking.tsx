@@ -26,9 +26,12 @@ export default function TrackingScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
-  useScreenTracking("onboarding_tracking", {
+  useScreenTracking({
+    screenName: "onboarding_tracking",
+    params: {
     onboarding_step: 12,
     step_name: "tracking",
+    },
   });
 
   const handleEnableTracking = async () => {
