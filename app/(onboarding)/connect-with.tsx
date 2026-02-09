@@ -30,9 +30,12 @@ export default function ConnectWithScreen() {
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
-  useScreenTracking("onboarding_connect_with", {
+  useScreenTracking({
+    screenName: "onboarding_connect_with",
+    params: {
     onboarding_step: 4,
     step_name: "connect_with",
+    },
   });
 
   const [selectedOptions, setSelectedOptions] = useState<

@@ -20,9 +20,12 @@ export default function UserAgeScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
-  useScreenTracking("onboarding_age", {
+  useScreenTracking({
+    screenName: "onboarding_age",
+    params: {
     onboarding_step: 2,
     step_name: "age",
+    },
   });
 
   const [birthDate, setBirthDate] = useState<Moment | null>(null);

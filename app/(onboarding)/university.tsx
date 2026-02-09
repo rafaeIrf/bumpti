@@ -33,9 +33,12 @@ export default function UniversityScreen() {
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
-  useScreenTracking("onboarding_university", {
+  useScreenTracking({
+    screenName: "onboarding_university",
+    params: {
     onboarding_step: 10,
     step_name: "university",
+    },
   });
 
   // State

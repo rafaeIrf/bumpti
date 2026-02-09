@@ -20,9 +20,12 @@ export default function FavoritePlacesScreen() {
   const { location: userLocation } = useCachedLocation();
 
   // Track screen view
-  useScreenTracking("onboarding_favorite_places", {
+  useScreenTracking({
+    screenName: "onboarding_favorite_places",
+    params: {
     onboarding_step: 9,
     step_name: "favorite_places",
+    },
   });
 
   const {

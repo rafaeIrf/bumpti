@@ -32,6 +32,11 @@ import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
@@ -39,7 +44,7 @@ import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
 import { useAppSelector } from "@/modules/store/hooks";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
@@ -96,6 +101,25 @@ export default function HomeScreen() {
   // This ensures the count updates when places with 0 active_users are filtered out
   const trendingCount = trendingData?.places?.length ?? 0;
 
+  // Track detection banner shown
+  useEffect(() => {
+    if (detectedPlace) {
+      trackEvent(ANALYTICS_EVENTS.HOME.DETECTION_BANNER_SHOWN, {
+        placeId: detectedPlace.id,
+      });
+    }
+  }, [detectedPlace]);
+
+  // Track detection banner dismiss
+  const handleDismissDetection = useCallback(() => {
+    if (detectedPlace) {
+      trackEvent(ANALYTICS_EVENTS.HOME.DETECTION_BANNER_DISMISS, {
+        placeId: detectedPlace.id,
+      });
+    }
+    dismissDetectedPlace();
+  }, [detectedPlace, dismissDetectedPlace]);
+
   const {
     showLocationSheet,
     showNotificationSheet,
@@ -108,6 +132,9 @@ export default function HomeScreen() {
   useEffect(() => {
     showTrackingSheet();
   }, [showTrackingSheet]);
+
+  // Track screen view
+  useScreenTracking({ screenName: "home" });
 
   useEffect(() => {
     // Show location sheet first if not yet handled (granted or dismissed)
@@ -294,6 +321,13 @@ export default function HomeScreen() {
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category.id);
+
+    // Track category click
+    trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
+      categoryId: category.id,
+      categoryName: category.title,
+    });
+
     router.push({
       pathname: "/main/category-results",
       params: {
@@ -330,12 +364,18 @@ export default function HomeScreen() {
   };
 
   const handleOpenSearch = () => {
+    trackEvent(ANALYTICS_EVENTS.HOME.SEARCH_OPENED, {});
     router.push("/main/place-search");
   };
 
   const handleConnectPlace = async (placeData: DetectedPlace) => {
     // Auto check-in at detected place
     if (!detectedPlace || isConnecting) return;
+
+    // Track detection banner connect
+    trackEvent(ANALYTICS_EVENTS.HOME.DETECTION_BANNER_CONNECT, {
+      placeId: placeData.id,
+    });
 
     setIsConnecting(true);
     try {
@@ -359,7 +399,10 @@ export default function HomeScreen() {
         <ScreenToolbar
           leftAction={{
             icon: SlidersHorizontalIcon,
-            onClick: () => router.push("main/filters" as any),
+            onClick: () => {
+              trackEvent(ANALYTICS_EVENTS.HOME.FILTER_OPENED, {});
+              router.push("main/filters" as any);
+            },
             ariaLabel: t("screens.home.toolbar.filters"),
             color: colors.icon,
           }}
@@ -383,7 +426,7 @@ export default function HomeScreen() {
           <DetectionBanner
             place={detectedPlace}
             onConnect={handleConnectPlace}
-            onDismiss={dismissDetectedPlace}
+            onDismiss={handleDismissDetection}
             isConnecting={isConnecting}
           />
         )}

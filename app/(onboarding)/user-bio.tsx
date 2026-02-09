@@ -26,9 +26,12 @@ export default function UserBioScreen() {
   const [isValidating, setIsValidating] = useState(false);
 
   // Track screen view
-  useScreenTracking("onboarding_bio", {
+  useScreenTracking({
+    screenName: "onboarding_bio",
+    params: {
     onboarding_step: 7,
     step_name: "bio",
+    },
   });
 
   const handleContinue = async () => {

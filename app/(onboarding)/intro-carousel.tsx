@@ -35,9 +35,12 @@ export default function IntroCarouselScreen() {
   const { showTrackingSheet } = usePermissionSheet();
 
   // Track screen view
-  useScreenTracking("onboarding_intro_carousel", {
+  useScreenTracking({
+    screenName: "onboarding_intro_carousel",
+    params: {
     onboarding_step: 0,
     step_name: "intro_carousel",
+    },
   });
 
   // Slides minimalistas sem imagens

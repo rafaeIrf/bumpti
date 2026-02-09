@@ -4,9 +4,12 @@ import React from "react";
 
 export default function OnboardingPlaceSearchModal() {
   // Track screen view
-  useScreenTracking("onboarding_place_search", {
+  useScreenTracking({
+    screenName: "onboarding_place_search",
+    params: {
     onboarding_step: 9,
     step_name: "place_search",
+    },
   });
 
   return <PlaceSearchContent />;

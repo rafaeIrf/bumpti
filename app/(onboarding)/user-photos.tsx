@@ -17,9 +17,12 @@ export default function UserPhotosScreen() {
   const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
 
   // Track screen view
-  useScreenTracking("onboarding_photos", {
+  useScreenTracking({
+    screenName: "onboarding_photos",
+    params: {
     onboarding_step: 6,
     step_name: "photos",
+    },
   });
 
   const handleContinue = () => {

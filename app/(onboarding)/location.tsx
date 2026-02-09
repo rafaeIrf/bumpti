@@ -28,9 +28,12 @@ export default function LocationScreen() {
   const { location: cachedCoords } = useCachedLocation();
 
   // Track screen view
-  useScreenTracking("onboarding_location", {
+  useScreenTracking({
+    screenName: "onboarding_location",
+    params: {
     onboarding_step: 8,
     step_name: "location",
+    },
   });
 
   const handleEnableLocation = async () => {

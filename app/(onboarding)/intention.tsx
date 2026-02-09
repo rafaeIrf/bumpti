@@ -34,9 +34,12 @@ export default function IntentionScreen() {
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
-  useScreenTracking("onboarding_intention", {
+  useScreenTracking({
+    screenName: "onboarding_intention",
+    params: {
     onboarding_step: 5,
     step_name: "intention",
+    },
   });
 
   const [selectedIntentions, setSelectedIntentions] = useState<

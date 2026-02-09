@@ -16,9 +16,12 @@ export default function InterestsScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
 
-  useScreenTracking("onboarding_interests", {
+  useScreenTracking({
+    screenName: "onboarding_interests",
+    params: {
     onboarding_step: 8,
     step_name: "interests",
+    },
   });
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>(
