@@ -6,6 +6,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import * as Haptics from "expo-haptics";
+import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
@@ -39,21 +40,6 @@ function LocationPinIcon({
   );
 }
 
-// Close icon
-function XIcon({ size = 16, color }: { size?: number; color: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M18 6L6 18M6 6l12 12"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 interface DetectionBannerProps {
   place: DetectedPlace;
   onConnect: (place: DetectedPlace) => void;
@@ -69,6 +55,12 @@ export function DetectionBanner({
 }: DetectionBannerProps) {
   const colors = useThemeColors();
   const [show, setShow] = React.useState(false);
+  const posthog = usePostHog();
+  const ctaVariant = useFeatureFlag("detect-place-cta-test");
+  const ctaLabel =
+    ctaVariant === "variant-entrar"
+      ? t("screens.home.detectionBanner.connectEntrar")
+      : t("screens.home.detectionBanner.connect");
 
   useEffect(() => {
     if (place) {
@@ -88,6 +80,12 @@ export function DetectionBanner({
 
   const handleConnect = () => {
     Haptics.selectionAsync();
+    posthog?.capture("detect_place_connect_clicked", {
+      place_id: place.id,
+      cta_variant: ctaVariant || "control",
+      cta_text: ctaLabel,
+      active_users: place.active_users || 0,
+    });
     onConnect(place);
   };
 
@@ -95,8 +93,6 @@ export function DetectionBanner({
   if (!place || !show) return null;
 
   const hasAvatars = place.preview_avatars && place.preview_avatars.length > 0;
-  // If we have avatars, we use them as the main visual. If not, use location icon.
-  const visualSize = hasAvatars ? 46 : 40;
 
   return (
     <Animated.View
@@ -156,7 +152,7 @@ export function DetectionBanner({
           variant="primary"
           disabled={isConnecting}
           loading={isConnecting}
-          label={t("screens.home.detectionBanner.connect")}
+          label={ctaLabel}
         />
 
         <Button
