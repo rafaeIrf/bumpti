@@ -814,7 +814,7 @@
       "genderNonBinary": "No binario",
       "genderIdentitySelected": "Identidad seleccionada: {{identity}}",
       "genderUpdateInfo": "Puedes actualizar esta información en cualquier momento en la configuración.",
-      "genderSkip": "Ahora no",
+      "genderSkip": "Omitir",
       "genderSelectIdentity": "Selecciona cómo te identificas",
       "genderCustomPrompt": "¿Quieres contar más sobre ti? Estamos escuchando 💬",
       "genderCustomPlaceholder": "Cuenta más sobre tu género",
@@ -856,7 +856,7 @@
       "bioCharacterCount": "{{count}}/500 caracteres",
       "interests": {
         "title": "¿Cuál es tu onda?",
-        "subtitle": "Elige de 3 a 10 intereses que te definen.",
+        "subtitle": "Elige hasta 10 intereses que te definen.",
         "selectedCount": "{{count}} seleccionados",
         "minRequired": "Selecciona al menos 3 intereses",
         "maxReached": "Máximo de 10 intereses",

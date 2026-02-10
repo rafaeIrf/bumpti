@@ -814,7 +814,7 @@
       "genderNonBinary": "Non-binary",
       "genderIdentitySelected": "Selected identity: {{identity}}",
       "genderUpdateInfo": "You can update this information at any time in settings.",
-      "genderSkip": "Not now",
+      "genderSkip": "Skip",
       "genderSelectIdentity": "Select how you identify",
       "genderCustomPrompt": "Want to tell more about yourself? We're listening 💬",
       "genderCustomPlaceholder": "Tell more about your gender",
@@ -856,7 +856,7 @@
       "bioCharacterCount": "{{count}}/500 characters",
       "interests": {
         "title": "What's your vibe?",
-        "subtitle": "Choose 3 to 10 interests that define you.",
+        "subtitle": "Choose up to 10 interests that define you.",
         "selectedCount": "{{count}} selected",
         "minRequired": "Select at least 3 interests",
         "maxReached": "Maximum of 10 interests",

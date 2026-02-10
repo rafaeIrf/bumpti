@@ -78,11 +78,9 @@ export default function ConnectWithScreen() {
         : selectedOptions;
 
       onboardingActions.setConnectWith(selectedKeys);
-      completeCurrentStep("connect-with");
     }
+    completeCurrentStep("connect-with");
   };
-
-  const isValid = selectedOptions.length > 0;
 
   return (
     <BaseTemplateScreen hasStackHeader>
@@ -202,7 +200,6 @@ export default function ConnectWithScreen() {
 
         <Button
           onPress={handleContinue}
-          disabled={!isValid}
           size="lg"
           fullWidth
           style={styles.continueButton}

@@ -817,7 +817,7 @@
       "genderNonBinary": "Não binário",
       "genderIdentitySelected": "Identidade selecionada: {{identity}}",
       "genderUpdateInfo": "Você pode atualizar essa informação a qualquer momento nas configurações.",
-      "genderSkip": "Agora não",
+      "genderSkip": "Pular",
       "genderSelectIdentity": "Selecione como você se identifica",
       "genderCustomPrompt": "Quer contar mais sobre você? Estamos ouvindo 💬",
       "genderCustomPlaceholder": "Conte mais sobre seu gênero",
@@ -859,7 +859,7 @@
       "bioCharacterCount": "{{count}}/500 caracteres",
       "interests": {
         "title": "O que combina com você?",
-        "subtitle": "Escolha de 3 a 10 interesses que definem sua vibe.",
+        "subtitle": "Escolha até 10 interesses que definem sua vibe.",
         "selectedCount": "{{count}} selecionados",
         "minRequired": "Selecione pelo menos 3 interesses",
         "maxReached": "Máximo de 10 interesses",

@@ -87,10 +87,6 @@ export default function UserGenderScreen() {
     completeCurrentStep("user-gender");
   };
 
-  const handleSkip = () => {
-    completeCurrentStep("user-gender");
-  };
-
   const isNonBinaryGender = gender === "non-binary";
 
   return (
@@ -145,16 +141,8 @@ export default function UserGenderScreen() {
             entering={FadeInUp.delay(600).duration(600)}
             style={styles.buttonContainer}
           >
-            <Button
-              onPress={handleContinue}
-              disabled={!gender}
-              size="lg"
-              fullWidth
-            >
+            <Button onPress={handleContinue} size="lg" fullWidth>
               {t("screens.onboarding.continue")}
-            </Button>
-            <Button onPress={handleSkip} variant="ghost" size="lg" fullWidth>
-              {t("screens.onboarding.genderSkip")}
             </Button>
           </Animated.View>
 
