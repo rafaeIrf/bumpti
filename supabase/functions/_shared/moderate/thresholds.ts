@@ -6,7 +6,7 @@
  */
 
 export const TEXT_THRESHOLDS = {
-  SEXUAL: 0.25,       // Catches explicit terms in PT/ES (penis=0.37)
+  SEXUAL: 0.15,       // Catches explicit terms in PT/ES (penis=0.37)
   VIOLENCE: 0.25,     // Violence references
   HARASSMENT: 0.25,   // Harassment, bullying
   HATE: 0.25,         // Hate speech
