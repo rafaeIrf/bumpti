@@ -65,8 +65,8 @@ export default function IntentionScreen() {
   const handleContinue = () => {
     if (selectedIntentions.length > 0) {
       onboardingActions.setIntentions(selectedIntentions);
-      completeCurrentStep("intention");
     }
+    completeCurrentStep("intention");
   };
 
   return (
@@ -76,7 +76,7 @@ export default function IntentionScreen() {
         <ScreenBottomBar
           primaryLabel={t("screens.onboarding.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={selectedIntentions.length === 0}
+          primaryDisabled={false}
         />
       }
     >

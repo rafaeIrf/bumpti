@@ -308,9 +308,9 @@ export function usePermissionSheet() {
     // Tracking permission is iOS-only (App Tracking Transparency)
     if (!isIOS) return;
 
-    // Don't show if already granted
+    // Don't show if already responded (granted, denied, or restricted)
     const status = await getTrackingStatus();
-    if (status === "authorized") return;
+    if (status !== "undetermined") return;
 
     if (
       !bottomSheet ||
