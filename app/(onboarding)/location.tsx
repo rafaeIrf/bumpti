@@ -1,4 +1,4 @@
-import { MapPinIcon, NavigationIcon } from "@/assets/icons";
+import { NavigationIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { triggerCityHydration } from "@/modules/places/api";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { logger } from "@/utils/logger";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -54,23 +55,16 @@ export default function LocationScreen() {
           setIsRequesting(false);
         }, 500);
       } else {
-        // Permissão negada
-        Alert.alert(
-          t("screens.onboarding.locationDeniedTitle"),
-          t("screens.onboarding.locationDeniedMessage"),
-        );
+        // Permission denied — still proceed (Apple 5.1.1 compliance)
+        onboardingActions.setLocationPermission(false);
+        completeCurrentStep("location");
         setIsRequesting(false);
       }
     } catch (error) {
-      console.error("Error requesting location permission:", error);
+      logger.error("Error requesting location permission:", error);
       Alert.alert(t("common.error"), t("screens.onboarding.locationError"));
       setIsRequesting(false);
     }
-  };
-
-  const handleSkip = () => {
-    onboardingActions.setLocationPermission(false);
-    completeCurrentStep("location");
   };
 
   return (
@@ -125,29 +119,9 @@ export default function LocationScreen() {
             fullWidth
             style={styles.enableButton}
           >
-            <View style={styles.buttonContent}>
-              <MapPinIcon width={20} height={20} color="#FFFFFF" />
-              <ThemedText style={styles.enableButtonText}>
-                {isRequesting
-                  ? t("screens.onboarding.locationRequesting")
-                  : t("screens.onboarding.locationEnable")}
-              </ThemedText>
-            </View>
-          </Button>
-
-          <Button
-            onPress={handleSkip}
-            disabled={isRequesting}
-            variant="ghost"
-            size="lg"
-            fullWidth
-            style={styles.skipButton}
-          >
-            <ThemedText
-              style={[styles.skipButtonText, { color: colors.textSecondary }]}
-            >
-              {t("screens.onboarding.locationSkip")}
-            </ThemedText>
+            {isRequesting
+              ? t("screens.onboarding.locationRequesting")
+              : t("screens.onboarding.locationEnable")}
           </Button>
         </Animated.View>
 
@@ -214,30 +188,6 @@ const styles = StyleSheet.create({
   },
   enableButton: {
     minHeight: 56,
-    shadowColor: "#1D9BF0",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  enableButtonText: {
-    ...typography.body,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  skipButton: {
-    minHeight: 56,
-  },
-  skipButtonText: {
-    ...typography.body,
-    fontWeight: "600",
-    fontSize: 16,
   },
   privacyContainer: {
     marginTop: spacing.xl,
