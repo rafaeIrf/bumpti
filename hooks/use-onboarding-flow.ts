@@ -64,6 +64,12 @@ export function useOnboardingFlow() {
     let next = step;
 
     while (next) {
+      // Skip steps that are already completed (e.g., user-name auto-populated by Apple Sign-In)
+      if (completedSteps.includes(next)) {
+        next = getNextStep(next);
+        continue;
+      }
+
       if (next === "location") {
         const granted = await hasLocationPermission();
         if (granted) {

@@ -6,6 +6,7 @@ import { Colors, spacing, typography } from "@/constants/theme";
 import { useScreenTracking } from "@/modules/analytics";
 import { socialAuthService } from "@/modules/auth";
 import { t } from "@/modules/locales";
+import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { openPrivacyPolicy, openTermsOfUse } from "@/utils";
 import { logger } from "@/utils/logger";
 import { Image } from "expo-image";
@@ -53,7 +54,24 @@ export default function WelcomeScreen() {
 
     try {
       setIsLoading("apple");
-      await socialAuthService.signInWithApple();
+      const { appleFullName } = await socialAuthService.signInWithApple();
+
+      // Persist auth provider in onboarding state
+      onboardingActions.setAuthProvider("apple");
+
+      // If Apple provided the user's name (first authorization only),
+      // auto-populate it and skip the manual name input step
+      if (appleFullName?.givenName) {
+        const firstName = appleFullName.givenName.trim();
+        onboardingActions.setUserName(firstName);
+        onboardingActions.completeStep("user-name");
+        onboardingActions.setCurrentStep("user-age");
+        logger.log(
+          "Apple name auto-populated, skipping user-name step:",
+          firstName,
+        );
+      }
+
       // Navigation handled by session context
     } catch (error: any) {
       logger.error("Apple auth error:", error);
