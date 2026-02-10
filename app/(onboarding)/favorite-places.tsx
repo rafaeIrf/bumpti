@@ -54,11 +54,10 @@ export default function FavoritePlacesScreen() {
     !isLoadingPlaces && !locationLoading && userLocation && !hasSuggestedPlaces;
 
   const handleContinue = () => {
-    // Allow continue even without selections if city is not available
-    if (isCityNotAvailable || selectedPlaceIds.length >= 1) {
+    if (selectedPlaceIds.length > 0) {
       onboardingActions.setFavoritePlaces(selectedPlaceIds);
-      completeCurrentStep("favorite-places");
     }
+    completeCurrentStep("favorite-places");
   };
 
   const allSelectedPlaces = selectedPlaceIds.map((id) => ({
@@ -79,7 +78,7 @@ export default function FavoritePlacesScreen() {
           <ScreenBottomBar
             primaryLabel={t("common.continue")}
             onPrimaryPress={handleContinue}
-            primaryDisabled={!isCityNotAvailable && selectedPlaceIds.length < 1}
+            primaryDisabled={false}
             topContent={
               selectedPlaceIds.length > 0 ? (
                 <MultiSelectSheet
