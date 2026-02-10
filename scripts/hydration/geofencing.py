@@ -96,7 +96,7 @@ VALID_LAND_USE_CLASSES = {
 }
 
 # Overture release version for polygon sources
-OVERTURE_RELEASE = '2025-12-17.0'
+OVERTURE_RELEASE = '2026-01-21.0'
 
 
 def fetch_city_polygons(bbox: List[float], con=None) -> Optional['gpd.GeoDataFrame']:

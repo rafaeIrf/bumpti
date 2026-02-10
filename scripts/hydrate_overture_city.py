@@ -195,8 +195,8 @@ def discover_city_from_overture(lat: float, lng: float):
     con.execute("SET s3_region='us-west-2';")
     
     # Use divisions theme (replaces deprecated admins)
-    # Note: If 2025-12-17.0 gives "No files found", fallback to 2024-11-13.0
-    release = '2025-12-17.0'
+    # Note: If 2026-01-21.0 gives "No files found", fallback to 2024-11-13.0
+    release = '2026-01-21.0'
     area_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division_area/*'
     division_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division/*'
     
@@ -497,7 +497,7 @@ def main():
           socials,
           len(sources) AS source_magnitude,
           (brand IS NOT NULL) AS has_brand
-        FROM read_parquet('s3://overturemaps-us-west-2/release/2025-12-17.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
+        FROM read_parquet('s3://overturemaps-us-west-2/release/2026-01-21.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
