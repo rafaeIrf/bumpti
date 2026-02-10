@@ -7,8 +7,7 @@ export default function OnboardingPlaceSearchModal() {
   useScreenTracking({
     screenName: "onboarding_place_search",
     params: {
-    onboarding_step: 9,
-    step_name: "place_search",
+      step_name: "place_search",
     },
   });
 

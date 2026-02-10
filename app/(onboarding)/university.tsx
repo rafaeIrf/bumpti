@@ -5,8 +5,8 @@ import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { logger } from "@/utils/logger";
@@ -36,8 +36,7 @@ export default function UniversityScreen() {
   useScreenTracking({
     screenName: "onboarding_university",
     params: {
-    onboarding_step: 10,
-    step_name: "university",
+      step_name: "university",
     },
   });
 

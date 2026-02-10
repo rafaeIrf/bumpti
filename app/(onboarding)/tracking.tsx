@@ -4,9 +4,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { logger } from "@/utils/logger";
@@ -29,8 +32,7 @@ export default function TrackingScreen() {
   useScreenTracking({
     screenName: "onboarding_tracking",
     params: {
-    onboarding_step: 12,
-    step_name: "tracking",
+      step_name: "tracking",
     },
   });
 
@@ -50,14 +52,12 @@ export default function TrackingScreen() {
           setIsRequesting(false);
         }, 500);
       } else {
-        // Permission denied
+        // Permission denied — still proceed (Apple 5.1.1 compliance)
+        onboardingActions.setTrackingPermission(false);
         trackEvent(ANALYTICS_EVENTS.TRACKING.PERMISSION_DENIED, {
           screen: "onboarding",
         });
-        Alert.alert(
-          t("screens.onboarding.trackingDeniedTitle"),
-          t("screens.onboarding.trackingDeniedMessage"),
-        );
+        completeCurrentStep("tracking");
         setIsRequesting(false);
       }
     } catch (error) {
@@ -65,14 +65,6 @@ export default function TrackingScreen() {
       Alert.alert(t("common.error"), t("screens.onboarding.trackingError"));
       setIsRequesting(false);
     }
-  };
-
-  const handleSkip = () => {
-    onboardingActions.setTrackingPermission(false);
-    trackEvent(ANALYTICS_EVENTS.TRACKING.PERMISSION_SKIPPED, {
-      screen: "onboarding",
-    });
-    completeCurrentStep("tracking");
   };
 
   return (
@@ -127,26 +119,9 @@ export default function TrackingScreen() {
             fullWidth
             style={styles.enableButton}
           >
-            <ThemedText style={styles.enableButtonText}>
-              {isRequesting
-                ? t("screens.onboarding.trackingRequesting")
-                : t("screens.onboarding.trackingEnable")}
-            </ThemedText>
-          </Button>
-
-          <Button
-            onPress={handleSkip}
-            disabled={isRequesting}
-            variant="ghost"
-            size="lg"
-            fullWidth
-            style={styles.skipButton}
-          >
-            <ThemedText
-              style={[styles.skipButtonText, { color: colors.textSecondary }]}
-            >
-              {t("screens.onboarding.trackingSkip")}
-            </ThemedText>
+            {isRequesting
+              ? t("screens.onboarding.trackingRequesting")
+              : t("screens.onboarding.trackingEnable")}
           </Button>
         </Animated.View>
       </View>
@@ -202,24 +177,5 @@ const styles = StyleSheet.create({
   },
   enableButton: {
     minHeight: 56,
-    shadowColor: "#1D9BF0",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  enableButtonText: {
-    ...typography.body,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  skipButton: {
-    minHeight: 56,
-  },
-  skipButtonText: {
-    ...typography.body,
-    fontWeight: "600",
-    fontSize: 16,
   },
 });

@@ -5,8 +5,8 @@ import { ThemedText } from "@/components/themed-text";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import { isAndroid } from "@/utils";
@@ -23,8 +23,7 @@ export default function UserAgeScreen() {
   useScreenTracking({
     screenName: "onboarding_age",
     params: {
-    onboarding_step: 2,
-    step_name: "age",
+      step_name: "age",
     },
   });
 

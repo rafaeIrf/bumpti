@@ -121,9 +121,12 @@ class SocialAuthService {
 
   /**
    * Sign in with Apple using native SDK (iOS only)
-   * Returns authenticated Supabase user
+   * Returns authenticated Supabase user + Apple-provided full name (first auth only)
    */
-  async signInWithApple(): Promise<User> {
+  async signInWithApple(): Promise<{
+    user: User;
+    appleFullName?: { givenName?: string; familyName?: string };
+  }> {
     if (Platform.OS !== "ios") {
       throw new Error("Login com Apple disponível apenas no iOS");
     }
@@ -151,6 +154,20 @@ class SocialAuthService {
         throw new Error("Não foi possível obter token da Apple");
       }
 
+      // Extract Apple-provided name (only available on FIRST authorization)
+      const appleFullName = credential.fullName
+        ? {
+            givenName: credential.fullName.givenName ?? undefined,
+            familyName: credential.fullName.familyName ?? undefined,
+          }
+        : undefined;
+
+      if (appleFullName?.givenName) {
+        logger.log("Apple provided user name:", appleFullName.givenName);
+      } else {
+        logger.log("Apple did not provide user name (subsequent login)");
+      }
+
       logger.log("Apple Sign-In successful, syncing with Supabase...");
 
       // Exchange Apple token for Supabase session
@@ -170,7 +187,7 @@ class SocialAuthService {
       }
 
       logger.log("Apple Sign-In completed successfully");
-      return data.user;
+      return { user: data.user, appleFullName };
     } catch (error: any) {
       logger.error("Apple Sign-In error:", error);
 

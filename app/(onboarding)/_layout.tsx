@@ -1,6 +1,7 @@
 import { OnboardingProgressBar } from "@/components/onboarding-progress-bar";
 import { OnboardingProgressProvider } from "@/components/onboarding-progress-context";
 import { useOnboardingSteps } from "@/hooks/use-onboarding-steps";
+import { useAppSelector } from "@/modules/store/hooks";
 import { isIOS } from "@/utils";
 import { Stack, useSegments } from "expo-router";
 import React, { useMemo } from "react";
@@ -12,6 +13,7 @@ export const unstable_settings = {
 const OnboardingHeader = React.memo(() => {
   const segments = useSegments();
   const { shouldShowLocation, shouldShowNotifications } = useOnboardingSteps();
+  const { completedSteps } = useAppSelector((state) => state.onboarding);
 
   const steps = useMemo(() => {
     const base = [
@@ -30,8 +32,10 @@ const OnboardingHeader = React.memo(() => {
     if (shouldShowNotifications) base.push("notifications");
     // Tracking permission is iOS-only (App Tracking Transparency)
     if (isIOS) base.push("tracking");
-    return base;
-  }, [shouldShowLocation, shouldShowNotifications]);
+
+    // Remove steps already completed before onboarding started (e.g., user-name from Apple Sign-In)
+    return base.filter((step) => !completedSteps.includes(step as any));
+  }, [shouldShowLocation, shouldShowNotifications, completedSteps]);
 
   // Get current screen name from segments: ["(onboarding)", "user-name"]
   const currentScreenName =

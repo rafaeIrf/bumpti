@@ -19,8 +19,7 @@ export default function InterestsScreen() {
   useScreenTracking({
     screenName: "onboarding_interests",
     params: {
-    onboarding_step: 8,
-    step_name: "interests",
+      step_name: "interests",
     },
   });
 

@@ -4,8 +4,8 @@ import { ThemedText } from "@/components/themed-text";
 import { UserPhotoGrid } from "@/components/user-photo-grid";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useState } from "react";
@@ -20,8 +20,7 @@ export default function UserPhotosScreen() {
   useScreenTracking({
     screenName: "onboarding_photos",
     params: {
-    onboarding_step: 6,
-    step_name: "photos",
+      step_name: "photos",
     },
   });
 

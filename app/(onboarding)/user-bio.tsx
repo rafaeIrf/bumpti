@@ -29,8 +29,7 @@ export default function UserBioScreen() {
   useScreenTracking({
     screenName: "onboarding_bio",
     params: {
-    onboarding_step: 7,
-    step_name: "bio",
+      step_name: "bio",
     },
   });
 

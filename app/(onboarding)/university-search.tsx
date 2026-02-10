@@ -10,8 +10,7 @@ export default function UniversitySearchModal() {
   useScreenTracking({
     screenName: "onboarding_university_search",
     params: {
-    onboarding_step: 10,
-    step_name: "university_search",
+      step_name: "university_search",
     },
   });
 

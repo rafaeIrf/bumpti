@@ -36,6 +36,8 @@ export interface OnboardingUserData {
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
   hasTrackingPermission?: boolean;
+  /** Auth provider used to sign in (e.g., "apple", "google", "email") */
+  authProvider?: string;
 }
 
 export interface OnboardingState {
@@ -100,6 +102,9 @@ const onboardingSlice = createSlice({
     setTrackingPermission: (state, action: PayloadAction<boolean>) => {
       state.userData.hasTrackingPermission = action.payload;
     },
+    setAuthProvider: (state, action: PayloadAction<string>) => {
+      state.userData.authProvider = action.payload;
+    },
     completeOnboarding: (state) => {
       state.isOnboardingComplete = true;
       state.currentStep = "complete";
@@ -159,6 +164,7 @@ export const {
   setLocationPermission,
   setNotificationPermission,
   setTrackingPermission,
+  setAuthProvider,
   completeOnboarding,
   setUniversityData,
   resetOnboarding,

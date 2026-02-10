@@ -4,6 +4,7 @@ import {
     completeStep as completeStepAction,
     OnboardingStep,
     resetOnboarding as resetOnboardingAction,
+    setAuthProvider as setAuthProviderAction,
     setBio as setBioAction,
     setConnectWith as setConnectWithAction,
     setCurrentStep as setCurrentStepAction,
@@ -76,6 +77,10 @@ export const onboardingActions = {
 
   setTrackingPermission: (hasPermission: boolean) => {
     store.dispatch(setTrackingPermissionAction(hasPermission));
+  },
+
+  setAuthProvider: (provider: string) => {
+    store.dispatch(setAuthProviderAction(provider));
   },
 
   setUniversityData: (data: {

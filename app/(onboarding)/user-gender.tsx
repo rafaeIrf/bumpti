@@ -1,13 +1,12 @@
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { GENDER_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices";
 import { isIOS } from "@/utils";
@@ -15,20 +14,16 @@ import { useState } from "react";
 import { KeyboardAvoidingView, StyleSheet } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-// ... existing imports
 
 export default function UserGenderScreen() {
   const colors = useThemeColors();
-  const bottomSheet = useCustomBottomSheet();
   const { userData, completeCurrentStep } = useOnboardingFlow();
-  // Removed useOnboardingOptions usage
 
   // Track screen view
   useScreenTracking({
     screenName: "onboarding_gender",
     params: {
-    onboarding_step: 3,
-    step_name: "gender",
+      step_name: "gender",
     },
   });
 
@@ -77,11 +72,6 @@ export default function UserGenderScreen() {
       }
     }) ?? [];
 
-  // Check if we need to append "Other" if it's not in GENDER_OPTIONS but was logically supported
-  // The previous code had a default case returning "Other", implying dynamic options might have it or fallback.
-  // Based on user request/constants, GENDER_OPTIONS has female, male, non-binary.
-  // Use logic as requested.
-
   const handleGenderSelect = (value: string) => {
     if (value === "other") {
       setGender("other");
@@ -93,14 +83,15 @@ export default function UserGenderScreen() {
   const handleContinue = () => {
     if (gender) {
       onboardingActions.setUserGender(gender);
-      completeCurrentStep("user-gender");
     }
+    completeCurrentStep("user-gender");
   };
 
-  const isValid = Boolean(gender);
-  const isNonBinaryGender = gender === "non-binary";
+  const handleSkip = () => {
+    completeCurrentStep("user-gender");
+  };
 
-  // Removed isLoading check
+  const isNonBinaryGender = gender === "non-binary";
 
   return (
     <BaseTemplateScreen hasStackHeader>
@@ -149,20 +140,21 @@ export default function UserGenderScreen() {
             })}
           </Animated.View>
 
-          {/* Selected identity preview removido */}
-
-          {/* Continue Button */}
+          {/* Continue & Skip Buttons */}
           <Animated.View
             entering={FadeInUp.delay(600).duration(600)}
             style={styles.buttonContainer}
           >
             <Button
               onPress={handleContinue}
-              disabled={!isValid}
+              disabled={!gender}
               size="lg"
               fullWidth
             >
               {t("screens.onboarding.continue")}
+            </Button>
+            <Button onPress={handleSkip} variant="ghost" size="lg" fullWidth>
+              {t("screens.onboarding.genderSkip")}
             </Button>
           </Animated.View>
 
@@ -207,17 +199,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   buttonContainer: {
+    gap: spacing.sm,
     marginTop: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   infoText: {
     ...typography.caption,
     textAlign: "center",
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
   },
 });

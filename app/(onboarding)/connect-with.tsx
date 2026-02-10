@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { CONNECT_WITH_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
-import { useScreenTracking } from "@/modules/analytics";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React, { useEffect, useState } from "react";
@@ -33,8 +33,7 @@ export default function ConnectWithScreen() {
   useScreenTracking({
     screenName: "onboarding_connect_with",
     params: {
-    onboarding_step: 4,
-    step_name: "connect_with",
+      step_name: "connect_with",
     },
   });
 

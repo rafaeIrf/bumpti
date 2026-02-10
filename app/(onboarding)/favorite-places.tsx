@@ -23,8 +23,7 @@ export default function FavoritePlacesScreen() {
   useScreenTracking({
     screenName: "onboarding_favorite_places",
     params: {
-    onboarding_step: 9,
-    step_name: "favorite_places",
+      step_name: "favorite_places",
     },
   });
 

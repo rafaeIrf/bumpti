@@ -5,6 +5,7 @@ import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
+import { useAppSelector } from "@/modules/store/hooks";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
@@ -32,12 +33,11 @@ export default function IntroCarouselScreen() {
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
   const carouselRef = useRef<ICarouselInstance>(null);
+  const { completedSteps } = useAppSelector((state) => state.onboarding);
 
-  // Track screen view
   useScreenTracking({
     screenName: "onboarding_intro_carousel",
     params: {
-      onboarding_step: 0,
       step_name: "intro_carousel",
     },
   });
@@ -72,7 +72,11 @@ export default function IntroCarouselScreen() {
       const nextIndex = currentIndex + 1;
       carouselRef.current?.scrollTo({ index: nextIndex, animated: true });
     } else {
-      router.replace("/(onboarding)/user-name");
+      // Skip user-name step if already completed (e.g., Apple Sign-In auto-populated name)
+      const firstStep = completedSteps.includes("user-name")
+        ? "/(onboarding)/user-age"
+        : "/(onboarding)/user-name";
+      router.replace(firstStep as any);
     }
   };
 
