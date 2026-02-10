@@ -814,6 +814,7 @@
       "genderNonBinary": "No binario",
       "genderIdentitySelected": "Identidad seleccionada: {{identity}}",
       "genderUpdateInfo": "Puedes actualizar esta información en cualquier momento en la configuración.",
+      "genderSkip": "Ahora no",
       "genderSelectIdentity": "Selecciona cómo te identificas",
       "genderCustomPrompt": "¿Quieres contar más sobre ti? Estamos escuchando 💬",
       "genderCustomPlaceholder": "Cuenta más sobre tu género",
