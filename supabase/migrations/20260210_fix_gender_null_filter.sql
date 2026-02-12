@@ -779,7 +779,6 @@ DECLARE
   ttl_heating INT := 6;   -- Hours before re-sending "heating" notification
   ttl_nearby INT := 12;   -- Hours before re-sending "nearby" notification
   distance_threshold FLOAT := 30000; -- 30km in meters
-  location_staleness_hours INT := 24; -- Location data must be fresher than 24h
 BEGIN
   RETURN QUERY
 
@@ -943,8 +942,6 @@ BEGIN
     -- User must have recent location data
     AND prof.last_lat IS NOT NULL
     AND prof.last_lng IS NOT NULL
-    AND prof.last_location_updated_at IS NOT NULL
-    AND prof.last_location_updated_at > NOW() - (location_staleness_hours || ' hours')::interval
     -- Distance check: within 30km
     AND ST_DWithin(
       ST_SetSRID(ST_MakePoint(prof.last_lng, prof.last_lat), 4326)::geography,
@@ -1022,8 +1019,6 @@ BEGIN
     -- User must have recent location data
     AND prof.last_lat IS NOT NULL
     AND prof.last_lng IS NOT NULL
-    AND prof.last_location_updated_at IS NOT NULL
-    AND prof.last_location_updated_at > NOW() - (location_staleness_hours || ' hours')::interval
     -- Distance check: within 30km
     AND ST_DWithin(
       ST_SetSRID(ST_MakePoint(prof.last_lng, prof.last_lat), 4326)::geography,
