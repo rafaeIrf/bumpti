@@ -24,8 +24,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // Card dimensions
 export const LARGE_CARD_WIDTH = SCREEN_WIDTH * 0.72;
 export const LARGE_CARD_HEIGHT = LARGE_CARD_WIDTH * (4 / 3);
-export const MEDIUM_CARD_WIDTH = SCREEN_WIDTH * 0.52;
-export const MEDIUM_CARD_HEIGHT = MEDIUM_CARD_WIDTH * (4 / 3);
+export const MEDIUM_CARD_WIDTH = SCREEN_WIDTH * 0.62;
+export const MEDIUM_CARD_HEIGHT = MEDIUM_CARD_WIDTH * (3 / 2);
 export const CARD_SPACING = spacing.sm;
 
 const DISMISS_DURATION = 450;

@@ -60,28 +60,21 @@ const PermissionSheetContent = ({
     const result = await perm.request();
     setIsRequesting(false);
 
-    if (result.status === "granted") {
-      // Register FCM token immediately after permission granted
-      // This ensures the user doesn't need to restart the app
-      if (!isLocation && !isTracking) {
-        registerDeviceToken();
-      }
-
-      // Refresh permission state to ensure hasPermission is updated
-      await perm.refresh();
-      // Mark as dismissed to prevent re-opening
-      onDismiss();
-      // Small delay to allow the system popup to disappear
-      setTimeout(() => {
-        onClose();
-      }, 300);
+    // Register FCM token immediately after notification permission granted
+    if (!isLocation && !isTracking && result.status === "granted") {
+      registerDeviceToken();
     }
-  };
 
-  const handleSkip = () => {
-    // Mark as dismissed BEFORE closing to prevent race condition
+    // Refresh permission state to ensure hasPermission is updated
+    if (result.status === "granted") {
+      await perm.refresh();
+    }
+
+    // Apple 5.1.1: always close after native dialog regardless of result
     onDismiss();
-    onClose();
+    setTimeout(() => {
+      onClose();
+    }, 300);
   };
 
   // Tracking permission doesn't support opening settings
@@ -130,12 +123,6 @@ const PermissionSheetContent = ({
     return "screens.onboarding.notificationsRequesting";
   };
 
-  const getSkipKey = () => {
-    if (isLocation) return "permissions.location.skip";
-    if (isTracking) return "permissions.tracking.skip";
-    return "screens.onboarding.notificationsSkip";
-  };
-
   return (
     <PermissionBottomSheet
       renderIcon={renderIcon}
@@ -143,11 +130,9 @@ const PermissionSheetContent = ({
       subtitle={t(getSubtitleKey())}
       enableButtonText={t(getButtonKey())}
       requestingText={t(getRequestingKey())}
-      skipButtonText={t(getSkipKey())}
       isRequesting={isRequesting}
       canAskAgain={isTracking ? true : perm.canAskAgain}
       onEnable={handleEnable}
-      onSkip={handleSkip}
       onOpenSettings={canOpenSettings ? handleOpenSettings : undefined}
     />
   );
@@ -215,11 +200,15 @@ export function usePermissionSheet() {
     })();
   }, []);
 
-  // Location is "handled" if permission granted OR explicitly dismissed OR in cooldown
+  // Location is "handled" if permission granted OR denied (can't ask again) OR explicitly dismissed OR in cooldown
   const locationHandled =
-    locationPerm.hasPermission || dismissedLocation || locationCooldownActive;
+    locationPerm.hasPermission ||
+    !locationPerm.canAskAgain ||
+    dismissedLocation ||
+    locationCooldownActive;
   const notificationHandled =
     notifyPerm.hasPermission ||
+    !notifyPerm.canAskAgain ||
     dismissedNotifications ||
     notificationCooldownActive;
 
@@ -242,6 +231,7 @@ export function usePermissionSheet() {
     if (
       !bottomSheet ||
       locationPerm.hasPermission ||
+      !locationPerm.canAskAgain ||
       locationPerm.isLoading ||
       bottomSheet.isBottomSheetOpen ||
       dismissedLocation ||
@@ -260,11 +250,12 @@ export function usePermissionSheet() {
           onDismiss={handleLocationDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,
     locationPerm.hasPermission,
+    locationPerm.canAskAgain,
     locationPerm.isLoading,
     dismissedLocation,
     locationCooldownActive,
@@ -275,6 +266,7 @@ export function usePermissionSheet() {
     if (
       !bottomSheet ||
       notifyPerm.hasPermission ||
+      !notifyPerm.canAskAgain ||
       notifyPerm.isLoading ||
       bottomSheet.isBottomSheetOpen ||
       dismissedNotifications ||
@@ -293,11 +285,12 @@ export function usePermissionSheet() {
           onDismiss={handleNotificationDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,
     notifyPerm.hasPermission,
+    notifyPerm.canAskAgain,
     notifyPerm.isLoading,
     dismissedNotifications,
     notificationCooldownActive,
@@ -331,7 +324,7 @@ export function usePermissionSheet() {
           onDismiss={handleTrackingDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,

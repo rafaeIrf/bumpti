@@ -10,6 +10,7 @@ import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { registerDeviceToken } from "@/modules/notifications";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { logger } from "@/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
@@ -70,36 +71,24 @@ export default function NotificationsScreen() {
 
       if (result.status === "granted") {
         onboardingActions.setNotificationPermission(true);
-
-        // Register FCM token immediately after permission granted
-        // This ensures the user doesn't need to restart the app
         registerDeviceToken();
-
-        setTimeout(() => {
-          completeCurrentStep("notifications");
-          setIsRequesting(false);
-        }, 500);
       } else {
-        // Permissão negada
-        Alert.alert(
-          t("screens.onboarding.notificationsDeniedTitle"),
-          t("screens.onboarding.notificationsDeniedMessage"),
-        );
-        setIsRequesting(false);
+        onboardingActions.setNotificationPermission(false);
       }
+
+      // Apple 5.1.1: always proceed after native dialog (granted or denied)
+      setTimeout(() => {
+        completeCurrentStep("notifications");
+        setIsRequesting(false);
+      }, 500);
     } catch (error) {
-      console.error("Error requesting notification permission:", error);
+      logger.error("Error requesting notification permission:", error);
       Alert.alert(
         t("common.error"),
         t("screens.onboarding.notificationsError"),
       );
       setIsRequesting(false);
     }
-  };
-
-  const handleSkip = () => {
-    onboardingActions.setNotificationPermission(false);
-    completeCurrentStep("notifications");
   };
 
   return (
@@ -178,21 +167,6 @@ export default function NotificationsScreen() {
                 : t("screens.onboarding.notificationsEnable")}
             </ThemedText>
           </Button>
-
-          <Button
-            onPress={handleSkip}
-            disabled={isRequesting}
-            variant="ghost"
-            size="lg"
-            fullWidth
-            style={styles.skipButton}
-          >
-            <ThemedText
-              style={[styles.skipButtonText, { color: colors.textSecondary }]}
-            >
-              {t("screens.onboarding.notificationsSkip")}
-            </ThemedText>
-          </Button>
         </Animated.View>
       </View>
     </BaseTemplateScreen>
@@ -267,14 +241,6 @@ const styles = StyleSheet.create({
   enableButtonText: {
     ...typography.body,
     color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  skipButton: {
-    minHeight: 56,
-  },
-  skipButtonText: {
-    ...typography.body,
     fontWeight: "600",
     fontSize: 16,
   },
