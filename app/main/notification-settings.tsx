@@ -60,13 +60,11 @@ export default function NotificationSettingsScreen() {
             bottomSheet?.close();
             notificationPermission.openSettings();
           }}
-          onSkip={() => bottomSheet?.close()}
           onOpenSettings={() => {
             bottomSheet?.close();
             notificationPermission.openSettings();
           }}
           onClose={() => bottomSheet?.close()}
-          hideSkip
         />
       ),
       draggable: false,

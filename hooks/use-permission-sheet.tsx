@@ -133,9 +133,7 @@ const PermissionSheetContent = ({
       isRequesting={isRequesting}
       canAskAgain={isTracking ? true : perm.canAskAgain}
       onEnable={handleEnable}
-      onSkip={handleEnable}
       onOpenSettings={canOpenSettings ? handleOpenSettings : undefined}
-      hideSkip
     />
   );
 };

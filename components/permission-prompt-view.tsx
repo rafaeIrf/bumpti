@@ -18,13 +18,10 @@ interface PermissionPromptViewProps {
   subtitle: string;
   enableButtonText?: string;
   requestingText?: string;
-  skipButtonText?: string;
   isRequesting: boolean;
   canAskAgain: boolean;
   onEnable: () => void;
-  onSkip: () => void;
   onOpenSettings?: () => void; // Optional for tracking permission
-  hideSkip?: boolean;
   onClose?: () => void; // Optional X close button in top-right corner
 }
 
@@ -34,13 +31,10 @@ export function PermissionPromptView({
   subtitle,
   enableButtonText,
   requestingText,
-  skipButtonText,
   isRequesting,
   canAskAgain,
   onEnable,
-  onSkip,
   onOpenSettings,
-  hideSkip = false,
   onClose,
 }: PermissionPromptViewProps) {
   const colors = useThemeColors();
@@ -108,23 +102,6 @@ export function PermissionPromptView({
             {primaryButtonText}
           </ThemedText>
         </Button>
-
-        {!hideSkip && (
-          <Button
-            onPress={onSkip}
-            disabled={isRequesting}
-            variant="ghost"
-            size="lg"
-            fullWidth
-            style={styles.skipButton}
-          >
-            <ThemedText
-              style={[styles.skipButtonText, { color: colors.textSecondary }]}
-            >
-              {skipButtonText || t("actions.skip")}
-            </ThemedText>
-          </Button>
-        )}
       </Animated.View>
     </View>
   );
@@ -174,14 +151,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     ...typography.body,
     color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  skipButton: {
-    minHeight: 56,
-  },
-  skipButtonText: {
-    ...typography.body,
     fontWeight: "600",
     fontSize: 16,
   },
