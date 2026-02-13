@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
+import { Ionicons } from "@expo/vector-icons";
 import React, { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -24,6 +25,7 @@ interface PermissionPromptViewProps {
   onSkip: () => void;
   onOpenSettings?: () => void; // Optional for tracking permission
   hideSkip?: boolean;
+  onClose?: () => void; // Optional X close button in top-right corner
 }
 
 export function PermissionPromptView({
@@ -39,6 +41,7 @@ export function PermissionPromptView({
   onSkip,
   onOpenSettings,
   hideSkip = false,
+  onClose,
 }: PermissionPromptViewProps) {
   const colors = useThemeColors();
 
@@ -58,6 +61,13 @@ export function PermissionPromptView({
 
   return (
     <View style={styles.container}>
+      {/* Close button */}
+      {onClose && (
+        <Pressable onPress={onClose} style={styles.closeButton} hitSlop={12}>
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </Pressable>
+      )}
+
       {/* Icon Area */}
       <Animated.View
         entering={ZoomIn.delay(200).duration(600).springify()}
@@ -125,6 +135,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     justifyContent: "center",
     alignItems: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 1,
   },
   iconContainer: {
     marginBottom: spacing.xl,

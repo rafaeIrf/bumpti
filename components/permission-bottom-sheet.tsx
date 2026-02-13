@@ -15,6 +15,7 @@ interface PermissionBottomSheetProps {
   onSkip: () => void;
   onOpenSettings?: () => void; // Optional for tracking permission
   hideSkip?: boolean;
+  onClose?: () => void; // Optional X close button in top-right corner
 }
 
 /**

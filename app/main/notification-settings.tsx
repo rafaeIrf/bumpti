@@ -54,7 +54,6 @@ export default function NotificationSettingsScreen() {
           subtitle={t("screens.onboarding.notificationsSubtitle")}
           enableButtonText={t("permissions.location.buttonSettings")}
           requestingText={t("screens.onboarding.notificationsRequesting")}
-          skipButtonText={t("screens.onboarding.notificationsSkip")}
           isRequesting={false}
           canAskAgain={false}
           onEnable={() => {
@@ -66,9 +65,11 @@ export default function NotificationSettingsScreen() {
             bottomSheet?.close();
             notificationPermission.openSettings();
           }}
+          onClose={() => bottomSheet?.close()}
+          hideSkip
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [bottomSheet, notificationPermission]);
 
