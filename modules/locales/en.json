@@ -1254,6 +1254,8 @@
     "relationship": "Relationship",
     "smoking": "Smoking",
     "education": "Education",
+    "educationSection": "Education",
+    "university": "University",
     "zodiac": "Zodiac",
     "interest": "INTEREST",
     "favoritePlaces": "Favorite Places",

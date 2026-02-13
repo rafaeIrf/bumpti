@@ -4,13 +4,13 @@ import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackCheckin } from "../analytics";
 import {
-  REVIEWER_EMAIL,
   getMockActiveUsersForReviewer,
   getMockPresenceForReviewer,
+  REVIEWER_EMAILS
 } from "./reviewer-mock-data";
 
 /**
- * Check if the current authenticated user is the Apple reviewer.
+ * Check if the current authenticated user is an Apple reviewer.
  * Caches the result to avoid repeated auth calls.
  */
 let _isReviewerCached: boolean | null = null;
@@ -18,8 +18,9 @@ async function isReviewerAccount(): Promise<boolean> {
   if (_isReviewerCached !== null) return _isReviewerCached;
   try {
     const { data } = await supabase.auth.getUser();
-    _isReviewerCached =
-      data?.user?.email?.toLowerCase() === REVIEWER_EMAIL;
+    _isReviewerCached = REVIEWER_EMAILS.includes(
+      data?.user?.email?.toLowerCase() || ""
+    );
     return _isReviewerCached;
   } catch {
     return false;

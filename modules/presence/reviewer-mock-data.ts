@@ -5,8 +5,8 @@
  */
 import type { ActiveUserAtPlace, ActiveUsersResponse, PresenceRecord } from "./api";
 
-// Reviewer account email for detection
-export const REVIEWER_EMAIL = "reviewer@bumpti.com";
+// Reviewer account emails for detection
+export const REVIEWER_EMAILS = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
 
 // Fake active users (fake4 through fake10) - those who haven't matched with reviewer
 const MOCK_ACTIVE_USERS: ActiveUserAtPlace[] = [

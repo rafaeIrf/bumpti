@@ -109,8 +109,9 @@ Deno.serve(async (req) => {
       };
     };
 
-    // Bypass: Skip email for Apple reviewer (they use static code 000000)
-    if (user.email.toLowerCase() === "reviewer@bumpti.com") {
+    // Bypass: Skip email for Apple reviewers (they use static code 000000)
+    const reviewerEmails = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
+    if (reviewerEmails.includes(user.email.toLowerCase())) {
       console.log(`🍎 Apple reviewer bypass - Token would be: ${email_data.token}`);
       return new Response(JSON.stringify({ success: true, bypass: true }), {
         status: 200,
