@@ -252,7 +252,7 @@ export function usePermissionSheet() {
           onDismiss={handleLocationDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,
@@ -287,7 +287,7 @@ export function usePermissionSheet() {
           onDismiss={handleNotificationDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,
@@ -326,7 +326,7 @@ export function usePermissionSheet() {
           onDismiss={handleTrackingDismiss}
         />
       ),
-      draggable: true,
+      draggable: false,
     });
   }, [
     bottomSheet,
