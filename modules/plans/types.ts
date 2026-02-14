@@ -17,3 +17,13 @@ export interface UserPlan {
   planned_period: PlanPeriod;
   active_users: number;
 }
+
+export interface SuggestedPlan {
+  place_id: string;
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  plan_count: number;
+  distance: number;
+}

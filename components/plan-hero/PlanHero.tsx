@@ -1,4 +1,5 @@
 import MapPinIcon from "@/assets/icons/map-pin.svg";
+import SettingsIcon from "@/assets/icons/settings.svg";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -93,6 +94,22 @@ export function PlanHero({
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
         >
+          {/* Settings icon (top-right) */}
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync();
+              router.push("/main/my-plans");
+            }}
+            hitSlop={10}
+            style={styles.settingsButton}
+          >
+            <SettingsIcon
+              width={20}
+              height={20}
+              color="rgba(255,255,255,0.85)"
+            />
+          </Pressable>
+
           {/* Active Plan State */}
           <>
             <ThemedText
@@ -188,35 +205,41 @@ export function PlanHero({
               {t("screens.home.planHero.emptyState.subtitle")}
             </ThemedText>
 
-            <InputText
-              value=""
-              onChangeText={() => {}}
-              placeholder={t("screens.home.planHero.emptyState.locationButton")}
-              editable={false}
-              pointerEvents="none"
-              leftIcon={MapPinIcon}
-              leftIconColor="rgba(255, 255, 255, 0.8)"
-              showClearButton={false}
-              containerStyle={{ flex: 0, marginBottom: spacing.sm }}
-              inputStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.25)",
-                borderColor: "transparent",
-                color: "#FFFFFF",
-              }}
-              placeholderTextColor="rgba(255, 255, 255, 0.8)"
-            />
+            <View pointerEvents="none">
+              <InputText
+                value=""
+                onChangeText={() => {}}
+                placeholder={t(
+                  "screens.home.planHero.emptyState.locationButton",
+                )}
+                editable={false}
+                autoFocus={false}
+                leftIcon={MapPinIcon}
+                leftIconColor="rgba(255, 255, 255, 0.8)"
+                showClearButton={false}
+                containerStyle={{ flex: 0, marginBottom: spacing.sm }}
+                inputStyle={{
+                  backgroundColor: "rgba(255, 255, 255, 0.25)",
+                  borderColor: "transparent",
+                  color: "#FFFFFF",
+                }}
+                placeholderTextColor="rgba(255, 255, 255, 0.8)"
+              />
+            </View>
 
-            <ThemedText
-              style={[
-                typography.caption,
-                styles.confirmedText,
-                { color: "#FFFFFF" },
-              ]}
-            >
-              {t("screens.home.planHero.confirmedToday", {
-                count: confirmedCount,
-              })}
-            </ThemedText>
+            {confirmedCount > 0 && (
+              <ThemedText
+                style={[
+                  typography.caption,
+                  styles.confirmedText,
+                  { color: "#FFFFFF" },
+                ]}
+              >
+                {t("screens.home.planHero.confirmedToday", {
+                  count: confirmedCount,
+                })}
+              </ThemedText>
+            )}
           </LinearGradient>
         </Pressable>
       )}
@@ -233,6 +256,18 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     minHeight: 140,
     justifyContent: "space-between",
+  },
+  settingsButton: {
+    position: "absolute",
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 10,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   // Empty state styles
   title: {

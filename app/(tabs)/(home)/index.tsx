@@ -44,6 +44,7 @@ import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
+import { fetchSuggestedPlans } from "@/modules/plans/api";
 import { useAppSelector } from "@/modules/store/hooks";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -69,6 +70,7 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
+  const [todayPlansCount, setTodayPlansCount] = useState(0);
 
   // Get user profile for MyCampusCard
   const profile = useAppSelector((state) => state.profile.data);
@@ -86,6 +88,14 @@ export default function HomeScreen() {
           plannedPeriod: plans[0].planned_period,
         }
       : null;
+
+  // Fetch today's plans count for PlanHero social proof
+  useEffect(() => {
+    if (!location?.latitude || !location?.longitude) return;
+    fetchSuggestedPlans(location.latitude, location.longitude).then(
+      ({ totalCount }) => setTodayPlansCount(totalCount),
+    );
+  }, [location?.latitude, location?.longitude]);
 
   // Detection banner with smart cooldowns and dismissal
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -452,6 +462,7 @@ export default function HomeScreen() {
         <PlanHero
           activePlan={nextPlan}
           loading={planLoading}
+          defaultConfirmedCount={todayPlansCount}
           onViewPeoplePress={async () => {
             if (nextPlan) {
               setPlanLoading(true);
@@ -469,7 +480,6 @@ export default function HomeScreen() {
               }
             }
           }}
-          defaultConfirmedCount={12}
         />
 
         {/* Title Section */}

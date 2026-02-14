@@ -2,7 +2,7 @@ import { store } from "@/modules/store";
 import { setPlans, setPlansLoading } from "@/modules/store/slices/plansSlice";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import type { CreatePlanPayload, UserPlan } from "./types";
+import type { CreatePlanPayload, SuggestedPlan, UserPlan } from "./types";
 
 export type PlanPresenceRecord = {
   id: string;
@@ -54,6 +54,33 @@ export async function createPlan(
   }
 }
 
+export async function deletePlan(planId: string): Promise<boolean> {
+  try {
+    logger.debug("[deletePlan] Deleting plan:", { planId });
+
+    const { data, error } = await supabase.functions.invoke<{
+      success: boolean;
+    }>("delete-plan", {
+      body: { plan_id: planId },
+    });
+
+    if (error) {
+      logger.error("[deletePlan] Edge function error:", { error });
+      return false;
+    }
+
+    logger.log("[deletePlan] Plan deleted successfully:", { planId });
+
+    // Refresh plans in store after deleting
+    fetchAndSetUserPlans().catch(() => {});
+
+    return data?.success ?? false;
+  } catch (err) {
+    logger.error("[deletePlan] Unexpected error:", { err });
+    return false;
+  }
+}
+
 /**
  * Fetches the user's active plans from the backend and updates the Redux store.
  * Called alongside fetchAndSetUserProfile in redux-provider.
@@ -87,5 +114,42 @@ export async function fetchAndSetUserPlans(): Promise<UserPlan[]> {
     return [];
   } finally {
     store.dispatch(setPlansLoading(false));
+  }
+}
+
+export interface SuggestedPlansResult {
+  suggestions: SuggestedPlan[];
+  totalCount: number;
+}
+
+/**
+ * Fetches suggested plans (from other users) near the given location (50km radius).
+ * Returns both the top suggested places and the total count of unique users
+ * with plans today, for social proof in the PlanHero card.
+ */
+export async function fetchSuggestedPlans(
+  lat: number,
+  lng: number
+): Promise<SuggestedPlansResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      suggestions: SuggestedPlan[];
+      total_count: number;
+    }>("get-suggested-plans", {
+      body: { lat, lng },
+    });
+
+    if (error) {
+      logger.error("[fetchSuggestedPlans] Edge function error:", { error });
+      return { suggestions: [], totalCount: 0 };
+    }
+
+    return {
+      suggestions: data?.suggestions ?? [],
+      totalCount: data?.total_count ?? 0,
+    };
+  } catch (err) {
+    logger.error("[fetchSuggestedPlans] Unexpected error:", { err });
+    return { suggestions: [], totalCount: 0 };
   }
 }

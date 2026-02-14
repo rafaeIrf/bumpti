@@ -45,7 +45,10 @@ Deno.serve(async (req) => {
         entered_at,
         places!inner (
           name,
-          category
+          category,
+          neighborhood,
+          street,
+          house_number
         )
       `)
       .eq("user_id", user.id)
@@ -63,22 +66,28 @@ Deno.serve(async (req) => {
     const plansWithCounts = await Promise.all(
       (plans || []).map(async (plan: any) => {
         const { data: countData } = await serviceClient.rpc(
-          "get_active_users_with_avatars",
+          "get_eligible_active_users_count",
           {
             target_place_id: plan.place_id,
             requesting_user_id: user.id,
-            max_avatars: 0,
           }
         );
+
+        // Build address from street + house_number
+        const street = plan.places?.street || "";
+        const houseNumber = plan.places?.house_number || "";
+        const address = [street, houseNumber].filter(Boolean).join(", ") || null;
 
         return {
           id: plan.id,
           place_id: plan.place_id,
           place_name: plan.places?.name || null,
           place_category: plan.places?.category || null,
+          place_neighborhood: plan.places?.neighborhood || null,
+          place_address: address,
           planned_for: plan.planned_for,
           planned_period: plan.planned_period,
-          active_users: countData?.count ?? 0,
+          active_users: countData ?? 0,
         };
       })
     );

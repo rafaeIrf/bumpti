@@ -73,6 +73,48 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Check daily plan limit ────────────────────────────────────────
+    const today = new Date().toISOString().split("T")[0];
+    
+    // Count today's plans
+    const { count: todayPlansCount, error: countError } = await serviceClient
+      .from("user_presences")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("entry_type", "planning")
+      .eq("planned_for", today)
+      .eq("active", true);
+
+    if (countError) {
+      console.error("Count plans error:", countError);
+      throw countError;
+    }
+
+    // Fetch user's premium status
+    const { data: subscription } = await serviceClient
+      .from("user_subscriptions")
+      .select("status, expires_at")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    const isPremium = !!subscription;
+    const dailyLimit = isPremium ? 10 : 2;
+    const currentCount = todayPlansCount ?? 0;
+
+    if (currentCount >= dailyLimit) {
+      return new Response(
+        JSON.stringify({
+          error: "daily_plan_limit_reached",
+          limit: dailyLimit,
+          current: currentCount,
+        }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+
     // ── Validate place exists and is active ───────────────────────────
     const { data: place, error: placeError } = await serviceClient
       .from("places")

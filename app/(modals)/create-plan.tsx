@@ -1,4 +1,12 @@
-import { ArrowLeftIcon, MapPinIcon, SearchIcon, XIcon } from "@/assets/icons";
+import {
+  ArrowLeftIcon,
+  CloudSunIcon,
+  MapPinIcon,
+  MoonIcon,
+  SearchIcon,
+  SunIcon,
+  XIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { LocationPermissionState } from "@/components/location-permission-state";
 import PlaceCardIcon, { PlaceCardIconData } from "@/components/place-card-icon";
@@ -6,14 +14,15 @@ import { ThemedText } from "@/components/themed-text";
 import { ActionButton } from "@/components/ui/action-button";
 import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
+import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
-import { createPlan } from "@/modules/plans/api";
-import type { PlanDay, PlanPeriod } from "@/modules/plans/types";
+import { createPlan, fetchSuggestedPlans } from "@/modules/plans/api";
+import type { PlanDay, PlanPeriod, SuggestedPlan } from "@/modules/plans/types";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, {
@@ -34,10 +43,15 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 // ── Period options ──────────────────────────────────────────────────
-const PERIOD_OPTIONS: { value: PlanPeriod; emoji: string }[] = [
-  { value: "morning", emoji: "☀️" },
-  { value: "afternoon", emoji: "🌤️" },
-  { value: "night", emoji: "🌙" },
+const PERIOD_OPTIONS: {
+  value: PlanPeriod;
+  icon: React.ComponentType<any>;
+  /** Hour at which this period is no longer available "today" */
+  cutoffHour: number;
+}[] = [
+  { value: "morning", icon: SunIcon, cutoffHour: 12 },
+  { value: "afternoon", icon: CloudSunIcon, cutoffHour: 18 },
+  { value: "night", icon: MoonIcon, cutoffHour: 24 },
 ];
 
 // ── Day options ─────────────────────────────────────────────────────
@@ -66,7 +80,27 @@ export default function CreatePlanModal() {
   } | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<PlanPeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<PlanDay>("today");
+
+  // ── Smart period filtering ───────────────────────────────────────
+  const availablePeriods = useMemo(() => {
+    if (selectedDay === "tomorrow") return PERIOD_OPTIONS;
+    const currentHour = new Date().getHours();
+    return PERIOD_OPTIONS.filter((p) => currentHour < p.cutoffHour);
+  }, [selectedDay]);
+
+  // Auto-select first available period when day changes or reset if selected is unavailable
+  useEffect(() => {
+    if (availablePeriods.length === 0) return;
+    const isStillAvailable = availablePeriods.some(
+      (p) => p.value === selectedPeriod,
+    );
+    if (!isStillAvailable) {
+      setSelectedPeriod(availablePeriods[0].value);
+    }
+  }, [availablePeriods, selectedPeriod]);
   const [isCreating, setIsCreating] = useState(false);
+  const [suggestedPlans, setSuggestedPlans] = useState<SuggestedPlan[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── API search ──────────────────────────────────────────────────
@@ -74,7 +108,7 @@ export default function CreatePlanModal() {
     useLazySearchPlacesByTextQuery();
 
   const searchResults: PlaceCardIconData[] = useMemo(() => {
-    if (!searchData?.places) return [];
+    if (searchQuery.trim().length < 2 || !searchData?.places) return [];
     return searchData.places.map((p: any) => ({
       id: p.placeId,
       name: p.name,
@@ -84,7 +118,7 @@ export default function CreatePlanModal() {
       distance: p.distance ?? 0,
       activeUsers: p.active_users || 0,
     }));
-  }, [searchData]);
+  }, [searchQuery, searchData]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -116,6 +150,30 @@ export default function CreatePlanModal() {
       });
     }
   }, [userLocation]);
+
+  // ── Fetch plan suggestions on mount ────────────────────────────
+  useEffect(() => {
+    if (!userLocation) return;
+    setSuggestionsLoading(true);
+    fetchSuggestedPlans(userLocation.latitude, userLocation.longitude)
+      .then(({ suggestions }) => setSuggestedPlans(suggestions))
+      .catch(() => setSuggestedPlans([]))
+      .finally(() => setSuggestionsLoading(false));
+  }, [userLocation]);
+
+  // Map suggestions to PlaceCardIconData
+  const suggestionCards: PlaceCardIconData[] = useMemo(
+    () =>
+      suggestedPlans.map((s) => ({
+        id: s.place_id,
+        name: s.name,
+        category: s.category ? t(`place.categories.${s.category}`) : "",
+        address: "",
+        distance: s.distance / 1000,
+        activeUsers: s.plan_count,
+      })),
+    [suggestedPlans],
+  );
 
   // ── Android back: go to step 1 instead of closing ────────────────
   useEffect(() => {
@@ -188,7 +246,12 @@ export default function CreatePlanModal() {
       />
 
       {/* Title — same on both steps */}
-      <ThemedText style={[styles.headerTitle, { color: colors.text }]}>
+      <ThemedText
+        style={[
+          styles.headerTitle,
+          { color: colors.text, marginTop: spacing.sm },
+        ]}
+      >
         {t("screens.home.createPlan.location.title")}
       </ThemedText>
 
@@ -254,12 +317,79 @@ export default function CreatePlanModal() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* ── Loading state (search) ── */}
           {(isFetching ||
             (locationLoading && searchQuery.trim().length >= 2)) && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.accent} />
             </View>
           )}
+
+          {/* ── Empty state: icon + description when no suggestions ── */}
+          {searchQuery.trim().length < 2 &&
+            !suggestionsLoading &&
+            suggestionCards.length === 0 && (
+              <Animated.View
+                entering={FadeInDown.delay(100).springify()}
+                style={styles.emptyStateContainer}
+              >
+                <View
+                  style={[
+                    styles.emptyStateIconContainer,
+                    { backgroundColor: colors.accent + "15" },
+                  ]}
+                >
+                  <SearchIcon width={28} height={28} color={colors.accent} />
+                </View>
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: "center",
+                      marginTop: spacing.md,
+                      paddingHorizontal: spacing.lg,
+                    },
+                  ]}
+                >
+                  {t("screens.home.createPlan.location.searchEmptyState")}
+                </ThemedText>
+              </Animated.View>
+            )}
+
+          {/* ── Default state: show suggestions when search is empty ── */}
+          {searchQuery.trim().length < 2 &&
+            !suggestionsLoading &&
+            suggestionCards.length > 0 &&
+            searchResults.length === 0 && (
+              <>
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      marginBottom: spacing.xs,
+                      marginTop: spacing.sm,
+                    },
+                  ]}
+                >
+                  {t("screens.home.createPlan.location.suggestionsTitle")}
+                </ThemedText>
+                {suggestionCards.map((place, index) => (
+                  <Animated.View
+                    key={place.id}
+                    entering={FadeInDown.delay(index * 60).springify()}
+                  >
+                    <PlaceCardIcon
+                      place={place}
+                      onPress={() => handlePlaceSelect(place)}
+                    />
+                  </Animated.View>
+                ))}
+              </>
+            )}
+
+          {/* ── Search results ── */}
           {!isFetching &&
             !locationLoading &&
             searchQuery.trim().length >= 2 &&
@@ -384,44 +514,25 @@ export default function CreatePlanModal() {
         style={styles.periodsList}
         showsVerticalScrollIndicator={false}
       >
-        {PERIOD_OPTIONS.map((option, index) => {
-          const isSelected = selectedPeriod === option.value;
-          return (
-            <Animated.View
-              key={option.value}
-              entering={FadeInDown.delay(150 + index * 60).springify()}
-            >
-              <Pressable
-                onPress={() => setSelectedPeriod(option.value)}
-                style={({ pressed }) => [
-                  styles.periodCard,
-                  {
-                    backgroundColor: isSelected
-                      ? colors.accent + "18"
-                      : colors.surface,
-                    borderColor: isSelected ? colors.accent : "transparent",
-                    borderWidth: isSelected ? 1.5 : 0,
-                  },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <ThemedText style={styles.periodEmoji}>
-                  {option.emoji}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    typography.subheading,
-                    {
-                      color: isSelected ? colors.accent : colors.text,
-                    },
-                  ]}
-                >
-                  {t(`screens.home.createPlan.period.periods.${option.value}`)}
-                </ThemedText>
-              </Pressable>
-            </Animated.View>
-          );
-        })}
+        {availablePeriods.map((option, index) => (
+          <Animated.View
+            key={option.value}
+            entering={FadeInDown.delay(150 + index * 60).springify()}
+            style={{ marginBottom: spacing.xs }}
+          >
+            <SelectionCard
+              label={t(
+                `screens.home.createPlan.period.periods.${option.value}`,
+              )}
+              description={t(
+                `screens.home.createPlan.period.periodDescriptions.${option.value}`,
+              )}
+              icon={option.icon}
+              isSelected={selectedPeriod === option.value}
+              onPress={() => setSelectedPeriod(option.value)}
+            />
+          </Animated.View>
+        ))}
       </ScrollView>
 
       {/* Confirm button */}
@@ -502,6 +613,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: "center",
   },
+  emptyStateContainer: {
+    alignItems: "center",
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  emptyStateIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   placeIconCircle: {
     width: 40,
     height: 40,
@@ -538,20 +661,7 @@ const styles = StyleSheet.create({
   periodsList: {
     flex: 1,
   },
-  periodCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: spacing.md,
-    borderRadius: 14,
-    marginBottom: spacing.xs,
-    gap: spacing.sm,
-  },
-  periodEmoji: {
-    fontSize: 28,
-  },
-  periodTextCol: {
-    flex: 1,
-  },
+
   confirmContainer: {
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,

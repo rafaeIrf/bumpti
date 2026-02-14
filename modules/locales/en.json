@@ -474,7 +474,8 @@
         "seeWhoViewedYou": "See who viewed you",
         "turboWeekly": "Connect+ (5/week)",
         "earlyCheckinWeekly": "Check-in+",
-        "pingsWeekly": "Pings (5/week)"
+        "pingsWeekly": "Pings (5/week)",
+        "morePlansDaily": "10 plans per day"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -688,14 +689,30 @@
           "tomorrowNight": "Tomorrow night"
         }
       },
+      "myPlans": {
+        "title": "My Plans",
+        "createPlan": "Create new plan",
+        "emptyTitle": "No plans yet",
+        "emptyDescription": "Create your first plan and see who's going!",
+        "activeUsers": "{{count}} people",
+        "viewPeople": "View people",
+        "deletePlan": "Delete plan",
+        "deleteConfirmTitle": "Delete plan?",
+        "deleteConfirmDescription": "This plan will be removed and you won't appear as confirmed anymore.",
+        "deleteConfirmButton": "Delete",
+        "deleteSuccess": "Plan deleted",
+        "dailyLimitReached": "You've reached your daily limit of {{limit}} plans",
+        "upgradeForMore": "Upgrade to Premium for up to 10 plans per day"
+      },
       "createPlan": {
         "location": {
           "title": "What's the plan for today?",
           "subtitle": "Choose where you're going",
           "suggestionsTitle": "Suggestions",
           "searchPlaceholder": "Search place...",
-          "suggestionsDescription": "Places where other people have plans",
-          "noResults": "No places found"
+
+          "noResults": "No places found",
+          "searchEmptyState": "Search for a bar, restaurant, or any other place you want to go"
         },
         "period": {
           "title": "What time are you arriving?",
@@ -714,7 +731,7 @@
             "morning": "6am - 12pm",
             "lunch": "12pm - 2pm",
             "afternoon": "2pm - 6pm",
-            "night": "6pm - 12am",
+            "night": "After 6pm",
             "late_night": "12am - 6am"
           },
           "days": {
@@ -779,6 +796,10 @@
         "pings": {
           "title": "Pings unlocked (5 per week)",
           "subtitle": "Send special social signals to get someone's attention."
+        },
+        "morePlans": {
+          "title": "10 plans per day",
+          "subtitle": "Create more daily plans and maximize your chances of meeting people."
         }
       },
       "terms": "Your subscription renews automatically for the same price and period unless cancelled in your {{store}} settings. By confirming the subscription, you agree to our",
