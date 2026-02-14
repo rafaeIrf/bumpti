@@ -26,6 +26,7 @@ import { useUserActions } from "@/hooks/use-user-actions";
 import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
+import { isDateToday } from "@/utils/date";
 import { triggerLightHaptic } from "@/utils/haptics";
 import { prefetchImages } from "@/utils/image-prefetch";
 import { LinearGradient } from "expo-linear-gradient";
@@ -355,19 +356,26 @@ export function UserProfileCard({
           {/* Quick status/location */}
           <View style={styles.quickStatusRow}>
             {/* Contextual Tags */}
-            {profile.entry_type === "checkin_plus"
+            {profile.entry_type === "planning"
               ? renderTag(
-                  t("userProfile.planningToGo"),
+                  isDateToday(profile.planned_for)
+                    ? t("userProfile.planningToGoToday")
+                    : t("userProfile.planningToGoTomorrow"),
                   <SparklesIcon width={12} height={12} color="#2997FF" />,
                   true,
                 )
-              : // Assume here now if found in list
-                profile.entry_type === "physical" &&
-                renderTag(
-                  t("userProfile.hereNow"),
-                  <View style={styles.onlineDot} />,
-                  true,
-                )}
+              : profile.entry_type === "checkin_plus"
+                ? renderTag(
+                    t("userProfile.planningToGo"),
+                    <SparklesIcon width={12} height={12} color="#2997FF" />,
+                    true,
+                  )
+                : profile.entry_type === "physical" &&
+                  renderTag(
+                    t("userProfile.hereNow"),
+                    <View style={styles.onlineDot} />,
+                    true,
+                  )}
           </View>
         </View>
       </View>

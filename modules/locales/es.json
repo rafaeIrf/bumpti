@@ -128,6 +128,7 @@
     "buy": "Comprar",
     "skip": "Omitir",
     "select": "Seleccionar",
+    "step": "Paso",
     "loading": "Cargando...",
     "understood": "Entendido",
     "of": "de",
@@ -666,6 +667,61 @@
         "noActiveNow": "Nadie en el campus ahora",
         "findOnMap": "Encuentra tu universidad en el mapa",
         "tapToConnect": "Toca para conectar"
+      },
+      "planHero": {
+        "emptyState": {
+          "title": "¿Cuál es el plan para hoy?",
+          "subtitle": "Ve quién va y conéctate de antemano",
+          "locationButton": "¿Dónde te conectarás?"
+        },
+        "activeState": {
+          "title": "Tu próximo plan",
+          "viewPeopleButton": "Ver personas"
+        },
+        "confirmedToday": "{{count}} personas confirmaron hoy",
+        "periodLabels": {
+          "todayMorning": "Hoy por la mañana",
+          "todayAfternoon": "Hoy por la tarde",
+          "todayNight": "Esta noche",
+          "tomorrowMorning": "Mañana por la mañana",
+          "tomorrowAfternoon": "Mañana por la tarde",
+          "tomorrowNight": "Mañana por la noche"
+        }
+      },
+      "createPlan": {
+        "location": {
+          "title": "¿Cuál es el plan para hoy?",
+          "subtitle": "Elige dónde vas",
+          "suggestionsTitle": "Sugerencias",
+          "searchPlaceholder": "Buscar lugar...",
+          "suggestionsDescription": "Lugares donde otras personas tienen planes",
+          "noResults": "No se encontraron lugares"
+        },
+        "period": {
+          "title": "¿A qué hora llegas?",
+          "subtitle": "Ubicación seleccionada",
+          "confirm": "Crear plan",
+          "dayLabel": "¿Cuándo?",
+          "periodLabel": "Período",
+          "periods": {
+            "morning": "Mañana",
+            "lunch": "Almuerzo",
+            "afternoon": "Tarde",
+            "night": "Noche",
+            "late_night": "Madrugada"
+          },
+          "periodDescriptions": {
+            "morning": "6h - 12h",
+            "lunch": "12h - 14h",
+            "afternoon": "14h - 18h",
+            "night": "18h - 00h",
+            "late_night": "00h - 6h"
+          },
+          "days": {
+            "today": "Hoy",
+            "tomorrow": "Mañana"
+          }
+        }
       }
     },
     "premiumPaywall": {
@@ -1244,6 +1300,8 @@
   "userProfile": {
     "hereNow": "Aquí ahora",
     "planningToGo": "Planeando ir",
+    "planningToGoToday": "Planeando ir hoy",
+    "planningToGoTomorrow": "Planeando ir mañana",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aquí",
     "nearLocation": "Cerca de {{location}}",

@@ -23,6 +23,8 @@ import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
 import { MyCampusCard } from "@/components/my-campus-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
+import { PlanHero } from "@/components/plan-hero";
+import type { ActivePlan } from "@/components/plan-hero/PlanHero";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -66,9 +68,24 @@ export default function HomeScreen() {
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
 
   // Get user profile for MyCampusCard
   const profile = useAppSelector((state) => state.profile.data);
+
+  // Get user plans for PlanHero
+  const plans = useAppSelector((state) => state.plans?.data ?? []);
+  const nextPlan: ActivePlan | null =
+    plans.length > 0
+      ? {
+          id: plans[0].id,
+          placeId: plans[0].place_id,
+          locationName: plans[0].place_name ?? "",
+          confirmedCount: plans[0].active_users,
+          plannedFor: plans[0].planned_for,
+          plannedPeriod: plans[0].planned_period,
+        }
+      : null;
 
   // Detection banner with smart cooldowns and dismissal
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -430,6 +447,30 @@ export default function HomeScreen() {
             isConnecting={isConnecting}
           />
         )}
+
+        {/* Plan Hero - Create or view plans */}
+        <PlanHero
+          activePlan={nextPlan}
+          loading={planLoading}
+          onViewPeoplePress={async () => {
+            if (nextPlan) {
+              setPlanLoading(true);
+              try {
+                await handlePlaceClick({
+                  placeId: nextPlan.placeId,
+                  name: nextPlan.locationName,
+                  latitude: 0,
+                  longitude: 0,
+                  distance: 0,
+                  active_users: nextPlan.confirmedCount,
+                });
+              } finally {
+                setPlanLoading(false);
+              }
+            }
+          }}
+          defaultConfirmedCount={12}
+        />
 
         {/* Title Section */}
         {/* <ScreenSectionHeading

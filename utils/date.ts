@@ -5,6 +5,25 @@ import { t } from "@/modules/locales";
  * @param dateString - ISO date string
  * @returns "Hoje", "Ontem", or "X dias atrás" based on the current date
  */
+/**
+ * Returns the local date as "YYYY-MM-DD".
+ */
+function getLocalDateString(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Checks if a "YYYY-MM-DD" date string matches today's local date.
+ * Safe from timezone issues because it never parses the string into a Date object.
+ */
+export function isDateToday(dateString?: string | null): boolean {
+  if (!dateString) return false;
+  return dateString === getLocalDateString();
+}
+
 export function getRelativeDate(dateString?: string): string {
   if (!dateString) return "";
 
