@@ -37,6 +37,13 @@ export default function MainLayout() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="my-plans"
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
     </Stack>
   );
 }

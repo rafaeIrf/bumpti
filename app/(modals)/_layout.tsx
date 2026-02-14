@@ -17,6 +17,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="verification-webview" />
       <Stack.Screen name="update-suggestion" />
       <Stack.Screen name="rating-feedback" />
+      <Stack.Screen name="create-plan" />
     </Stack>
   );
 }

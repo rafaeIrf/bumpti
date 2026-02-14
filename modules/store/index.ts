@@ -17,13 +17,14 @@ import {
 } from "redux-persist";
 import appReducer from "./slices/appSlice";
 import onboardingReducer from "./slices/onboardingSlice";
+import plansReducer from "./slices/plansSlice";
 import profileReducer from "./slices/profileSlice";
 
 // Configure persistence
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["onboarding", "profile"], // Don't persist API states (RTKQ)
+  whitelist: ["onboarding", "profile", "plans"], // Don't persist API states (RTKQ)
 };
 
 // Define action type
@@ -37,6 +38,7 @@ const appReducer_combined = combineReducers({
   [discoverApi.reducerPath]: discoverApi.reducer,
   app: appReducer,
   onboarding: onboardingReducer,
+  plans: plansReducer,
   profile: profileReducer,
 });
 
