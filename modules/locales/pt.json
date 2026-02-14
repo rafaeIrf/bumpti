@@ -128,10 +128,9 @@
     "buy": "Comprar",
     "skip": "Pular",
     "select": "Selecione",
-    "step": "Passo",
-    "of": "de",
     "loading": "Carregando...",
     "understood": "Entendi",
+    "of": "de",
     "placeCategories": {
       "bar": "Bares",
       "nightclub": "Baladas",
@@ -220,6 +219,7 @@
         "title": "Configurações",
         "presence": {
           "title": "PREFERÊNCIAS DE PRESENÇA",
+
           "invisible": "Modo invisível",
           "invisibleDescription": "Torna sua presença invisível para outros usuários."
         },
@@ -248,6 +248,7 @@
             "alreadyVerified": "Seu perfil já está verificado!"
           }
         },
+
         "security": {
           "title": "SEGURANÇA E PRIVACIDADE",
           "privacyPolicy": "Política de Privacidade",
@@ -331,6 +332,7 @@
           "empty": "Nenhum liker ID encontrado."
         }
       },
+
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -474,8 +476,7 @@
         "seeWhoViewedYou": "Veja quem te viu no local",
         "turboWeekly": "Connect+ (5/semana)",
         "earlyCheckinWeekly": "Check-in+",
-        "pingsWeekly": "Pings (5/semana)",
-        "morePlansDaily": "10 planos por dia"
+        "pingsWeekly": "Pings (5/semana)"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -668,77 +669,6 @@
         "noActiveNow": "Ninguém no campus agora",
         "findOnMap": "Encontre sua faculdade no mapa",
         "tapToConnect": "Toque para se conectar"
-      },
-      "planHero": {
-        "emptyState": {
-          "title": "Qual o plano para hoje?",
-          "subtitle": "Veja quem vai e conecte-se antecipadamente",
-          "locationButton": "Onde você vai se conectar?"
-        },
-        "activeState": {
-          "title": "Seu próximo plano",
-          "viewPeopleButton": "Ver pessoas"
-        },
-        "confirmedToday": "{{count}} pessoas confirmaram hoje",
-        "periodLabels": {
-          "todayMorning": "Hoje de manhã",
-          "todayAfternoon": "Hoje à tarde",
-          "todayNight": "Hoje à noite",
-          "tomorrowMorning": "Amanhã de manhã",
-          "tomorrowAfternoon": "Amanhã à tarde",
-          "tomorrowNight": "Amanhã à noite"
-        }
-      },
-      "myPlans": {
-        "title": "Meus Planos",
-        "createPlan": "Criar novo plano",
-        "emptyTitle": "Nenhum plano ainda",
-        "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
-        "activeUsers": "{{count}} pessoas",
-        "viewPeople": "Ver pessoas",
-        "deletePlan": "Excluir plano",
-        "deleteConfirmTitle": "Excluir plano?",
-        "deleteConfirmDescription": "Este plano será removido e você não aparecerá mais como confirmado.",
-        "deleteConfirmButton": "Excluir",
-        "deleteSuccess": "Plano excluído",
-        "dailyLimitReached": "Você atingiu seu limite diário de {{limit}} planos",
-        "upgradeForMore": "Assine o Premium para criar até 10 planos por dia"
-      },
-      "createPlan": {
-        "location": {
-          "title": "Qual o plano para hoje?",
-          "subtitle": "Escolha onde você vai",
-          "suggestionsTitle": "Sugestões",
-          "searchPlaceholder": "Buscar local...",
-
-          "noResults": "Nenhum lugar encontrado",
-          "searchEmptyState": "Busque por um bar, restaurante ou qualquer outro lugar que queira ir"
-        },
-        "period": {
-          "title": "Que horas você chega?",
-          "subtitle": "Local selecionado",
-          "confirm": "Criar plano",
-          "dayLabel": "Quando?",
-          "periodLabel": "Período",
-          "periods": {
-            "morning": "Manhã",
-            "lunch": "Almoço",
-            "afternoon": "Tarde",
-            "night": "Noite",
-            "late_night": "Madrugada"
-          },
-          "periodDescriptions": {
-            "morning": "6h - 12h",
-            "lunch": "12h - 14h",
-            "afternoon": "14h - 18h",
-            "night": "Após as 18h",
-            "late_night": "00h - 6h"
-          },
-          "days": {
-            "today": "Hoje",
-            "tomorrow": "Amanhã"
-          }
-        }
       }
     },
     "premiumPaywall": {
@@ -796,10 +726,6 @@
         "pings": {
           "title": "Pings liberados (5 por semana)",
           "subtitle": "Envie sinais sociais especiais para chamar atenção de alguém."
-        },
-        "morePlans": {
-          "title": "10 planos por dia",
-          "subtitle": "Crie mais planos diários e maximize suas chances de encontrar pessoas."
         }
       },
       "terms": "A renovação da sua assinatura é automática pelo mesmo valor e período, a menos que seja cancelada nas configurações da {{store}}. Ao confirmar a assinatura, você concorda com nossos",
@@ -1321,8 +1247,6 @@
   "userProfile": {
     "hereNow": "Aqui agora",
     "planningToGo": "Planejando ir",
-    "planningToGoToday": "Planejando ir hoje",
-    "planningToGoTomorrow": "Planejando ir amanhã",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aqui",
     "nearLocation": "Próximo de {{location}}",

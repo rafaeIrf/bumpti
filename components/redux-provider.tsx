@@ -4,7 +4,6 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
-import { fetchAndSetUserPlans } from "@/modules/plans/api";
 import { fetchAndSetUserProfile } from "@/modules/profile";
 import { persistor, store } from "@/modules/store";
 import { supabase } from "@/modules/supabase/client";
@@ -36,13 +35,6 @@ async function validateSessionOrLogout(): Promise<boolean> {
   return true;
 }
 
-/**
- * Loads all user data (profile + plans) in parallel.
- */
-async function loadUserData(): Promise<void> {
-  await Promise.all([fetchAndSetUserProfile(), fetchAndSetUserPlans()]);
-}
-
 export function ReduxProvider({ children }: ReduxProviderProps) {
   useEffect(() => {
     let mounted = true;
@@ -65,9 +57,9 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
           if (!ok) return;
 
           try {
-            await loadUserData();
+            await fetchAndSetUserProfile();
           } catch (err) {
-            logger.error("[Auth] Failed to load user data:", err);
+            logger.error("[Auth] Failed to load profile:", err);
           }
         }
 
@@ -77,9 +69,9 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
           supabase.auth.startAutoRefresh();
 
           try {
-            await loadUserData();
+            await fetchAndSetUserProfile();
           } catch (err) {
-            logger.error("[Auth] Failed to load user data:", err);
+            logger.error("[Auth] Failed to load profile:", err);
           }
         }
 
@@ -107,9 +99,9 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
         if (!ok) return;
 
         try {
-          await loadUserData();
+          await fetchAndSetUserProfile();
         } catch (err) {
-          logger.error("[AppState] Failed to refresh user data:", err);
+          logger.error("[AppState] Failed to refresh profile:", err);
         }
       } else {
         supabase.auth.stopAutoRefresh();

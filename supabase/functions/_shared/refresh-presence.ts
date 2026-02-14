@@ -10,9 +10,7 @@ export type PresenceRecord = {
   active: boolean;
   lat: number | null;
   lng: number | null;
-  entry_type: 'physical' | 'checkin_plus' | 'planning';
-  planned_for?: string;  // DATE string (YYYY-MM-DD), only set for planning entries
-  planned_period?: string;  // morning|lunch|afternoon|night|late_night
+  entry_type: 'physical' | 'checkin_plus';
 };
 
 export async function refreshPresenceForPlace(

@@ -82,10 +82,6 @@ export const HOME_INTERACTION_EVENTS = {
   DETECTION_BANNER_CONNECT: "home_detection_connect",
   /** User dismissed detection banner */
   DETECTION_BANNER_DISMISS: "home_detection_dismiss",
-  /** User clicked location button on plan hero (empty state) */
-  PLAN_HERO_LOCATION_CLICKED: "plan_hero_location_clicked",
-  /** User clicked view people button on plan hero (active state) */
-  PLAN_HERO_VIEW_PEOPLE_CLICKED: "plan_hero_view_people_clicked",
 } as const;
 
 // =============================================================================

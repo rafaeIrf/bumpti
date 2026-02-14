@@ -25,15 +25,11 @@ export interface InputTextProps extends Omit<TextInputProps, "style"> {
     height: number;
     color: string;
   }>;
-  /** Custom color for left icon (defaults to theme textSecondary) */
-  leftIconColor?: string;
   rightIcon?: React.ComponentType<{
     width: number;
     height: number;
     color: string;
   }>;
-  /** Custom color for right icon (defaults to theme textSecondary) */
-  rightIconColor?: string;
   /** Callback when left icon is pressed */
   onLeftIconPress?: () => void;
   /** Callback when right icon is pressed */
@@ -54,16 +50,13 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
       onClear,
       placeholder = "Buscar...",
       leftIcon: LeftIcon,
-      leftIconColor,
       rightIcon: RightIcon,
-      rightIconColor,
       onLeftIconPress,
       onRightIconPress,
-      showClearButton = false,
+      showClearButton = true,
       containerStyle,
       inputStyle,
       multiline,
-      editable = true,
       maxLength,
       showCharacterCounter,
       ...textInputProps
@@ -112,11 +105,7 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
                 zIndex: 1,
               }}
             >
-              <LeftIcon
-                width={18}
-                height={18}
-                color={leftIconColor ?? colors.textSecondary}
-              />
+              <LeftIcon width={18} height={18} color={colors.textSecondary} />
             </Pressable>
           )}
 
@@ -139,7 +128,6 @@ export const InputText = forwardRef<TextInput, InputTextProps>(
               paddingRight: (showClearButton && value) || RightIcon ? 36 : 16,
               color: colors.text,
               minHeight: multiline ? 120 : undefined,
-              includeFontPadding: false, // Fix Android vertical alignment
               ...typography.body,
               ...inputStyle,
             }}

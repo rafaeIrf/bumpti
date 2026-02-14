@@ -47,11 +47,6 @@ const BENEFITS: BenefitRow[] = [
     premium: true,
     id: "earlyCheckin",
   },
-  {
-    labelKey: "screens.profile.benefits.morePlansDaily",
-    free: false,
-    premium: true,
-  },
 ];
 
 export function BenefitsTable() {
