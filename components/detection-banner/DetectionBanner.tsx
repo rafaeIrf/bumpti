@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: "hidden",
     padding: spacing.md,
+    marginBottom: spacing.md,
   },
   content: {
     flexDirection: "column",
