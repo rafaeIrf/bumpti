@@ -677,9 +677,10 @@
         },
         "activeState": {
           "title": "Seu próximo plano",
-          "viewPeopleButton": "Ver pessoas"
+          "viewPeopleButton": "Entrar"
         },
         "confirmedToday": "{{count}} pessoas confirmaram hoje",
+        "beFirstToConfirm": "Você já está no radar!",
         "periodLabels": {
           "todayMorning": "Hoje de manhã",
           "todayAfternoon": "Hoje à tarde",
@@ -695,7 +696,7 @@
         "emptyTitle": "Nenhum plano ainda",
         "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
         "activeUsers": "{{count}} pessoas",
-        "viewPeople": "Ver pessoas",
+        "viewPeople": "Entrar",
         "deletePlan": "Excluir plano",
         "deleteConfirmTitle": "Excluir plano?",
         "deleteConfirmDescription": "Este plano será removido e você não aparecerá mais como confirmado.",

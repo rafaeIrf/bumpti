@@ -2,7 +2,48 @@ import { store } from "@/modules/store";
 import { setPlans, setPlansLoading } from "@/modules/store/slices/plansSlice";
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import type { CreatePlanPayload, SuggestedPlan, UserPlan } from "./types";
+import type {
+  CreatePlanPayload,
+  PlanDay,
+  PlanPeriod,
+  SuggestedPlan,
+  UserPlan,
+} from "./types";
+
+// ── Timezone-aware date helpers ───────────────────────────────────────
+
+const PERIOD_END_HOURS: Record<PlanPeriod, number> = {
+  morning: 11,
+  afternoon: 17,
+  night: 23,
+};
+
+/**
+ * Returns the device's local date as YYYY-MM-DD.
+ * If day is "tomorrow", adds one day.
+ */
+export function computeLocalDate(day: PlanDay): string {
+  const d = new Date();
+  if (day === "tomorrow") d.setDate(d.getDate() + 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+/**
+ * Returns the expires_at ISO string based on the planned date + period.
+ * The Date constructor interprets "YYYY-MM-DDThh:mm:ss" as local timezone,
+ * so toISOString() automatically converts to UTC.
+ */
+export function computeExpiresAt(
+  localDate: string,
+  period: PlanPeriod
+): string {
+  const endHour = PERIOD_END_HOURS[period];
+  const d = new Date(`${localDate}T${String(endHour).padStart(2, "0")}:59:59`);
+  return d.toISOString();
+}
 
 export type PlanPresenceRecord = {
   id: string;
@@ -22,16 +63,25 @@ export async function createPlan(
 ): Promise<PlanPresenceRecord | null> {
   try {
     const { placeId, period, day } = params;
+    const localDate = computeLocalDate(day);
+    const expiresAt = computeExpiresAt(localDate, period);
 
-    logger.debug("[createPlan] Creating plan:", { placeId, period, day });
+    logger.debug("[createPlan] Creating plan:", {
+      placeId,
+      period,
+      day,
+      localDate,
+      expiresAt,
+    });
 
     const { data, error } = await supabase.functions.invoke<{
       presence: PlanPresenceRecord;
     }>("create-plan", {
       body: {
         place_id: placeId,
-        planned_for: day,
+        planned_for: localDate,
         planned_period: period,
+        expires_at: expiresAt,
       },
     });
 
@@ -93,6 +143,7 @@ export async function fetchAndSetUserPlans(): Promise<UserPlan[]> {
       plans: UserPlan[];
     }>("get-my-plans", {
       method: "GET",
+      headers: { "x-local-date": computeLocalDate("today") },
     });
 
     if (error) {
@@ -136,7 +187,7 @@ export async function fetchSuggestedPlans(
       suggestions: SuggestedPlan[];
       total_count: number;
     }>("get-suggested-plans", {
-      body: { lat, lng },
+      body: { lat, lng, local_date: computeLocalDate("today") },
     });
 
     if (error) {

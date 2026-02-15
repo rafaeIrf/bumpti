@@ -677,9 +677,10 @@
         },
         "activeState": {
           "title": "Your next plan",
-          "viewPeopleButton": "View people"
+          "viewPeopleButton": "Enter"
         },
         "confirmedToday": "{{count}} people confirmed today",
+        "beFirstToConfirm": "You're already on the radar!",
         "periodLabels": {
           "todayMorning": "Today in the morning",
           "todayAfternoon": "Today in the afternoon",
@@ -695,7 +696,7 @@
         "emptyTitle": "No plans yet",
         "emptyDescription": "Create your first plan and see who's going!",
         "activeUsers": "{{count}} people",
-        "viewPeople": "View people",
+        "viewPeople": "Enter",
         "deletePlan": "Delete plan",
         "deleteConfirmTitle": "Delete plan?",
         "deleteConfirmDescription": "This plan will be removed and you won't appear as confirmed anymore.",

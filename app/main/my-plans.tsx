@@ -16,11 +16,16 @@ import { Chip } from "@/components/ui/chip";
 import { spacing, typography } from "@/constants/theme";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { deletePlan, fetchAndSetUserPlans } from "@/modules/plans/api";
+import { useUserPlans } from "@/modules/plans/hooks";
 import type { PlanPeriod, UserPlan } from "@/modules/plans/types";
-import { useAppSelector } from "@/modules/store/hooks";
 import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -64,11 +69,13 @@ export default function MyPlansScreen() {
   const router = useRouter();
   const bottomSheet = useCustomBottomSheet();
   const { handlePlaceClick } = usePlaceClick();
-  const plans = useAppSelector((state) => state.plans.data);
-  const plansLoading = useAppSelector((state) => state.plans.loading);
+  const { plans, loading: plansLoading } = useUserPlans();
   const { isPremium } = useUserSubscription();
   const [refreshing, setRefreshing] = useState(false);
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+
+  // ── Screen tracking ──────────────────────────────────────────────
+  useScreenTracking({ screenName: "my_plans" });
 
   // ── Daily limit check ─────────────────────────────────────────────
   const getTodayPlansCount = useCallback(() => {
@@ -78,8 +85,13 @@ export default function MyPlansScreen() {
 
   const handleCreatePlan = useCallback(() => {
     const todayCount = getTodayPlansCount();
-    console.log("count", todayCount);
+    logger.log("[MyPlans] Today plan count:", todayCount);
     const dailyLimit = isPremium ? 10 : 2;
+
+    trackEvent(ANALYTICS_EVENTS.MY_PLANS.CREATE_TAPPED, {
+      todayPlansCount: todayCount,
+      isPremium,
+    });
 
     if (todayCount >= dailyLimit) {
       if (!isPremium) {
@@ -153,6 +165,7 @@ export default function MyPlansScreen() {
                 try {
                   const success = await deletePlan(plan.id);
                   if (success) {
+                    trackEvent(ANALYTICS_EVENTS.MY_PLANS.DELETE_CONFIRMED, {});
                     Haptics.notificationAsync(
                       Haptics.NotificationFeedbackType.Success,
                     );
@@ -194,6 +207,10 @@ export default function MyPlansScreen() {
   const handlePlanPress = useCallback(
     (plan: UserPlan) => {
       if (!bottomSheet) return;
+
+      trackEvent(ANALYTICS_EVENTS.MY_PLANS.CARD_TAPPED, {
+        activeUsers: plan.active_users,
+      });
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -260,6 +277,9 @@ export default function MyPlansScreen() {
             <View style={styles.sheetActions}>
               <Button
                 onPress={() => {
+                  trackEvent(ANALYTICS_EVENTS.MY_PLANS.ENTER_TAPPED, {
+                    activeUsers: plan.active_users,
+                  });
                   bottomSheet.close();
                   handleViewPeople(plan);
                 }}
@@ -270,6 +290,7 @@ export default function MyPlansScreen() {
               />
               <Button
                 onPress={() => {
+                  trackEvent(ANALYTICS_EVENTS.MY_PLANS.DELETE_TAPPED, {});
                   handleDeletePlan(plan);
                 }}
                 variant="ghost"

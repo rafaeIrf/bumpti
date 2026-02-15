@@ -85,7 +85,9 @@ export const HOME_INTERACTION_EVENTS = {
   /** User clicked location button on plan hero (empty state) */
   PLAN_HERO_LOCATION_CLICKED: "plan_hero_location_clicked",
   /** User clicked view people button on plan hero (active state) */
-  PLAN_HERO_VIEW_PEOPLE_CLICKED: "plan_hero_view_people_clicked",
+  PLAN_HERO_ENTER_CLICKED: "plan_hero_enter_clicked",
+  /** User clicked settings icon on plan hero to go to my plans */
+  PLAN_HERO_SETTINGS_CLICKED: "plan_hero_settings_clicked",
 } as const;
 
 // =============================================================================
@@ -154,6 +156,50 @@ export const CHECKIN_FLOW_EVENTS = {
 } as const;
 
 // =============================================================================
+// PLAN CREATION FLOW
+// =============================================================================
+
+export const PLAN_CREATION_FLOW_EVENTS = {
+  /** Suggested plans loaded and shown */
+  SUGGESTION_SHOWN: "plan_suggestion_shown",
+  /** User tapped a suggested place */
+  SUGGESTION_TAPPED: "plan_suggestion_tapped",
+  /** User triggered a search (debounced, ≥2 chars) */
+  SEARCH_TYPED: "plan_search_typed",
+  /** User tapped a search result */
+  SEARCH_RESULT_TAPPED: "plan_search_result_tapped",
+  /** User selected a day (today / tomorrow) */
+  DAY_SELECTED: "plan_day_selected",
+  /** User selected a period (morning / afternoon / night) */
+  PERIOD_SELECTED: "plan_period_selected",
+  /** User tapped the confirm button */
+  CONFIRMED: "plan_confirmed",
+  /** Plan successfully created via API */
+  CREATED: "plan_created",
+  /** Plan creation failed */
+  CREATION_FAILED: "plan_creation_failed",
+  /** User abandoned the creation flow */
+  ABANDONED: "plan_create_abandoned",
+} as const;
+
+// =============================================================================
+// MY PLANS SCREEN
+// =============================================================================
+
+export const MY_PLANS_EVENTS = {
+  /** User tapped create plan button */
+  CREATE_TAPPED: "my_plans_create_tapped",
+  /** User tapped a plan card (opens bottom sheet) */
+  CARD_TAPPED: "my_plans_card_tapped",
+  /** User tapped "Entrar" in the plan bottom sheet */
+  ENTER_TAPPED: "my_plans_enter_tapped",
+  /** User tapped "Excluir" in the plan bottom sheet */
+  DELETE_TAPPED: "my_plans_delete_tapped",
+  /** User confirmed plan deletion */
+  DELETE_CONFIRMED: "my_plans_delete_confirmed",
+} as const;
+
+// =============================================================================
 // CONSOLIDATED EXPORT
 // =============================================================================
 
@@ -167,6 +213,8 @@ export const ANALYTICS_EVENTS = {
   CATEGORY_RESULTS: CATEGORY_RESULTS_EVENTS,
   PLACE_DETAILS: PLACE_DETAILS_EVENTS,
   CHECKIN_FLOW: CHECKIN_FLOW_EVENTS,
+  PLAN_CREATION: PLAN_CREATION_FLOW_EVENTS,
+  MY_PLANS: MY_PLANS_EVENTS,
 } as const;
 
 // =============================================================================
@@ -297,5 +345,56 @@ export interface AnalyticsEventParams {
   [CHECKIN_FLOW_EVENTS.PLACE_PEOPLE_NAVIGATED]: {
     placeId: string;
     activeUsers: number;
+  };
+
+  // Plan creation flow
+  [PLAN_CREATION_FLOW_EVENTS.SUGGESTION_SHOWN]: {
+    suggestionsCount: number;
+    topSuggestionHype: number;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.SUGGESTION_TAPPED]: {
+    hypeCount: number;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.SEARCH_TYPED]: {
+    queryLength: number;
+    resultsCount: number;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.SEARCH_RESULT_TAPPED]: {
+    activeUsers: number;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.DAY_SELECTED]: {
+    day: string;
+    availablePeriods: number;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.PERIOD_SELECTED]: {
+    period: string;
+    day: string;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.CONFIRMED]: {
+    source: string;
+  };
+  [PLAN_CREATION_FLOW_EVENTS.CREATED]: Record<string, never>;
+  [PLAN_CREATION_FLOW_EVENTS.CREATION_FAILED]: Record<string, never>;
+  [PLAN_CREATION_FLOW_EVENTS.ABANDONED]: {
+    step: number;
+  };
+
+  // My Plans screen
+  [MY_PLANS_EVENTS.CREATE_TAPPED]: {
+    todayPlansCount: number;
+    isPremium: boolean;
+  };
+  [MY_PLANS_EVENTS.CARD_TAPPED]: {
+    activeUsers: number;
+  };
+  [MY_PLANS_EVENTS.ENTER_TAPPED]: {
+    activeUsers: number;
+  };
+  [MY_PLANS_EVENTS.DELETE_TAPPED]: Record<string, never>;
+  [MY_PLANS_EVENTS.DELETE_CONFIRMED]: Record<string, never>;
+
+  // Plan hero
+  [HOME_INTERACTION_EVENTS.PLAN_HERO_SETTINGS_CLICKED]: {
+    activePlansCount: number;
   };
 }
