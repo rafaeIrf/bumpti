@@ -550,25 +550,20 @@ export default function HomeScreen() {
 
         {/* Info Card */}
         <Animated.View entering={FadeInDown.delay(700).springify()}>
-          <ThemedView style={styles.section}>
-            <ThemedView
+          <View style={styles.section}>
+            <View
               style={[
                 styles.infoCard,
                 {
-                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
                 },
               ]}
             >
-              <ThemedView style={styles.infoContent}>
-                <ThemedView
-                  style={[
-                    styles.infoIconContainer,
-                    { backgroundColor: `${colors.accent}10` },
-                  ]}
-                >
+              <View style={styles.infoContent}>
+                <View style={[styles.infoIconContainer]}>
                   <MapPinIcon width={20} height={20} color={colors.accent} />
-                </ThemedView>
-                <ThemedView style={styles.infoTextContainer}>
+                </View>
+                <View style={styles.infoTextContainer}>
                   <ThemedText
                     style={[styles.infoTitle, { color: colors.text }]}
                   >
@@ -582,10 +577,10 @@ export default function HomeScreen() {
                   >
                     {t("screens.home.infoDescription")}
                   </ThemedText>
-                </ThemedView>
-              </ThemedView>
-            </ThemedView>
-          </ThemedView>
+                </View>
+              </View>
+            </View>
+          </View>
         </Animated.View>
       </ThemedView>
     </BaseTemplateScreen>

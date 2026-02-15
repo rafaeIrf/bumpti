@@ -680,6 +680,7 @@
           "viewPeopleButton": "Entrar"
         },
         "confirmedToday": "{{count}} personas confirmaron hoy",
+        "confirmedTodayOne": "{{count}} persona confirmó hoy",
         "beFirstToConfirm": "¡Ya estás en el radar!",
         "periodLabels": {
           "todayMorning": "Hoy por la mañana",
@@ -698,12 +699,27 @@
         "activeUsers": "{{count}} personas",
         "viewPeople": "Entrar",
         "deletePlan": "Eliminar plan",
+        "vibeCheck": "Vibe Check",
         "deleteConfirmTitle": "¿Eliminar plan?",
         "deleteConfirmDescription": "Este plan será eliminado y ya no aparecerás como confirmado.",
         "deleteConfirmButton": "Eliminar",
         "deleteSuccess": "Plan eliminado",
         "dailyLimitReached": "Has alcanzado tu límite diario de {{limit}} planes",
         "upgradeForMore": "Suscríbete a Premium para crear hasta 10 planes por día"
+      },
+      "vibeCheck": {
+        "title": "¡Estás en el radar! 🎉",
+        "subtitle": "Mira quién más va a ",
+        "planningLabel": "personas planificando ir hoy",
+        "planningLabelOne": "persona planificando ir hoy",
+        "trendingTitle": "¡El movimiento está creciendo!",
+        "recentLabel": "+{{count}} personas en las últimas horas",
+        "recentLabelOne": "+{{count}} persona en las últimas horas",
+        "commonInterestsLabel": "Intereses en común",
+        "matchesGoingLabel": "matches confirmados",
+        "emptyState": "Nadie aquí aún — ¡serás el primero!",
+        "viewPeople": "Ver quién va",
+        "gotIt": "Entendido"
       },
       "createPlan": {
         "location": {

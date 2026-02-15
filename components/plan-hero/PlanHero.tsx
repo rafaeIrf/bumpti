@@ -195,9 +195,13 @@ function PlanCard({
           ]}
         >
           {confirmedCount > 0
-            ? t("screens.home.planHero.confirmedToday", {
-                count: confirmedCount,
-              })
+            ? confirmedCount === 1
+              ? t("screens.home.planHero.confirmedTodayOne", {
+                  count: confirmedCount,
+                })
+              : t("screens.home.planHero.confirmedToday", {
+                  count: confirmedCount,
+                })
             : t("screens.home.planHero.beFirstToConfirm")}
         </ThemedText>
 
@@ -369,9 +373,13 @@ export function PlanHero({
                   { color: "#FFFFFF" },
                 ]}
               >
-                {t("screens.home.planHero.confirmedToday", {
-                  count: confirmedCount,
-                })}
+                {confirmedCount === 1
+                  ? t("screens.home.planHero.confirmedTodayOne", {
+                      count: confirmedCount,
+                    })
+                  : t("screens.home.planHero.confirmedToday", {
+                      count: confirmedCount,
+                    })}
               </ThemedText>
             )}
           </LinearGradient>

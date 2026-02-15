@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
-import { useThemeColors } from "@/hooks/use-theme-colors";
+import { getCardGradientColors } from "@/utils/card-gradient";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -37,7 +37,6 @@ export function PlaceCardFeatured({
 }: PlaceCardFeaturedProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
-  const colors = useThemeColors();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -65,7 +64,8 @@ export function PlaceCardFeatured({
       style={[styles.card, animatedStyle, containerStyle]}
     >
       <LinearGradient
-        colors={[color, color]} // Use the pastel color as background
+        colors={getCardGradientColors(color)}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientContainer}

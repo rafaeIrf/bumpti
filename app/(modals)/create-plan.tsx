@@ -269,7 +269,16 @@ export default function CreatePlanModal() {
           period: selectedPeriod,
           day: selectedDay,
         });
-        router.dismissAll();
+        router.replace({
+          pathname: "/(modals)/vibe-check",
+          params: {
+            placeId: selectedPlace.id,
+            placeName: selectedPlace.name,
+            planPeriod: t(
+              `screens.home.createPlan.period.periodDescriptions.${selectedPeriod}`,
+            ),
+          },
+        });
       } else {
         trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.CREATION_FAILED, {});
         logger.error("[CreatePlan] Failed to create plan");

@@ -2,6 +2,7 @@ import {
   ArrowLeftIcon,
   MapPinIcon,
   PlusIcon,
+  SparklesIcon,
   UsersIcon,
   XIcon,
 } from "@/assets/icons";
@@ -290,6 +291,26 @@ export default function MyPlansScreen() {
               />
               <Button
                 onPress={() => {
+                  bottomSheet.close();
+                  router.push({
+                    pathname: "/(modals)/vibe-check",
+                    params: {
+                      placeId: plan.place_id,
+                      placeName: plan.place_name || "",
+                      planPeriod: t(
+                        `screens.home.createPlan.period.periodDescriptions.${plan.planned_period}`,
+                      ),
+                    },
+                  });
+                }}
+                variant="link"
+                size="lg"
+                fullWidth
+                leftIcon={<SparklesIcon width={18} height={18} />}
+                label={t("screens.home.myPlans.vibeCheck")}
+              />
+              <Button
+                onPress={() => {
                   trackEvent(ANALYTICS_EVENTS.MY_PLANS.DELETE_TAPPED, {});
                   handleDeletePlan(plan);
                 }}
@@ -297,7 +318,6 @@ export default function MyPlansScreen() {
                 size="lg"
                 fullWidth
                 label={t("screens.home.myPlans.deletePlan")}
-                textStyle={{ color: colors.error }}
               />
             </View>
           </View>
@@ -305,7 +325,7 @@ export default function MyPlansScreen() {
         draggable: true,
       });
     },
-    [bottomSheet, colors, handleDeletePlan, handleViewPeople],
+    [bottomSheet, colors, handleDeletePlan, handleViewPeople, router],
   );
 
   const renderPlanCard = useCallback(

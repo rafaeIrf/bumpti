@@ -200,6 +200,17 @@ export const MY_PLANS_EVENTS = {
 } as const;
 
 // =============================================================================
+// VIBE CHECK DASHBOARD
+// =============================================================================
+
+export const VIBE_CHECK_EVENTS = {
+  /** User tapped "Ver quem vai" CTA */
+  VIEW_PEOPLE_TAPPED: "vibe_check_view_people_tapped",
+  /** User dismissed the vibe check modal */
+  DISMISSED: "vibe_check_dismissed",
+} as const;
+
+// =============================================================================
 // CONSOLIDATED EXPORT
 // =============================================================================
 
@@ -215,6 +226,7 @@ export const ANALYTICS_EVENTS = {
   CHECKIN_FLOW: CHECKIN_FLOW_EVENTS,
   PLAN_CREATION: PLAN_CREATION_FLOW_EVENTS,
   MY_PLANS: MY_PLANS_EVENTS,
+  VIBE_CHECK: VIBE_CHECK_EVENTS,
 } as const;
 
 // =============================================================================
@@ -396,5 +408,14 @@ export interface AnalyticsEventParams {
   // Plan hero
   [HOME_INTERACTION_EVENTS.PLAN_HERO_SETTINGS_CLICKED]: {
     activePlansCount: number;
+  };
+
+  // Vibe check
+  [VIBE_CHECK_EVENTS.VIEW_PEOPLE_TAPPED]: {
+    placeId: string;
+    planningCount: number;
+  };
+  [VIBE_CHECK_EVENTS.DISMISSED]: {
+    placeId: string;
   };
 }
