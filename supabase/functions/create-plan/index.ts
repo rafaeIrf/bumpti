@@ -19,7 +19,7 @@ interface CreatePlanBody {
 
 const VALID_PERIODS = ["morning", "afternoon", "night"] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_DATE_DRIFT_DAYS = 2;
+const MAX_DATE_DRIFT_DAYS = 8;
 
 // ── Validation helpers ───────────────────────────────────────────────
 function validateBody(body: CreatePlanBody | null) {

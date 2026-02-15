@@ -1,5 +1,4 @@
 import {
-  ArrowRightIcon,
   FlameIcon,
   HeartIcon,
   SparklesIcon,
@@ -7,8 +6,8 @@ import {
   XIcon,
 } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
-import Button from "@/components/ui/button";
 import { ALL_INTERESTS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
@@ -18,12 +17,14 @@ import { trackEvent } from "@/modules/analytics";
 import { ANALYTICS_EVENTS } from "@/modules/analytics/analytics-events";
 import { t } from "@/modules/locales";
 import { supabase } from "@/modules/supabase/client";
+import { getLocalizedWeekday, getWhenLabel } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ── Types ─────────────────────────────────────────────────────────────
 type CommonInterest = {
@@ -32,6 +33,8 @@ type CommonInterest = {
 };
 
 type VibeCheckData = {
+  total_planning_count: number;
+  total_day_planning_count: number;
   planning_count: number;
   recent_count: number;
   common_interests: CommonInterest[];
@@ -50,14 +53,16 @@ function getInterestLabel(key: string): string {
 
 // ── Component ─────────────────────────────────────────────────────────
 export default function VibeCheckScreen() {
-  const { placeId, placeName, planPeriod } = useLocalSearchParams<{
+  const { placeId, placeName, plannedFor, planPeriod } = useLocalSearchParams<{
     placeId: string;
     placeName: string;
+    plannedFor?: string;
     planPeriod?: string;
   }>();
   const colors = useThemeColors();
   const { handlePlaceClick } = usePlaceClick();
   const { location: userLocation } = useCachedLocation();
+  const insets = useSafeAreaInsets();
   const [data, setData] = useState<VibeCheckData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +70,7 @@ export default function VibeCheckScreen() {
     try {
       const { data: result, error } =
         await supabase.functions.invoke<VibeCheckData>("get-vibe-check", {
-          body: { place_id: placeId },
+          body: { place_id: placeId, planned_for: plannedFor },
         });
 
       if (error) {
@@ -79,7 +84,7 @@ export default function VibeCheckScreen() {
     } finally {
       setLoading(false);
     }
-  }, [placeId]);
+  }, [placeId, plannedFor]);
 
   useEffect(() => {
     fetchVibeCheck();
@@ -107,15 +112,42 @@ export default function VibeCheckScreen() {
     router.dismissAll();
   };
 
-  const showCta = (data?.planning_count ?? 0) + (data?.recent_count ?? 0) > 0;
+  const hasDayActivity =
+    (data?.total_day_planning_count ?? 0) +
+      (data?.planning_count ?? 0) +
+      (data?.recent_count ?? 0) +
+      (data?.matches_going ?? 0) +
+      (data?.common_interests?.length ?? 0) >
+    0;
+  const showCta =
+    (data?.total_planning_count ?? 0) + (data?.recent_count ?? 0) > 0;
+
+  const dayName = plannedFor ? getLocalizedWeekday(plannedFor) : "";
+  const when = plannedFor ? getWhenLabel(plannedFor) : "";
 
   return (
-    <BaseTemplateScreen isModal scrollEnabled={false}>
+    <BaseTemplateScreen
+      isModal
+      scrollEnabled={false}
+      useSafeArea={false}
+      BottomBar={
+        <ScreenBottomBar
+          variant="single"
+          primaryLabel={
+            showCta
+              ? t("screens.home.vibeCheck.viewPeople")
+              : t("screens.home.vibeCheck.gotIt")
+          }
+          onPrimaryPress={showCta ? () => handleViewPeople() : handleDismiss}
+          showBorder
+        />
+      }
+    >
       {/* ─── Gradient Header ─── */}
       <LinearGradient
         colors={["#0A2D4F", "#0D1B2A", colors.background]}
         locations={[0, 0.6, 1]}
-        style={styles.headerGradient}
+        style={[styles.headerGradient, { paddingTop: insets.top + spacing.lg }]}
       >
         {/* Close button */}
         <Pressable
@@ -174,8 +206,8 @@ export default function VibeCheckScreen() {
         </View>
       ) : data ? (
         <View style={styles.statsContainer}>
-          {/* Planning count */}
-          {data.planning_count > 0 && (
+          {/* Total planning count (all dates — always shown) */}
+          {data.total_planning_count > 0 && (
             <Animated.View
               entering={FadeInDown.duration(400).delay(250)}
               style={[styles.statCard, { backgroundColor: colors.surface }]}
@@ -190,14 +222,90 @@ export default function VibeCheckScreen() {
               </View>
               <View style={styles.statTextContainer}>
                 <ThemedText style={styles.statNumber}>
+                  {data.total_planning_count}
+                </ThemedText>
+                <ThemedText
+                  style={[typography.caption, { color: colors.textSecondary }]}
+                >
+                  {data.total_planning_count === 1
+                    ? t("screens.home.vibeCheck.totalPlanningLabelOne")
+                    : t("screens.home.vibeCheck.totalPlanningLabel")}
+                </ThemedText>
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Date-filtered: total people planning this day (unfiltered) — only shown when different from compatible count */}
+          {data.total_day_planning_count > 0 &&
+            data.total_day_planning_count !== data.planning_count && (
+              <Animated.View
+                entering={FadeInDown.duration(400).delay(300)}
+                style={[styles.statCard, { backgroundColor: colors.surface }]}
+              >
+                <View
+                  style={[
+                    styles.statIconContainer,
+                    { backgroundColor: "rgba(34, 197, 94, 0.15)" },
+                  ]}
+                >
+                  <UsersIcon width={22} height={22} color="#22C55E" />
+                </View>
+                <View style={styles.statTextContainer}>
+                  <ThemedText style={[styles.statNumber, { color: "#22C55E" }]}>
+                    {data.total_day_planning_count}
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {data.total_day_planning_count === 1
+                      ? t("screens.home.vibeCheck.planningLabelOne", { when })
+                      : t("screens.home.vibeCheck.planningLabel", { when })}
+                  </ThemedText>
+                </View>
+              </Animated.View>
+            )}
+
+          {/* Preference-filtered: compatible people for this day */}
+          {data.planning_count > 0 && (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(
+                data.total_day_planning_count !== data.planning_count
+                  ? 350
+                  : 300,
+              )}
+              style={[styles.statCard, { backgroundColor: colors.surface }]}
+            >
+              <View
+                style={[
+                  styles.statIconContainer,
+                  { backgroundColor: "rgba(168, 85, 247, 0.15)" },
+                ]}
+              >
+                <UsersIcon width={22} height={22} color="#A855F7" />
+              </View>
+              <View style={styles.statTextContainer}>
+                <ThemedText style={[styles.statNumber, { color: "#A855F7" }]}>
                   {data.planning_count}
                 </ThemedText>
                 <ThemedText
                   style={[typography.caption, { color: colors.textSecondary }]}
                 >
                   {data.planning_count === 1
-                    ? t("screens.home.vibeCheck.planningLabelOne")
-                    : t("screens.home.vibeCheck.planningLabel")}
+                    ? data.total_day_planning_count === data.planning_count
+                      ? t("screens.home.vibeCheck.compatiblePlanningLabelOne", {
+                          when,
+                        })
+                      : t("screens.home.vibeCheck.compatibleLabelOne", {
+                          when,
+                        })
+                    : data.total_day_planning_count === data.planning_count
+                      ? t("screens.home.vibeCheck.compatiblePlanningLabel", {
+                          when,
+                        })
+                      : t("screens.home.vibeCheck.compatibleLabel", { when })}
                 </ThemedText>
               </View>
             </Animated.View>
@@ -316,53 +424,24 @@ export default function VibeCheckScreen() {
             </Animated.View>
           )}
 
-          {/* Empty state */}
-          {data.planning_count === 0 &&
-            data.recent_count === 0 &&
-            data.matches_going === 0 &&
-            data.common_interests.length === 0 && (
-              <Animated.View
-                entering={FadeInDown.duration(400).delay(250)}
-                style={styles.emptyContainer}
+          {/* Empty state for this day — shown when no date-filtered data */}
+          {!hasDayActivity && (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(350)}
+              style={styles.emptyContainer}
+            >
+              <ThemedText
+                style={[
+                  typography.body,
+                  { color: colors.textSecondary, textAlign: "center" },
+                ]}
               >
-                <ThemedText
-                  style={[
-                    typography.body,
-                    { color: colors.textSecondary, textAlign: "center" },
-                  ]}
-                >
-                  {t("screens.home.vibeCheck.emptyState")}
-                </ThemedText>
-              </Animated.View>
-            )}
+                {t("screens.home.vibeCheck.emptyState", { dayName })}
+              </ThemedText>
+            </Animated.View>
+          )}
         </View>
       ) : null}
-
-      {/* CTA Button */}
-      <Animated.View
-        entering={FadeInUp.duration(500).delay(650)}
-        style={styles.ctaContainer}
-      >
-        {showCta ? (
-          <Button
-            label={t("screens.home.vibeCheck.viewPeople")}
-            rightIcon={
-              <ArrowRightIcon width={18} height={18} color="#FFFFFF" />
-            }
-            size="lg"
-            fullWidth
-            onPress={() => handleViewPeople()}
-          />
-        ) : (
-          <Button
-            variant="secondary"
-            label={t("screens.home.vibeCheck.gotIt")}
-            size="lg"
-            fullWidth
-            onPress={handleDismiss}
-          />
-        )}
-      </Animated.View>
     </BaseTemplateScreen>
   );
 }
@@ -375,13 +454,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     marginHorizontal: -spacing.md, // bleed to edges (counteract BaseTemplateScreen padding)
-    marginTop: -32, // bleed past top padding
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   closeButton: {
     position: "absolute",
-    top: spacing.lg,
+    top: spacing.xl,
     right: spacing.lg,
     width: 32,
     height: 32,
@@ -494,8 +572,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-  },
-  ctaContainer: {
-    paddingTop: spacing.lg,
   },
 });

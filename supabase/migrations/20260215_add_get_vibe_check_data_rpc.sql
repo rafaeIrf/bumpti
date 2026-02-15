@@ -151,10 +151,14 @@ AS $$
 $$;
 
 
--- ── 3. Refactor get_vibe_check_data → uses helper ──────────────────────────
+-- ── 3. get_vibe_check_data (with date filter) ──────────────────────────────
+-- Drop old 2-param overload; vibe-check is always called with a date
+DROP FUNCTION IF EXISTS get_vibe_check_data(uuid, uuid);
+
 CREATE OR REPLACE FUNCTION get_vibe_check_data(
   target_place_id uuid,
-  requesting_user_id uuid
+  requesting_user_id uuid,
+  target_date date
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -162,16 +166,41 @@ SECURITY DEFINER
 STABLE
 AS $$
 DECLARE
+  v_total_planning_count bigint;
+  v_total_day_planning_count bigint;
   v_planning_count bigint;
   v_recent_count bigint;
   v_matches_going bigint;
   v_common_interests jsonb;
 BEGIN
-  -- Compute counts from the shared eligible users helper
+  -- Total planning count (no date filter) — shows overall interest in the place (preference-filtered)
+  SELECT COUNT(DISTINCT e.user_id) FILTER (WHERE e.entry_type = 'planning')
+  INTO v_total_planning_count
+  FROM get_eligible_users_at_place(target_place_id, requesting_user_id) e;
+
+  -- Total day planning count (date-filtered but NO preference filter) — general activity
+  SELECT COUNT(DISTINCT up.user_id)
+  INTO v_total_day_planning_count
+  FROM user_presences up
+  WHERE up.place_id = target_place_id
+    AND up.active = true
+    AND up.ended_at IS NULL
+    AND up.expires_at > NOW()
+    AND up.entry_type = 'planning'
+    AND up.planned_for = target_date
+    AND up.user_id != requesting_user_id
+    -- Exclude blocked users (bidirectional)
+    AND NOT EXISTS (
+      SELECT 1 FROM user_blocks b
+      WHERE (b.blocker_id = requesting_user_id AND b.blocked_id = up.user_id)
+         OR (b.blocker_id = up.user_id AND b.blocked_id = requesting_user_id)
+    );
+
+  -- Date-filtered counts (preference-filtered via get_eligible_users_at_place)
   SELECT
-    COUNT(*) FILTER (WHERE e.entry_type = 'planning'),
-    COUNT(*) FILTER (WHERE e.entered_at >= NOW() - INTERVAL '3 hours'),
-    COUNT(*) FILTER (WHERE EXISTS (
+    COUNT(DISTINCT e.user_id) FILTER (WHERE e.entry_type = 'planning'),
+    COUNT(DISTINCT e.user_id) FILTER (WHERE e.entered_at >= NOW() - INTERVAL '3 hours'),
+    COUNT(DISTINCT e.user_id) FILTER (WHERE EXISTS (
       SELECT 1 FROM user_matches um
       WHERE um.status = 'active'
         AND (
@@ -181,15 +210,36 @@ BEGIN
         )
     ))
   INTO v_planning_count, v_recent_count, v_matches_going
-  FROM get_eligible_users_at_place(target_place_id, requesting_user_id) e;
+  FROM get_eligible_users_at_place(target_place_id, requesting_user_id) e
+  WHERE EXISTS (
+    SELECT 1 FROM user_presences up
+    WHERE up.user_id = e.user_id
+      AND up.place_id = target_place_id
+      AND up.active = true
+      AND up.ended_at IS NULL
+      AND up.expires_at > NOW()
+      AND up.planned_for = target_date
+  );
 
-  -- Common interests (top 3 by frequency)
+  -- Common interests (top 3), also date-filtered
   SELECT COALESCE(jsonb_agg(to_jsonb(sub)), '[]'::jsonb)
   INTO v_common_interests
   FROM (
     SELECT i.key, COUNT(*) AS count
-    FROM get_eligible_users_at_place(target_place_id, requesting_user_id) e2
-    JOIN profile_interests pi_them ON pi_them.profile_id = e2.user_id
+    FROM (
+      SELECT DISTINCT e2.user_id
+      FROM get_eligible_users_at_place(target_place_id, requesting_user_id) e2
+      WHERE EXISTS (
+        SELECT 1 FROM user_presences up
+        WHERE up.user_id = e2.user_id
+          AND up.place_id = target_place_id
+          AND up.active = true
+          AND up.ended_at IS NULL
+          AND up.expires_at > NOW()
+          AND up.planned_for = target_date
+      )
+    ) du
+    JOIN profile_interests pi_them ON pi_them.profile_id = du.user_id
     JOIN profile_interests pi_me   ON pi_me.interest_id = pi_them.interest_id
                                    AND pi_me.profile_id = requesting_user_id
     JOIN interests i ON i.id = pi_them.interest_id
@@ -199,6 +249,8 @@ BEGIN
   ) sub;
 
   RETURN jsonb_build_object(
+    'total_planning_count', v_total_planning_count,
+    'total_day_planning_count', v_total_day_planning_count,
     'planning_count', v_planning_count,
     'recent_count',   v_recent_count,
     'common_interests', v_common_interests,
@@ -207,9 +259,12 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION get_vibe_check_data(uuid, uuid) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION get_vibe_check_data(uuid, uuid, date) TO authenticated, anon;
 
-COMMENT ON FUNCTION get_vibe_check_data IS
-'Returns social-proof data for the Vibe Check Dashboard.
-Delegates eligibility filtering to get_eligible_users_at_place.
-Returns: planning_count, recent_count, common_interests (top 3), matches_going.';
+COMMENT ON FUNCTION get_vibe_check_data(uuid, uuid, date) IS
+'Returns social-proof data for the Vibe Check Dashboard, filtered by target_date.
+total_planning_count is unfiltered (all dates, preference-filtered).
+total_day_planning_count is date-filtered but NOT preference-filtered (general activity).
+planning_count is date-filtered AND preference-filtered (compatible users).
+Returns: total_planning_count, total_day_planning_count, planning_count, recent_count, common_interests (top 3), matches_going.';
+

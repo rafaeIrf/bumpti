@@ -26,7 +26,8 @@ import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { deletePlan, fetchAndSetUserPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
-import type { PlanPeriod, UserPlan } from "@/modules/plans/types";
+import type { UserPlan } from "@/modules/plans/types";
+import { getPeriodLabel } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -42,26 +43,6 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getPeriodLabel(planned_for: string, period: PlanPeriod): string {
-  const today = new Date().toISOString().split("T")[0];
-  const isToday = planned_for === today;
-
-  const periodKey =
-    period === "morning"
-      ? isToday
-        ? "todayMorning"
-        : "tomorrowMorning"
-      : period === "afternoon"
-        ? isToday
-          ? "todayAfternoon"
-          : "tomorrowAfternoon"
-        : isToday
-          ? "todayNight"
-          : "tomorrowNight";
-
-  return t(`screens.home.planHero.periodLabels.${periodKey}`);
-}
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
@@ -297,6 +278,7 @@ export default function MyPlansScreen() {
                     params: {
                       placeId: plan.place_id,
                       placeName: plan.place_name || "",
+                      plannedFor: plan.planned_for,
                       planPeriod: t(
                         `screens.home.createPlan.period.periodDescriptions.${plan.planned_period}`,
                       ),

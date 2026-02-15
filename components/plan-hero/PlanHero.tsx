@@ -1,5 +1,6 @@
 import MapPinIcon from "@/assets/icons/map-pin.svg";
 import SettingsIcon from "@/assets/icons/settings.svg";
+import TrendingUpIcon from "@/assets/icons/trending-up.svg";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -8,7 +9,7 @@ import { spacing, typography } from "@/constants/theme";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import type { ActivePlan } from "@/modules/plans/hooks";
-import type { PlanPeriod } from "@/modules/plans/types";
+import { getPeriodLabel } from "@/utils/date";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -28,32 +29,6 @@ interface PlanHeroProps {
   onViewPeoplePress?: (plan: ActivePlan) => void;
   defaultConfirmedCount?: number;
   loading?: boolean;
-}
-
-function getPeriodLabel(plannedFor: string, period: PlanPeriod): string {
-  const today = new Date().toISOString().split("T")[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-
-  const isToday = plannedFor === today;
-  const isTomorrow = plannedFor === tomorrow;
-
-  if (isToday) {
-    if (period === "morning")
-      return t("screens.home.planHero.periodLabels.todayMorning");
-    if (period === "afternoon")
-      return t("screens.home.planHero.periodLabels.todayAfternoon");
-    return t("screens.home.planHero.periodLabels.todayNight");
-  }
-
-  if (isTomorrow) {
-    if (period === "morning")
-      return t("screens.home.planHero.periodLabels.tomorrowMorning");
-    if (period === "afternoon")
-      return t("screens.home.planHero.periodLabels.tomorrowAfternoon");
-    return t("screens.home.planHero.periodLabels.tomorrowNight");
-  }
-
-  return plannedFor;
 }
 
 // ──────────────────────────────────────────────
@@ -151,20 +126,50 @@ function PlanCard({
         },
       ]}
     >
-      {/* Settings icon (top-right) */}
-      <Pressable
-        onPress={() => {
-          trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
-            activePlansCount: totalPlans,
-          });
-          Haptics.selectionAsync();
-          router.push("/main/my-plans");
-        }}
-        hitSlop={10}
-        style={styles.settingsButton}
-      >
-        <SettingsIcon width={20} height={20} color="rgba(255,255,255,0.85)" />
-      </Pressable>
+      {/* Top-right action buttons */}
+      <View style={styles.topRightActions}>
+        {/* Vibe Check icon */}
+        <Pressable
+          onPress={() => {
+            trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIBE_CHECK_CLICKED, {});
+            Haptics.selectionAsync();
+            router.push({
+              pathname: "/(modals)/vibe-check",
+              params: {
+                placeId: plan.placeId,
+                placeName: plan.locationName,
+                plannedFor: plan.plannedFor,
+                planPeriod: t(
+                  `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
+                ),
+              },
+            });
+          }}
+          hitSlop={10}
+          style={styles.actionButton}
+        >
+          <TrendingUpIcon
+            width={20}
+            height={20}
+            color="rgba(255,255,255,0.85)"
+          />
+        </Pressable>
+
+        {/* Settings icon */}
+        <Pressable
+          onPress={() => {
+            trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
+              activePlansCount: totalPlans,
+            });
+            Haptics.selectionAsync();
+            router.push("/main/my-plans");
+          }}
+          hitSlop={10}
+          style={styles.actionButton}
+        >
+          <SettingsIcon width={20} height={20} color="rgba(255,255,255,0.85)" />
+        </Pressable>
+      </View>
 
       <ThemedText
         style={[typography.body1, styles.activeTitle, { color: "#FFFFFF" }]}
@@ -196,10 +201,10 @@ function PlanCard({
         >
           {confirmedCount > 0
             ? confirmedCount === 1
-              ? t("screens.home.planHero.confirmedTodayOne", {
+              ? t("screens.home.planHero.confirmedOne", {
                   count: confirmedCount,
                 })
-              : t("screens.home.planHero.confirmedToday", {
+              : t("screens.home.planHero.confirmed", {
                   count: confirmedCount,
                 })
             : t("screens.home.planHero.beFirstToConfirm")}
@@ -374,10 +379,10 @@ export function PlanHero({
                 ]}
               >
                 {confirmedCount === 1
-                  ? t("screens.home.planHero.confirmedTodayOne", {
+                  ? t("screens.home.planHero.confirmedOne", {
                       count: confirmedCount,
                     })
-                  : t("screens.home.planHero.confirmedToday", {
+                  : t("screens.home.planHero.confirmed", {
                       count: confirmedCount,
                     })}
               </ThemedText>
@@ -401,11 +406,15 @@ const styles = StyleSheet.create({
     minHeight: 140,
     justifyContent: "space-between",
   },
-  settingsButton: {
+  topRightActions: {
     position: "absolute",
     top: spacing.md,
     right: spacing.md,
     zIndex: 10,
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  actionButton: {
     width: 32,
     height: 32,
     alignItems: "center",

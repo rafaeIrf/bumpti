@@ -1,5 +1,6 @@
 export type PlanPeriod = "morning" | "afternoon" | "night";
-export type PlanDay = "today" | "tomorrow";
+/** Day offset from today: 0 = today, 1 = tomorrow, … 6 = 6 days from now */
+export type PlanDay = number;
 
 export interface CreatePlanPayload {
   placeId: string;

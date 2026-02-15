@@ -88,6 +88,8 @@ export const HOME_INTERACTION_EVENTS = {
   PLAN_HERO_ENTER_CLICKED: "plan_hero_enter_clicked",
   /** User clicked settings icon on plan hero to go to my plans */
   PLAN_HERO_SETTINGS_CLICKED: "plan_hero_settings_clicked",
+  /** User clicked vibe check icon on plan hero */
+  PLAN_HERO_VIBE_CHECK_CLICKED: "plan_hero_vibe_check_clicked",
 } as const;
 
 // =============================================================================
@@ -409,6 +411,7 @@ export interface AnalyticsEventParams {
   [HOME_INTERACTION_EVENTS.PLAN_HERO_SETTINGS_CLICKED]: {
     activePlansCount: number;
   };
+  [HOME_INTERACTION_EVENTS.PLAN_HERO_VIBE_CHECK_CLICKED]: Record<string, never>;
 
   // Vibe check
   [VIBE_CHECK_EVENTS.VIEW_PEOPLE_TAPPED]: {

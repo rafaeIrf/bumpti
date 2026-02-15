@@ -119,6 +119,7 @@
     "min": "min",
     "max": "max",
     "today": "Today",
+    "tomorrow": "Tomorrow",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
     "selected": "Selected",
@@ -671,7 +672,7 @@
       },
       "planHero": {
         "emptyState": {
-          "title": "What's the plan for today?",
+          "title": "What's the plan?",
           "subtitle": "See who's going and connect in advance",
           "locationButton": "Where will you connect?"
         },
@@ -679,8 +680,8 @@
           "title": "Your next plan",
           "viewPeopleButton": "Enter"
         },
-        "confirmedToday": "{{count}} people confirmed today",
-        "confirmedTodayOne": "{{count}} person confirmed today",
+        "confirmedOne": "{{count}} person confirmed",
+        "confirmed": "{{count}} people confirmed",
         "beFirstToConfirm": "You're already on the radar!",
         "periodLabels": {
           "todayMorning": "Today in the morning",
@@ -688,7 +689,10 @@
           "todayNight": "Tonight",
           "tomorrowMorning": "Tomorrow morning",
           "tomorrowAfternoon": "Tomorrow afternoon",
-          "tomorrowNight": "Tomorrow night"
+          "tomorrowNight": "Tomorrow night",
+          "futureMorning": "{{weekday}} morning",
+          "futureAfternoon": "{{weekday}} afternoon",
+          "futureNight": "{{weekday}} night"
         }
       },
       "myPlans": {
@@ -710,20 +714,26 @@
       "vibeCheck": {
         "title": "You're on the radar! 🎉",
         "subtitle": "See who else is going to ",
-        "planningLabel": "people planning to go today",
-        "planningLabelOne": "person planning to go today",
+        "totalPlanningLabel": "people going this week",
+        "totalPlanningLabelOne": "person going this week",
+        "planningLabel": "people planning to go {{when}}",
+        "planningLabelOne": "person planning to go {{when}}",
+        "compatibleLabel": "compatible with your profile {{when}}",
+        "compatibleLabelOne": "compatible with your profile {{when}}",
+        "compatiblePlanningLabel": "compatible people planning to go {{when}}",
+        "compatiblePlanningLabelOne": "compatible person planning to go {{when}}",
         "trendingTitle": "It's picking up!",
         "recentLabel": "+{{count}} people in the last few hours",
         "recentLabelOne": "+{{count}} person in the last few hours",
         "commonInterestsLabel": "Common interests",
         "matchesGoingLabel": "matches going",
-        "emptyState": "No one here yet — you'll be the first!",
+        "emptyState": "Nobody planning on {{dayName}} yet — you're the first! We'll let you know when others plan too.",
         "viewPeople": "See who's going",
         "gotIt": "Got it"
       },
       "createPlan": {
         "location": {
-          "title": "What's the plan for today?",
+          "title": "What's the plan?",
           "subtitle": "Choose where you're going",
           "suggestionsTitle": "Suggestions",
           "searchPlaceholder": "Search place...",

@@ -60,6 +60,7 @@ export { default as SparklesIcon } from "./sparkles.svg";
 export { default as StarIcon } from "./star.svg";
 export { default as SunIcon } from "./sun.svg";
 export { default as TreeIcon } from "./tree.svg";
+export { default as TrendingUpIcon } from "./trending-up.svg";
 export { default as UserRoundIcon } from "./user-round.svg";
 export { default as UsersIcon } from "./users.svg";
 export { default as UtensilsCrossedIcon } from "./utensils-crossed.svg";

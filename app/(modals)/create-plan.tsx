@@ -28,6 +28,7 @@ import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { createPlan, fetchSuggestedPlans } from "@/modules/plans/api";
 import type { PlanDay, PlanPeriod, SuggestedPlan } from "@/modules/plans/types";
+import { getDayLabel, getLocalDateString } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import React, {
@@ -59,9 +60,8 @@ const PERIOD_OPTIONS: {
   { value: "night", icon: MoonIcon, cutoffHour: 24 },
 ];
 
-// ── Day options ─────────────────────────────────────────────────────
-// DayOption is now PlanDay from types
-const DAY_OPTIONS: PlanDay[] = ["today", "tomorrow"];
+// ── Day helpers ─────────────────────────────────────────────────────
+const DAY_COUNT = 7;
 
 const TOTAL_STEPS = 2;
 
@@ -84,11 +84,11 @@ export default function CreatePlanModal() {
     name: string;
   } | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<PlanPeriod | null>(null);
-  const [selectedDay, setSelectedDay] = useState<PlanDay>("today");
+  const [selectedDay, setSelectedDay] = useState<PlanDay>(0);
 
   // ── Smart period filtering ───────────────────────────────────────
   const availablePeriods = useMemo(() => {
-    if (selectedDay === "tomorrow") return PERIOD_OPTIONS;
+    if (selectedDay > 0) return PERIOD_OPTIONS;
     const currentHour = new Date().getHours();
     return PERIOD_OPTIONS.filter((p) => currentHour < p.cutoffHour);
   }, [selectedDay]);
@@ -216,7 +216,7 @@ export default function CreatePlanModal() {
     if (currentStep === 2) {
       setCurrentStep(1);
       setSelectedPeriod(null);
-      setSelectedDay("today");
+      setSelectedDay(0);
     } else {
       trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.ABANDONED, {
         step: currentStep,
@@ -274,6 +274,7 @@ export default function CreatePlanModal() {
           params: {
             placeId: selectedPlace.id,
             placeName: selectedPlace.name,
+            plannedFor: getLocalDateString(selectedDay),
             planPeriod: t(
               `screens.home.createPlan.period.periodDescriptions.${selectedPeriod}`,
             ),
@@ -530,18 +531,22 @@ export default function CreatePlanModal() {
         >
           {t("screens.home.createPlan.period.dayLabel")}
         </ThemedText>
-        <View style={styles.dayPillsRow}>
-          {DAY_OPTIONS.map((day) => {
-            const isActive = selectedDay === day;
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dayPillsRow}
+        >
+          {Array.from({ length: DAY_COUNT }, (_, i) => {
+            const isActive = selectedDay === i;
             return (
               <Pressable
-                key={day}
+                key={i}
                 onPress={() => {
-                  setSelectedDay(day);
+                  setSelectedDay(i);
                   trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.DAY_SELECTED, {
-                    day,
+                    day: i,
                     availablePeriods:
-                      day === "tomorrow"
+                      i > 0
                         ? PERIOD_OPTIONS.length
                         : PERIOD_OPTIONS.filter(
                             (p) => new Date().getHours() < p.cutoffHour,
@@ -558,18 +563,18 @@ export default function CreatePlanModal() {
               >
                 <ThemedText
                   style={[
-                    typography.body,
+                    typography.caption,
                     {
                       color: isActive ? "#FFFFFF" : colors.textSecondary,
                     },
                   ]}
                 >
-                  {t(`screens.home.createPlan.period.days.${day}`)}
+                  {getDayLabel(i)}
                 </ThemedText>
               </Pressable>
             );
           })}
-        </View>
+        </ScrollView>
       </Animated.View>
 
       {/* Period label + cards */}
@@ -729,9 +734,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   dayPill: {
-    flex: 1,
     alignItems: "center",
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     borderRadius: 999,
     borderWidth: 1,
   },

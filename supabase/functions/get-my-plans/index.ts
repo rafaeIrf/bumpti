@@ -48,7 +48,11 @@ Deno.serve(async (req) => {
       (plans ?? []).map(async (plan: any) => {
         const { data: count } = await admin.rpc(
           "get_eligible_active_users_count",
-          { target_place_id: plan.place_id, requesting_user_id: user.id },
+          {
+            target_place_id: plan.place_id,
+            requesting_user_id: user.id,
+            target_date: plan.planned_for,
+          },
         );
 
         const street = plan.places?.street ?? "";

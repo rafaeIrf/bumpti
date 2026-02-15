@@ -1,13 +1,13 @@
 import { store } from "@/modules/store";
 import { setPlans, setPlansLoading } from "@/modules/store/slices/plansSlice";
 import { supabase } from "@/modules/supabase/client";
+import { getLocalDateString } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import type {
   CreatePlanPayload,
-  PlanDay,
   PlanPeriod,
   SuggestedPlan,
-  UserPlan,
+  UserPlan
 } from "./types";
 
 // ── Timezone-aware date helpers ───────────────────────────────────────
@@ -17,19 +17,6 @@ const PERIOD_END_HOURS: Record<PlanPeriod, number> = {
   afternoon: 17,
   night: 23,
 };
-
-/**
- * Returns the device's local date as YYYY-MM-DD.
- * If day is "tomorrow", adds one day.
- */
-export function computeLocalDate(day: PlanDay): string {
-  const d = new Date();
-  if (day === "tomorrow") d.setDate(d.getDate() + 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
 
 /**
  * Returns the expires_at ISO string based on the planned date + period.
@@ -63,7 +50,7 @@ export async function createPlan(
 ): Promise<PlanPresenceRecord | null> {
   try {
     const { placeId, period, day } = params;
-    const localDate = computeLocalDate(day);
+    const localDate = getLocalDateString(day);
     const expiresAt = computeExpiresAt(localDate, period);
 
     logger.debug("[createPlan] Creating plan:", {
@@ -143,7 +130,7 @@ export async function fetchAndSetUserPlans(): Promise<UserPlan[]> {
       plans: UserPlan[];
     }>("get-my-plans", {
       method: "GET",
-      headers: { "x-local-date": computeLocalDate("today") },
+      headers: { "x-local-date": getLocalDateString(0) },
     });
 
     if (error) {
@@ -187,7 +174,7 @@ export async function fetchSuggestedPlans(
       suggestions: SuggestedPlan[];
       total_count: number;
     }>("get-suggested-plans", {
-      body: { lat, lng, local_date: computeLocalDate("today") },
+      body: { lat, lng, local_date: getLocalDateString(0) },
     });
 
     if (error) {

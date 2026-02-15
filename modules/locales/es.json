@@ -119,6 +119,7 @@
     "min": "mínima",
     "max": "máxima",
     "today": "Hoy",
+    "tomorrow": "Mañana",
     "yesterday": "Ayer",
     "daysAgo": "Hace {{count}} días",
     "selected": "Seleccionados",
@@ -671,7 +672,7 @@
       },
       "planHero": {
         "emptyState": {
-          "title": "¿Cuál es el plan para hoy?",
+          "title": "¿Cuál es el plan?",
           "subtitle": "Ve quién va y conéctate de antemano",
           "locationButton": "¿Dónde te conectarás?"
         },
@@ -679,8 +680,8 @@
           "title": "Tu próximo plan",
           "viewPeopleButton": "Entrar"
         },
-        "confirmedToday": "{{count}} personas confirmaron hoy",
-        "confirmedTodayOne": "{{count}} persona confirmó hoy",
+        "confirmedOne": "{{count}} persona confirmó",
+        "confirmed": "{{count}} personas confirmaron",
         "beFirstToConfirm": "¡Ya estás en el radar!",
         "periodLabels": {
           "todayMorning": "Hoy por la mañana",
@@ -688,7 +689,10 @@
           "todayNight": "Esta noche",
           "tomorrowMorning": "Mañana por la mañana",
           "tomorrowAfternoon": "Mañana por la tarde",
-          "tomorrowNight": "Mañana por la noche"
+          "tomorrowNight": "Mañana por la noche",
+          "futureMorning": "{{weekday}} por la mañana",
+          "futureAfternoon": "{{weekday}} por la tarde",
+          "futureNight": "{{weekday}} por la noche"
         }
       },
       "myPlans": {
@@ -710,20 +714,26 @@
       "vibeCheck": {
         "title": "¡Estás en el radar! 🎉",
         "subtitle": "Mira quién más va a ",
-        "planningLabel": "personas planificando ir hoy",
-        "planningLabelOne": "persona planificando ir hoy",
+        "totalPlanningLabel": "personas yendo esta semana",
+        "totalPlanningLabelOne": "persona yendo esta semana",
+        "planningLabel": "personas planificando ir {{when}}",
+        "planningLabelOne": "persona planificando ir {{when}}",
+        "compatibleLabel": "compatibles con tu perfil {{when}}",
+        "compatibleLabelOne": "compatible con tu perfil {{when}}",
+        "compatiblePlanningLabel": "personas compatibles planificando ir {{when}}",
+        "compatiblePlanningLabelOne": "persona compatible planificando ir {{when}}",
         "trendingTitle": "¡El movimiento está creciendo!",
         "recentLabel": "+{{count}} personas en las últimas horas",
         "recentLabelOne": "+{{count}} persona en las últimas horas",
         "commonInterestsLabel": "Intereses en común",
         "matchesGoingLabel": "matches confirmados",
-        "emptyState": "Nadie aquí aún — ¡serás el primero!",
+        "emptyState": "Nadie planificando el {{dayName}} aún — ¡eres el primero! Te avisaremos cuando más personas planifiquen.",
         "viewPeople": "Ver quién va",
         "gotIt": "Entendido"
       },
       "createPlan": {
         "location": {
-          "title": "¿Cuál es el plan para hoy?",
+          "title": "¿Cuál es el plan?",
           "subtitle": "Elige dónde vas",
           "suggestionsTitle": "Sugerencias",
           "searchPlaceholder": "Buscar lugar...",
