@@ -1,24 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { jsonError } from "./response.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
+type AuthSuccess = { success: true; supabase: any; user: any };
+type AuthFailure = { success: false; response: Response };
 
-export async function requireAuth(req: Request): Promise<
-  | { success: true; supabase: any; user: any }
-  | { success: false; response: Response }
-> {
+/**
+ * Validates the Authorization header and returns the authenticated user.
+ * On failure, returns a ready-to-send Response.
+ */
+export async function requireAuth(
+  req: Request,
+): Promise<AuthSuccess | AuthFailure> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return {
-      success: false,
-      response: new Response(
-        JSON.stringify({ error: "unauthorized", message: "Missing Authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      ),
-    };
+    return { success: false, response: jsonError("unauthorized", "Missing Authorization header", 401) };
   }
 
   const token = authHeader.replace("Bearer ", "").trim();
@@ -26,13 +21,7 @@ export async function requireAuth(req: Request): Promise<
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return {
-      success: false,
-      response: new Response(
-        JSON.stringify({ error: "server_error", message: "Missing Supabase environment variables" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      ),
-    };
+    return { success: false, response: jsonError("server_error", "Missing Supabase environment variables", 500) };
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -42,13 +31,7 @@ export async function requireAuth(req: Request): Promise<
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return {
-      success: false,
-      response: new Response(
-        JSON.stringify({ error: "unauthorized", message: "Invalid or expired token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      ),
-    };
+    return { success: false, response: jsonError("unauthorized", "Invalid or expired token", 401) };
   }
 
   return { success: true, supabase, user };

@@ -1,4 +1,5 @@
 import {
+  CalendarIcon,
   CheckIcon,
   HeartIcon,
   MapPinIcon,
@@ -55,6 +56,11 @@ const BENEFITS: Benefit[] = [
   //   titleKey: "screens.premiumPaywall.benefits.turboIncluded.title",
   //   subtitleKey: "screens.premiumPaywall.benefits.turboIncluded.subtitle",
   // },
+  {
+    icon: CalendarIcon,
+    titleKey: "screens.premiumPaywall.benefits.morePlans.title",
+    subtitleKey: "screens.premiumPaywall.benefits.morePlans.subtitle",
+  },
   {
     icon: MapPinIcon,
     titleKey: "screens.premiumPaywall.benefits.earlyCheckin.title",

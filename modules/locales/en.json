@@ -119,6 +119,7 @@
     "min": "min",
     "max": "max",
     "today": "Today",
+    "tomorrow": "Tomorrow",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
     "selected": "Selected",
@@ -128,6 +129,7 @@
     "buy": "Buy",
     "skip": "Skip",
     "select": "Select",
+    "step": "Step",
     "loading": "Loading...",
     "understood": "Got it",
     "of": "of",
@@ -473,7 +475,8 @@
         "seeWhoViewedYou": "See who viewed you",
         "turboWeekly": "Connect+ (5/week)",
         "earlyCheckinWeekly": "Check-in+",
-        "pingsWeekly": "Pings (5/week)"
+        "pingsWeekly": "Pings (5/week)",
+        "morePlansDaily": "10 plans per day"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -666,6 +669,103 @@
         "noActiveNow": "No one on campus right now",
         "findOnMap": "Find your university on the map",
         "tapToConnect": "Tap to connect"
+      },
+      "planHero": {
+        "emptyState": {
+          "title": "What's the plan?",
+          "subtitle": "See who's going and connect in advance",
+          "locationButton": "Where will you connect?"
+        },
+        "activeState": {
+          "title": "Your next plan",
+          "viewPeopleButton": "Enter"
+        },
+        "confirmedOne": "{{count}} person confirmed",
+        "confirmed": "{{count}} people confirmed",
+        "beFirstToConfirm": "You're already on the radar!",
+        "periodLabels": {
+          "todayMorning": "Today in the morning",
+          "todayAfternoon": "Today in the afternoon",
+          "todayNight": "Tonight",
+          "tomorrowMorning": "Tomorrow morning",
+          "tomorrowAfternoon": "Tomorrow afternoon",
+          "tomorrowNight": "Tomorrow night",
+          "futureMorning": "{{weekday}} morning",
+          "futureAfternoon": "{{weekday}} afternoon",
+          "futureNight": "{{weekday}} night"
+        }
+      },
+      "myPlans": {
+        "title": "My Plans",
+        "createPlan": "Create new plan",
+        "emptyTitle": "No plans yet",
+        "emptyDescription": "Create your first plan and see who's going!",
+        "activeUsers": "{{count}} people",
+        "viewPeople": "Enter",
+        "deletePlan": "Delete plan",
+        "vibeCheck": "Vibe Check",
+        "deleteConfirmTitle": "Delete plan?",
+        "deleteConfirmDescription": "This plan will be removed and you won't appear as confirmed anymore.",
+        "deleteConfirmButton": "Delete",
+        "deleteSuccess": "Plan deleted",
+        "dailyLimitReached": "You've reached your daily limit of {{limit}} plans",
+        "upgradeForMore": "Upgrade to Premium for up to 10 plans per day"
+      },
+      "vibeCheck": {
+        "title": "You're on the radar! 🎉",
+        "subtitle": "See who else is going to ",
+        "totalPlanningLabel": "people going this week",
+        "totalPlanningLabelOne": "person going this week",
+        "planningLabel": "people planning to go {{when}}",
+        "planningLabelOne": "person planning to go {{when}}",
+        "compatibleLabel": "compatible with your profile {{when}}",
+        "compatibleLabelOne": "compatible with your profile {{when}}",
+        "compatiblePlanningLabel": "compatible people planning to go {{when}}",
+        "compatiblePlanningLabelOne": "compatible person planning to go {{when}}",
+        "trendingTitle": "It's picking up!",
+        "recentLabel": "+{{count}} people in the last few hours",
+        "recentLabelOne": "+{{count}} person in the last few hours",
+        "commonInterestsLabel": "Common interests",
+        "matchesGoingLabel": "matches going",
+        "emptyState": "Nobody planning on {{dayName}} yet — you're the first! We'll let you know when others plan too.",
+        "viewPeople": "See who's going",
+        "gotIt": "Got it"
+      },
+      "createPlan": {
+        "location": {
+          "title": "What's the plan?",
+          "subtitle": "Choose where you're going",
+          "suggestionsTitle": "Suggestions",
+          "searchPlaceholder": "Search place...",
+
+          "noResults": "No places found",
+          "searchEmptyState": "Search for a bar, restaurant, or any other place you want to go"
+        },
+        "period": {
+          "title": "What time are you arriving?",
+          "subtitle": "Selected location",
+          "confirm": "Create plan",
+          "dayLabel": "When?",
+          "periodLabel": "Period",
+          "periods": {
+            "morning": "Morning",
+            "lunch": "Lunch",
+            "afternoon": "Afternoon",
+            "night": "Night",
+            "late_night": "Late Night"
+          },
+          "periodDescriptions": {
+            "morning": "6am - 12pm",
+            "lunch": "12pm - 2pm",
+            "afternoon": "2pm - 6pm",
+            "night": "After 6pm",
+            "late_night": "12am - 6am"
+          },
+          "days": {
+            "today": "Today",
+            "tomorrow": "Tomorrow"
+          }
+        }
       }
     },
     "premiumPaywall": {
@@ -723,6 +823,10 @@
         "pings": {
           "title": "Pings unlocked (5 per week)",
           "subtitle": "Send special social signals to get someone's attention."
+        },
+        "morePlans": {
+          "title": "10 plans per day",
+          "subtitle": "Create more daily plans and maximize your chances of meeting people."
         }
       },
       "terms": "Your subscription renews automatically for the same price and period unless cancelled in your {{store}} settings. By confirming the subscription, you agree to our",
@@ -1244,6 +1348,8 @@
   "userProfile": {
     "hereNow": "Here now",
     "planningToGo": "Planning to go",
+    "planningToGoToday": "Planning to go today",
+    "planningToGoTomorrow": "Planning to go tomorrow",
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",

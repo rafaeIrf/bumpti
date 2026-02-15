@@ -119,6 +119,7 @@
     "min": "mínima",
     "max": "máxima",
     "today": "Hoje",
+    "tomorrow": "Amanhã",
     "yesterday": "Ontem",
     "daysAgo": "{{count}} dias atrás",
     "selected": "Selecionados",
@@ -128,9 +129,10 @@
     "buy": "Comprar",
     "skip": "Pular",
     "select": "Selecione",
+    "step": "Passo",
+    "of": "de",
     "loading": "Carregando...",
     "understood": "Entendi",
-    "of": "de",
     "placeCategories": {
       "bar": "Bares",
       "nightclub": "Baladas",
@@ -219,7 +221,6 @@
         "title": "Configurações",
         "presence": {
           "title": "PREFERÊNCIAS DE PRESENÇA",
-
           "invisible": "Modo invisível",
           "invisibleDescription": "Torna sua presença invisível para outros usuários."
         },
@@ -248,7 +249,6 @@
             "alreadyVerified": "Seu perfil já está verificado!"
           }
         },
-
         "security": {
           "title": "SEGURANÇA E PRIVACIDADE",
           "privacyPolicy": "Política de Privacidade",
@@ -332,7 +332,6 @@
           "empty": "Nenhum liker ID encontrado."
         }
       },
-
       "completeProfile": "Completar perfil",
       "editProfile": "Editar perfil",
       "preview": {
@@ -476,7 +475,8 @@
         "seeWhoViewedYou": "Veja quem te viu no local",
         "turboWeekly": "Connect+ (5/semana)",
         "earlyCheckinWeekly": "Check-in+",
-        "pingsWeekly": "Pings (5/semana)"
+        "pingsWeekly": "Pings (5/semana)",
+        "morePlansDaily": "10 planos por dia"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -669,6 +669,103 @@
         "noActiveNow": "Ninguém no campus agora",
         "findOnMap": "Encontre sua faculdade no mapa",
         "tapToConnect": "Toque para se conectar"
+      },
+      "planHero": {
+        "emptyState": {
+          "title": "Qual é o plano?",
+          "subtitle": "Veja quem vai e conecte-se antecipadamente",
+          "locationButton": "Onde você vai se conectar?"
+        },
+        "activeState": {
+          "title": "Seu próximo plano",
+          "viewPeopleButton": "Entrar"
+        },
+        "confirmedOne": "{{count}} pessoa confirmou",
+        "confirmed": "{{count}} pessoas confirmaram",
+        "beFirstToConfirm": "Você já está no radar!",
+        "periodLabels": {
+          "todayMorning": "Hoje de manhã",
+          "todayAfternoon": "Hoje à tarde",
+          "todayNight": "Hoje à noite",
+          "tomorrowMorning": "Amanhã de manhã",
+          "tomorrowAfternoon": "Amanhã à tarde",
+          "tomorrowNight": "Amanhã à noite",
+          "futureMorning": "{{weekday}} de manhã",
+          "futureAfternoon": "{{weekday}} à tarde",
+          "futureNight": "{{weekday}} à noite"
+        }
+      },
+      "myPlans": {
+        "title": "Meus Planos",
+        "createPlan": "Criar novo plano",
+        "emptyTitle": "Nenhum plano ainda",
+        "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
+        "activeUsers": "{{count}} pessoas",
+        "viewPeople": "Entrar",
+        "deletePlan": "Excluir plano",
+        "vibeCheck": "Vibe Check",
+        "deleteConfirmTitle": "Excluir plano?",
+        "deleteConfirmDescription": "Este plano será removido e você não aparecerá mais como confirmado.",
+        "deleteConfirmButton": "Excluir",
+        "deleteSuccess": "Plano excluído",
+        "dailyLimitReached": "Você atingiu seu limite diário de {{limit}} planos",
+        "upgradeForMore": "Assine o Premium para criar até 10 planos por dia"
+      },
+      "vibeCheck": {
+        "title": "Você está no radar! 🎉",
+        "subtitle": "Veja quem mais vai para ",
+        "totalPlanningLabel": "pessoas indo nessa semana",
+        "totalPlanningLabelOne": "pessoa indo nessa semana",
+        "planningLabel": "pessoas planejando ir {{when}}",
+        "planningLabelOne": "pessoa planejando ir {{when}}",
+        "compatibleLabel": "compatíveis com seu perfil {{when}}",
+        "compatibleLabelOne": "compatível com seu perfil {{when}}",
+        "compatiblePlanningLabel": "pessoas compatíveis planejando ir {{when}}",
+        "compatiblePlanningLabelOne": "pessoa compatível planejando ir {{when}}",
+        "trendingTitle": "O movimento está aumentando!",
+        "recentLabel": "+{{count}} pessoas nas últimas horas",
+        "recentLabelOne": "+{{count}} pessoa nas últimas horas",
+        "commonInterestsLabel": "Interesses em comum",
+        "matchesGoingLabel": "matches confirmados",
+        "emptyState": "Ninguém planejando na {{dayName}} ainda — você é o primeiro! Avisaremos quando mais pessoas planejarem.",
+        "viewPeople": "Ver quem vai",
+        "gotIt": "Entendi"
+      },
+      "createPlan": {
+        "location": {
+          "title": "Qual é o plano?",
+          "subtitle": "Escolha onde você vai",
+          "suggestionsTitle": "Sugestões",
+          "searchPlaceholder": "Buscar local...",
+
+          "noResults": "Nenhum lugar encontrado",
+          "searchEmptyState": "Busque por um bar, restaurante ou qualquer outro lugar que queira ir"
+        },
+        "period": {
+          "title": "Que horas você chega?",
+          "subtitle": "Local selecionado",
+          "confirm": "Criar plano",
+          "dayLabel": "Quando?",
+          "periodLabel": "Período",
+          "periods": {
+            "morning": "Manhã",
+            "lunch": "Almoço",
+            "afternoon": "Tarde",
+            "night": "Noite",
+            "late_night": "Madrugada"
+          },
+          "periodDescriptions": {
+            "morning": "6h - 12h",
+            "lunch": "12h - 14h",
+            "afternoon": "14h - 18h",
+            "night": "Após as 18h",
+            "late_night": "00h - 6h"
+          },
+          "days": {
+            "today": "Hoje",
+            "tomorrow": "Amanhã"
+          }
+        }
       }
     },
     "premiumPaywall": {
@@ -726,6 +823,10 @@
         "pings": {
           "title": "Pings liberados (5 por semana)",
           "subtitle": "Envie sinais sociais especiais para chamar atenção de alguém."
+        },
+        "morePlans": {
+          "title": "10 planos por dia",
+          "subtitle": "Crie mais planos diários e maximize suas chances de encontrar pessoas."
         }
       },
       "terms": "A renovação da sua assinatura é automática pelo mesmo valor e período, a menos que seja cancelada nas configurações da {{store}}. Ao confirmar a assinatura, você concorda com nossos",
@@ -1247,6 +1348,8 @@
   "userProfile": {
     "hereNow": "Aqui agora",
     "planningToGo": "Planejando ir",
+    "planningToGoToday": "Planejando ir hoje",
+    "planningToGoTomorrow": "Planejando ir amanhã",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aqui",
     "nearLocation": "Próximo de {{location}}",

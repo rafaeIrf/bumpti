@@ -63,7 +63,9 @@ export type ActiveUserAtPlace = {
   place_id?: string | null;
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
-  entry_type?: "physical" | "checkin_plus"; // NEW: How user entered the place
+  entry_type?: "physical" | "checkin_plus" | "planning"; // How user entered the place
+  planned_for?: string | null; // ISO date string for planning entries
+  planned_period?: "morning" | "afternoon" | "night" | null;
   // University fields
   university_id?: string | null;
   university_name?: string | null;

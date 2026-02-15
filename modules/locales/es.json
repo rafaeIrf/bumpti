@@ -119,6 +119,7 @@
     "min": "mínima",
     "max": "máxima",
     "today": "Hoy",
+    "tomorrow": "Mañana",
     "yesterday": "Ayer",
     "daysAgo": "Hace {{count}} días",
     "selected": "Seleccionados",
@@ -128,6 +129,7 @@
     "buy": "Comprar",
     "skip": "Omitir",
     "select": "Seleccionar",
+    "step": "Paso",
     "loading": "Cargando...",
     "understood": "Entendido",
     "of": "de",
@@ -473,7 +475,8 @@
         "seeWhoViewedYou": "Mira quién te vio en el lugar",
         "turboWeekly": "Connect+ (5/semana)",
         "earlyCheckinWeekly": "Check-in+",
-        "pingsWeekly": "Pings (5/semana)"
+        "pingsWeekly": "Pings (5/semana)",
+        "morePlansDaily": "10 planes por día"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -666,6 +669,103 @@
         "noActiveNow": "Nadie en el campus ahora",
         "findOnMap": "Encuentra tu universidad en el mapa",
         "tapToConnect": "Toca para conectar"
+      },
+      "planHero": {
+        "emptyState": {
+          "title": "¿Cuál es el plan?",
+          "subtitle": "Ve quién va y conéctate de antemano",
+          "locationButton": "¿Dónde te conectarás?"
+        },
+        "activeState": {
+          "title": "Tu próximo plan",
+          "viewPeopleButton": "Entrar"
+        },
+        "confirmedOne": "{{count}} persona confirmó",
+        "confirmed": "{{count}} personas confirmaron",
+        "beFirstToConfirm": "¡Ya estás en el radar!",
+        "periodLabels": {
+          "todayMorning": "Hoy por la mañana",
+          "todayAfternoon": "Hoy por la tarde",
+          "todayNight": "Esta noche",
+          "tomorrowMorning": "Mañana por la mañana",
+          "tomorrowAfternoon": "Mañana por la tarde",
+          "tomorrowNight": "Mañana por la noche",
+          "futureMorning": "{{weekday}} por la mañana",
+          "futureAfternoon": "{{weekday}} por la tarde",
+          "futureNight": "{{weekday}} por la noche"
+        }
+      },
+      "myPlans": {
+        "title": "Mis Planes",
+        "createPlan": "Crear nuevo plan",
+        "emptyTitle": "Sin planes aún",
+        "emptyDescription": "¡Crea tu primer plan y mira quién va!",
+        "activeUsers": "{{count}} personas",
+        "viewPeople": "Entrar",
+        "deletePlan": "Eliminar plan",
+        "vibeCheck": "Vibe Check",
+        "deleteConfirmTitle": "¿Eliminar plan?",
+        "deleteConfirmDescription": "Este plan será eliminado y ya no aparecerás como confirmado.",
+        "deleteConfirmButton": "Eliminar",
+        "deleteSuccess": "Plan eliminado",
+        "dailyLimitReached": "Has alcanzado tu límite diario de {{limit}} planes",
+        "upgradeForMore": "Suscríbete a Premium para crear hasta 10 planes por día"
+      },
+      "vibeCheck": {
+        "title": "¡Estás en el radar! 🎉",
+        "subtitle": "Mira quién más va a ",
+        "totalPlanningLabel": "personas yendo esta semana",
+        "totalPlanningLabelOne": "persona yendo esta semana",
+        "planningLabel": "personas planificando ir {{when}}",
+        "planningLabelOne": "persona planificando ir {{when}}",
+        "compatibleLabel": "compatibles con tu perfil {{when}}",
+        "compatibleLabelOne": "compatible con tu perfil {{when}}",
+        "compatiblePlanningLabel": "personas compatibles planificando ir {{when}}",
+        "compatiblePlanningLabelOne": "persona compatible planificando ir {{when}}",
+        "trendingTitle": "¡El movimiento está creciendo!",
+        "recentLabel": "+{{count}} personas en las últimas horas",
+        "recentLabelOne": "+{{count}} persona en las últimas horas",
+        "commonInterestsLabel": "Intereses en común",
+        "matchesGoingLabel": "matches confirmados",
+        "emptyState": "Nadie planificando el {{dayName}} aún — ¡eres el primero! Te avisaremos cuando más personas planifiquen.",
+        "viewPeople": "Ver quién va",
+        "gotIt": "Entendido"
+      },
+      "createPlan": {
+        "location": {
+          "title": "¿Cuál es el plan?",
+          "subtitle": "Elige dónde vas",
+          "suggestionsTitle": "Sugerencias",
+          "searchPlaceholder": "Buscar lugar...",
+
+          "noResults": "No se encontraron lugares",
+          "searchEmptyState": "Busca un bar, restaurante o cualquier otro lugar al que quieras ir"
+        },
+        "period": {
+          "title": "¿A qué hora llegas?",
+          "subtitle": "Ubicación seleccionada",
+          "confirm": "Crear plan",
+          "dayLabel": "¿Cuándo?",
+          "periodLabel": "Período",
+          "periods": {
+            "morning": "Mañana",
+            "lunch": "Almuerzo",
+            "afternoon": "Tarde",
+            "night": "Noche",
+            "late_night": "Madrugada"
+          },
+          "periodDescriptions": {
+            "morning": "6h - 12h",
+            "lunch": "12h - 14h",
+            "afternoon": "14h - 18h",
+            "night": "Después de las 18h",
+            "late_night": "00h - 6h"
+          },
+          "days": {
+            "today": "Hoy",
+            "tomorrow": "Mañana"
+          }
+        }
       }
     },
     "premiumPaywall": {
@@ -723,6 +823,10 @@
         "pings": {
           "title": "Pings liberados (5 por semana)",
           "subtitle": "Envía señales sociales especiales para llamar la atención de alguien."
+        },
+        "morePlans": {
+          "title": "10 planes por día",
+          "subtitle": "Crea más planes diarios y maximiza tus posibilidades de conocer personas."
         }
       },
       "terms": "La renovación de tu suscripción es automática por el mismo valor y período, a menos que se cancele en la configuración de {{store}}. Al confirmar la suscripción, aceptas nuestros",
@@ -1244,6 +1348,8 @@
   "userProfile": {
     "hereNow": "Aquí ahora",
     "planningToGo": "Planeando ir",
+    "planningToGoToday": "Planeando ir hoy",
+    "planningToGoTomorrow": "Planeando ir mañana",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aquí",
     "nearLocation": "Cerca de {{location}}",

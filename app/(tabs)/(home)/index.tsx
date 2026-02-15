@@ -23,6 +23,7 @@ import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
 import { MyCampusCard } from "@/components/my-campus-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
+import { PlanHero } from "@/components/plan-hero";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -42,6 +43,8 @@ import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { PlaceCategory } from "@/modules/places/types";
+import { fetchSuggestedPlans } from "@/modules/plans/api";
+import { useUserPlans } from "@/modules/plans/hooks";
 import { useAppSelector } from "@/modules/store/hooks";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -66,9 +69,22 @@ export default function HomeScreen() {
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [todayPlansCount, setTodayPlansCount] = useState(0);
 
   // Get user profile for MyCampusCard
   const profile = useAppSelector((state) => state.profile.data);
+
+  // Get user plans for PlanHero carousel
+  const { sortedPlans, initialIndex } = useUserPlans();
+
+  // Fetch today's plans count for PlanHero social proof
+  useEffect(() => {
+    if (!location?.latitude || !location?.longitude) return;
+    fetchSuggestedPlans(location.latitude, location.longitude).then(
+      ({ totalCount }) => setTodayPlansCount(totalCount),
+    );
+  }, [location?.latitude, location?.longitude]);
 
   // Detection banner with smart cooldowns and dismissal
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -431,6 +447,29 @@ export default function HomeScreen() {
           />
         )}
 
+        {/* Plan Hero - Create or view plans */}
+        <PlanHero
+          plans={sortedPlans}
+          initialIndex={initialIndex}
+          loading={planLoading}
+          defaultConfirmedCount={todayPlansCount}
+          onViewPeoplePress={async (plan) => {
+            setPlanLoading(true);
+            try {
+              await handlePlaceClick({
+                placeId: plan.placeId,
+                name: plan.locationName,
+                latitude: 0,
+                longitude: 0,
+                distance: 0,
+                active_users: plan.confirmedCount,
+              });
+            } finally {
+              setPlanLoading(false);
+            }
+          }}
+        />
+
         {/* Title Section */}
         {/* <ScreenSectionHeading
           titleStyle={{ marginTop: 24 }}
@@ -511,25 +550,20 @@ export default function HomeScreen() {
 
         {/* Info Card */}
         <Animated.View entering={FadeInDown.delay(700).springify()}>
-          <ThemedView style={styles.section}>
-            <ThemedView
+          <View style={styles.section}>
+            <View
               style={[
                 styles.infoCard,
                 {
-                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
                 },
               ]}
             >
-              <ThemedView style={styles.infoContent}>
-                <ThemedView
-                  style={[
-                    styles.infoIconContainer,
-                    { backgroundColor: `${colors.accent}10` },
-                  ]}
-                >
+              <View style={styles.infoContent}>
+                <View style={[styles.infoIconContainer]}>
                   <MapPinIcon width={20} height={20} color={colors.accent} />
-                </ThemedView>
-                <ThemedView style={styles.infoTextContainer}>
+                </View>
+                <View style={styles.infoTextContainer}>
                   <ThemedText
                     style={[styles.infoTitle, { color: colors.text }]}
                   >
@@ -543,10 +577,10 @@ export default function HomeScreen() {
                   >
                     {t("screens.home.infoDescription")}
                   </ThemedText>
-                </ThemedView>
-              </ThemedView>
-            </ThemedView>
-          </ThemedView>
+                </View>
+              </View>
+            </View>
+          </View>
         </Animated.View>
       </ThemedView>
     </BaseTemplateScreen>

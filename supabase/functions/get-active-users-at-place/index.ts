@@ -92,7 +92,11 @@ Deno.serve(async (req) => {
     ]);
 
     const { data: rows, error: fetchError } = rpcResult;
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("[get-active-users] RPC get_available_users_at_place failed:", JSON.stringify(fetchError));
+      throw fetchError;
+    }
+    console.log(`[get-active-users] RPC returned ${rows?.length ?? 0} rows for place ${placeId}`);
 
     const { data: likerRows } = likersResult;
 
@@ -159,6 +163,8 @@ Deno.serve(async (req) => {
       allPhotoPaths.push(...photos);
     }
 
+    console.log(`[get-active-users] Signing ${allPhotoPaths.length} photos, fetching ${allFavoritePlaceIds.length} fav places`);
+
     // Run places query and photo signing in PARALLEL
     const [placesResult, allSignedUrls] = await Promise.all([
       allFavoritePlaceIds.length > 0
@@ -166,6 +172,8 @@ Deno.serve(async (req) => {
         : Promise.resolve({ data: [] }),
       signPhotoUrls(serviceSupabase, allPhotoPaths),
     ]);
+
+    console.log(`[get-active-users] Photo signing done. Signed ${allSignedUrls?.length ?? 0} URLs`);
 
     // Build place map
     const placeMap = new Map((placesResult.data || []).map((p: any) => [p.id, p]));
@@ -209,6 +217,9 @@ Deno.serve(async (req) => {
         company_name: row.company_name,
         height_cm: row.height_cm,
         languages: row.languages || [],
+        location: row.city_name && row.city_state
+          ? `${row.city_name}, ${row.city_state}`
+          : row.city_name || null,
         relationship_status: row.relationship_status,
         smoking_habit: row.smoking_habit,
         education_level: row.education_level,
@@ -217,6 +228,8 @@ Deno.serve(async (req) => {
         expires_at: row.expires_at,
         zodiac_sign: row.zodiac_sign,
         entry_type: row.entry_type || 'physical',
+        planned_for: row.planned_for || null,
+        planned_period: row.planned_period || null,
         // University fields
         university_id: row.university_id,
         university_name: row.university_name,
@@ -236,6 +249,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: corsHeaders }
     );
   } catch (err: any) {
+    console.error("[get-active-users] CAUGHT ERROR:", err?.message, err?.stack ?? err);
     return new Response(
       JSON.stringify({
         error: "internal_error",
