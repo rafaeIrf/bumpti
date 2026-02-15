@@ -1,6 +1,8 @@
 import { ThemedView } from "@/components/themed-view";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { getCardGradientColors } from "@/utils/card-gradient";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Pressable,
   StyleProp,
@@ -97,11 +99,12 @@ export function CategoryCard({
         ]}
       >
         <View style={styles.cardBackground}>
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: resolvedColor },
-            ]}
+          <LinearGradient
+            colors={getCardGradientColors(resolvedColor)}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
           />
           <View
             style={[StyleSheet.absoluteFill, { backgroundColor: overlayColor }]}

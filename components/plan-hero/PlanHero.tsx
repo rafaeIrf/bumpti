@@ -7,26 +7,25 @@ import { spacing, typography } from "@/constants/theme";
 
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
+import type { ActivePlan } from "@/modules/plans/hooks";
 import type { PlanPeriod } from "@/modules/plans/types";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
-
-export interface ActivePlan {
-  id: string;
-  placeId: string;
-  locationName: string;
-  confirmedCount: number;
-  plannedFor: string; // YYYY-MM-DD
-  plannedPeriod: PlanPeriod;
-}
+import Animated, {
+  Extrapolation,
+  FadeInDown,
+  interpolate,
+  useAnimatedStyle,
+} from "react-native-reanimated";
+import Carousel from "react-native-reanimated-carousel";
 
 interface PlanHeroProps {
-  activePlan?: ActivePlan | null;
-  onViewPeoplePress?: () => void;
+  plans: ActivePlan[];
+  initialIndex?: number;
+  onViewPeoplePress?: (plan: ActivePlan) => void;
   defaultConfirmedCount?: number;
   loading?: boolean;
 }
@@ -54,17 +53,197 @@ function getPeriodLabel(plannedFor: string, period: PlanPeriod): string {
     return t("screens.home.planHero.periodLabels.tomorrowNight");
   }
 
-  // Fallback for future dates beyond tomorrow
   return plannedFor;
 }
 
+// ──────────────────────────────────────────────
+// Pagination Dot (matches intro-carousel pattern)
+// ──────────────────────────────────────────────
+
+function PaginationDot({
+  index,
+  currentIndex,
+}: {
+  index: number;
+  currentIndex: number;
+}) {
+  const dotAnimStyle = useAnimatedStyle(() => {
+    const inputRange = [index - 1, index, index + 1];
+
+    const width = interpolate(
+      currentIndex,
+      inputRange,
+      [6, 18, 6],
+      Extrapolation.CLAMP,
+    );
+
+    const opacity = interpolate(
+      currentIndex,
+      inputRange,
+      [0.35, 1, 0.35],
+      Extrapolation.CLAMP,
+    );
+
+    return { width, opacity };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        dotAnimStyle,
+        {
+          backgroundColor:
+            index === currentIndex ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
+        },
+      ]}
+    />
+  );
+}
+
+// ──────────────────────────────────────────────
+// Plan Card (single carousel slide)
+// ──────────────────────────────────────────────
+
+function PlanCard({
+  plan,
+  onViewPeople,
+  loading,
+  showDots,
+  totalPlans,
+  currentIndex,
+  cardIndex,
+}: {
+  plan: ActivePlan;
+  onViewPeople: () => void;
+  loading: boolean;
+  showDots: boolean;
+  totalPlans: number;
+  currentIndex: number;
+  cardIndex: number;
+}) {
+  const router = useRouter();
+  const confirmedCount = plan.confirmedCount;
+
+  // Conditional border radius: first card (left), last card (right)
+  const isFirst = cardIndex === 0;
+  const isLast = cardIndex === totalPlans - 1;
+
+  // Alternate gradient direction for visual continuity
+  const isEven = cardIndex % 2 === 0;
+  const gradientStart = isEven ? { x: 0, y: 0 } : { x: 1, y: 1 };
+  const gradientEnd = isEven ? { x: 1, y: 1 } : { x: 0, y: 0 };
+
+  return (
+    <LinearGradient
+      colors={["#E94B7D", "#FF7A5C"]}
+      start={gradientStart}
+      end={gradientEnd}
+      style={[
+        styles.gradient,
+        isFirst && {
+          borderTopLeftRadius: spacing.lg,
+          borderBottomLeftRadius: spacing.lg,
+        },
+        isLast && {
+          borderTopRightRadius: spacing.lg,
+          borderBottomRightRadius: spacing.lg,
+        },
+      ]}
+    >
+      {/* Settings icon (top-right) */}
+      <Pressable
+        onPress={() => {
+          trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
+            activePlansCount: totalPlans,
+          });
+          Haptics.selectionAsync();
+          router.push("/main/my-plans");
+        }}
+        hitSlop={10}
+        style={styles.settingsButton}
+      >
+        <SettingsIcon width={20} height={20} color="rgba(255,255,255,0.85)" />
+      </Pressable>
+
+      <ThemedText
+        style={[typography.body1, styles.activeTitle, { color: "#FFFFFF" }]}
+      >
+        {getPeriodLabel(plan.plannedFor, plan.plannedPeriod)}
+      </ThemedText>
+
+      <View style={styles.locationRow}>
+        <MapPinIcon width={16} height={16} color="rgba(255,255,255,0.9)" />
+        <ThemedText
+          style={[
+            typography.body,
+            styles.locationName,
+            { color: "rgba(255,255,255,0.9)" },
+          ]}
+          numberOfLines={1}
+        >
+          {plan.locationName}
+        </ThemedText>
+      </View>
+
+      <View style={styles.activePlanFooter}>
+        <ThemedText
+          style={[
+            typography.caption,
+            styles.confirmedText,
+            { color: "#FFFFFF" },
+          ]}
+        >
+          {confirmedCount > 0
+            ? confirmedCount === 1
+              ? t("screens.home.planHero.confirmedTodayOne", {
+                  count: confirmedCount,
+                })
+              : t("screens.home.planHero.confirmedToday", {
+                  count: confirmedCount,
+                })
+            : t("screens.home.planHero.beFirstToConfirm")}
+        </ThemedText>
+
+        <Button
+          onPress={onViewPeople}
+          loading={loading}
+          style={[{ backgroundColor: "rgba(255, 255, 255, 0.2)" }]}
+          label={t("screens.home.planHero.activeState.viewPeopleButton")}
+          textStyle={[typography.caption, { color: "#FFFFFF" }]}
+        />
+      </View>
+
+      {/* Pagination Dots inside the card */}
+      {showDots && (
+        <View style={styles.dotsContainer}>
+          {Array.from({ length: totalPlans }).map((_, index) => (
+            <PaginationDot
+              key={index}
+              index={index}
+              currentIndex={currentIndex}
+            />
+          ))}
+        </View>
+      )}
+    </LinearGradient>
+  );
+}
+
+// ──────────────────────────────────────────────
+// PlanHero (main export)
+// ──────────────────────────────────────────────
+
 export function PlanHero({
-  activePlan,
+  plans,
+  initialIndex = 0,
   onViewPeoplePress,
   defaultConfirmedCount = 10,
   loading = false,
 }: PlanHeroProps) {
   const router = useRouter();
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const handleLocationPress = () => {
     Haptics.selectionAsync();
@@ -72,112 +251,71 @@ export function PlanHero({
     router.push("/(modals)/create-plan");
   };
 
-  const handleViewPeoplePress = () => {
-    Haptics.selectionAsync();
-    trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIEW_PEOPLE_CLICKED, {
-      planId: activePlan?.id || "",
-    });
-    onViewPeoplePress?.();
-  };
+  const handleViewPeoplePress = useCallback(
+    (plan: ActivePlan) => {
+      Haptics.selectionAsync();
+      trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_ENTER_CLICKED, {
+        planId: plan.id,
+      });
+      onViewPeoplePress?.(plan);
+    },
+    [onViewPeoplePress],
+  );
 
-  const confirmedCount = activePlan?.confirmedCount ?? defaultConfirmedCount;
+  const confirmedCount =
+    plans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
+
+  const hasPlans = plans.length > 0;
 
   return (
     <Animated.View
       entering={FadeInDown.delay(150).springify().damping(20).mass(0.8)}
       style={styles.container}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
-      {activePlan ? (
+      {hasPlans && containerWidth > 0 ? (
+        <>
+          <Carousel
+            loop={false}
+            width={containerWidth}
+            height={160}
+            data={plans}
+            defaultIndex={initialIndex}
+            scrollAnimationDuration={300}
+            overscrollEnabled={false}
+            onProgressChange={(_, absoluteProgress) => {
+              const newIndex = Math.round(absoluteProgress);
+              if (
+                newIndex !== currentIndex &&
+                newIndex >= 0 &&
+                newIndex < plans.length
+              ) {
+                setCurrentIndex(newIndex);
+              }
+            }}
+            renderItem={({ item, index }) => (
+              <PlanCard
+                plan={item}
+                onViewPeople={() => handleViewPeoplePress(item)}
+                loading={loading}
+                showDots={plans.length > 1}
+                totalPlans={plans.length}
+                currentIndex={currentIndex}
+                cardIndex={index}
+              />
+            )}
+          />
+        </>
+      ) : hasPlans ? (
+        /* Placeholder while measuring width */
         <LinearGradient
           colors={["#E94B7D", "#FF7A5C"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          {/* Settings icon (top-right) */}
-          <Pressable
-            onPress={() => {
-              Haptics.selectionAsync();
-              router.push("/main/my-plans");
-            }}
-            hitSlop={10}
-            style={styles.settingsButton}
-          >
-            <SettingsIcon
-              width={20}
-              height={20}
-              color="rgba(255,255,255,0.85)"
-            />
-          </Pressable>
-
-          {/* Active Plan State */}
-          <>
-            <ThemedText
-              style={[
-                typography.body1,
-                styles.activeTitle,
-                { color: "#FFFFFF" },
-              ]}
-            >
-              {t("screens.home.planHero.activeState.title")}
-            </ThemedText>
-
-            <View style={styles.locationRow}>
-              <MapPinIcon width={16} height={16} color="#FFFFFF" />
-              <ThemedText
-                style={[
-                  typography.body,
-                  styles.locationName,
-                  { color: "#FFFFFF" },
-                ]}
-                numberOfLines={1}
-              >
-                {activePlan.locationName}
-              </ThemedText>
-            </View>
-
-            <ThemedText
-              style={[
-                typography.caption,
-                styles.periodLabel,
-                { color: "rgba(255, 255, 255, 0.9)" },
-              ]}
-            >
-              {getPeriodLabel(activePlan.plannedFor, activePlan.plannedPeriod)}
-            </ThemedText>
-
-            <View style={styles.activePlanFooter}>
-              <ThemedText
-                style={[
-                  typography.caption,
-                  styles.confirmedText,
-                  { color: "#FFFFFF" },
-                ]}
-              >
-                {t("screens.home.planHero.confirmedToday", {
-                  count: confirmedCount,
-                })}
-              </ThemedText>
-
-              {confirmedCount >= 1 && (
-                <Button
-                  onPress={handleViewPeoplePress}
-                  loading={loading}
-                  style={[
-                    {
-                      backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    },
-                  ]}
-                  label={t(
-                    "screens.home.planHero.activeState.viewPeopleButton",
-                  )}
-                  textStyle={[typography.caption, { color: "#FFFFFF" }]}
-                />
-              )}
-            </View>
-          </>
-        </LinearGradient>
+          style={[styles.gradient, { minHeight: 160 }]}
+        />
       ) : (
+        /* Empty state */
         <Pressable onPress={handleLocationPress}>
           <LinearGradient
             colors={["#E94B7D", "#FF7A5C"]}
@@ -235,9 +373,13 @@ export function PlanHero({
                   { color: "#FFFFFF" },
                 ]}
               >
-                {t("screens.home.planHero.confirmedToday", {
-                  count: confirmedCount,
-                })}
+                {confirmedCount === 1
+                  ? t("screens.home.planHero.confirmedTodayOne", {
+                      count: confirmedCount,
+                    })
+                  : t("screens.home.planHero.confirmedToday", {
+                      count: confirmedCount,
+                    })}
               </ThemedText>
             )}
           </LinearGradient>
@@ -251,8 +393,10 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: spacing.lg,
     overflow: "hidden",
+    marginTop: spacing.md,
   },
   gradient: {
+    flex: 1,
     padding: spacing.md,
     minHeight: 140,
     justifyContent: "space-between",
@@ -300,11 +444,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginTop: spacing.lg,
     gap: spacing.sm,
   },
   viewPeopleButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     height: 36,
+  },
+  // Dots
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
   },
 });

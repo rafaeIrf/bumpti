@@ -7,6 +7,8 @@ import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { ProfileData } from "@/modules/store/slices/profileSlice";
+import { getCardGradientColors } from "@/utils/card-gradient";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -88,55 +90,62 @@ function MyCampusCardComponent({ profile }: MyCampusCardProps) {
         style={({ pressed }) => [
           styles.card,
           {
-            backgroundColor: colors.pastelBlue,
             opacity: pressed && isOfficialUniversity ? 0.9 : 1,
             transform: [{ scale: pressed && isOfficialUniversity ? 0.98 : 1 }],
           },
         ]}
       >
-        {/* Left Section: Icon or Loading */}
-        <View style={styles.iconContainer}>
-          {isLoading ? (
-            <LoadingView
-              style={{ backgroundColor: "transparent" }}
-              color="#FFFFFF"
-              size="small"
+        <LinearGradient
+          colors={getCardGradientColors(colors.pastelBlue)}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientInner}
+        >
+          {/* Left Section: Icon or Loading */}
+          <View style={styles.iconContainer}>
+            {isLoading ? (
+              <LoadingView
+                style={{ backgroundColor: "transparent" }}
+                color="#FFFFFF"
+                size="small"
+              />
+            ) : (
+              <UniversityIcon width={28} height={28} />
+            )}
+          </View>
+
+          {/* Middle Section: Content */}
+          <View style={styles.contentContainer}>
+            {/* Title */}
+            <ThemedText
+              style={[styles.title, { color: "#FFFFFF" }]}
+              numberOfLines={1}
+            >
+              {displayName}
+            </ThemedText>
+
+            {/* Subtitle */}
+            <ThemedText style={[styles.subtitle, { color: "#FFFFFF" }]}>
+              {isOfficialUniversity && university_active_users! > 0
+                ? t("screens.home.myCampus.activeNow", {
+                    count: university_active_users,
+                  })
+                : isOfficialUniversity
+                  ? t("screens.home.myCampus.tapToConnect")
+                  : t("screens.home.myCampus.findOnMap")}
+            </ThemedText>
+          </View>
+
+          {/* Right Section: Chevron */}
+          {isOfficialUniversity && (
+            <IconSymbol
+              name="chevron.right"
+              size={20}
+              color="rgba(255, 255, 255, 0.6)"
             />
-          ) : (
-            <UniversityIcon width={28} height={28} />
           )}
-        </View>
-
-        {/* Middle Section: Content */}
-        <View style={styles.contentContainer}>
-          {/* Title */}
-          <ThemedText
-            style={[styles.title, { color: "#FFFFFF" }]}
-            numberOfLines={1}
-          >
-            {displayName}
-          </ThemedText>
-
-          {/* Subtitle */}
-          <ThemedText style={[styles.subtitle, { color: "#FFFFFF" }]}>
-            {isOfficialUniversity && university_active_users! > 0
-              ? t("screens.home.myCampus.activeNow", {
-                  count: university_active_users,
-                })
-              : isOfficialUniversity
-                ? t("screens.home.myCampus.tapToConnect")
-                : t("screens.home.myCampus.findOnMap")}
-          </ThemedText>
-        </View>
-
-        {/* Right Section: Chevron */}
-        {isOfficialUniversity && (
-          <IconSymbol
-            name="chevron.right"
-            size={20}
-            color="rgba(255, 255, 255, 0.6)"
-          />
-        )}
+        </LinearGradient>
       </Pressable>
     </Animated.View>
   );
@@ -149,11 +158,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   card: {
-    flexDirection: "row",
-    alignItems: "center",
     borderRadius: 20,
-    padding: spacing.md,
-    gap: spacing.md,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -162,6 +168,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+  },
+  gradientInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    padding: spacing.md,
+    gap: spacing.md,
   },
   iconContainer: {
     width: 48,

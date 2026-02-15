@@ -19,6 +19,11 @@ import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import {
+  ANALYTICS_EVENTS,
+  trackEvent,
+  useScreenTracking,
+} from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
 import { createPlan, fetchSuggestedPlans } from "@/modules/plans/api";
@@ -102,6 +107,10 @@ export default function CreatePlanModal() {
   const [suggestedPlans, setSuggestedPlans] = useState<SuggestedPlan[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectionSource = useRef<"suggestion" | "search">("suggestion");
+
+  // ── Screen tracking ──────────────────────────────────────────────
+  useScreenTracking({ screenName: "create_plan" });
 
   // ── API search ──────────────────────────────────────────────────
   const [triggerSearch, { data: searchData, isFetching }] =
@@ -133,6 +142,11 @@ export default function CreatePlanModal() {
           lat: userLocation.latitude,
           lng: userLocation.longitude,
           radius: 20000,
+        }).then((result) => {
+          trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.SEARCH_TYPED, {
+            queryLength: query.trim().length,
+            resultsCount: result.data?.places?.length ?? 0,
+          });
         });
       }, 400);
     },
@@ -156,7 +170,17 @@ export default function CreatePlanModal() {
     if (!userLocation) return;
     setSuggestionsLoading(true);
     fetchSuggestedPlans(userLocation.latitude, userLocation.longitude)
-      .then(({ suggestions }) => setSuggestedPlans(suggestions))
+      .then(({ suggestions }) => {
+        setSuggestedPlans(suggestions);
+        if (suggestions.length > 0) {
+          trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.SUGGESTION_SHOWN, {
+            suggestionsCount: suggestions.length,
+            topSuggestionHype: Math.max(
+              ...suggestions.map((s) => s.plan_count),
+            ),
+          });
+        }
+      })
       .catch(() => setSuggestedPlans([]))
       .finally(() => setSuggestionsLoading(false));
   }, [userLocation]);
@@ -194,17 +218,39 @@ export default function CreatePlanModal() {
       setSelectedPeriod(null);
       setSelectedDay("today");
     } else {
+      trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.ABANDONED, {
+        step: currentStep,
+      });
       router.back();
     }
   };
 
-  const handlePlaceSelect = (place: PlaceCardIconData) => {
+  const handlePlaceSelect = (
+    place: PlaceCardIconData,
+    source: "suggestion" | "search",
+    position: number,
+  ) => {
+    selectionSource.current = source;
     setSelectedPlace({ id: place.id, name: place.name });
     setCurrentStep(2);
+
+    if (source === "suggestion") {
+      trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.SUGGESTION_TAPPED, {
+        hypeCount: place.activeUsers ?? 0,
+      });
+    } else {
+      trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.SEARCH_RESULT_TAPPED, {
+        activeUsers: place.activeUsers ?? 0,
+      });
+    }
   };
 
   const handleConfirm = async () => {
     if (!selectedPeriod || !selectedPlace || isCreating) return;
+
+    trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.CONFIRMED, {
+      source: selectionSource.current,
+    });
 
     setIsCreating(true);
     try {
@@ -216,17 +262,29 @@ export default function CreatePlanModal() {
       });
 
       if (result) {
+        trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.CREATED, {});
         logger.log("[CreatePlan] Plan created:", {
           presenceId: result.id,
           placeId: selectedPlace.id,
           period: selectedPeriod,
           day: selectedDay,
         });
-        router.dismissAll();
+        router.replace({
+          pathname: "/(modals)/vibe-check",
+          params: {
+            placeId: selectedPlace.id,
+            placeName: selectedPlace.name,
+            planPeriod: t(
+              `screens.home.createPlan.period.periodDescriptions.${selectedPeriod}`,
+            ),
+          },
+        });
       } else {
+        trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.CREATION_FAILED, {});
         logger.error("[CreatePlan] Failed to create plan");
       }
     } catch (err) {
+      trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.CREATION_FAILED, {});
       logger.error("[CreatePlan] Error creating plan:", { err });
     } finally {
       setIsCreating(false);
@@ -382,7 +440,9 @@ export default function CreatePlanModal() {
                   >
                     <PlaceCardIcon
                       place={place}
-                      onPress={() => handlePlaceSelect(place)}
+                      onPress={() =>
+                        handlePlaceSelect(place, "suggestion", index)
+                      }
                     />
                   </Animated.View>
                 ))}
@@ -416,7 +476,7 @@ export default function CreatePlanModal() {
               >
                 <PlaceCardIcon
                   place={place}
-                  onPress={() => handlePlaceSelect(place)}
+                  onPress={() => handlePlaceSelect(place, "search", index)}
                 />
               </Animated.View>
             ))}
@@ -476,7 +536,18 @@ export default function CreatePlanModal() {
             return (
               <Pressable
                 key={day}
-                onPress={() => setSelectedDay(day)}
+                onPress={() => {
+                  setSelectedDay(day);
+                  trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.DAY_SELECTED, {
+                    day,
+                    availablePeriods:
+                      day === "tomorrow"
+                        ? PERIOD_OPTIONS.length
+                        : PERIOD_OPTIONS.filter(
+                            (p) => new Date().getHours() < p.cutoffHour,
+                          ).length,
+                  });
+                }}
                 style={[
                   styles.dayPill,
                   {
@@ -529,7 +600,13 @@ export default function CreatePlanModal() {
               )}
               icon={option.icon}
               isSelected={selectedPeriod === option.value}
-              onPress={() => setSelectedPeriod(option.value)}
+              onPress={() => {
+                setSelectedPeriod(option.value);
+                trackEvent(ANALYTICS_EVENTS.PLAN_CREATION.PERIOD_SELECTED, {
+                  period: option.value,
+                  day: selectedDay,
+                });
+              }}
             />
           </Animated.View>
         ))}

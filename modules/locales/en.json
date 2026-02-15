@@ -677,9 +677,11 @@
         },
         "activeState": {
           "title": "Your next plan",
-          "viewPeopleButton": "View people"
+          "viewPeopleButton": "Enter"
         },
         "confirmedToday": "{{count}} people confirmed today",
+        "confirmedTodayOne": "{{count}} person confirmed today",
+        "beFirstToConfirm": "You're already on the radar!",
         "periodLabels": {
           "todayMorning": "Today in the morning",
           "todayAfternoon": "Today in the afternoon",
@@ -695,14 +697,29 @@
         "emptyTitle": "No plans yet",
         "emptyDescription": "Create your first plan and see who's going!",
         "activeUsers": "{{count}} people",
-        "viewPeople": "View people",
+        "viewPeople": "Enter",
         "deletePlan": "Delete plan",
+        "vibeCheck": "Vibe Check",
         "deleteConfirmTitle": "Delete plan?",
         "deleteConfirmDescription": "This plan will be removed and you won't appear as confirmed anymore.",
         "deleteConfirmButton": "Delete",
         "deleteSuccess": "Plan deleted",
         "dailyLimitReached": "You've reached your daily limit of {{limit}} plans",
         "upgradeForMore": "Upgrade to Premium for up to 10 plans per day"
+      },
+      "vibeCheck": {
+        "title": "You're on the radar! 🎉",
+        "subtitle": "See who else is going to ",
+        "planningLabel": "people planning to go today",
+        "planningLabelOne": "person planning to go today",
+        "trendingTitle": "It's picking up!",
+        "recentLabel": "+{{count}} people in the last few hours",
+        "recentLabelOne": "+{{count}} person in the last few hours",
+        "commonInterestsLabel": "Common interests",
+        "matchesGoingLabel": "matches going",
+        "emptyState": "No one here yet — you'll be the first!",
+        "viewPeople": "See who's going",
+        "gotIt": "Got it"
       },
       "createPlan": {
         "location": {
