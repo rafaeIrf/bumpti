@@ -37,28 +37,49 @@ serve(async (req) => {
 
     // 2. Process Candidates
     for (const item of candidates) {
-      // item = { target_user_id, notification_type, target_place_id, target_place_name, active_count }
+      // item = { target_user_id, notification_type, target_place_id, target_place_name, active_count, has_planning }
       
       let title = "";
       let body = "";
       const count = item.active_count || 0;
+      const isPlanning = item.has_planning === true;
 
       switch (item.notification_type) {
         case "favorite_activity_started":
-          title = "Conexão no seu pico! 📍";
-          body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}`;
+          if (isPlanning) {
+            title = "Seu pico está movimentado! 📍";
+            body = `Pessoas estão planejando ir em ${item.target_place_name}. Planeje também e conecte-se antes!`;
+          } else {
+            title = "Conexão no seu pico! 📍";
+            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}`;
+          }
           break;
         case "favorite_activity_heating":
-          title = `${item.target_place_name} está bombando 🔥`;
-          body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} já ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+          if (isPlanning) {
+            title = `${item.target_place_name} está esquentando 🔥`;
+            body = `Pessoas estão planejando ir e iniciando conexões. Não fique de fora!`;
+          } else {
+            title = `${item.target_place_name} está bombando 🔥`;
+            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} já ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+          }
           break;
         case "nearby_activity_started":
-          title = "Conexão próxima! 📍";
-          body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}`;
+          if (isPlanning) {
+            title = "Atividade perto de você! 📍";
+            body = `Pessoas estão planejando ir em ${item.target_place_name}. Planeje também!`;
+          } else {
+            title = "Conexão próxima! 📍";
+            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}`;
+          }
           break;
         case "nearby_activity_heating":
-          title = `${item.target_place_name} está bombando 🔥`;
-          body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+          if (isPlanning) {
+            title = `${item.target_place_name} está esquentando 🔥`;
+            body = `Pessoas estão planejando ir e iniciando conexões!`;
+          } else {
+            title = `${item.target_place_name} está bombando 🔥`;
+            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+          }
           break;
         default:
           continue;
