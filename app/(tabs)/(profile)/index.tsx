@@ -1,4 +1,9 @@
-import { MapPinIcon, PencilIcon, SettingsIcon } from "@/assets/icons";
+import {
+  AwardIcon,
+  MapPinIcon,
+  PencilIcon,
+  SettingsIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { BenefitsTable } from "@/components/benefits-table";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
@@ -10,6 +15,7 @@ import {
 } from "@/components/power-up-bottom-sheet";
 import { PremiumStatusCard } from "@/components/premium/premium-status-card";
 import { ProfilePhotoProgress } from "@/components/profile/profile-photo-progress";
+
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
@@ -79,6 +85,10 @@ export default function ProfileScreen() {
     if (!isVerified) {
       router.push("/(modals)/verification-webview");
     }
+  };
+
+  const handleReferralClick = () => {
+    router.push("/(modals)/referral-hub");
   };
 
   const openEarlyCheckinSheet = () => {
@@ -163,6 +173,11 @@ export default function ProfileScreen() {
             <ScreenToolbar
               title={t("screens.profile.title")}
               rightActions={[
+                {
+                  icon: AwardIcon,
+                  onClick: handleReferralClick,
+                  ariaLabel: t("referral.entryCard.title"),
+                },
                 {
                   icon: SettingsIcon,
                   onClick: handleSettingsClick,

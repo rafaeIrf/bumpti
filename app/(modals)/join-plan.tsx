@@ -1,4 +1,10 @@
-import { CalendarIcon, MapPinIcon, UsersIcon, XIcon } from "@/assets/icons";
+import {
+  AlarmClockIcon,
+  CalendarIcon,
+  MapPinIcon,
+  UsersIcon,
+  XIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -161,7 +167,9 @@ export default function JoinPlanScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.iconBadge}
           >
-            <ThemedText style={styles.stateBadgeEmoji}>⏰</ThemedText>
+            <ThemedText style={styles.stateBadgeEmoji}>
+              <AlarmClockIcon width={28} height={28} color="#FFFFFF" />
+            </ThemedText>
           </LinearGradient>
         </Animated.View>
 

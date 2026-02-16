@@ -75,9 +75,9 @@ export function ActionButton({
   // Determine colors based on variant
   const isAccent = variant === "accent";
   const backgroundColor = isAccent
-    ? (colors as any).accentBorderFaint ??
+    ? ((colors as any).accentBorderFaint ??
       (colors as any).accentBlueLight ??
-      colors.border
+      colors.border)
     : "#16181C";
   const borderColor = isAccent ? colors.accent : "#2F3336";
   const iconColor = color ?? (isAccent ? colors.accent : "#FFF");
@@ -122,7 +122,7 @@ export function ActionButton({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: "#16181C",
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#2F3336",
     alignItems: "center",
     justifyContent: "center",

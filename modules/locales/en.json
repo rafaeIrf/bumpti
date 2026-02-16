@@ -158,6 +158,35 @@
       "shopping": "Shopping Centers"
     }
   },
+  "referral": {
+    "entryCard": {
+      "title": "Invite friends",
+      "creditsEarned": "{{count}} Check-in+ earned"
+    },
+    "hub": {
+      "title": "Referrals",
+      "overview": {
+        "creditsEarned": "Check-in+ earned",
+        "accepted": "friends invited",
+        "nextReward": "Next reward"
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "step1": "Create a plan and share the link with friends",
+        "step2": "Each friend who joins through your link counts as an accepted invite",
+        "step3": "3 friends = +1 Check-in+, 7 = +2, 15 = +3. Then +1 every 5 more"
+      },
+      "milestones": {
+        "title": "Milestones",
+        "threshold": "{{count}} friends invited",
+        "progress": "{{current}} of {{threshold}}",
+        "reward": "+{{count}} Check-in+",
+        "reward_plural": "+{{count}} Check-in+",
+        "recurring": "Every {{interval}} friends",
+        "recurringEarned": "Earned {{count}}x so far"
+      }
+    }
+  },
   "versionCheck": {
     "forceUpdate": {
       "title": "Update Required",

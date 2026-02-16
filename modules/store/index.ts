@@ -2,6 +2,7 @@ import { discoverApi } from "@/modules/discover/discoverApi";
 import { interactionsApi } from "@/modules/interactions/interactionsApi";
 import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
 import { placesApi } from "@/modules/places/placesApi";
+import { referralApi } from "@/modules/referral/referralApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -36,6 +37,7 @@ const appReducer_combined = combineReducers({
   [interactionsApi.reducerPath]: interactionsApi.reducer,
   [pendingLikesApi.reducerPath]: pendingLikesApi.reducer,
   [discoverApi.reducerPath]: discoverApi.reducer,
+  [referralApi.reducerPath]: referralApi.reducer,
   app: appReducer,
   onboarding: onboardingReducer,
   plans: plansReducer,
@@ -65,7 +67,8 @@ export const store = configureStore({
       placesApi.middleware,
       interactionsApi.middleware,
       pendingLikesApi.middleware,
-      discoverApi.middleware
+      discoverApi.middleware,
+      referralApi.middleware
     ),
 });
 

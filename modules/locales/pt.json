@@ -158,6 +158,35 @@
       "shopping": "Shopping Centers"
     }
   },
+  "referral": {
+    "entryCard": {
+      "title": "Indique amigos",
+      "creditsEarned": "{{count}} Check-in+ ganhos"
+    },
+    "hub": {
+      "title": "Indicações",
+      "overview": {
+        "creditsEarned": "Check-in+ ganhos",
+        "accepted": "amigos convidados",
+        "nextReward": "Próxima recompensa"
+      },
+      "howItWorks": {
+        "title": "Como funciona",
+        "step1": "Crie um plano e compartilhe o link com amigos",
+        "step2": "Cada amigo que entrar pelo seu link conta como convite aceito",
+        "step3": "3 amigos = +1 Check-in+, 7 = +2, 15 = +3. Depois, +1 a cada 5 extras"
+      },
+      "milestones": {
+        "title": "Conquistas",
+        "threshold": "{{count}} amigos convidados",
+        "progress": "{{current}} de {{threshold}}",
+        "reward": "+{{count}} Check-in+",
+        "reward_plural": "+{{count}} Check-in+",
+        "recurring": "A cada {{interval}} amigos",
+        "recurringEarned": "Ganho {{count}}x até agora"
+      }
+    }
+  },
   "versionCheck": {
     "forceUpdate": {
       "title": "Atualização Necessária",

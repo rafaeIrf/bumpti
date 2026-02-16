@@ -12,6 +12,7 @@ import DiscoverEmptyState from "@/components/discover/discover-empty-state";
 import DiscoverSection from "@/components/discover/discover-section";
 import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
 import { ItsMatchModal } from "@/components/its-match-modal";
+import { ActionButton } from "@/components/ui/action-button";
 import { spacing, typography } from "@/constants/theme";
 import {
   consumeActedUserIds,
@@ -34,7 +35,6 @@ import {
   Dimensions,
   InteractionManager,
   LayoutAnimation,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -323,22 +323,12 @@ export default function DiscoverScreen() {
               {t("screens.discover.subtitle")}
             </Text>
           </View>
-          <Pressable
+          <ActionButton
+            icon={InfoRoundedIcon}
             onPress={handleOpenInfo}
-            hitSlop={12}
-            style={[
-              styles.infoButton,
-              { backgroundColor: `${colors.textSecondary}15` },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t("screens.discover.infoTitle")}
-          >
-            <InfoRoundedIcon
-              width={20}
-              height={20}
-              color={colors.textSecondary}
-            />
-          </Pressable>
+            ariaLabel={t("screens.discover.infoTitle")}
+            color={colors.textSecondary}
+          />
         </View>
       </View>
 
@@ -497,15 +487,7 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
-  infoButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: spacing.sm,
-    marginTop: 2,
-  },
+
   noEncountersContainer: {
     flex: 1,
     justifyContent: "center",

@@ -2,9 +2,19 @@ import { grantCheckinCredits } from "./iap-validation.ts";
 import { createAdminClient } from "./supabase-admin.ts";
 
 /**
+ * Recurring reward config: after all fixed milestones are reached,
+ * award RECURRING_CREDITS every RECURRING_INTERVAL additional accepts.
+ */
+const RECURRING_INTERVAL = 5;
+const RECURRING_CREDITS = 1;
+
+/**
  * Awards checkin+ credits to the invite creator when a new user joins.
  * Counts global joins across all of the creator's invites, checks milestone
  * thresholds, and upserts credits for newly-reached milestones.
+ *
+ * After all fixed milestones are reached, awards 1 credit for every 5
+ * additional accepts (recurring reward).
  *
  * Safe to call fire-and-forget — errors are caught internally.
  */
@@ -71,14 +81,33 @@ export async function processReferralReward(
       (claimedRows ?? []).map((r: { threshold: number }) => r.threshold),
     );
 
-    // 6. Award credits for newly reached, unclaimed milestones
+    // 6. Award credits for newly reached, unclaimed fixed milestones
     let creditsToAward = 0;
     const newClaims: { user_id: string; threshold: number }[] = [];
+
+    const highestMilestoneThreshold = milestones.length > 0
+      ? milestones[milestones.length - 1].threshold
+      : 0;
 
     for (const m of milestones) {
       if (totalJoins >= m.threshold && !claimedSet.has(m.threshold)) {
         creditsToAward += m.credits;
         newClaims.push({ user_id: invite.creator_id, threshold: m.threshold });
+      }
+    }
+
+    // 7. Recurring rewards: after all fixed milestones, +1 every 5 extra accepts
+    if (totalJoins > highestMilestoneThreshold) {
+      const acceptsBeyond = totalJoins - highestMilestoneThreshold;
+      const totalRecurringSlots = Math.floor(acceptsBeyond / RECURRING_INTERVAL);
+
+      // Check each recurring slot (threshold stored as 15+5=20, 15+10=25, etc.)
+      for (let slot = 1; slot <= totalRecurringSlots; slot++) {
+        const recurringThreshold = highestMilestoneThreshold + (slot * RECURRING_INTERVAL);
+        if (!claimedSet.has(recurringThreshold)) {
+          creditsToAward += RECURRING_CREDITS;
+          newClaims.push({ user_id: invite.creator_id, threshold: recurringThreshold });
+        }
       }
     }
 

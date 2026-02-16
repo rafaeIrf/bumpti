@@ -158,6 +158,35 @@
       "shopping": "Centros Comerciales"
     }
   },
+  "referral": {
+    "entryCard": {
+      "title": "Invita amigos",
+      "creditsEarned": "{{count}} Check-in+ ganados"
+    },
+    "hub": {
+      "title": "Referidos",
+      "overview": {
+        "creditsEarned": "Check-in+ ganados",
+        "accepted": "amigos invitados",
+        "nextReward": "Próxima recompensa"
+      },
+      "howItWorks": {
+        "title": "Cómo funciona",
+        "step1": "Crea un plan y comparte el enlace con amigos",
+        "step2": "Cada amigo que entre por tu enlace cuenta como invitación aceptada",
+        "step3": "3 amigos = +1 Check-in+, 7 = +2, 15 = +3. Después, +1 cada 5 más"
+      },
+      "milestones": {
+        "title": "Logros",
+        "threshold": "{{count}} amigos invitados",
+        "progress": "{{current}} de {{threshold}}",
+        "reward": "+{{count}} Check-in+",
+        "reward_plural": "+{{count}} Check-in+",
+        "recurring": "Cada {{interval}} amigos",
+        "recurringEarned": "Ganado {{count}}x hasta ahora"
+      }
+    }
+  },
   "versionCheck": {
     "forceUpdate": {
       "title": "Actualización Necesaria",
