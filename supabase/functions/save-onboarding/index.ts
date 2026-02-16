@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { grantCheckinCredits } from "../_shared/iap-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -233,6 +234,13 @@ Deno.serve(async (req) => {
 
     if (rpcError) {
       throw rpcError;
+    }
+
+    try {
+      await grantCheckinCredits(supabase, user.id, 10, "onboarding_bonus");
+      console.log(`Granted 10 checkin+ credits to user ${user.id}`);
+    } catch (creditError) {
+      console.error("Failed to grant onboarding credits:", creditError);
     }
 
     return new Response(JSON.stringify({ success: true }), {
