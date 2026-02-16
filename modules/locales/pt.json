@@ -733,7 +733,9 @@
         "matchesGoingLabel": "matches confirmados",
         "emptyState": "Ninguém planejando para {{dayName}} ainda — você é o primeiro! Avisaremos quando mais pessoas planejarem.",
         "viewPeople": "Ver quem vai",
-        "gotIt": "Entendi"
+        "gotIt": "Entendi",
+        "referralTitle": "Ganhe Check-in+",
+        "referralBody": "Compartilhe seus planos e convide amigos para ganhar créditos quando aceitarem."
       },
       "joinPlan": {
         "title": "Você foi convidado! 🎉",

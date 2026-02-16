@@ -733,7 +733,9 @@
         "matchesGoingLabel": "matches going",
         "emptyState": "Nobody planning on {{dayName}} yet — you're the first! We'll let you know when others plan too.",
         "viewPeople": "See who's going",
-        "gotIt": "Got it"
+        "gotIt": "Got it",
+        "referralTitle": "Earn Check-in+",
+        "referralBody": "Share your plans and invite friends to earn credits when they accept."
       },
       "joinPlan": {
         "title": "You're invited! 🎉",
