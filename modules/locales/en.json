@@ -851,18 +851,22 @@
       },
       "introCarousel": {
         "slide1": {
-          "title": "Connections that happen live",
-          "text": "Discover who's at the same places as you, in real-time. No waiting, no missed matches."
+          "title": "Your next adventure starts here",
+          "text": "Meet people who share your tastes and interests. A new way to make real connections."
         },
         "slide2": {
-          "title": "Places you already know",
-          "text": "Bars, nightclubs, universities, cafes, gyms, and parks. Connect with people who frequent the same spots as you."
+          "title": "The places you love",
+          "text": "Bars, cafes, universities, parks... discover who shares the same favorite spots as you."
         },
         "slide3": {
+          "title": "Plan your week",
+          "text": "Create plans, pick where to go, and connect with people before you even leave the house. Never go out alone again."
+        },
+        "slide4": {
           "title": "Privacy in your control",
           "text": "You decide when to appear and to whom. Your location is only shared when you want."
         },
-        "slide4": {
+        "slide5": {
           "title": "Ready to get started?",
           "text": "Create your profile, choose your favorite places, and start making real connections."
         },
@@ -1116,11 +1120,15 @@
         "showOnHomeTitle": "Show university shortcut on Home",
         "showOnHomeSubtitle": "Get quick access to what's happening on your campus"
       },
-      "completeTitle": "All set to start connecting!",
-      "completeSubtitle": "Enter a place and see who shares your tastes.",
+      "completeTitle": "All set!",
+      "completeSubtitle": "Your profile is ready. Now it's time to discover who's nearby.",
       "completeExplore": "Explore places",
-      "completeFindPlaces": "Find\nplaces",
-      "completeConnectPeople": "Connect\nwith people"
+      "completeFindPlaces": "Find places",
+      "completeFindPlacesDesc": "Discover bars, cafes, and other spots near you.",
+      "completeConnectPeople": "Connect",
+      "completeConnectPeopleDesc": "See who's at the same places and start a conversation.",
+      "completeDiscoverVibes": "Create plans",
+      "completeDiscoverVibesDesc": "Set up outings, invite friends, and discover the best of your city."
     },
     "auth": {
       "continueWithEmail": "Continue with Email",

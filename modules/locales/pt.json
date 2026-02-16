@@ -851,18 +851,22 @@
       },
       "introCarousel": {
         "slide1": {
-          "title": "Conexões que acontecem ao vivo",
-          "text": "Descubra quem está nos mesmos lugares que você, em tempo real. Sem espera, sem match perdido."
+          "title": "Seu rolê começa aqui",
+          "text": "Conheça pessoas com os mesmos gostos e interesses que você. Uma nova forma de fazer conexões de verdade."
         },
         "slide2": {
-          "title": "Lugares que você já conhece",
-          "text": "Bares, baladas, universidades, cafés, academias e parques. Conecte-se com pessoas que frequentam os mesmos spots que você."
+          "title": "Os lugares que você ama",
+          "text": "Bares, cafés, universidades, parques... descubra quem compartilha os mesmos spots favoritos que você."
         },
         "slide3": {
+          "title": "Planeje sua semana",
+          "text": "Monte planos, escolha onde ir e conecte-se com pessoas antes mesmo de sair de casa. Nunca mais vá sozinho."
+        },
+        "slide4": {
           "title": "Privacidade no seu controle",
           "text": "Você decide quando aparecer e para quem. Sua localização só é compartilhada quando você quiser."
         },
-        "slide4": {
+        "slide5": {
           "title": "Pronto para começar?",
           "text": "Crie seu perfil, escolha seus lugares favoritos e comece a fazer conexões reais."
         },
@@ -1116,11 +1120,15 @@
         "showOnHomeTitle": "Exibir atalho da faculdade na Home",
         "showOnHomeSubtitle": "Tenha acesso rápido ao que está rolando no seu campus"
       },
-      "completeTitle": "Tudo pronto para começar a se conectar!",
-      "completeSubtitle": "Entre em um lugar e veja quem também compartilha dos mesmos gostos.",
+      "completeTitle": "Tudo pronto!",
+      "completeSubtitle": "Seu perfil está configurado. Agora é hora de descobrir quem está por perto.",
       "completeExplore": "Explorar locais",
-      "completeFindPlaces": "Encontre\nlugares",
-      "completeConnectPeople": "Conecte-se\ncom pessoas"
+      "completeFindPlaces": "Encontre lugares",
+      "completeFindPlacesDesc": "Descubra bares, cafés e outros spots perto de você.",
+      "completeConnectPeople": "Conecte-se",
+      "completeConnectPeopleDesc": "Veja quem está nos mesmos lugares e inicie uma conversa.",
+      "completeDiscoverVibes": "Crie planos",
+      "completeDiscoverVibesDesc": "Monte rolês, convide amigos e descubra o melhor da sua cidade."
     },
     "auth": {
       "continueWithEmail": "Continuar com E-mail",
