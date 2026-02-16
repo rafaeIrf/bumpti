@@ -30,7 +30,7 @@ import { createPlan, fetchSuggestedPlans } from "@/modules/plans/api";
 import type { PlanDay, PlanPeriod, SuggestedPlan } from "@/modules/plans/types";
 import { getDayLabel, getLocalDateString } from "@/utils/date";
 import { logger } from "@/utils/logger";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
   useCallback,
   useEffect,
@@ -68,6 +68,10 @@ const TOTAL_STEPS = 2;
 export default function CreatePlanModal() {
   const colors = useThemeColors();
   const router = useRouter();
+  const { placeId, placeName } = useLocalSearchParams<{
+    placeId?: string;
+    placeName?: string;
+  }>();
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
   const {
@@ -77,12 +81,16 @@ export default function CreatePlanModal() {
     openSettings,
   } = useLocationPermission();
 
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  // If a place was passed via deep link, start on step 2 with the place pre-selected
+  const hasDeepLinkPlace = Boolean(placeId && placeName);
+  const [currentStep, setCurrentStep] = useState<1 | 2>(
+    hasDeepLinkPlace ? 2 : 1,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlace, setSelectedPlace] = useState<{
     id: string;
     name: string;
-  } | null>(null);
+  } | null>(hasDeepLinkPlace ? { id: placeId!, name: placeName! } : null);
   const [selectedPeriod, setSelectedPeriod] = useState<PlanPeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<PlanDay>(0);
 

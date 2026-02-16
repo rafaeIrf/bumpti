@@ -64,32 +64,46 @@ serve(async (req: Request) => {
       console.error("Error deactivating old tokens:", deactivateError);
     }
 
-    // Step 2: Use UPSERT to handle token registration
-    // The UNIQUE constraint on fcm_token ensures no duplicates
-    // If token exists, it updates to new user_id and reactivates
-    // If token is new, it inserts a new record
-    const { error: upsertError } = await supabase
+    // Step 2: Try to UPDATE existing record for this user+token
+    // This handles the common case: same device re-registering on app open
+    const { data: updated, error: updateError } = await supabase
       .from("user_devices")
-      .upsert(
-        {
+      .update({
+        active: true,
+        platform,
+        last_active_at: now,
+      })
+      .eq("fcm_token", fcm_token)
+      .eq("user_id", userId)
+      .select("id");
+
+    if (updateError) {
+      console.error("Error updating device:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Failed to register device" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Step 3: If no existing row was updated, INSERT a new one
+    if (!updated || updated.length === 0) {
+      const { error: insertError } = await supabase
+        .from("user_devices")
+        .insert({
           fcm_token,
           user_id: userId,
           platform,
           active: true,
           last_active_at: now,
-        },
-        {
-          onConflict: "fcm_token",
-          ignoreDuplicates: false, // Update existing record instead of ignoring
-        }
-      );
+        });
 
-    if (upsertError) {
-      console.error("Error upserting device:", upsertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to register device" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (insertError) {
+        console.error("Error inserting device:", insertError);
+        return new Response(
+          JSON.stringify({ error: "Failed to register device" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     console.log(`Device registered successfully for user ${userId}`);

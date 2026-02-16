@@ -20,9 +20,13 @@ import { SessionProvider } from "@/contexts/session-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { AnalyticsProvider } from "@/modules/analytics";
+import { useNotificationDeepLink } from "@/modules/deep-link";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
-import { clearAppBadge } from "@/modules/notifications";
+import {
+  clearAppBadge,
+  configureNotificationHandler,
+} from "@/modules/notifications";
 import { prefetchImage } from "@/utils/image-prefetch";
 import { initializeRatingTracking } from "@/utils/rating-service";
 import {
@@ -49,6 +53,15 @@ const styles = StyleSheet.create({
   },
 });
 
+/**
+ * Must be rendered inside ReduxProvider + BottomSheetProvider
+ * so that usePlaceClick (and its Redux/BottomSheet deps) are available.
+ */
+function DeepLinkHandler() {
+  useNotificationDeepLink();
+  return null;
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
@@ -63,6 +76,11 @@ export default function RootLayout() {
 
   // Initialize FCM registration
   useFCMRegistration();
+
+  // Configure foreground notification display
+  useEffect(() => {
+    configureNotificationHandler();
+  }, []);
 
   // Initialize rating tracking on first mount
   useEffect(() => {
@@ -143,6 +161,7 @@ export default function RootLayout() {
                   <DatabaseProvider>
                     <BottomSheetProvider>
                       <AppConfigGuard>
+                        <DeepLinkHandler />
                         <ChatRealtimeProvider>
                           <SessionProvider>
                             <RootNavigator />

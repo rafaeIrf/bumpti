@@ -674,7 +674,9 @@
         "emptyState": {
           "title": "Qual é o plano?",
           "subtitle": "Veja quem vai e conecte-se antecipadamente",
-          "locationButton": "Onde você vai se conectar?"
+          "locationButton": "Onde você vai se conectar?",
+          "confirmedOne": "{{count}} pessoa confirmou hoje",
+          "confirmed": "{{count}} pessoas confirmaram hoje"
         },
         "activeState": {
           "title": "Seu próximo plano",
@@ -727,7 +729,7 @@
         "recentLabelOne": "+{{count}} pessoa nas últimas horas",
         "commonInterestsLabel": "Interesses em comum",
         "matchesGoingLabel": "matches confirmados",
-        "emptyState": "Ninguém planejando na {{dayName}} ainda — você é o primeiro! Avisaremos quando mais pessoas planejarem.",
+        "emptyState": "Ninguém planejando para {{dayName}} ainda — você é o primeiro! Avisaremos quando mais pessoas planejarem.",
         "viewPeople": "Ver quem vai",
         "gotIt": "Entendi"
       },
