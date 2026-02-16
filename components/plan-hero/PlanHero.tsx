@@ -305,6 +305,8 @@ export function PlanHero({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  const visiblePlans = plans.slice(0, 5);
+
   const handleLocationPress = () => {
     Haptics.selectionAsync();
     trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_LOCATION_CLICKED, {});
@@ -323,9 +325,9 @@ export function PlanHero({
   );
 
   const confirmedCount =
-    plans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
+    visiblePlans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
 
-  const hasPlans = plans.length > 0;
+  const hasPlans = visiblePlans.length > 0;
 
   return (
     <Animated.View
@@ -339,7 +341,7 @@ export function PlanHero({
             loop={false}
             width={containerWidth}
             height={160}
-            data={plans}
+            data={visiblePlans}
             defaultIndex={initialIndex}
             scrollAnimationDuration={300}
             overscrollEnabled={false}
@@ -348,7 +350,7 @@ export function PlanHero({
               if (
                 newIndex !== currentIndex &&
                 newIndex >= 0 &&
-                newIndex < plans.length
+                newIndex < visiblePlans.length
               ) {
                 setCurrentIndex(newIndex);
               }
@@ -358,8 +360,8 @@ export function PlanHero({
                 plan={item}
                 onViewPeople={() => handleViewPeoplePress(item)}
                 loading={loading}
-                showDots={plans.length > 1}
-                totalPlans={plans.length}
+                showDots={visiblePlans.length > 1}
+                totalPlans={visiblePlans.length}
                 currentIndex={currentIndex}
                 cardIndex={index}
               />
