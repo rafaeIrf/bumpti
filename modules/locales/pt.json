@@ -695,7 +695,9 @@
           "futureMorning": "{{weekday}} de manhã",
           "futureAfternoon": "{{weekday}} à tarde",
           "futureNight": "{{weekday}} à noite"
-        }
+        },
+        "shareInvite": "Convidar amigos",
+        "shareMessage": "Vem pro meu plano no {{placeName}}! 🎉"
       },
       "myPlans": {
         "title": "Meus Planos",
@@ -732,6 +734,20 @@
         "emptyState": "Ninguém planejando para {{dayName}} ainda — você é o primeiro! Avisaremos quando mais pessoas planejarem.",
         "viewPeople": "Ver quem vai",
         "gotIt": "Entendi"
+      },
+      "joinPlan": {
+        "title": "Você foi convidado! 🎉",
+        "subtitle": "{{name}} te convidou",
+        "joinButton": "Entrar nesse plano",
+        "success": "Você está dentro!",
+        "expired": "Convite expirado",
+        "expiredDescription": "Esse convite de plano não é mais válido.",
+        "invalidLink": "Link de convite inválido",
+        "errorJoining": "Algo deu errado",
+        "alreadyJoined": "Você já está nesse plano",
+        "ownPlan": "Você não pode entrar no seu próprio plano",
+        "placeLabel": "Onde",
+        "whenLabel": "Quando"
       },
       "createPlan": {
         "location": {

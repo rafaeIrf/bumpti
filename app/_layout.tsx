@@ -21,6 +21,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 import { AnalyticsProvider } from "@/modules/analytics";
 import { useNotificationDeepLink } from "@/modules/deep-link";
+import { useLinkingDeeplinks } from "@/modules/deep-link/use-url-deep-link";
 import { IAPProvider } from "@/modules/iap/context";
 import I18nProvider from "@/modules/locales/i18n-provider";
 import {
@@ -59,6 +60,7 @@ const styles = StyleSheet.create({
  */
 function DeepLinkHandler() {
   useNotificationDeepLink();
+  useLinkingDeeplinks();
   return null;
 }
 
