@@ -22,6 +22,8 @@ export { default as EllipsisVerticalIcon } from "./ellipsis-vertical.svg";
 export { default as ExclamationCircleIcon } from "./exclamation-circle.svg";
 export { default as FlagIcon } from "./flag.svg";
 export { default as FlameIcon } from "./flame.svg";
+
+export { default as AwardIcon } from "./award.svg";
 export { default as GlobeIcon } from "./globe.svg";
 export { default as GoogleIcon } from "./google.svg";
 export { default as GraduationCapIcon } from "./graduation-cap.svg";
@@ -37,6 +39,8 @@ export { default as LogOutIcon } from "./log-out.svg";
 export { default as LogoName } from "./logo-name.svg";
 export { default as MapPinIcon } from "./map-pin.svg";
 export { default as MapIcon } from "./map.svg";
+
+export { default as AlarmClockIcon } from "./alarm-clock.svg";
 export { default as MessageCircleIcon } from "./message-circle.svg";
 export { default as MoonIcon } from "./moon.svg";
 export { default as MusicIcon } from "./music.svg";
@@ -51,6 +55,7 @@ export { default as SearchIcon } from "./search.svg";
 export { default as SendHorizontalIcon } from "./send-horizontal.svg";
 export { default as SendIcon } from "./send.svg";
 export { default as SettingsIcon } from "./settings.svg";
+export { default as ShareIcon } from "./share.svg";
 export { default as ShieldAlertIcon } from "./shield-alert.svg";
 export { default as ShieldCheckIcon } from "./shield-check.svg";
 export { default as ShoppingBagIcon } from "./shopping-bag.svg";

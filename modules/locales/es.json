@@ -158,6 +158,35 @@
       "shopping": "Centros Comerciales"
     }
   },
+  "referral": {
+    "entryCard": {
+      "title": "Invita amigos",
+      "creditsEarned": "{{count}} Check-in+ ganados"
+    },
+    "hub": {
+      "title": "Referidos",
+      "overview": {
+        "creditsEarned": "Check-in+ ganados",
+        "accepted": "amigos invitados",
+        "nextReward": "Próxima recompensa"
+      },
+      "howItWorks": {
+        "title": "Cómo funciona",
+        "step1": "Crea un plan y comparte el enlace con amigos",
+        "step2": "Cada amigo que entre por tu enlace cuenta como invitación aceptada",
+        "step3": "3 amigos = +1 Check-in+, 7 = +2, 15 = +3. Después, +1 cada 5 más"
+      },
+      "milestones": {
+        "title": "Logros",
+        "threshold": "{{count}} amigos invitados",
+        "progress": "{{current}} de {{threshold}}",
+        "reward": "+{{count}} Check-in+",
+        "reward_plural": "+{{count}} Check-in+",
+        "recurring": "Cada {{interval}} amigos",
+        "recurringEarned": "Ganado {{count}}x hasta ahora"
+      }
+    }
+  },
   "versionCheck": {
     "forceUpdate": {
       "title": "Actualización Necesaria",
@@ -695,7 +724,9 @@
           "futureMorning": "{{weekday}} por la mañana",
           "futureAfternoon": "{{weekday}} por la tarde",
           "futureNight": "{{weekday}} por la noche"
-        }
+        },
+        "shareInvite": "Invitar amigos",
+        "shareMessage": "¡Únete a mi plan en {{placeName}}! 🎉"
       },
       "myPlans": {
         "title": "Mis Planes",
@@ -731,7 +762,23 @@
         "matchesGoingLabel": "matches confirmados",
         "emptyState": "Nadie planificando el {{dayName}} aún — ¡eres el primero! Te avisaremos cuando más personas planifiquen.",
         "viewPeople": "Ver quién va",
-        "gotIt": "Entendido"
+        "gotIt": "Entendido",
+        "referralTitle": "Gana Check-in+",
+        "referralBody": "Comparte tus planes e invita amigos para ganar créditos cuando acepten."
+      },
+      "joinPlan": {
+        "title": "¡Estás invitado! 🎉",
+        "subtitle": "{{name}} te invitó",
+        "joinButton": "Unirse al plan",
+        "success": "¡Estás dentro!",
+        "expired": "Invitación expirada",
+        "expiredDescription": "Esta invitación de plan ya no es válida.",
+        "invalidLink": "Enlace de invitación inválido",
+        "errorJoining": "Algo salió mal",
+        "alreadyJoined": "Ya estás en este plan",
+        "ownPlan": "No puedes unirte a tu propio plan",
+        "placeLabel": "Dónde",
+        "whenLabel": "Cuándo"
       },
       "createPlan": {
         "location": {
@@ -851,18 +898,22 @@
       },
       "introCarousel": {
         "slide1": {
-          "title": "Conexiones que suceden en vivo",
-          "text": "Descubre quién está en los mismos lugares que tú, en tiempo real. Sin espera, sin match perdido."
+          "title": "Tu próxima aventura empieza aquí",
+          "text": "Conoce personas con los mismos gustos e intereses que tú. Una nueva forma de hacer conexiones reales."
         },
         "slide2": {
-          "title": "Lugares que ya conoces",
-          "text": "Bares, discotecas, universidades, cafés, gimnasios y parques. Conéctate con personas que frecuentan los mismos spots que tú."
+          "title": "Los lugares que amas",
+          "text": "Bares, cafés, universidades, parques... descubre quién comparte los mismos spots favoritos que tú."
         },
         "slide3": {
+          "title": "Planifica tu semana",
+          "text": "Arma planes, elige adónde ir y conecta con personas antes de salir de casa. Nunca más salgas solo."
+        },
+        "slide4": {
           "title": "Privacidad bajo tu control",
           "text": "Tú decides cuándo aparecer y para quién. Tu ubicación solo se comparte cuando quieras."
         },
-        "slide4": {
+        "slide5": {
           "title": "¿Listo para empezar?",
           "text": "Crea tu perfil, elige tus lugares favoritos y comienza a hacer conexiones reales."
         },
@@ -901,8 +952,8 @@
       "enterCompleteCode": "Por favor, ingresa el código completo",
       "newCodeSent": "Nuevo código enviado a {{phone}}",
       "codeNotReceived": "¿No recibiste el código? Verifica si el número es correcto o inténtalo de nuevo en unos instantes.",
-      "nameTitle": "¿Cuál es tu nombre?",
-      "nameSubtitle": "Informa solo tu primer nombre",
+      "nameTitle": "Tu primer nombre",
+      "nameSubtitle": "Así aparecerás en la app",
       "namePlaceholder": "Primer nombre",
       "continue": "Continuar",
       "ageTitle": "¿Cuándo naciste?",
@@ -913,7 +964,7 @@
       "ageRequired": "Por favor, selecciona tu fecha de nacimiento",
       "ageMinimum": "Debes tener 18 años o más para usar esta app.",
       "selectDate": "Seleccionar fecha",
-      "genderTitle": "¿Cómo te identificas?",
+      "genderTitle": "Tu género",
       "genderSubtitle": "Elige el género que más te represente. Esto ayuda a crear conexiones más reales y respetuosas.",
       "genderWoman": "Mujer",
       "genderMan": "Hombre",
@@ -941,7 +992,7 @@
       "connectWithAll": "Todos",
       "connectWithPrivacy": "Esta información se usa solo para mostrar personas con las que quieres conectar.",
       "connectWithFooter": "Podrás cambiar esto después en la configuración.",
-      "intentionTitle": "¿Qué buscas encontrar aquí?",
+      "intentionTitle": "¿Qué estás buscando?",
       "intentionSubtitle": "Usamos esto para mostrar personas con los mismos objetivos que tú",
       "intentionFriends": "Hacer nuevos amigos",
       "intentionCasual": "Conexiones casuales",
@@ -1088,7 +1139,7 @@
       "locationError": "Error al solicitar permiso de ubicación. Inténtalo de nuevo.",
       "notificationsTitle": "¿Activar notificaciones?",
       "notificationsSubtitle": "Usamos notificaciones para avisarte sobre novedades importantes en la app.",
-      "notificationsEnable": "Permitir notificaciones",
+      "notificationsEnable": "Continuar",
       "notificationsSkip": "Ahora no",
       "trackingTitle": "Ayúdanos a personalizar tu experiencia",
       "trackingSubtitle": "Permite el seguimiento para que podamos mostrarte mejor contenido y mejorar tu experiencia.",
@@ -1116,11 +1167,15 @@
         "showOnHomeTitle": "Mostrar atajo de universidad en Home",
         "showOnHomeSubtitle": "Accede rápidamente a lo que está pasando en tu campus"
       },
-      "completeTitle": "¡Todo listo para empezar a conectar!",
-      "completeSubtitle": "Entra en un lugar y mira quién comparte tus mismos gustos.",
-      "completeExplore": "Explorar locales",
-      "completeFindPlaces": "Encuentra\nlugares",
-      "completeConnectPeople": "Conecta\ncon personas"
+      "completeTitle": "¡Todo listo!",
+      "completeSubtitle": "Tu perfil está configurado. Ahora es hora de descubrir quién está cerca.",
+      "completeExplore": "Explorar lugares",
+      "completeFindPlaces": "Encuentra lugares",
+      "completeFindPlacesDesc": "Descubre bares, cafés y otros spots cerca de ti.",
+      "completeConnectPeople": "Conéctate",
+      "completeConnectPeopleDesc": "Mira quién está en los mismos lugares e inicia una conversación.",
+      "completeDiscoverVibes": "Crea planes",
+      "completeDiscoverVibesDesc": "Organiza salidas, invita amigos y descubre lo mejor de tu ciudad."
     },
     "auth": {
       "continueWithEmail": "Continuar con Correo",

@@ -138,15 +138,15 @@ export function ConnectionBottomSheet({
           subtitle: t("venue.connection.locked.subtitle"),
           supportText: t("venue.connection.locked.supportText"),
           primaryButton: {
-            text: t("venue.connection.locked.button"),
-            onClick: onClose || (() => {}),
-          },
-          secondaryButton: {
-            text: t("venue.connection.locked.buttonPremium"),
+            text: t("venue.connection.locked.buttonPremium"), // "Enter with Check-in"
             onClick: handlePremiumConnect,
-            variant: "secondary" as const,
             loading: isPremiumConnecting,
             disabled: isPremiumConnecting,
+          },
+          secondaryButton: {
+            text: t("venue.connection.locked.button"), // "Continue exploring"
+            onClick: onClose || (() => {}),
+            variant: "secondary" as const,
           },
           icon: LockIcon,
         };

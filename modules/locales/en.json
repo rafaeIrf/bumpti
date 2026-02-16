@@ -158,6 +158,35 @@
       "shopping": "Shopping Centers"
     }
   },
+  "referral": {
+    "entryCard": {
+      "title": "Invite friends",
+      "creditsEarned": "{{count}} Check-in+ earned"
+    },
+    "hub": {
+      "title": "Referrals",
+      "overview": {
+        "creditsEarned": "Check-in+ earned",
+        "accepted": "friends invited",
+        "nextReward": "Next reward"
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "step1": "Create a plan and share the link with friends",
+        "step2": "Each friend who joins through your link counts as an accepted invite",
+        "step3": "3 friends = +1 Check-in+, 7 = +2, 15 = +3. Then +1 every 5 more"
+      },
+      "milestones": {
+        "title": "Milestones",
+        "threshold": "{{count}} friends invited",
+        "progress": "{{current}} of {{threshold}}",
+        "reward": "+{{count}} Check-in+",
+        "reward_plural": "+{{count}} Check-in+",
+        "recurring": "Every {{interval}} friends",
+        "recurringEarned": "Earned {{count}}x so far"
+      }
+    }
+  },
   "versionCheck": {
     "forceUpdate": {
       "title": "Update Required",
@@ -695,7 +724,9 @@
           "futureMorning": "{{weekday}} morning",
           "futureAfternoon": "{{weekday}} afternoon",
           "futureNight": "{{weekday}} night"
-        }
+        },
+        "shareInvite": "Invite friends",
+        "shareMessage": "Join my plan at {{placeName}}! 🎉"
       },
       "myPlans": {
         "title": "My Plans",
@@ -731,7 +762,23 @@
         "matchesGoingLabel": "matches going",
         "emptyState": "Nobody planning on {{dayName}} yet — you're the first! We'll let you know when others plan too.",
         "viewPeople": "See who's going",
-        "gotIt": "Got it"
+        "gotIt": "Got it",
+        "referralTitle": "Earn Check-in+",
+        "referralBody": "Share your plans and invite friends to earn credits when they accept."
+      },
+      "joinPlan": {
+        "title": "You're invited! 🎉",
+        "subtitle": "{{name}} invited you",
+        "joinButton": "Join this plan",
+        "success": "You're in!",
+        "expired": "Invite expired",
+        "expiredDescription": "This plan invite is no longer valid.",
+        "invalidLink": "Invalid invite link",
+        "errorJoining": "Something went wrong",
+        "alreadyJoined": "You already joined this plan",
+        "ownPlan": "You can't join your own plan",
+        "placeLabel": "Where",
+        "whenLabel": "When"
       },
       "createPlan": {
         "location": {
@@ -851,18 +898,22 @@
       },
       "introCarousel": {
         "slide1": {
-          "title": "Connections that happen live",
-          "text": "Discover who's at the same places as you, in real-time. No waiting, no missed matches."
+          "title": "Your next adventure starts here",
+          "text": "Meet people who share your tastes and interests. A new way to make real connections."
         },
         "slide2": {
-          "title": "Places you already know",
-          "text": "Bars, nightclubs, universities, cafes, gyms, and parks. Connect with people who frequent the same spots as you."
+          "title": "The places you love",
+          "text": "Bars, cafes, universities, parks... discover who shares the same favorite spots as you."
         },
         "slide3": {
+          "title": "Plan your week",
+          "text": "Create plans, pick where to go, and connect with people before you even leave the house. Never go out alone again."
+        },
+        "slide4": {
           "title": "Privacy in your control",
           "text": "You decide when to appear and to whom. Your location is only shared when you want."
         },
-        "slide4": {
+        "slide5": {
           "title": "Ready to get started?",
           "text": "Create your profile, choose your favorite places, and start making real connections."
         },
@@ -901,8 +952,8 @@
       "enterCompleteCode": "Please enter the complete code",
       "newCodeSent": "New code sent to {{phone}}",
       "codeNotReceived": "Didn't receive the code? Check if the number is correct or try again in a few moments.",
-      "nameTitle": "What's your name?",
-      "nameSubtitle": "Enter only your first name",
+      "nameTitle": "Your first name",
+      "nameSubtitle": "This is how you'll appear in the app",
       "namePlaceholder": "First name",
       "continue": "Continue",
       "ageTitle": "When were you born?",
@@ -913,7 +964,7 @@
       "ageRequired": "Please select your birth date",
       "ageMinimum": "You must be 18 or older to use this app.",
       "selectDate": "Select date",
-      "genderTitle": "How do you identify?",
+      "genderTitle": "Your gender",
       "genderSubtitle": "Choose the gender that best represents you. This helps create more real and respectful connections.",
       "genderWoman": "Woman",
       "genderMan": "Man",
@@ -941,7 +992,7 @@
       "connectWithAll": "Everyone",
       "connectWithPrivacy": "This information is only used to show people you want to connect with.",
       "connectWithFooter": "You can change this later in settings.",
-      "intentionTitle": "What are you looking for here?",
+      "intentionTitle": "What are you looking for?",
       "intentionSubtitle": "We use this to show people with the same goals as you",
       "intentionFriends": "Make new friends",
       "intentionCasual": "Casual connections",
@@ -1088,7 +1139,7 @@
       "locationError": "Error requesting location permission. Please try again.",
       "notificationsTitle": "Enable notifications?",
       "notificationsSubtitle": "We use notifications to alert you about important updates in the app.",
-      "notificationsEnable": "Enable notifications",
+      "notificationsEnable": "Continue",
       "notificationsSkip": "Not now",
       "trackingTitle": "Help us personalize your experience",
       "trackingSubtitle": "Allow tracking so we can show you better content and improve your experience.",
@@ -1116,11 +1167,15 @@
         "showOnHomeTitle": "Show university shortcut on Home",
         "showOnHomeSubtitle": "Get quick access to what's happening on your campus"
       },
-      "completeTitle": "All set to start connecting!",
-      "completeSubtitle": "Enter a place and see who shares your tastes.",
+      "completeTitle": "All set!",
+      "completeSubtitle": "Your profile is ready. Now it's time to discover who's nearby.",
       "completeExplore": "Explore places",
-      "completeFindPlaces": "Find\nplaces",
-      "completeConnectPeople": "Connect\nwith people"
+      "completeFindPlaces": "Find places",
+      "completeFindPlacesDesc": "Discover bars, cafes, and other spots near you.",
+      "completeConnectPeople": "Connect",
+      "completeConnectPeopleDesc": "See who's at the same places and start a conversation.",
+      "completeDiscoverVibes": "Create plans",
+      "completeDiscoverVibesDesc": "Set up outings, invite friends, and discover the best of your city."
     },
     "auth": {
       "continueWithEmail": "Continue with Email",
