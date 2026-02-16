@@ -51,7 +51,7 @@ serve(async (req) => {
             body = `Pessoas estão planejando ir em ${item.target_place_name}. Planeje também e conecte-se antes!`;
           } else {
             title = "Conexão no seu pico! 📍";
-            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}`;
+            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}. Faça também e conecte-se!`;
           }
           break;
         case "favorite_activity_heating":
@@ -60,7 +60,7 @@ serve(async (req) => {
             body = `Pessoas estão planejando ir e iniciando conexões. Não fique de fora!`;
           } else {
             title = `${item.target_place_name} está bombando 🔥`;
-            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} já ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} já ${count === 1 ? 'fez' : 'fizeram'} check-in. Faça também e conecte-se!`;
           }
           break;
         case "nearby_activity_started":
@@ -69,7 +69,7 @@ serve(async (req) => {
             body = `Pessoas estão planejando ir em ${item.target_place_name}. Planeje também!`;
           } else {
             title = "Conexão próxima! 📍";
-            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}`;
+            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}. Faça também e conecte-se!`;
           }
           break;
         case "nearby_activity_heating":
@@ -78,7 +78,7 @@ serve(async (req) => {
             body = `Pessoas estão planejando ir e iniciando conexões!`;
           } else {
             title = `${item.target_place_name} está bombando 🔥`;
-            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in`;
+            body = `${count} ${count === 1 ? 'pessoa' : 'pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in. Faça também e conecte-se!`;
           }
           break;
         default:
@@ -94,7 +94,10 @@ serve(async (req) => {
         placeId: item.target_place_id,
         data: {
           place_id: item.target_place_id,
-          place_name: item.target_place_name
+          place_name: item.target_place_name,
+          place_lat: String(item.target_place_lat),
+          place_lng: String(item.target_place_lng),
+          has_planning: String(item.has_planning === true),
         }
       });
 

@@ -128,7 +128,8 @@ export default function VibeCheckScreen() {
   return (
     <BaseTemplateScreen
       isModal
-      scrollEnabled={false}
+      scrollEnabled
+      contentContainerStyle={{ paddingBottom: spacing.xxl * 3 }}
       useSafeArea={false}
       BottomBar={
         <ScreenBottomBar

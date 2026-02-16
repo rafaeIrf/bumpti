@@ -1,9 +1,8 @@
 -- =============================================================================
--- Migration: Add has_planning flag to place activity candidates
+-- Migration: Add lat/lng to place activity candidates return
 -- =============================================================================
--- Differentiates notification copy for planning vs check-in activity.
--- Adds `has_planning` boolean to the return set of get_place_activity_candidates.
--- When true, the edge function sends planning-specific notification copy.
+-- Adds target_place_lat and target_place_lng to the return set so they can be
+-- included in the push notification payload for deep linking.
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.get_place_activity_candidates();
@@ -14,6 +13,8 @@ RETURNS TABLE(
   notification_type text,
   target_place_id uuid,
   target_place_name text,
+  target_place_lat double precision,
+  target_place_lng double precision,
   active_count integer,
   has_planning boolean
 )
@@ -65,6 +66,8 @@ BEGIN
     'favorite_activity_started'::text AS notification_type,
     ac.place_id AS target_place_id,
     ac.place_name AS target_place_name,
+    ac.lat AS target_place_lat,
+    ac.lng AS target_place_lng,
     ac.count AS active_count,
     ac.has_planning
   FROM active_counts ac
@@ -120,6 +123,8 @@ BEGIN
     'favorite_activity_heating'::text AS notification_type,
     ac.place_id AS target_place_id,
     ac.place_name AS target_place_name,
+    ac.lat AS target_place_lat,
+    ac.lng AS target_place_lng,
     ac.count AS active_count,
     ac.has_planning
   FROM active_counts ac
@@ -175,6 +180,8 @@ BEGIN
     'nearby_activity_started'::text AS notification_type,
     sub.target_place_id,
     sub.target_place_name,
+    sub.target_place_lat,
+    sub.target_place_lng,
     sub.active_count,
     sub.has_planning
   FROM (
@@ -182,6 +189,8 @@ BEGIN
       prof.id AS target_user_id,
       ac.place_id AS target_place_id,
       ac.place_name AS target_place_name,
+      ac.lat AS target_place_lat,
+      ac.lng AS target_place_lng,
       ac.count AS active_count,
       ac.has_planning,
       ROW_NUMBER() OVER (PARTITION BY prof.id ORDER BY ac.count DESC) AS rn
@@ -254,6 +263,8 @@ BEGIN
     'nearby_activity_heating'::text AS notification_type,
     sub.target_place_id,
     sub.target_place_name,
+    sub.target_place_lat,
+    sub.target_place_lng,
     sub.active_count,
     sub.has_planning
   FROM (
@@ -261,6 +272,8 @@ BEGIN
       prof.id AS target_user_id,
       ac.place_id AS target_place_id,
       ac.place_name AS target_place_name,
+      ac.lat AS target_place_lat,
+      ac.lng AS target_place_lng,
       ac.count AS active_count,
       ac.has_planning,
       ROW_NUMBER() OVER (PARTITION BY prof.id ORDER BY ac.count DESC) AS rn

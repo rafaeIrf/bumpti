@@ -674,7 +674,9 @@
         "emptyState": {
           "title": "What's the plan?",
           "subtitle": "See who's going and connect in advance",
-          "locationButton": "Where will you connect?"
+          "locationButton": "Where will you connect?",
+          "confirmedOne": "{{count}} person confirmed today",
+          "confirmed": "{{count}} people confirmed today"
         },
         "activeState": {
           "title": "Your next plan",
