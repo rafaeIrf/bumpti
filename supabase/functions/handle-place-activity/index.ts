@@ -94,7 +94,10 @@ serve(async (req) => {
         placeId: item.target_place_id,
         data: {
           place_id: item.target_place_id,
-          place_name: item.target_place_name
+          place_name: item.target_place_name,
+          place_lat: String(item.target_place_lat),
+          place_lng: String(item.target_place_lng),
+          has_planning: String(item.has_planning === true),
         }
       });
 

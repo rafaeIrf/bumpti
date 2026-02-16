@@ -213,6 +213,15 @@ export const VIBE_CHECK_EVENTS = {
 } as const;
 
 // =============================================================================
+// NOTIFICATION DEEP LINK
+// =============================================================================
+
+export const NOTIFICATION_EVENTS = {
+  /** User tapped a push notification to open the app */
+  OPENED: "notification_opened",
+} as const;
+
+// =============================================================================
 // CONSOLIDATED EXPORT
 // =============================================================================
 
@@ -229,6 +238,7 @@ export const ANALYTICS_EVENTS = {
   PLAN_CREATION: PLAN_CREATION_FLOW_EVENTS,
   MY_PLANS: MY_PLANS_EVENTS,
   VIBE_CHECK: VIBE_CHECK_EVENTS,
+  NOTIFICATION: NOTIFICATION_EVENTS,
 } as const;
 
 // =============================================================================

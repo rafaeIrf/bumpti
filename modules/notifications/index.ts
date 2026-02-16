@@ -1,3 +1,4 @@
+import messaging from "@react-native-firebase/messaging";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
@@ -86,7 +87,9 @@ export async function shouldShowNotificationScreen(): Promise<boolean> {
 }
 
 /**
- * Configure notification handler for when app is in foreground
+ * Configure notification handler for when app is in foreground.
+ * Also bridges FCM messages to expo-notifications since FCM
+ * delivers messages silently when the app is in foreground.
  */
 export function configureNotificationHandler() {
   Notifications.setNotificationHandler({
@@ -97,6 +100,23 @@ export function configureNotificationHandler() {
       shouldShowBanner: true,
       shouldShowList: true,
     }),
+  });
+
+  // Bridge FCM foreground messages → expo-notifications local notifications
+  messaging().onMessage(async (remoteMessage) => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: remoteMessage.notification?.title || "",
+          body: remoteMessage.notification?.body || "",
+          data: remoteMessage.data || {},
+          sound: "default",
+        },
+        trigger: null, // Immediate
+      });
+    } catch {
+      // expo-notifications native module may not be ready yet
+    }
   });
 }
 
