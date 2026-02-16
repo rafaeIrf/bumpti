@@ -379,10 +379,10 @@ export function PlanHero({
                 ]}
               >
                 {confirmedCount === 1
-                  ? t("screens.home.planHero.confirmedOne", {
+                  ? t("screens.home.planHero.emptyState.confirmedOne", {
                       count: confirmedCount,
                     })
-                  : t("screens.home.planHero.confirmed", {
+                  : t("screens.home.planHero.emptyState.confirmed", {
                       count: confirmedCount,
                     })}
               </ThemedText>
