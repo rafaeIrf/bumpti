@@ -19,6 +19,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="rating-feedback" />
       <Stack.Screen name="create-plan" />
       <Stack.Screen name="vibe-check" />
+      <Stack.Screen name="join-plan" />
     </Stack>
   );
 }

@@ -25,7 +25,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
  * IntroCarousel - Design Dark com UnDraw Illustrations
  *
  * Senior UX Design: Modern, clean, professional
- * Apresenta 4 slides com ilustrações SVG do UnDraw
+ * Apresenta 5 slides com ilustrações SVG do UnDraw
  */
 export default function IntroCarouselScreen() {
   const colors = useThemeColors();
@@ -63,6 +63,11 @@ export default function IntroCarouselScreen() {
       id: "slide4",
       title: t("screens.onboarding.introCarousel.slide4.title"),
       text: t("screens.onboarding.introCarousel.slide4.text"),
+    },
+    {
+      id: "slide5",
+      title: t("screens.onboarding.introCarousel.slide5.title"),
+      text: t("screens.onboarding.introCarousel.slide5.text"),
     },
   ];
 

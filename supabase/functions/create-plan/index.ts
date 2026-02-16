@@ -1,6 +1,7 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { requireAuth } from "../_shared/auth.ts";
 import { handleCors } from "../_shared/cors.ts";
+import { processReferralReward } from "../_shared/referral-rewards.ts";
 import {
   internalError,
   jsonError,
@@ -15,6 +16,7 @@ interface CreatePlanBody {
   planned_for: string; // YYYY-MM-DD (client local timezone)
   planned_period: "morning" | "afternoon" | "night";
   expires_at: string; // ISO 8601 (period-based, client-computed)
+  invite_token?: string; // Optional: token from invite link
 }
 
 const VALID_PERIODS = ["morning", "afternoon", "night"] as const;
@@ -72,7 +74,7 @@ Deno.serve(async (req) => {
     const validationError = validateBody(body);
     if (validationError) return validationError;
 
-    const { place_id, planned_for, planned_period, expires_at } = body!;
+    const { place_id, planned_for, planned_period, expires_at, invite_token } = body!;
     const admin = createAdminClient();
 
     // Check daily plan limit
@@ -126,6 +128,8 @@ Deno.serve(async (req) => {
       .eq("active", true)
       .maybeSingle();
 
+    let result;
+
     if (existing) {
       const { data, error } = await admin
         .from("user_presences")
@@ -134,27 +138,36 @@ Deno.serve(async (req) => {
         .select()
         .single();
       if (error) throw error;
-      return jsonOk({ presence: data }, 200);
+      result = { presence: data, status: 200 };
+    } else {
+      const { data, error } = await admin
+        .from("user_presences")
+        .insert({
+          user_id: user.id,
+          place_id,
+          active: true,
+          entry_type: "planning",
+          planned_for,
+          planned_period,
+          expires_at,
+          lat: null,
+          lng: null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      result = { presence: data, status: 201 };
     }
 
-    const { data, error } = await admin
-      .from("user_presences")
-      .insert({
-        user_id: user.id,
-        place_id,
-        active: true,
-        entry_type: "planning",
-        planned_for,
-        planned_period,
-        expires_at,
-        lat: null,
-        lng: null,
-      })
-      .select()
-      .single();
+    // Process referral reward asynchronously (non-blocking)
+    if (invite_token && typeof invite_token === "string") {
+      // Fire-and-forget: don't block the response
+      processReferralReward(admin, invite_token, user.id).catch((err) => {
+        console.error("[create-plan] Referral background error:", err);
+      });
+    }
 
-    if (error) throw error;
-    return jsonOk({ presence: data }, 201);
+    return jsonOk({ presence: result.presence }, result.status);
   } catch (err) {
     return internalError(err);
   }

@@ -31,12 +31,6 @@ export function OnboardingProgressBar({
   React.useEffect(() => {
     const percentage = Math.min(currentStep / totalSteps, 1);
 
-    console.log("Progress animation:", {
-      from: prevStepRef.current,
-      to: currentStep,
-      percentage,
-    });
-
     // Always animate
     progress.value = withSpring(percentage, {
       damping: 20,

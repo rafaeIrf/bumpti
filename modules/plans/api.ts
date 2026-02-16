@@ -5,6 +5,7 @@ import { getLocalDateString } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import type {
   CreatePlanPayload,
+  JoinPlanPayload,
   PlanPeriod,
   SuggestedPlan,
   UserPlan
@@ -46,17 +47,23 @@ export type PlanPresenceRecord = {
 };
 
 export async function createPlan(
-  params: CreatePlanPayload
+  params: CreatePlanPayload | JoinPlanPayload
 ): Promise<PlanPresenceRecord | null> {
   try {
-    const { placeId, period, day } = params;
-    const localDate = getLocalDateString(day);
-    const expiresAt = computeExpiresAt(localDate, period);
+    const { placeId, period } = params;
+
+    // Discriminate: CreatePlanPayload has 'day', JoinPlanPayload has 'plannedFor'
+    const localDate = "day" in params
+      ? getLocalDateString(params.day)
+      : params.plannedFor;
+    const expiresAt = "day" in params
+      ? computeExpiresAt(localDate, period)
+      : params.expiresAt;
+    const inviteToken = "inviteToken" in params ? params.inviteToken : undefined;
 
     logger.debug("[createPlan] Creating plan:", {
       placeId,
       period,
-      day,
       localDate,
       expiresAt,
     });
@@ -69,6 +76,7 @@ export async function createPlan(
         planned_for: localDate,
         planned_period: period,
         expires_at: expiresAt,
+        ...(inviteToken ? { invite_token: inviteToken } : {}),
       },
     });
 

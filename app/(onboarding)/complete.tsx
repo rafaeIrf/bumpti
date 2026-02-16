@@ -1,4 +1,4 @@
-import { MapPinIcon, SparklesIcon, UsersIcon } from "@/assets/icons";
+import { CheckIcon, MapPinIcon, SparklesIcon, UsersIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
@@ -13,28 +13,24 @@ import { t } from "@/modules/locales";
 import { saveOnboarding } from "@/modules/onboarding/onboarding-service";
 import { fetchAndSetUserProfile } from "@/modules/profile/index";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { logger } from "@/utils/logger";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  ZoomIn,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CompleteScreen() {
   const colors = useThemeColors();
-
+  const insets = useSafeAreaInsets();
   const { userData } = useOnboardingFlow();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Track screen view
   useScreenTracking({
     screenName: "onboarding_complete",
-    params: {
-      step_name: "complete",
-    },
+    params: { step_name: "complete" },
   });
 
   const handleComplete = async () => {
@@ -43,183 +39,229 @@ export default function CompleteScreen() {
     try {
       setIsSaving(true);
       await saveOnboarding(userData);
-
-      // Track onboarding completion
       await trackOnboardingComplete();
-
-      // Sync profile state in Redux
       await fetchAndSetUserProfile();
       onboardingActions.completeOnboarding();
       router.replace("/(tabs)/(home)");
     } catch (error: any) {
-      Alert.alert(
-        t("common.error"),
-        error?.message || "Não foi possível salvar seu onboarding.",
-      );
+      logger.error("Error saving onboarding:", error);
+      Alert.alert(t("common.error"), error?.message || t("common.error"));
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <BaseTemplateScreen>
-      <View style={styles.container}>
-        {/* Success Icon */}
-        <Animated.View
-          entering={ZoomIn.delay(200).duration(600).springify()}
-          style={styles.iconContainer}
-        >
+    <BaseTemplateScreen
+      scrollEnabled
+      contentContainerStyle={{ paddingBottom: spacing.xxl * 3 }}
+      useSafeArea={false}
+    >
+      {/* ─── Gradient Header ─── */}
+      <LinearGradient
+        colors={["#0A2D4F", "#0D1B2A", colors.background]}
+        locations={[0, 0.6, 1]}
+        style={[
+          styles.headerGradient,
+          { paddingTop: insets.top + spacing.xxl },
+        ]}
+      >
+        {/* Icon badge */}
+        <Animated.View entering={ZoomIn.duration(600).delay(200).springify()}>
           <LinearGradient
-            colors={["#1D9BF0", "#1A8CD8"]}
+            colors={["#1D9BF0", "#38BDF8"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.iconGradient}
+            style={styles.iconBadge}
           >
-            <SparklesIcon width={48} height={48} color="#FFFFFF" />
+            <CheckIcon width={40} height={40} color="#FFFFFF" />
           </LinearGradient>
         </Animated.View>
 
         {/* Title */}
         <Animated.View
-          entering={FadeInUp.delay(400).duration(500)}
-          style={styles.titleContainer}
+          entering={FadeInDown.duration(500).delay(300)}
+          style={styles.headerTextContainer}
         >
-          <ThemedText style={[styles.title, { color: colors.text }]}>
+          <ThemedText style={[typography.heading, styles.headerTitle]}>
             {t("screens.onboarding.completeTitle")}
           </ThemedText>
-        </Animated.View>
-
-        {/* Subtitle */}
-        <Animated.View
-          entering={FadeInUp.delay(500).duration(500)}
-          style={styles.subtitleContainer}
-        >
-          <ThemedText
-            style={[styles.subtitle, { color: colors.textSecondary }]}
-          >
+          <ThemedText style={[typography.body, styles.headerSubtitle]}>
             {t("screens.onboarding.completeSubtitle")}
           </ThemedText>
         </Animated.View>
+      </LinearGradient>
 
-        {/* Main Button */}
+      {/* ─── Feature Cards ─── */}
+      <View style={styles.cardsContainer}>
         <Animated.View
-          entering={FadeInDown.delay(600).duration(500)}
-          style={styles.buttonContainer}
+          entering={FadeInDown.duration(400).delay(450)}
+          style={[styles.featureCard, { backgroundColor: colors.surface }]}
         >
-          <Button
-            onPress={handleComplete}
-            disabled={isSaving}
-            size="lg"
-            fullWidth
-            style={styles.exploreButton}
+          <View
+            style={[
+              styles.featureIconContainer,
+              { backgroundColor: "rgba(29, 155, 240, 0.15)" },
+            ]}
           >
-            <View style={styles.buttonContent}>
-              {isSaving ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <MapPinIcon width={20} height={20} color="#FFFFFF" />
-              )}
-              <ThemedText style={styles.buttonText}>
-                {t("screens.onboarding.completeExplore")}
-              </ThemedText>
-            </View>
-          </Button>
-        </Animated.View>
-
-        {/* Features */}
-        <Animated.View
-          entering={FadeInDown.delay(700).duration(500)}
-          style={styles.featuresContainer}
-        >
-          <View style={styles.featureItem}>
-            <View
-              style={[
-                styles.featureIconContainer,
-                { backgroundColor: `${colors.accent}1A` },
-              ]}
-            >
-              <MapPinIcon width={24} height={24} color={colors.accent} />
-            </View>
-            <ThemedText
-              style={[styles.featureText, { color: colors.textSecondary }]}
-            >
+            <MapPinIcon width={22} height={22} color="#1D9BF0" />
+          </View>
+          <View style={styles.featureTextContainer}>
+            <ThemedText style={[typography.subheading, { color: colors.text }]}>
               {t("screens.onboarding.completeFindPlaces")}
             </ThemedText>
-          </View>
-
-          <View style={styles.featureItem}>
-            <View
-              style={[
-                styles.featureIconContainer,
-                { backgroundColor: `${colors.accent}1A` },
-              ]}
-            >
-              <UsersIcon width={24} height={24} color={colors.accent} />
-            </View>
             <ThemedText
-              style={[styles.featureText, { color: colors.textSecondary }]}
+              style={[typography.caption, { color: colors.textSecondary }]}
             >
+              {t("screens.onboarding.completeFindPlacesDesc")}
+            </ThemedText>
+          </View>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(550)}
+          style={[styles.featureCard, { backgroundColor: colors.surface }]}
+        >
+          <View
+            style={[
+              styles.featureIconContainer,
+              { backgroundColor: "rgba(168, 85, 247, 0.15)" },
+            ]}
+          >
+            <UsersIcon width={22} height={22} color="#A855F7" />
+          </View>
+          <View style={styles.featureTextContainer}>
+            <ThemedText style={[typography.subheading, { color: colors.text }]}>
               {t("screens.onboarding.completeConnectPeople")}
+            </ThemedText>
+            <ThemedText
+              style={[typography.caption, { color: colors.textSecondary }]}
+            >
+              {t("screens.onboarding.completeConnectPeopleDesc")}
+            </ThemedText>
+          </View>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(650)}
+          style={[styles.featureCard, { backgroundColor: colors.surface }]}
+        >
+          <View
+            style={[
+              styles.featureIconContainer,
+              { backgroundColor: "rgba(249, 24, 128, 0.15)" },
+            ]}
+          >
+            <SparklesIcon width={22} height={22} color="#F91880" />
+          </View>
+          <View style={styles.featureTextContainer}>
+            <ThemedText style={[typography.subheading, { color: colors.text }]}>
+              {t("screens.onboarding.completeDiscoverVibes")}
+            </ThemedText>
+            <ThemedText
+              style={[typography.caption, { color: colors.textSecondary }]}
+            >
+              {t("screens.onboarding.completeDiscoverVibesDesc")}
             </ThemedText>
           </View>
         </Animated.View>
       </View>
+
+      {/* ─── CTA Button ─── */}
+      <Animated.View
+        entering={FadeInDown.duration(500).delay(800)}
+        style={styles.buttonContainer}
+      >
+        <Button
+          onPress={handleComplete}
+          disabled={isSaving}
+          size="lg"
+          fullWidth
+          style={styles.ctaButton}
+        >
+          <View style={styles.buttonContent}>
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <MapPinIcon width={20} height={20} color="#FFFFFF" />
+            )}
+            <ThemedText style={styles.buttonText}>
+              {t("screens.onboarding.completeExplore")}
+            </ThemedText>
+          </View>
+        </Button>
+      </Animated.View>
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingVertical: spacing.lg,
-    justifyContent: "center",
+  headerGradient: {
     alignItems: "center",
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: -spacing.md,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  iconContainer: {
-    marginBottom: spacing.xl,
-  },
-  iconGradient: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  iconBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: spacing.lg,
     shadowColor: "#1D9BF0",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 8,
   },
-  titleContainer: {
+  headerTextContainer: {
     alignItems: "center",
-    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
-  title: {
-    ...typography.heading,
-    fontSize: 28,
+  headerTitle: {
+    color: "#FFFFFF",
     textAlign: "center",
   },
-  subtitleContainer: {
-    alignItems: "center",
-    marginBottom: spacing.xxl,
-  },
-  subtitle: {
-    ...typography.body,
-    fontSize: 18,
+  headerSubtitle: {
+    color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    lineHeight: 26,
+    maxWidth: 280,
+  },
+  cardsContainer: {
+    gap: spacing.md,
+    paddingTop: spacing.xl,
+  },
+  featureCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.md,
+    borderRadius: 16,
+    gap: spacing.md,
+  },
+  featureIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featureTextContainer: {
+    flex: 1,
+    gap: 2,
   },
   buttonContainer: {
-    width: "100%",
-    marginBottom: spacing.xl,
+    paddingTop: spacing.xl,
   },
-  exploreButton: {
+  ctaButton: {
     minHeight: 56,
     shadowColor: "#1D9BF0",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonContent: {
     flexDirection: "row",
@@ -230,30 +272,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: "#FFFFFF",
     fontWeight: "600",
-    fontSize: 16,
-  },
-  featuresContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: spacing.xxl,
-    paddingTop: spacing.lg,
-  },
-  featureItem: {
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  featureIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  featureText: {
-    ...typography.caption,
-    fontSize: 12,
-    textAlign: "center",
-    maxWidth: 80,
-    lineHeight: 16,
   },
 });

@@ -1,6 +1,8 @@
 import {
   FlameIcon,
   HeartIcon,
+  InfoRoundedIcon,
+  ShareIcon,
   SparklesIcon,
   UsersIcon,
   XIcon,
@@ -427,18 +429,108 @@ export default function VibeCheckScreen() {
 
           {/* Empty state for this day — shown when no date-filtered data */}
           {!hasDayActivity && (
-            <Animated.View
-              entering={FadeInDown.duration(400).delay(350)}
-              style={styles.emptyContainer}
-            >
-              <ThemedText
-                style={[
-                  typography.body,
-                  { color: colors.textSecondary, textAlign: "center" },
-                ]}
+            <>
+              {/* Empty state card */}
+              <Animated.View entering={FadeInDown.duration(400).delay(350)}>
+                <View
+                  style={[styles.statCard, { backgroundColor: colors.surface }]}
+                >
+                  <View
+                    style={[
+                      styles.statIconContainer,
+                      { backgroundColor: "rgba(56, 189, 248, 0.15)" },
+                    ]}
+                  >
+                    <InfoRoundedIcon width={22} height={22} color="#38BDF8" />
+                  </View>
+                  <View style={styles.statTextContainer}>
+                    <ThemedText
+                      style={[
+                        typography.body,
+                        { color: colors.text, fontWeight: "600" },
+                      ]}
+                    >
+                      {t("screens.home.vibeCheck.emptyState", { dayName })}
+                    </ThemedText>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Referral rewards info banner */}
+              <Animated.View entering={FadeInDown.duration(400).delay(450)}>
+                <LinearGradient
+                  colors={["#9333EA", "#C084FC"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCard}
+                >
+                  <View
+                    style={[
+                      styles.statIconContainer,
+                      { backgroundColor: "rgba(255,255,255,0.2)" },
+                    ]}
+                  >
+                    <ShareIcon width={22} height={22} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.statTextContainer}>
+                    <ThemedText
+                      style={[
+                        typography.subheading,
+                        { color: "#FFFFFF", fontWeight: "700" },
+                      ]}
+                    >
+                      {t("screens.home.vibeCheck.referralTitle")}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        typography.caption,
+                        { color: "rgba(255,255,255,0.85)" },
+                      ]}
+                    >
+                      {t("screens.home.vibeCheck.referralBody")}
+                    </ThemedText>
+                  </View>
+                </LinearGradient>
+              </Animated.View>
+            </>
+          )}
+
+          {/* Referral rewards info banner - shown when there's activity */}
+          {hasDayActivity && (
+            <Animated.View entering={FadeInDown.duration(400).delay(600)}>
+              <LinearGradient
+                colors={["#9333EA", "#C084FC"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statCard}
               >
-                {t("screens.home.vibeCheck.emptyState", { dayName })}
-              </ThemedText>
+                <View
+                  style={[
+                    styles.statIconContainer,
+                    { backgroundColor: "rgba(255,255,255,0.2)" },
+                  ]}
+                >
+                  <ShareIcon width={22} height={22} color="#FFFFFF" />
+                </View>
+                <View style={styles.statTextContainer}>
+                  <ThemedText
+                    style={[
+                      typography.subheading,
+                      { color: "#FFFFFF", fontWeight: "700" },
+                    ]}
+                  >
+                    {t("screens.home.vibeCheck.referralTitle")}
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      typography.caption,
+                      { color: "rgba(255,255,255,0.85)" },
+                    ]}
+                  >
+                    {t("screens.home.vibeCheck.referralBody")}
+                  </ThemedText>
+                </View>
+              </LinearGradient>
             </Animated.View>
           )}
         </View>

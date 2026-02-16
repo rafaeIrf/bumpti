@@ -1,6 +1,6 @@
+import { ShareIcon } from "@/assets/icons";
 import MapPinIcon from "@/assets/icons/map-pin.svg";
 import SettingsIcon from "@/assets/icons/settings.svg";
-import TrendingUpIcon from "@/assets/icons/trending-up.svg";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -9,12 +9,21 @@ import { spacing, typography } from "@/constants/theme";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import type { ActivePlan } from "@/modules/plans/hooks";
+import { createPlanInvite } from "@/modules/plans/invite";
 import { getPeriodLabel } from "@/utils/date";
+import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Share,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   Extrapolation,
   FadeInDown,
@@ -99,6 +108,7 @@ function PlanCard({
 }) {
   const router = useRouter();
   const confirmedCount = plan.confirmedCount;
+  const [sharing, setSharing] = useState(false);
 
   // Conditional border radius: first card (left), last card (right)
   const isFirst = cardIndex === 0;
@@ -109,129 +119,174 @@ function PlanCard({
   const gradientStart = isEven ? { x: 0, y: 0 } : { x: 1, y: 1 };
   const gradientEnd = isEven ? { x: 1, y: 1 } : { x: 0, y: 0 };
 
+  const handleCardPress = () => {
+    trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIBE_CHECK_CLICKED, {});
+    Haptics.selectionAsync();
+    router.push({
+      pathname: "/(modals)/vibe-check",
+      params: {
+        placeId: plan.placeId,
+        placeName: plan.locationName,
+        plannedFor: plan.plannedFor,
+        planPeriod: t(
+          `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
+        ),
+      },
+    });
+  };
+
   return (
-    <LinearGradient
-      colors={["#E94B7D", "#FF7A5C"]}
-      start={gradientStart}
-      end={gradientEnd}
-      style={[
-        styles.gradient,
-        isFirst && {
-          borderTopLeftRadius: spacing.lg,
-          borderBottomLeftRadius: spacing.lg,
-        },
-        isLast && {
-          borderTopRightRadius: spacing.lg,
-          borderBottomRightRadius: spacing.lg,
-        },
-      ]}
-    >
-      {/* Top-right action buttons */}
-      <View style={styles.topRightActions}>
-        {/* Vibe Check icon */}
-        <Pressable
-          onPress={() => {
-            trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIBE_CHECK_CLICKED, {});
-            Haptics.selectionAsync();
-            router.push({
-              pathname: "/(modals)/vibe-check",
-              params: {
-                placeId: plan.placeId,
-                placeName: plan.locationName,
-                plannedFor: plan.plannedFor,
-                planPeriod: t(
-                  `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
-                ),
-              },
-            });
-          }}
-          hitSlop={10}
-          style={styles.actionButton}
-        >
-          <TrendingUpIcon
-            width={20}
-            height={20}
-            color="rgba(255,255,255,0.85)"
-          />
-        </Pressable>
-
-        {/* Settings icon */}
-        <Pressable
-          onPress={() => {
-            trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
-              activePlansCount: totalPlans,
-            });
-            Haptics.selectionAsync();
-            router.push("/main/my-plans");
-          }}
-          hitSlop={10}
-          style={styles.actionButton}
-        >
-          <SettingsIcon width={20} height={20} color="rgba(255,255,255,0.85)" />
-        </Pressable>
-      </View>
-
-      <ThemedText
-        style={[typography.body1, styles.activeTitle, { color: "#FFFFFF" }]}
+    <Pressable onPress={handleCardPress} style={{ flex: 1 }}>
+      <LinearGradient
+        colors={["#E94B7D", "#FF7A5C"]}
+        start={gradientStart}
+        end={gradientEnd}
+        style={[
+          styles.gradient,
+          isFirst && {
+            borderTopLeftRadius: spacing.lg,
+            borderBottomLeftRadius: spacing.lg,
+          },
+          isLast && {
+            borderTopRightRadius: spacing.lg,
+            borderBottomRightRadius: spacing.lg,
+          },
+        ]}
       >
-        {getPeriodLabel(plan.plannedFor, plan.plannedPeriod)}
-      </ThemedText>
+        {/* Top-right action buttons */}
+        <View style={styles.topRightActions}>
+          {/* Share invite */}
+          <Pressable
+            onPress={async (e) => {
+              e.stopPropagation();
+              if (sharing) return;
+              setSharing(true);
+              Haptics.selectionAsync();
+              try {
+                const inviteUrl = await createPlanInvite(plan.id);
+                setSharing(false);
+                if (inviteUrl) {
+                  const message = t("screens.home.planHero.shareMessage", {
+                    placeName: plan.locationName,
+                  });
+                  await Share.share({
+                    // Android ignores `url`, so we append the link to `message`.
+                    // iOS uses `url` separately (enables link preview / image).
+                    message:
+                      Platform.OS === "android"
+                        ? `${message}\n${inviteUrl}`
+                        : message,
+                    url: inviteUrl,
+                  });
+                  trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SHARE_CLICKED, {
+                    placeId: plan.placeId,
+                  });
+                }
+              } catch (err) {
+                logger.error("[PlanHero] Share invite error:", err);
+                setSharing(false);
+              }
+            }}
+            hitSlop={10}
+            style={styles.actionButton}
+          >
+            {sharing ? (
+              <ActivityIndicator size="small" color="rgba(255,255,255,0.85)" />
+            ) : (
+              <ShareIcon
+                width={20}
+                height={20}
+                color="rgba(255,255,255,0.85)"
+              />
+            )}
+          </Pressable>
 
-      <View style={styles.locationRow}>
-        <MapPinIcon width={16} height={16} color="rgba(255,255,255,0.9)" />
-        <ThemedText
-          style={[
-            typography.body,
-            styles.locationName,
-            { color: "rgba(255,255,255,0.9)" },
-          ]}
-          numberOfLines={1}
-        >
-          {plan.locationName}
-        </ThemedText>
-      </View>
-
-      <View style={styles.activePlanFooter}>
-        <ThemedText
-          style={[
-            typography.caption,
-            styles.confirmedText,
-            { color: "#FFFFFF" },
-          ]}
-        >
-          {confirmedCount > 0
-            ? confirmedCount === 1
-              ? t("screens.home.planHero.confirmedOne", {
-                  count: confirmedCount,
-                })
-              : t("screens.home.planHero.confirmed", {
-                  count: confirmedCount,
-                })
-            : t("screens.home.planHero.beFirstToConfirm")}
-        </ThemedText>
-
-        <Button
-          onPress={onViewPeople}
-          loading={loading}
-          style={[{ backgroundColor: "rgba(255, 255, 255, 0.2)" }]}
-          label={t("screens.home.planHero.activeState.viewPeopleButton")}
-          textStyle={[typography.caption, { color: "#FFFFFF" }]}
-        />
-      </View>
-
-      {/* Pagination Dots inside the card */}
-      {showDots && (
-        <View style={styles.dotsContainer}>
-          {Array.from({ length: totalPlans }).map((_, index) => (
-            <PaginationDot
-              key={index}
-              index={index}
-              currentIndex={currentIndex}
+          {/* Settings icon */}
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
+                activePlansCount: totalPlans,
+              });
+              Haptics.selectionAsync();
+              router.push("/main/my-plans");
+            }}
+            hitSlop={10}
+            style={styles.actionButton}
+          >
+            <SettingsIcon
+              width={20}
+              height={20}
+              color="rgba(255,255,255,0.85)"
             />
-          ))}
+          </Pressable>
         </View>
-      )}
-    </LinearGradient>
+
+        <ThemedText
+          style={[typography.body1, styles.activeTitle, { color: "#FFFFFF" }]}
+        >
+          {getPeriodLabel(plan.plannedFor, plan.plannedPeriod)}
+        </ThemedText>
+
+        <View style={styles.locationRow}>
+          <MapPinIcon width={16} height={16} color="rgba(255,255,255,0.9)" />
+          <ThemedText
+            style={[
+              typography.body,
+              styles.locationName,
+              { color: "rgba(255,255,255,0.9)" },
+            ]}
+            numberOfLines={1}
+          >
+            {plan.locationName}
+          </ThemedText>
+        </View>
+
+        <View style={styles.activePlanFooter}>
+          <ThemedText
+            style={[
+              typography.caption,
+              styles.confirmedText,
+              { color: "#FFFFFF" },
+            ]}
+          >
+            {confirmedCount > 0
+              ? confirmedCount === 1
+                ? t("screens.home.planHero.confirmedOne", {
+                    count: confirmedCount,
+                  })
+                : t("screens.home.planHero.confirmed", {
+                    count: confirmedCount,
+                  })
+              : t("screens.home.planHero.beFirstToConfirm")}
+          </ThemedText>
+
+          <Button
+            onPress={(e: any) => {
+              e?.stopPropagation?.();
+              onViewPeople();
+            }}
+            loading={loading}
+            style={[{ backgroundColor: "rgba(255, 255, 255, 0.2)" }]}
+            label={t("screens.home.planHero.activeState.viewPeopleButton")}
+            textStyle={[typography.caption, { color: "#FFFFFF" }]}
+          />
+        </View>
+
+        {/* Pagination Dots inside the card */}
+        {showDots && (
+          <View style={styles.dotsContainer}>
+            {Array.from({ length: totalPlans }).map((_, index) => (
+              <PaginationDot
+                key={index}
+                index={index}
+                currentIndex={currentIndex}
+              />
+            ))}
+          </View>
+        )}
+      </LinearGradient>
+    </Pressable>
   );
 }
 
@@ -249,6 +304,8 @@ export function PlanHero({
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [containerWidth, setContainerWidth] = useState(0);
+
+  const visiblePlans = plans.slice(0, 5);
 
   const handleLocationPress = () => {
     Haptics.selectionAsync();
@@ -268,9 +325,9 @@ export function PlanHero({
   );
 
   const confirmedCount =
-    plans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
+    visiblePlans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
 
-  const hasPlans = plans.length > 0;
+  const hasPlans = visiblePlans.length > 0;
 
   return (
     <Animated.View
@@ -284,7 +341,7 @@ export function PlanHero({
             loop={false}
             width={containerWidth}
             height={160}
-            data={plans}
+            data={visiblePlans}
             defaultIndex={initialIndex}
             scrollAnimationDuration={300}
             overscrollEnabled={false}
@@ -293,7 +350,7 @@ export function PlanHero({
               if (
                 newIndex !== currentIndex &&
                 newIndex >= 0 &&
-                newIndex < plans.length
+                newIndex < visiblePlans.length
               ) {
                 setCurrentIndex(newIndex);
               }
@@ -303,8 +360,8 @@ export function PlanHero({
                 plan={item}
                 onViewPeople={() => handleViewPeoplePress(item)}
                 loading={loading}
-                showDots={plans.length > 1}
-                totalPlans={plans.length}
+                showDots={visiblePlans.length > 1}
+                totalPlans={visiblePlans.length}
                 currentIndex={currentIndex}
                 cardIndex={index}
               />

@@ -1,3 +1,5 @@
+const DEEPLINK_DOMAIN = process.env.EXPO_PUBLIC_DEEPLINK_DOMAIN || "bumpti.com";
+
 module.exports = {
   expo: {
     name: "Bumpti",
@@ -42,6 +44,8 @@ module.exports = {
           "219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com",
       },
       appleTeamId: "V68Y42WV27",
+      // TODO: Re-enable after enabling Associated Domains capability in Apple Developer Portal
+      // associatedDomains: [`applinks:${DEEPLINK_DOMAIN}`],
     },
     android: {
       adaptiveIcon: {
@@ -54,6 +58,20 @@ module.exports = {
       googleServicesFile: "./google-services.json",
       package: "com.bumpti",
       permissions: ["android.permission.RECORD_AUDIO"],
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "https",
+              host: DEEPLINK_DOMAIN,
+              pathPrefix: "/invite/plan/",
+            },
+          ],
+          category: ["BROWSABLE", "DEFAULT"],
+        },
+      ],
     },
     web: {
       output: "static",

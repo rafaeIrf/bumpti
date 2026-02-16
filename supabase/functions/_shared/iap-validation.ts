@@ -359,17 +359,22 @@ export async function grantCheckinCredits(supabase: any, userId: string, amount:
   // 1. Get current balance (or user row)
   const { data: balanceRow } = await supabase
     .from("user_checkin_credits")
-    .select("credits") // Corrected col name from 'balance' to 'credits'
-    .eq("user_id", userId) // PK is user_id
+    .select("credits")
+    .eq("user_id", userId)
     .single();
 
   const currentBalance = balanceRow?.credits || 0;
   const newBalance = currentBalance + amount;
 
-  // 2. Update balance
+  // 2. Update balance with source tracking
   const { error } = await supabase
     .from("user_checkin_credits")
-    .upsert({ user_id: userId, credits: newBalance, updated_at: new Date().toISOString() });
+    .upsert({
+      user_id: userId,
+      credits: newBalance,
+      last_source: source,
+      updated_at: new Date().toISOString(),
+    });
 
   if (error) throw new Error(`Failed to update credits: ${error.message}`);
 }

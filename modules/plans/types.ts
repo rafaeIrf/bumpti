@@ -9,6 +9,15 @@ export interface CreatePlanPayload {
   day: PlanDay;
 }
 
+/** Used when joining via invite — date params already resolved from the invite. */
+export interface JoinPlanPayload {
+  placeId: string;
+  plannedFor: string;   // "YYYY-MM-DD"
+  period: PlanPeriod;
+  expiresAt: string;    // ISO 8601
+  inviteToken?: string; // Token from invite link (for referral rewards)
+}
+
 export interface UserPlan {
   id: string;
   place_id: string;
