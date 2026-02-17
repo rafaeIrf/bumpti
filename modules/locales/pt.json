@@ -1137,7 +1137,7 @@
       "locationDeniedTitle": "Permissão negada",
       "locationDeniedMessage": "Você negou a permissão de localização. Pode ativar depois nas configurações do app.",
       "locationError": "Erro ao solicitar permissão de localização. Tente novamente.",
-      "notificationsTitle": "Ativar notificações?",
+      "notificationsTitle": "Fique por dentro",
       "notificationsSubtitle": "Usamos notificações para avisar você sobre novidades importantes no app.",
       "notificationsEnable": "Continuar",
       "notificationsSkip": "Agora não",
