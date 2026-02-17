@@ -14,7 +14,7 @@ interface CreatePlanInviteBody {
   presence_id: string;
 }
 
-const DEEPLINK_DOMAIN = Deno.env.get("DEEPLINK_DOMAIN") || "bumpti.com";
+const DEEPLINK_DOMAIN = Deno.env.get("DEEPLINK_DOMAIN") || "www.bumpti.com";
 const INVITE_BASE_URL = `https://${DEEPLINK_DOMAIN}/invite/plan`;
 
 // ── Handler ──────────────────────────────────────────────────────────

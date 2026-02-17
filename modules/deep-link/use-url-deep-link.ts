@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef } from "react";
 const DEEPLINK_DOMAIN = process.env.EXPO_PUBLIC_DEEPLINK_DOMAIN || "bumpti.com";
 const escapedDomain = DEEPLINK_DOMAIN.replace(/\./g, "\\.");
 const PLAN_INVITE_REGEX = new RegExp(
-  `(?:${escapedDomain}|bumpti:\\/\\/)\\/invite\\/plan\\/([a-f0-9]+)`,
+  `(?:(?:www\\.)?${escapedDomain}|bumpti:\\/\\/)\\/invite\\/plan\\/([a-f0-9]+)`,
   "i",
 );
 
