@@ -2,7 +2,7 @@ import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 
 
-const INVITE_BASE_URL = "https://bumpti.com/invite/plan";
+const INVITE_BASE_URL = "https://www.bumpti.com/invite/plan";
 
 // ── Types ────────────────────────────────────────────────────────────
 export interface PlanInviteDetails {

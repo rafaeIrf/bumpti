@@ -1,5 +1,3 @@
-const DEEPLINK_DOMAIN = process.env.EXPO_PUBLIC_DEEPLINK_DOMAIN || "bumpti.com";
-
 module.exports = {
   expo: {
     name: "Bumpti",
@@ -44,7 +42,7 @@ module.exports = {
           "219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com",
       },
       appleTeamId: "V68Y42WV27",
-      associatedDomains: [`applinks:${DEEPLINK_DOMAIN}`],
+      associatedDomains: ["applinks:bumpti.com", "applinks:www.bumpti.com"],
     },
     android: {
       adaptiveIcon: {
@@ -64,7 +62,12 @@ module.exports = {
           data: [
             {
               scheme: "https",
-              host: DEEPLINK_DOMAIN,
+              host: "bumpti.com",
+              pathPrefix: "/invite/plan/",
+            },
+            {
+              scheme: "https",
+              host: "www.bumpti.com",
               pathPrefix: "/invite/plan/",
             },
           ],
