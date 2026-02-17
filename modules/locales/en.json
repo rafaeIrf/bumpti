@@ -3,7 +3,7 @@
     "location": {
       "title": "Location required",
       "subtitle": "To find the best places and people around you, we need to know your location.",
-      "button": "Enable location",
+      "button": "Continue",
       "buttonSettings": "Open Settings",
       "requesting": "Requesting...",
       "skip": "Not now"
@@ -11,7 +11,7 @@
     "tracking": {
       "title": "Want personalised experience? Turn on tracking.",
       "subtitle": "Your permission helps us create a more complete experience and suggest personalized features you'll love.",
-      "button": "Allow",
+      "button": "Continue",
       "requesting": "Requesting...",
       "skip": "Not now"
     }
@@ -1137,7 +1137,7 @@
       "locationDeniedTitle": "Permission denied",
       "locationDeniedMessage": "You denied location permission. You can enable it later in app settings.",
       "locationError": "Error requesting location permission. Please try again.",
-      "notificationsTitle": "Enable notifications?",
+      "notificationsTitle": "Stay in the loop",
       "notificationsSubtitle": "We use notifications to alert you about important updates in the app.",
       "notificationsEnable": "Continue",
       "notificationsSkip": "Not now",
