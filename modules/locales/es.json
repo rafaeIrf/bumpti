@@ -3,7 +3,7 @@
     "location": {
       "title": "Ubicación necesaria",
       "subtitle": "Para encontrar los mejores lugares y personas a tu alrededor, necesitamos saber tu ubicación.",
-      "button": "Activar ubicación",
+      "button": "Continuar",
       "buttonSettings": "Abrir Configuración",
       "requesting": "Solicitando...",
       "skip": "Ahora no"
@@ -11,7 +11,7 @@
     "tracking": {
       "title": "¿Quieres una experiencia personalizada? Activa el seguimiento.",
       "subtitle": "Tu autorización nos ayuda a crear una experiencia más completa y sugerir funcionalidades personalizadas que te encantarán.",
-      "button": "Permitir",
+      "button": "Continuar",
       "requesting": "Solicitando...",
       "skip": "Ahora no"
     }
