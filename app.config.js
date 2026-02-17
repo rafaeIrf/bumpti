@@ -44,8 +44,7 @@ module.exports = {
           "219202844049-5r7p0kou98ipl5bb8bblv76j9b3kbo6p.apps.googleusercontent.com",
       },
       appleTeamId: "V68Y42WV27",
-      // TODO: Re-enable after enabling Associated Domains capability in Apple Developer Portal
-      // associatedDomains: [`applinks:${DEEPLINK_DOMAIN}`],
+      associatedDomains: [`applinks:${DEEPLINK_DOMAIN}`],
     },
     android: {
       adaptiveIcon: {
