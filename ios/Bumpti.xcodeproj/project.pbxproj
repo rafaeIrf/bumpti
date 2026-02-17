@@ -7,32 +7,32 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		05765E96E9D4E631830CCD3C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 671E00F44A763108CFF05AC3 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2B2CBAF6599B4714916D0B93 /* Pods_Bumpti.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FD1716045E4795B46C46FA2 /* Pods_Bumpti.framework */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		5E7BC15D84B6483FA4DC736D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 71A98AC71431402DA581EECD /* GoogleService-Info.plist */; };
-		8A4DCD9A294745858C768202 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97044C3E8F1A421EAAC13EDA /* Colors.xcassets */; };
-		8E69C0FA1CB740469F0EEEEA /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0D59D3B3BDE041628680984B /* BootSplash.storyboard */; };
-		A330F5DE4EFF74B42231A5EA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4902E4E041E2A1861199EE7F /* PrivacyInfo.xcprivacy */; };
+		40980C8948FC4B4A9D032E54 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1F4FEEB4BC384F719183A5AA /* GoogleService-Info.plist */; };
+		64789ACE43A31FC881E0ED6E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A007E5501400C97B4F00D590 /* PrivacyInfo.xcprivacy */; };
+		7A24B2007F5CDC2D374BB005 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8423D5BDA51B4BB73A1637 /* ExpoModulesProvider.swift */; };
+		9311C7581A294455BF3E785B /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AC6F3242CEF948F589F43493 /* Colors.xcassets */; };
+		ADFEE12BEBA3490FA4792FE5 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 48F2AF5BE0AD49FC8BE70CD6 /* BootSplash.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D69D0CE1E86B0AEB2D117B98 /* Pods_Bumpti.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69E9FCD609610DF26EA09334 /* Pods_Bumpti.framework */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0D59D3B3BDE041628680984B /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = Bumpti/BootSplash.storyboard; sourceTree = "<group>"; };
+		0FD1716045E4795B46C46FA2 /* Pods_Bumpti.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bumpti.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* Bumpti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bumpti.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Bumpti/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Bumpti/Info.plist; sourceTree = "<group>"; };
-		4902E4E041E2A1861199EE7F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Bumpti/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		671E00F44A763108CFF05AC3 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Bumpti/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		69E9FCD609610DF26EA09334 /* Pods_Bumpti.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bumpti.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		71A98AC71431402DA581EECD /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Bumpti/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		97044C3E8F1A421EAAC13EDA /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = Bumpti/Colors.xcassets; sourceTree = "<group>"; };
+		1F4FEEB4BC384F719183A5AA /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Bumpti/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		2E654124721AE302A121A15B /* Pods-Bumpti.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bumpti.release.xcconfig"; path = "Target Support Files/Pods-Bumpti/Pods-Bumpti.release.xcconfig"; sourceTree = "<group>"; };
+		48F2AF5BE0AD49FC8BE70CD6 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = Bumpti/BootSplash.storyboard; sourceTree = "<group>"; };
+		9EF2B7682F9BD2CB4A933591 /* Pods-Bumpti.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bumpti.debug.xcconfig"; path = "Target Support Files/Pods-Bumpti/Pods-Bumpti.debug.xcconfig"; sourceTree = "<group>"; };
+		A007E5501400C97B4F00D590 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Bumpti/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Bumpti/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B366B272E7B8BA657B56E143 /* Pods-Bumpti.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bumpti.release.xcconfig"; path = "Target Support Files/Pods-Bumpti/Pods-Bumpti.release.xcconfig"; sourceTree = "<group>"; };
+		AC6F3242CEF948F589F43493 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = Bumpti/Colors.xcassets; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C1D58446BC6F96C9819B3CFF /* Pods-Bumpti.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bumpti.debug.xcconfig"; path = "Target Support Files/Pods-Bumpti/Pods-Bumpti.debug.xcconfig"; sourceTree = "<group>"; };
+		CF8423D5BDA51B4BB73A1637 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Bumpti/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Bumpti/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Bumpti-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Bumpti-Bridging-Header.h"; path = "Bumpti/Bumpti-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -43,7 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D69D0CE1E86B0AEB2D117B98 /* Pods_Bumpti.framework in Frameworks */,
+				2B2CBAF6599B4714916D0B93 /* Pods_Bumpti.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,10 +59,10 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				71A98AC71431402DA581EECD /* GoogleService-Info.plist */,
-				0D59D3B3BDE041628680984B /* BootSplash.storyboard */,
-				97044C3E8F1A421EAAC13EDA /* Colors.xcassets */,
-				4902E4E041E2A1861199EE7F /* PrivacyInfo.xcprivacy */,
+				1F4FEEB4BC384F719183A5AA /* GoogleService-Info.plist */,
+				48F2AF5BE0AD49FC8BE70CD6 /* BootSplash.storyboard */,
+				AC6F3242CEF948F589F43493 /* Colors.xcassets */,
+				A007E5501400C97B4F00D590 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Bumpti;
 			sourceTree = "<group>";
@@ -71,9 +71,17 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				69E9FCD609610DF26EA09334 /* Pods_Bumpti.framework */,
+				0FD1716045E4795B46C46FA2 /* Pods_Bumpti.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7DF965F5A8193FCF893C7A4D /* Bumpti */ = {
+			isa = PBXGroup;
+			children = (
+				CF8423D5BDA51B4BB73A1637 /* ExpoModulesProvider.swift */,
+			);
+			name = Bumpti;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -90,8 +98,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				B339666F7FF3A94BA6FD8000 /* Pods */,
-				E841AEB28F3414106F66842E /* ExpoModulesProviders */,
+				BD689E2AE68CD1AE44A2F94D /* Pods */,
+				ECE3C64914858C80503C5A6A /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -106,24 +114,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		AEF1BF44B060E28158D01D3A /* Bumpti */ = {
-			isa = PBXGroup;
-			children = (
-				671E00F44A763108CFF05AC3 /* ExpoModulesProvider.swift */,
-			);
-			name = Bumpti;
-			sourceTree = "<group>";
-		};
-		B339666F7FF3A94BA6FD8000 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				C1D58446BC6F96C9819B3CFF /* Pods-Bumpti.debug.xcconfig */,
-				B366B272E7B8BA657B56E143 /* Pods-Bumpti.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,10 +123,20 @@
 			path = Bumpti/Supporting;
 			sourceTree = "<group>";
 		};
-		E841AEB28F3414106F66842E /* ExpoModulesProviders */ = {
+		BD689E2AE68CD1AE44A2F94D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				AEF1BF44B060E28158D01D3A /* Bumpti */,
+				9EF2B7682F9BD2CB4A933591 /* Pods-Bumpti.debug.xcconfig */,
+				2E654124721AE302A121A15B /* Pods-Bumpti.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		ECE3C64914858C80503C5A6A /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				7DF965F5A8193FCF893C7A4D /* Bumpti */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -149,15 +149,15 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Bumpti" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				C2383C4558C84716824811ED /* [Expo] Configure project */,
+				04F55A23012F29753FC76542 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				FC53383686996C96A6195F6D /* [CP] Embed Pods Frameworks */,
-				5DD56205A905C3683D29CEE5 /* [CP-User] [RNFB] Core Configuration */,
-				EC730A68CBAF714552CFA419 /* [CP-User] [RNFB] Crashlytics Configuration */,
+				05DCBDBC710ADBA558074F23 /* [CP] Embed Pods Frameworks */,
+				684DD389E7049C399A961F32 /* [CP-User] [RNFB] Core Configuration */,
+				94CABE0ADAE1B8ADC4B65AC2 /* [CP-User] [RNFB] Crashlytics Configuration */,
 			);
 			buildRules = (
 			);
@@ -207,10 +207,10 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				5E7BC15D84B6483FA4DC736D /* GoogleService-Info.plist in Resources */,
-				8E69C0FA1CB740469F0EEEEA /* BootSplash.storyboard in Resources */,
-				8A4DCD9A294745858C768202 /* Colors.xcassets in Resources */,
-				A330F5DE4EFF74B42231A5EA /* PrivacyInfo.xcprivacy in Resources */,
+				40980C8948FC4B4A9D032E54 /* GoogleService-Info.plist in Resources */,
+				ADFEE12BEBA3490FA4792FE5 /* BootSplash.storyboard in Resources */,
+				9311C7581A294455BF3E785B /* Colors.xcassets in Resources */,
+				64789ACE43A31FC881E0ED6E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,6 +234,48 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
+		04F55A23012F29753FC76542 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Bumpti/Bumpti.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Bumpti/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Bumpti/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Bumpti/expo-configure-project.sh\"\n";
+		};
+		05DCBDBC710ADBA558074F23 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bumpti/Pods-Bumpti-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bumpti/Pods-Bumpti-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,7 +298,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5DD56205A905C3683D29CEE5 /* [CP-User] [RNFB] Core Configuration */ = {
+		684DD389E7049C399A961F32 /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -351,31 +393,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bumpti/Pods-Bumpti-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C2383C4558C84716824811ED /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/Bumpti/Bumpti.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Bumpti/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Bumpti/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Bumpti/expo-configure-project.sh\"\n";
-		};
-		EC730A68CBAF714552CFA419 /* [CP-User] [RNFB] Crashlytics Configuration */ = {
+		94CABE0ADAE1B8ADC4B65AC2 /* [CP-User] [RNFB] Crashlytics Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -389,24 +407,6 @@
 			shellPath = /bin/sh;
 			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\nset -e\n\nif [[ ${PODS_ROOT} ]]; then\n  echo \"info: Exec FirebaseCrashlytics Run from Pods\"\n  \"${PODS_ROOT}/FirebaseCrashlytics/run\"\nelse\n  echo \"info: Exec FirebaseCrashlytics Run from framework\"\n  \"${PROJECT_DIR}/FirebaseCrashlytics.framework/run\"\nfi\n";
 		};
-		FC53383686996C96A6195F6D /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bumpti/Pods-Bumpti-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bumpti/Pods-Bumpti-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -415,7 +415,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				05765E96E9D4E631830CCD3C /* ExpoModulesProvider.swift in Sources */,
+				7A24B2007F5CDC2D374BB005 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,7 +424,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C1D58446BC6F96C9819B3CFF /* Pods-Bumpti.debug.xcconfig */;
+			baseConfigurationReference = 9EF2B7682F9BD2CB4A933591 /* Pods-Bumpti.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -461,7 +461,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B366B272E7B8BA657B56E143 /* Pods-Bumpti.release.xcconfig */;
+			baseConfigurationReference = 2E654124721AE302A121A15B /* Pods-Bumpti.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

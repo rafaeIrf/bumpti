@@ -1,3 +1,4 @@
+import { XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ReferralMilestonesList } from "@/components/referral-milestones-list";
 import { ReferralOverviewCard } from "@/components/referral-overview-card";
@@ -28,7 +29,11 @@ export default function ReferralHubScreen() {
         TopHeader={
           <ScreenToolbar
             title={t("referral.hub.title")}
-            onBackPress={handleBack}
+            rightActions={{
+              icon: XIcon,
+              onClick: handleBack,
+              ariaLabel: t("common.close"),
+            }}
           />
         }
       >
@@ -45,7 +50,11 @@ export default function ReferralHubScreen() {
         TopHeader={
           <ScreenToolbar
             title={t("referral.hub.title")}
-            onBackPress={handleBack}
+            rightActions={{
+              icon: XIcon,
+              onClick: handleBack,
+              ariaLabel: t("common.close"),
+            }}
           />
         }
       >
@@ -86,7 +95,11 @@ export default function ReferralHubScreen() {
       TopHeader={
         <ScreenToolbar
           title={t("referral.hub.title")}
-          onBackPress={handleBack}
+          rightActions={{
+            icon: XIcon,
+            onClick: handleBack,
+            ariaLabel: t("common.close"),
+          }}
         />
       }
     >
