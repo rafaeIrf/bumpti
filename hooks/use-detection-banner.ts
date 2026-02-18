@@ -11,20 +11,6 @@ interface DetectedPlace {
   preview_avatars?: { user_id: string; url: string }[];
 }
 
-// =============================================================================
-// DEV MOCK — always show a fake detected place for UI testing
-// =============================================================================
-const MOCK_DETECTED_PLACE: DetectedPlace = {
-  id: "mock-place-dev-001",
-  name: "Starbucks Centro",
-  category: "cafe",
-  active_users: 5,
-  preview_avatars: [
-    { user_id: "mock-1", url: "https://i.pravatar.cc/150?img=1" },
-    { user_id: "mock-2", url: "https://i.pravatar.cc/150?img=2" },
-    { user_id: "mock-3", url: "https://i.pravatar.cc/150?img=3" },
-  ],
-};
 
 interface UseDetectionBannerParams {
   latitude?: number;
@@ -48,7 +34,7 @@ interface UseDetectionBannerResult {
  * - Enforcing global cooldown
  * - Initializing detection store on mount
  *
- * In __DEV__ mode, always shows a mock place for UI testing.
+
  */
 export function useDetectionBanner({
   latitude,
@@ -56,18 +42,14 @@ export function useDetectionBanner({
   accuracy,
   enabled = true,
 }: UseDetectionBannerParams): UseDetectionBannerResult {
-  const [visiblePlace, setVisiblePlace] = useState<DetectedPlace | null>(
-    __DEV__ ? MOCK_DETECTED_PLACE : null,
-  );
+  const [visiblePlace, setVisiblePlace] = useState<DetectedPlace | null>(null);
 
-  // Initialize detection store on mount (no-op in dev)
+  // Initialize detection store on mount
   useEffect(() => {
-    if (!__DEV__) {
-      DetectionStore.initialize();
-    }
+    DetectionStore.initialize();
   }, []);
 
-  // Query for detected place — skip entirely in dev mode
+  // Query for detected place
   const { data: detectedPlaceResult } = useDetectPlaceQuery(
     {
       latitude: latitude ?? 0,
@@ -75,13 +57,12 @@ export function useDetectionBanner({
       hacc: accuracy,
     },
     {
-      skip: __DEV__ || !enabled || !latitude || !longitude,
+      skip: !enabled || !latitude || !longitude,
     },
   );
 
-  // Process detection result (production only)
+  // Process detection result
   useEffect(() => {
-    if (__DEV__) return; // mock is already set via initial state
 
     const processDetection = async () => {
       const detected = detectedPlaceResult?.suggested;
@@ -132,12 +113,6 @@ export function useDetectionBanner({
   }, [detectedPlaceResult]);
 
   const dismiss = useCallback(async () => {
-    if (__DEV__) {
-      // In dev, hide and re-show after 2s so you can keep testing
-      setVisiblePlace(null);
-      setTimeout(() => setVisiblePlace(MOCK_DETECTED_PLACE), 2000);
-      return;
-    }
 
     if (visiblePlace) {
       await DetectionStore.dismissPlace(visiblePlace.id);
