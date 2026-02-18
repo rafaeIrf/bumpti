@@ -269,31 +269,6 @@ export function PlaceDetailsBottomSheet({
                 </View>
               </View>
             )}
-
-            {/* Regulars Badge */}
-            {regularsCount > 0 && (
-              <View
-                style={[
-                  styles.socialProofRow,
-                  { flexDirection: "row", justifyContent: "center" },
-                ]}
-              >
-                <View style={styles.socialBadge}>
-                  <StarIcon
-                    width={12}
-                    height={12}
-                    color={colors.textSecondary}
-                  />
-                  <ThemedText
-                    style={[styles.socialText, { color: colors.textSecondary }]}
-                  >
-                    {regularsCount === 1
-                      ? t("place.oneRegularHere")
-                      : t("place.manyRegularsHere", { count: regularsCount })}
-                  </ThemedText>
-                </View>
-              </View>
-            )}
           </View>
         )}
 
