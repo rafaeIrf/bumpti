@@ -21,7 +21,10 @@ import {
 } from "@/hooks/use-encounter-actions";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useGetDiscoverFeedQuery } from "@/modules/discover/discoverApi";
-import type { DiscoverEncounter } from "@/modules/discover/types";
+import type {
+  DiscoverEncounter,
+  SharedFavoriteUser,
+} from "@/modules/discover/types";
 import { t } from "@/modules/locales";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, {
@@ -40,6 +43,33 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+
+/** Maps SharedFavoriteUser[] → DiscoverEncounter[] so we can reuse DiscoverSection */
+function mapSharedFavoritesToEncounters(
+  users: SharedFavoriteUser[],
+): DiscoverEncounter[] {
+  return users.map((u) => ({
+    user_a_id: "",
+    user_b_id: u.other_user_id,
+    place_id: u.shared_place_ids?.[0] ?? "",
+    encounter_type: "shared_favorites" as const,
+    affinity_score: u.shared_count,
+    last_encountered_at: new Date().toISOString(),
+    metadata: {
+      shared_places: u.shared_count,
+      shared_place_names: u.shared_place_names ?? [],
+    },
+    shared_interests_count: 0,
+    other_user_id: u.other_user_id,
+    other_name: u.other_name,
+    other_age: u.other_age,
+    other_photos: u.other_photos,
+    other_verification_status: u.other_verification_status,
+    other_bio: u.other_bio,
+    place_name: u.shared_place_names?.[0] ?? null,
+    additional_encounters: null,
+  }));
+}
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -281,7 +311,7 @@ export default function DiscoverScreen() {
 
   // Filter out dismissed cards from feed
   const feed = useMemo(() => {
-    if (!rawFeed || dismissedIds.size === 0) return rawFeed;
+    if (!rawFeed) return rawFeed;
     return {
       direct_overlap: rawFeed.direct_overlap.filter(
         (e) => !dismissedIds.has(e.other_user_id),
@@ -292,6 +322,11 @@ export default function DiscoverScreen() {
       path_match: rawFeed.path_match.filter(
         (e) => !dismissedIds.has(e.other_user_id),
       ),
+      shared_favorites: mapSharedFavoritesToEncounters(
+        (rawFeed.shared_favorites ?? []).filter(
+          (e) => !dismissedIds.has(e.other_user_id),
+        ),
+      ),
     };
   }, [rawFeed, dismissedIds]);
 
@@ -299,7 +334,8 @@ export default function DiscoverScreen() {
     feed &&
     (feed.direct_overlap.length > 0 ||
       feed.vibe_match.length > 0 ||
-      feed.path_match.length > 0);
+      feed.path_match.length > 0 ||
+      feed.shared_favorites.length > 0);
 
   return (
     <BaseTemplateScreen
@@ -391,8 +427,26 @@ export default function DiscoverScreen() {
         </View>
       )}
 
-      {/* Gate: no recent presence → empty state */}
-      {!isLoading && !hasRecentPresence && <DiscoverEmptyState />}
+      {/* Gate: no recent presence → show only shared favorites or empty state */}
+      {!isLoading && !hasRecentPresence && (
+        <>
+          {feed && feed.shared_favorites.length > 0 && (
+            <DiscoverSection
+              title={t("screens.discover.sharedFavorites.title")}
+              subtitle={t("screens.discover.sharedFavorites.subtitle")}
+              encounters={feed.shared_favorites}
+              variant="medium"
+              onLike={handleLike}
+              onSkip={handleSkip}
+              pendingDismissIds={pendingDismissIds}
+              onDismissComplete={handleDismissComplete}
+            />
+          )}
+          {(!feed || feed.shared_favorites.length === 0) && (
+            <DiscoverEmptyState />
+          )}
+        </>
+      )}
 
       {/* Feed sections */}
       {hasRecentPresence && hasEncounters && feed && (
@@ -431,6 +485,20 @@ export default function DiscoverScreen() {
               title={t("screens.discover.sectionRoutine")}
               subtitle={t("screens.discover.sectionRoutineDesc")}
               encounters={feed.path_match}
+              variant="medium"
+              onLike={handleLike}
+              onSkip={handleSkip}
+              pendingDismissIds={pendingDismissIds}
+              onDismissComplete={handleDismissComplete}
+            />
+          )}
+
+          {/* Section 4: Mesmos Lugares */}
+          {feed.shared_favorites.length > 0 && (
+            <DiscoverSection
+              title={t("screens.discover.sharedFavorites.title")}
+              subtitle={t("screens.discover.sharedFavorites.subtitle")}
+              encounters={feed.shared_favorites}
               variant="medium"
               onLike={handleLike}
               onSkip={handleSkip}

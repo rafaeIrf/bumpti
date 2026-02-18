@@ -1,4 +1,5 @@
 import { useDatabase } from "@/components/DatabaseProvider";
+import { useProfile } from "@/hooks/use-profile";
 import type Chat from "@/modules/database/models/Chat";
 import type DiscoveryProfile from "@/modules/database/models/DiscoveryProfile";
 import type Match from "@/modules/database/models/Match";
@@ -6,7 +7,6 @@ import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import { fetchDiscoveryFeed } from "@/modules/discovery/discovery-service";
 import { filterDiscoveryProfiles } from "@/modules/discovery/utils";
 import type { ActiveUserAtPlace } from "@/modules/presence/api";
-import { useProfile } from "@/hooks/use-profile";
 import { Q } from "@nozbe/watermelondb";
 import { useCallback, useEffect, useMemo, useState } from "react";
 

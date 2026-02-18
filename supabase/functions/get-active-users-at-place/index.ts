@@ -1,87 +1,194 @@
-/// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { requireAuth } from "../_shared/auth.ts";
+import { handleCors } from "../_shared/cors.ts";
+import { internalError, jsonError, jsonOk, methodNotAllowed } from "../_shared/response.ts";
 import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+interface UserRow {
+  user_id: string;
+  name: string;
+  age: number | null;
+  bio: string | null;
+  intentions: string[];
+  interests: string[];
+  photos: string[];
+  favorite_places: string[];
+  job_title: string | null;
+  company_name: string | null;
+  height_cm: number | null;
+  zodiac_sign: string | null;
+  education_level: string | null;
+  relationship_status: string | null;
+  smoking_habit: string | null;
+  languages: string[];
+  city_name: string | null;
+  city_state: string | null;
+  entered_at: string | null;
+  expires_at?: string | null;
+  entry_type: string;
+  planned_for?: string | null;
+  planned_period?: string | null;
+  university_id: string | null;
+  university_name: string | null;
+  university_name_custom: string | null;
+  graduation_year: number | null;
+  show_university_on_home: boolean;
+  verification_status?: string | null;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Batch-sign photo URLs and build a userId → signedUrls map.
+ * Both active users and regulars share this exact logic.
+ */
+async function batchSignPhotos(
+  supabase: any,
+  rows: UserRow[],
+): Promise<Map<string, string[]>> {
+  const allPaths: string[] = [];
+  const indexMap: { userId: string; count: number }[] = [];
+
+  for (const row of rows) {
+    const paths = (Array.isArray(row.photos) ? row.photos : []).filter(Boolean);
+    indexMap.push({ userId: row.user_id, count: paths.length });
+    allPaths.push(...paths);
   }
 
+  const allSigned = allPaths.length > 0
+    ? await signPhotoUrls(supabase, allPaths)
+    : [];
+
+  let offset = 0;
+  const map = new Map<string, string[]>();
+  for (const { userId, count } of indexMap) {
+    map.set(userId, allSigned.slice(offset, offset + count));
+    offset += count;
+  }
+  return map;
+}
+
+/**
+ * Resolve favorite place IDs → { id, name, category } using a batch query.
+ */
+async function resolveFavoritePlaces(
+  client: any,
+  rows: UserRow[],
+): Promise<Map<string, any>> {
+  const allIds = Array.from(
+    new Set(rows.flatMap((r) => r.favorite_places || []))
+  ).filter(Boolean) as string[];
+
+  if (allIds.length === 0) return new Map();
+
+  const { data } = await client
+    .from("places")
+    .select("id, name, category")
+    .in("id", allIds);
+
+  return new Map((data || []).map((p: any) => [p.id, p]));
+}
+
+/**
+ * Build the response object for a user row, using pre-fetched signed URLs
+ * and place details. Works identically for active users and regulars.
+ */
+function buildUserResponse(
+  row: UserRow,
+  placeId: string,
+  signedUrlsMap: Map<string, string[]>,
+  placeMap: Map<string, any>,
+) {
+  const favoritePlaces = (row.favorite_places || []).map((id: string) => {
+    const details = placeMap.get(id);
+    return {
+      id,
+      name: details?.name || "Unknown Place",
+      category: details?.category || "",
+    };
+  });
+
+  return {
+    user_id: row.user_id,
+    name: row.name,
+    age: row.age,
+    bio: row.bio,
+    intentions: (row.intentions || []).map((i: any) =>
+      i == null ? null : String(i)
+    ),
+    interests: (row.interests || []).map((i: any) =>
+      i == null ? null : String(i)
+    ),
+    photos: signedUrlsMap.get(row.user_id) || [],
+    visited_places_count: 0,
+    favorite_places: favoritePlaces,
+    job_title: row.job_title,
+    company_name: row.company_name,
+    height_cm: row.height_cm,
+    languages: row.languages || [],
+    location:
+      row.city_name && row.city_state
+        ? `${row.city_name}, ${row.city_state}`
+        : row.city_name || null,
+    relationship_status: row.relationship_status,
+    smoking_habit: row.smoking_habit,
+    education_level: row.education_level,
+    place_id: placeId,
+    entered_at: row.entered_at,
+    expires_at: row.expires_at ?? null,
+    zodiac_sign: row.zodiac_sign,
+    entry_type: row.entry_type || "physical",
+    planned_for: row.planned_for ?? null,
+    planned_period: row.planned_period ?? null,
+    university_id: row.university_id,
+    university_name: row.university_name,
+    university_name_custom: row.university_name_custom,
+    graduation_year: row.graduation_year,
+    show_university_on_home: row.show_university_on_home,
+    verification_status: row.verification_status ?? null,
+  };
+}
+
+// ─── Handler ─────────────────────────────────────────────────────────────────
+
+Deno.serve(async (req) => {
+  const cors = handleCors(req);
+  if (cors) return cors;
+
   if (req.method !== "GET" && req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return methodNotAllowed();
   }
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "").trim();
+    // Auth
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.response;
+    const { user } = auth;
 
-    if (!token) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY env vars");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const serviceSupabase = supabaseServiceKey
-      ? createClient(supabaseUrl, supabaseServiceKey)
-      : supabase;
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user?.id) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-
+    // Parse place_id from query string or body
     const url = new URL(req.url);
     const queryPlaceId = url.searchParams.get("place_id");
     const bodyParams =
-      req.method === "POST"
-        ? (await req.json().catch(() => null))
-        : null;
+      req.method === "POST" ? await req.json().catch(() => null) : null;
     const placeId = queryPlaceId || bodyParams?.place_id;
 
     if (!placeId || typeof placeId !== "string") {
-      return new Response(JSON.stringify({ error: "invalid_place_id" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+      return jsonError("invalid_place_id", "place_id is required", 400);
     }
 
-    const client = serviceSupabase;
+    const client = createAdminClient();
 
-    // Run RPC and likers query in PARALLEL
-    const [rpcResult, likersResult] = await Promise.all([
+    // ── Parallel: active users, regulars, likers ──
+    const [rpcResult, regularsResult, likersResult] = await Promise.all([
       client.rpc("get_available_users_at_place", {
         p_place_id: placeId,
         viewer_id: user.id,
+      }),
+      client.rpc("get_eligible_regulars_at_place", {
+        target_place_id: placeId,
+        requesting_user_id: user.id,
       }),
       client
         .from("user_interactions")
@@ -91,17 +198,26 @@ Deno.serve(async (req) => {
         .gt("action_expires_at", new Date().toISOString()),
     ]);
 
-    const { data: rows, error: fetchError } = rpcResult;
-    if (fetchError) {
-      console.error("[get-active-users] RPC get_available_users_at_place failed:", JSON.stringify(fetchError));
-      throw fetchError;
+    const { data: activeRows, error: activeError } = rpcResult;
+    if (activeError) {
+      console.error("[get-active-users] RPC get_available_users_at_place failed:", JSON.stringify(activeError));
+      throw activeError;
     }
-    console.log(`[get-active-users] RPC returned ${rows?.length ?? 0} rows for place ${placeId}`);
 
+    const { data: regularRows, error: regularsError } = regularsResult;
+    if (regularsError) {
+      console.error("[get-active-users] RPC get_eligible_regulars_at_place failed:", JSON.stringify(regularsError));
+      // Non-fatal: continue without regulars
+    }
+
+    console.log(
+      `[get-active-users] Active: ${activeRows?.length ?? 0}, Regulars: ${regularRows?.length ?? 0} for place ${placeId}`
+    );
+
+    // ── Liker filtering (exclude already matched) ──
     const { data: likerRows } = likersResult;
-
     const likerIds = (likerRows ?? [])
-      .map((row) => row.from_user_id)
+      .map((r: any) => r.from_user_id)
       .filter(Boolean) as string[];
 
     let filteredLikerIds = likerIds;
@@ -122,140 +238,41 @@ Deno.serve(async (req) => {
       ]);
 
       const matchedIds = new Set<string>();
-      (matchRowsA ?? []).forEach((row) => {
-        if (row.user_b) matchedIds.add(row.user_b);
-      });
-      (matchRowsB ?? []).forEach((row) => {
-        if (row.user_a) matchedIds.add(row.user_a);
-      });
+      (matchRowsA ?? []).forEach((r: any) => r.user_b && matchedIds.add(r.user_b));
+      (matchRowsB ?? []).forEach((r: any) => r.user_a && matchedIds.add(r.user_a));
 
       filteredLikerIds = likerIds.filter((id) => !matchedIds.has(id));
     }
 
-    if (!rows || rows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          place_id: placeId,
-          count: 0,
-          users: [],
-          liker_ids: filteredLikerIds,
-        }),
-        { status: 200, headers: corsHeaders }
-      );
-    }
+    // ── Batch operations: sign photos + resolve favorites for BOTH sets ──
+    const allRows = [...(activeRows || []), ...(regularRows || [])] as UserRow[];
 
-    const filteredRows = rows;
-
-    // Extract all unique favorite place IDs
-    const allFavoritePlaceIds = Array.from(
-      new Set(
-        filteredRows.flatMap((row: any) => row.favorite_places || [])
-      )
-    ).filter(Boolean) as string[];
-
-    // Collect ALL photo paths from ALL users for batch signing
-    const allPhotoPaths: string[] = [];
-    const photoIndexMap: { userId: string; paths: string[] }[] = [];
-    
-    for (const row of filteredRows) {
-      const photos = (Array.isArray(row.photos) ? row.photos : []).filter(Boolean) as string[];
-      photoIndexMap.push({ userId: row.user_id, paths: photos });
-      allPhotoPaths.push(...photos);
-    }
-
-    console.log(`[get-active-users] Signing ${allPhotoPaths.length} photos, fetching ${allFavoritePlaceIds.length} fav places`);
-
-    // Run places query and photo signing in PARALLEL
-    const [placesResult, allSignedUrls] = await Promise.all([
-      allFavoritePlaceIds.length > 0
-        ? client.from("places").select("id, name, category").in("id", allFavoritePlaceIds)
-        : Promise.resolve({ data: [] }),
-      signPhotoUrls(serviceSupabase, allPhotoPaths),
+    const [signedUrlsMap, placeMap] = await Promise.all([
+      batchSignPhotos(client, allRows),
+      resolveFavoritePlaces(client, allRows),
     ]);
 
-    console.log(`[get-active-users] Photo signing done. Signed ${allSignedUrls?.length ?? 0} URLs`);
+    console.log(
+      `[get-active-users] Signed photos for ${signedUrlsMap.size} users, resolved ${placeMap.size} fav places`
+    );
 
-    // Build place map
-    const placeMap = new Map((placesResult.data || []).map((p: any) => [p.id, p]));
+    // ── Build response ──
+    const users = (activeRows || []).map((row: any) =>
+      buildUserResponse(row, placeId, signedUrlsMap, placeMap)
+    );
+    const regulars = (regularRows || []).map((row: any) =>
+      buildUserResponse(row, placeId, signedUrlsMap, placeMap)
+    );
 
-    // Build signed URL map for each user
-    let urlIndex = 0;
-    const userSignedUrlsMap = new Map<string, string[]>();
-    for (const entry of photoIndexMap) {
-      const count = entry.paths.length;
-      const userUrls = allSignedUrls.slice(urlIndex, urlIndex + count);
-      userSignedUrlsMap.set(entry.userId, userUrls);
-      urlIndex += count;
-    }
-
-    // Build users array (no async needed now - all data is pre-fetched)
-    const users = filteredRows.map((row: any) => {
-      const favoritePlaces = (row.favorite_places || []).map((id: string) => {
-        const details = placeMap.get(id);
-        return {
-          id: id,
-          name: details?.name || "Unknown Place",
-          category: details?.category || ""
-        };
-      });
-
-      return {
-        user_id: row.user_id,
-        name: row.name,
-        age: row.age,
-        bio: row.bio,
-        intentions: Array.isArray(row.intentions)
-          ? row.intentions.map((i: any) => (i == null ? null : String(i)))
-          : [],
-        interests: Array.isArray(row.interests)
-          ? row.interests.map((i: any) => (i == null ? null : String(i)))
-          : [],
-        photos: userSignedUrlsMap.get(row.user_id) || [],
-        visited_places_count: 0, 
-        favorite_places: favoritePlaces,
-        job_title: row.job_title,
-        company_name: row.company_name,
-        height_cm: row.height_cm,
-        languages: row.languages || [],
-        location: row.city_name && row.city_state
-          ? `${row.city_name}, ${row.city_state}`
-          : row.city_name || null,
-        relationship_status: row.relationship_status,
-        smoking_habit: row.smoking_habit,
-        education_level: row.education_level,
-        place_id: placeId,
-        entered_at: row.entered_at,
-        expires_at: row.expires_at,
-        zodiac_sign: row.zodiac_sign,
-        entry_type: row.entry_type || 'physical',
-        planned_for: row.planned_for || null,
-        planned_period: row.planned_period || null,
-        // University fields
-        university_id: row.university_id,
-        university_name: row.university_name,
-        university_name_custom: row.university_name_custom,
-        graduation_year: row.graduation_year,
-        show_university_on_home: row.show_university_on_home,
-      };
+    return jsonOk({
+      place_id: placeId,
+      count: users.length,
+      users,
+      regulars,
+      regulars_count: regulars.length,
+      liker_ids: filteredLikerIds,
     });
-
-    return new Response(
-      JSON.stringify({
-        place_id: placeId,
-        count: users.length,
-        users,
-        liker_ids: filteredLikerIds,
-      }),
-      { status: 200, headers: corsHeaders }
-    );
-  } catch (err: any) {
-    console.error("[get-active-users] CAUGHT ERROR:", err?.message, err?.stack ?? err);
-    return new Response(
-      JSON.stringify({
-        error: "internal_error",
-        message: err?.message ?? "Unexpected error",
-      }),
-      { status: 500, headers: corsHeaders }
-    );
+  } catch (err) {
+    return internalError(err);
   }
 });

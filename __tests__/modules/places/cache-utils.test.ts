@@ -483,6 +483,92 @@ describe("decrementActiveUsersInCaches", () => {
       expect(draft[0].active_users).toBe(0);
     });
 
+    it("should keep places in getTrendingPlaces if they have regulars but zero active_users after removal", () => {
+      const mockUpdateQueryData = jest.fn((endpoint, args, updateFn) => {
+        const draft = {
+          places: [
+            {
+              placeId: "place-1",
+              active_users: 1,
+              regulars_count: 1,
+              preview_avatars: [{ user_id: "user-123", avatar_url: "url1" }],
+            },
+            {
+              placeId: "place-2",
+              active_users: 0,
+              regulars_count: 0,
+              preview_avatars: [],
+            },
+          ],
+        };
+        updateFn(draft);
+        return draft;
+      });
+
+      (placesApi.util.updateQueryData as jest.Mock) = mockUpdateQueryData;
+
+      const mockState = {
+        placesApi: {
+          queries: {
+            "getTrendingPlaces--25.404--49.246": {
+              data: {
+                places: [
+                  {
+                    placeId: "place-1",
+                    active_users: 1,
+                    regulars_count: 1,
+                    preview_avatars: [{ user_id: "user-123", avatar_url: "url1" }],
+                  },
+                  {
+                    placeId: "place-2",
+                    active_users: 0,
+                    regulars_count: 0,
+                    preview_avatars: [],
+                  },
+                ],
+              },
+              originalArgs: { lat: -25.404, lng: -49.246 },
+            },
+          },
+        },
+      };
+
+      const mockGetState = jest.fn().mockReturnValue(mockState);
+
+      decrementActiveUsersInCaches({
+        dispatch: mockDispatch,
+        getState: mockGetState,
+        userId: "user-123",
+      });
+
+      const updateFn = mockUpdateQueryData.mock.calls[0][2];
+      const draft = {
+        places: [
+          {
+            placeId: "place-1",
+            active_users: 1,
+            regulars_count: 1,
+            preview_avatars: [{ user_id: "user-123", avatar_url: "url1" }],
+          },
+          {
+            placeId: "place-2",
+            active_users: 0,
+            regulars_count: 0,
+            preview_avatars: [],
+          },
+        ],
+      };
+
+      updateFn(draft);
+
+      // place-1 had active_users=1, now 0 after swipe, but regulars_count=1 so it stays
+      // place-2 has active_users=0 and regulars_count=0, so it gets filtered out
+      expect(draft.places).toHaveLength(1);
+      expect(draft.places[0].placeId).toBe("place-1");
+      expect(draft.places[0].active_users).toBe(0);
+      expect(draft.places[0].regulars_count).toBe(1);
+    });
+
     it("should keep places in getTrendingPlaces if they still have active users after removal", () => {
       const mockUpdateQueryData = jest.fn((endpoint, args, updateFn) => {
         const draft = {

@@ -29,6 +29,7 @@ interface FavoritePlace {
   dist_meters: number;
   active_users: number;
   preview_avatars: { user_id: string; url: string }[] | null;
+  regulars_count: number;
 }
 
 Deno.serve(async (req) => {
@@ -127,6 +128,7 @@ Deno.serve(async (req) => {
                 tags: p.review_tags,
               }
             : undefined,
+        regulars_count: p.regulars_count ?? 0,
       };
     }));
 

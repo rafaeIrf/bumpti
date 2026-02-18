@@ -96,7 +96,9 @@
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
     "onePersonConnecting": "1 person connecting",
-    "manyPeopleConnecting": "{{count}} people connecting"
+    "manyPeopleConnecting": "{{count}} people connecting",
+    "oneRegularHere": "1 Regular",
+    "manyRegularsHere": "{{count}} Regulars"
   },
   "matches": "Chat",
   "profile": "Profile",
@@ -1123,7 +1125,8 @@
         "subtitle": "Increase your connections by choosing your favorite spots.",
         "searchPlaceholder": "Search place...",
         "selectAtLeastOne": "Select at least 1 spot",
-        "locationNeeded": "To suggest places near you, we need your location."
+        "locationNeeded": "To suggest places near you, we need your location.",
+        "minimumHint": "Select at least {{minimum}} places ({{current}}/{{minimum}})"
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",
@@ -1329,6 +1332,12 @@
       "sectionVibeDesc": "Shared interests and vibes",
       "sectionRoutine": "Same routine",
       "sectionRoutineDesc": "Frequent the same spots as you",
+      "sharedFavorites": {
+        "title": "Same Places",
+        "subtitle": "Love the same spots as you",
+        "onePlace": "Also loves {{place}}",
+        "morePlaces": "{{place}} +{{extra}}"
+      },
       "contextOverlap": "At {{place}}",
       "contextOverlapGeneric": "Crossed your path recently",
       "contextVibe": "{{count}} shared interests",
@@ -1407,6 +1416,9 @@
     "planningToGo": "Planning to go",
     "planningToGoToday": "Planning to go today",
     "planningToGoTomorrow": "Planning to go tomorrow",
+    "planningToGoOn": "Planning to go {{weekday}}",
+    "frequentsPlace": "Frequents this place",
+    "favoritedPlace": "Favorited this place",
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",

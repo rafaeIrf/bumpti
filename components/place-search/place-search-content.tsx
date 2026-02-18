@@ -37,9 +37,11 @@ interface SearchResult {
   neighborhood?: string;
   distance?: number;
   active_users?: number;
+  preview_avatars?: { user_id: string; url: string }[];
   rating?: number;
   lat: number;
   lng: number;
+  regulars_count?: number;
   review?: {
     average: number;
     count: number;
@@ -121,7 +123,7 @@ export function PlaceSearchContent({
         : undefined,
     [userLocation],
   );
-  const { showPlaceDetails, favoriteIds, handleToggle } = usePlaceDetailsSheet({
+  const { showPlaceDetails } = usePlaceDetailsSheet({
     queryArg,
   });
 
@@ -151,6 +153,7 @@ export function PlaceSearchContent({
       lng: p.longitude,
       distance: p.distance ?? 0,
       active_users: p.active_users || 0,
+      regulars_count: p.regulars_count ?? 0,
       review: p.review,
     }));
   }, [searchData]);
@@ -301,36 +304,17 @@ export function PlaceSearchContent({
             neighborhood: item.neighborhood,
             distance: item.distance ?? 0,
             activeUsers: item.active_users || 0,
+            activeUserAvatars: item.preview_avatars ?? undefined,
             tag: item.category,
             review: item.review,
+            regularsCount: item.regulars_count ?? 0,
           }}
           onPress={() => handleResultPress(item)}
-          isFavorite={favoriteIds.has(item.placeId)}
-          onToggleFavorite={() =>
-            handleToggle(item.placeId, {
-              place: {
-                placeId: item.placeId,
-                name: item.name,
-                formattedAddress: item.formattedAddress,
-                neighborhood: item.neighborhood,
-                distance: item.distance,
-                latitude: item.lat,
-                longitude: item.lng,
-                types: [item.category],
-                active_users: item.active_users,
-                review: item.review as any,
-              },
-              details: { name: item.name, emoji: (item as any).emoji },
-            })
-          }
         />
       );
     },
     [
       handleResultPress,
-      showPlaceDetails,
-      favoriteIds,
-      handleToggle,
       multiSelectMode,
       localSelectedIds,
       categoryFilter,

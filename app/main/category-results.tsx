@@ -540,6 +540,7 @@ export default function CategoryResultsScreen() {
         neighborhood: item.neighborhood,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
+        regularsCount: item.regulars_count,
       };
 
       return (

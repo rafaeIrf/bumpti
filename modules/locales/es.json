@@ -96,7 +96,9 @@
     "activeUsersLabel": "personas aquí",
     "noConnections": "Inicia la conexión",
     "onePersonConnecting": "1 persona conectando",
-    "manyPeopleConnecting": "{{count}} personas conectando"
+    "manyPeopleConnecting": "{{count}} personas conectando",
+    "oneRegularHere": "1 Habitual",
+    "manyRegularsHere": "{{count}} Habituales"
   },
   "matches": "Chat",
   "profile": "Perfil",

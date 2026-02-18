@@ -80,6 +80,7 @@ function PlaceDetailsWrapper({
       distance={formatDistance(place.distance)}
       review={place.review}
       activeUsers={place.active_users}
+      regularsCount={place.regulars_count}
       isFavorite={favoriteIds.has(place.placeId)}
       onNavigate={() => {
         openMapsWithChooser({

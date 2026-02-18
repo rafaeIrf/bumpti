@@ -1,6 +1,8 @@
-import { HeartIcon, UsersIcon } from "@/assets/icons";
+import { StarIcon, UsersIcon } from "@/assets/icons";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
+import { Chip } from "@/components/ui/chip";
+import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -13,7 +15,6 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { RatingBadge } from "./ui/rating-badge";
 
 interface PlaceCardData {
   id: string;
@@ -21,10 +22,11 @@ interface PlaceCardData {
   address: string;
   distance: number;
   activeUsers: number;
-  activeUserAvatars?: UserAvatar[]; // Avatars with user_id for real-time removal
+  regularsCount?: number;
+  activeUserAvatars?: UserAvatar[];
   tag?: string;
-  neighborhood?: string; // NEW: Bairro name
-  rank?: number; // Ranking position (1-based)
+  neighborhood?: string;
+  rank?: number;
   review?: {
     average: number;
     count: number;
@@ -35,29 +37,20 @@ interface PlaceCardData {
 interface PlaceCardProps {
   place: PlaceCardData;
   onPress: () => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Medal colors for top 3
 const MEDAL_COLORS = {
-  1: "#FFD700", // Gold
-  2: "#C0C0C0", // Silver
-  3: "#CD7F32", // Bronze
+  1: "#FFD700",
+  2: "#C0C0C0",
+  3: "#CD7F32",
 };
 
-const getRankBadgeColor = (rank: number): string => {
-  return MEDAL_COLORS[rank as keyof typeof MEDAL_COLORS] || "#6B7280"; // Gray for 4+
-};
+const getRankBadgeColor = (rank: number): string =>
+  MEDAL_COLORS[rank as keyof typeof MEDAL_COLORS] || "#6B7280";
 
-export function PlaceCard({
-  place,
-  onPress,
-  isFavorite,
-  onToggleFavorite,
-}: PlaceCardProps) {
+export function PlaceCard({ place, onPress }: PlaceCardProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
   const overlay = useSharedValue(0);
@@ -84,6 +77,23 @@ export function PlaceCard({
   const hasAvatars =
     place.activeUserAvatars && place.activeUserAvatars.length > 0;
   const hasReview = place.review && place.review.average > 0;
+  const hasRegulars = (place.regularsCount ?? 0) > 0;
+
+  // Label for active users chip (when no avatars)
+  const activeUsersLabel = t(
+    place.activeUsers === 0
+      ? "place.noConnections"
+      : place.activeUsers === 1
+        ? "place.onePersonConnecting"
+        : "place.manyPeopleConnecting",
+    { count: place.activeUsers },
+  );
+
+  // Label for regulars chip
+  const regularsLabel =
+    place.regularsCount === 1
+      ? t("place.oneRegularHere")
+      : t("place.manyRegularsHere", { count: place.regularsCount });
 
   return (
     <AnimatedPressable
@@ -97,7 +107,7 @@ export function PlaceCard({
         style={[styles.hoverOverlay, overlayStyle]}
       />
 
-      {/* Rank Indicator - Subtle Top Line */}
+      {/* Rank Indicator */}
       {place.rank && place.rank <= 3 && (
         <View
           style={[
@@ -108,27 +118,17 @@ export function PlaceCard({
       )}
 
       <View style={styles.content}>
-        {/* Header: Name + Favorite */}
-        <View style={styles.headerRow}>
-          <ThemedText style={styles.placeTitle} numberOfLines={1}>
-            {place.name.toUpperCase()}
-          </ThemedText>
-          <Pressable onPress={() => onToggleFavorite?.()} hitSlop={12}>
-            <HeartIcon
-              width={20}
-              height={20}
-              color={isFavorite ? colors.accent : colors.textSecondary}
-              fill={isFavorite ? colors.accent : "none"}
-            />
-          </Pressable>
-        </View>
+        {/* Header: Name */}
+        <ThemedText style={styles.placeTitle} numberOfLines={1}>
+          {place.name.toUpperCase()}
+        </ThemedText>
 
-        {/* Meta: Category • Neighborhood • Distance */}
+        {/* Meta: Category • Neighborhood • Distance • Rating */}
         <View style={styles.metaRow}>
           {place.tag && (
             <>
               <ThemedText
-                style={[styles.tagText, { color: colors.textSecondary }]}
+                style={[styles.metaText, { color: colors.textSecondary }]}
               >
                 {t(`place.categories.${place.tag}`)}
               </ThemedText>
@@ -151,7 +151,6 @@ export function PlaceCard({
           >
             {formatDistance(place.distance)}
           </ThemedText>
-          {/* Rating */}
           {hasReview && (
             <>
               <View style={styles.dot} />
@@ -160,45 +159,41 @@ export function PlaceCard({
           )}
         </View>
 
-        {/* Footer: Live Status */}
+        {/* Footer: avatars + chips */}
         <View style={styles.footerRow}>
+          {/* Left: avatars (if active) OR active-users chip (if no avatars) */}
           {hasAvatars ? (
             <StackedAvatars
               avatars={place.activeUserAvatars!}
               totalCount={place.activeUsers}
               maxVisible={4}
-              size={36}
+              size={34}
             />
           ) : (
-            <View
-              style={[
-                styles.liveContainer,
-                hasActiveUsers && {
-                  backgroundColor: "rgba(29, 155, 240, 0.1)",
-                },
-              ]}
-            >
-              <UsersIcon
-                width={12}
-                height={12}
-                color={hasActiveUsers ? colors.accent : colors.textSecondary}
-              />
-              <ThemedText
-                style={[
-                  styles.liveText,
-                  hasActiveUsers && { color: colors.accent },
-                ]}
-              >
-                {t(
-                  place.activeUsers === 0
-                    ? "place.noConnections"
-                    : place.activeUsers === 1
-                      ? "place.onePersonConnecting"
-                      : "place.manyPeopleConnecting",
-                  { count: place.activeUsers },
-                )}
-              </ThemedText>
-            </View>
+            <Chip
+              label={activeUsersLabel}
+              icon={
+                <UsersIcon
+                  width={12}
+                  height={12}
+                  color={hasActiveUsers ? colors.accent : colors.textSecondary}
+                />
+              }
+              color={hasActiveUsers ? colors.accent : colors.textSecondary}
+              size="sm"
+            />
+          )}
+
+          {/* Right: regulars chip — always shown when there are regulars */}
+          {hasRegulars && (
+            <Chip
+              label={regularsLabel}
+              icon={
+                <StarIcon width={11} height={11} color={colors.textSecondary} />
+              }
+              color={colors.textSecondary}
+              size="sm"
+            />
           )}
         </View>
       </View>
@@ -237,13 +232,11 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: spacing.xs,
     marginBottom: 8,
   },
   metaText: {
-    ...typography.caption,
-  },
-  tagText: {
     ...typography.caption,
   },
   dot: {
@@ -258,21 +251,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 2,
-  },
-  liveContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: "rgba(255,255,255,0.03)",
-  },
-  liveText: {
-    ...typography.caption,
-    fontSize: 11,
-    color: "#A1A1AA",
-    fontWeight: "500",
+    gap: spacing.sm,
   },
   rankLine: {
     position: "absolute",

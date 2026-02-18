@@ -26,6 +26,9 @@ export type DeepLinkAction =
     }
   | {
       type: "like_received";
+    }
+  | {
+      type: "discover";
     };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +42,8 @@ export type NotificationType =
   | "nearby_activity_heating"
   | "match_created"
   | "message_received"
-  | "like_received";
+  | "like_received"
+  | "favorite_new_regular";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FCM Data Payload — raw data from push notification
