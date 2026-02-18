@@ -95,10 +95,10 @@
     },
     "activeUsersLabel": "personas aquí",
     "noConnections": "Inicia la conexión",
-    "onePersonConnecting": "1 persona conectando",
-    "manyPeopleConnecting": "{{count}} personas conectando",
-    "oneRegularHere": "1 Habitual",
-    "manyRegularsHere": "{{count}} Habituales"
+    "onePersonConnecting": "1 persona activa ahora",
+    "manyPeopleConnecting": "{{count}} personas activas ahora",
+    "oneRegularHere": "1 persona frecuenta este lugar",
+    "manyRegularsHere": "{{count}} personas frecuentan este lugar"
   },
   "matches": "Chat",
   "profile": "Perfil",
@@ -1121,10 +1121,10 @@
         }
       },
       "favoritePlaces": {
-        "title": "¿Cuáles son tus spots preferidos?",
-        "subtitle": "Aumenta tus conexiones eligiendo tus spots favoritos.",
+        "title": "Tus Spots favoritos",
+        "subtitle": "Elige al menos 3 Spots donde te gustaría conocer personas",
         "searchPlaceholder": "Buscar lugar...",
-        "selectAtLeastOne": "Selecciona al menos 1 spot",
+        "selectAtLeastOne": "Selecciona al menos 3 spots",
         "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación."
       },
       "cityNotAvailable": {

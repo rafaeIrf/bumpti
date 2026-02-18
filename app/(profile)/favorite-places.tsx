@@ -8,7 +8,6 @@ import { LocationPermissionState } from "@/components/location-permission-state"
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
-import { spacing } from "@/constants/theme";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { t } from "@/modules/locales";
 import {
@@ -56,6 +55,7 @@ export default function EditFavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   } = useFavoritePlaces({
     initialSelectedIds:
       initialFavorites.map((p: any) => p.placeId || p.id) || [],
@@ -122,7 +122,7 @@ export default function EditFavoritePlacesScreen() {
         <ScreenBottomBar
           primaryLabel={t("common.save")}
           onPrimaryPress={handleSave}
-          primaryDisabled={selectedPlaceIds.length < 1}
+          primaryDisabled={needsMore}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet

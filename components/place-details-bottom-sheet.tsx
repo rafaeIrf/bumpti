@@ -336,6 +336,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onNavigate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <NavigationIcon {...props} />}
                 color={colors.text}
               />
@@ -358,6 +359,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onRate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <StarIcon {...props} />}
                 color={colors.text}
               />
@@ -383,6 +385,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   handleFavorite();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => (
                   <HeartIcon
                     {...props}

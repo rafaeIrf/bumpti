@@ -492,6 +492,7 @@ export function PlaceSearchContent({
     <BaseTemplateScreen
       isModal={isModal}
       TopHeader={header}
+      useKeyboardAvoidingView={multiSelectMode}
       BottomBar={
         multiSelectMode && localSelectedIds.length > 0 ? (
           <ScreenBottomBar variant="custom" showBorder>

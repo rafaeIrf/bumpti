@@ -95,10 +95,10 @@
     },
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
-    "onePersonConnecting": "1 person connecting",
-    "manyPeopleConnecting": "{{count}} people connecting",
-    "oneRegularHere": "1 Regular",
-    "manyRegularsHere": "{{count}} Regulars"
+    "onePersonConnecting": "1 person active now",
+    "manyPeopleConnecting": "{{count}} people active now",
+    "oneRegularHere": "1 person frequents this place",
+    "manyRegularsHere": "{{count}} people frequent this place"
   },
   "matches": "Chat",
   "profile": "Profile",
@@ -1121,12 +1121,11 @@
         }
       },
       "favoritePlaces": {
-        "title": "What are your favorite spots?",
-        "subtitle": "Increase your connections by choosing your favorite spots.",
+        "title": "Your favorite Spots",
+        "subtitle": "Pick at least 3 Spots where you'd like to meet people",
         "searchPlaceholder": "Search place...",
-        "selectAtLeastOne": "Select at least 1 spot",
-        "locationNeeded": "To suggest places near you, we need your location.",
-        "minimumHint": "Select at least {{minimum}} places ({{current}}/{{minimum}})"
+        "selectAtLeastOne": "Select at least 3 spots",
+        "locationNeeded": "To suggest places near you, we need your location."
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",

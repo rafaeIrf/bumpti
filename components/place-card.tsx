@@ -1,4 +1,4 @@
-import { StarIcon, UsersIcon } from "@/assets/icons";
+import { ArrowRightIcon, UsersIcon } from "@/assets/icons";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
 import { Chip } from "@/components/ui/chip";
@@ -77,7 +77,6 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
   const hasAvatars =
     place.activeUserAvatars && place.activeUserAvatars.length > 0;
   const hasReview = place.review && place.review.average > 0;
-  const hasRegulars = (place.regularsCount ?? 0) > 0;
 
   // Label for active users chip (when no avatars)
   const activeUsersLabel = t(
@@ -88,12 +87,6 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
         : "place.manyPeopleConnecting",
     { count: place.activeUsers },
   );
-
-  // Label for regulars chip
-  const regularsLabel =
-    place.regularsCount === 1
-      ? t("place.oneRegularHere")
-      : t("place.manyRegularsHere", { count: place.regularsCount });
 
   return (
     <AnimatedPressable
@@ -118,10 +111,16 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
       )}
 
       <View style={styles.content}>
-        {/* Header: Name */}
-        <ThemedText style={styles.placeTitle} numberOfLines={1}>
-          {place.name.toUpperCase()}
-        </ThemedText>
+        {/* Header: Name + Arrow */}
+        <View style={styles.headerRow}>
+          <ThemedText style={styles.placeTitle} numberOfLines={1}>
+            {place.name.toUpperCase()}
+          </ThemedText>
+          <ArrowRightIcon
+            color={colors.textSecondary}
+            style={styles.arrowIcon}
+          />
+        </View>
 
         {/* Meta: Category • Neighborhood • Distance • Rating */}
         <View style={styles.metaRow}>
@@ -159,9 +158,8 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
           )}
         </View>
 
-        {/* Footer: avatars + chips */}
+        {/* Footer: avatars or chip */}
         <View style={styles.footerRow}>
-          {/* Left: avatars (if active) OR active-users chip (if no avatars) */}
           {hasAvatars ? (
             <StackedAvatars
               avatars={place.activeUserAvatars!}
@@ -180,18 +178,6 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
                 />
               }
               color={hasActiveUsers ? colors.accent : colors.textSecondary}
-              size="sm"
-            />
-          )}
-
-          {/* Right: regulars chip — always shown when there are regulars */}
-          {hasRegulars && (
-            <Chip
-              label={regularsLabel}
-              icon={
-                <StarIcon width={11} height={11} color={colors.textSecondary} />
-              }
-              color={colors.textSecondary}
               size="sm"
             />
           )}
@@ -229,6 +215,9 @@ const styles = StyleSheet.create({
     flex: 1,
     letterSpacing: 0.5,
   },
+  arrowIcon: {
+    marginTop: 2,
+  },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -249,7 +238,6 @@ const styles = StyleSheet.create({
   footerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginTop: 2,
     gap: spacing.sm,
   },

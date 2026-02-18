@@ -16,8 +16,6 @@ import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
 import React from "react";
 
-const MIN_FAVORITES = 3;
-
 export default function FavoritePlacesScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
   const { location: userLocation } = useCachedLocation();
@@ -43,6 +41,7 @@ export default function FavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   } = useFavoritePlaces({ searchPath: "./place-search" });
 
   // Check if we have no suggested places after loading completes (city not supported)
@@ -56,8 +55,6 @@ export default function FavoritePlacesScreen() {
 
   const isCityNotAvailable =
     !isLoadingPlaces && !locationLoading && userLocation && !hasSuggestedPlaces;
-
-  const needsMore = selectedPlaceIds.length < MIN_FAVORITES;
 
   const handleContinue = () => {
     if (selectedPlaceIds.length > 0) {
@@ -95,19 +92,6 @@ export default function FavoritePlacesScreen() {
                   onToggleExpanded={() => setIsExpanded(!isExpanded)}
                   onRemoveItem={removePlace}
                 />
-              ) : needsMore ? (
-                <ThemedText
-                  style={{
-                    ...typography.caption,
-                    color: colors.textSecondary,
-                    textAlign: "center",
-                  }}
-                >
-                  {t("screens.onboarding.favoritePlaces.minimumHint", {
-                    current: selectedPlaceIds.length,
-                    minimum: MIN_FAVORITES,
-                  })}
-                </ThemedText>
               ) : undefined
             }
           />

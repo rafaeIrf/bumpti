@@ -33,6 +33,7 @@ const CATEGORIES: PlaceCategory[] = [
 ];
 
 const MAX_SELECTIONS = 12;
+export const MIN_FAVORITES = 3;
 
 export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];
@@ -157,6 +158,8 @@ export function useFavoritePlaces({
     return suggestedPlaces.find((c) => c.category === category)?.places || [];
   };
 
+  const needsMore = selectedPlaceIds.length < MIN_FAVORITES;
+
   return {
     selectedPlaceIds,
     placesMap,
@@ -169,6 +172,7 @@ export function useFavoritePlaces({
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   };
 }
 
