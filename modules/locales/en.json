@@ -95,8 +95,8 @@
     },
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
-    "onePersonConnecting": "1 person active now",
-    "manyPeopleConnecting": "{{count}} people active now",
+    "onePersonConnecting": "1 person recently active",
+    "manyPeopleConnecting": "{{count}} people recently active",
     "oneRegularHere": "1 person frequents this place",
     "manyRegularsHere": "{{count}} people frequent this place"
   },

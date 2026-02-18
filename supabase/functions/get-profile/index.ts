@@ -234,6 +234,7 @@ Deno.serve(async (req) => {
           nearby_activity: true,
           messages: true,
           matches: true,
+          likes: true,
         },
         // University fields
         university_id: rest.university_id ?? null,
