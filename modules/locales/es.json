@@ -703,7 +703,7 @@
       },
       "planHero": {
         "emptyState": {
-          "title": "¿Cuál es el plan?",
+          "title": "Planifica tu semana",
           "subtitle": "Ve quién va y conéctate de antemano",
           "locationButton": "¿Dónde te conectarás?",
           "confirmedOne": "{{count}} persona confirmó hoy",
@@ -1125,7 +1125,8 @@
         "subtitle": "Elige al menos 3 Spots donde te gustaría conocer personas",
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecciona al menos 3 spots",
-        "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación."
+        "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación.",
+        "selectionHint": "{{current}}/{{min}}"
       },
       "cityNotAvailable": {
         "title": "¡Todavía no llegamos ahí!",

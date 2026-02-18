@@ -8,6 +8,7 @@ import { LocationPermissionState } from "@/components/location-permission-state"
 import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
+import { spacing } from "@/constants/theme";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { t } from "@/modules/locales";
 import {
