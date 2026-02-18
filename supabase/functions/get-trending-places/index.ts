@@ -30,6 +30,7 @@ interface TrendingPlace {
   active_users: number;
   preview_avatars: { user_id: string; url: string }[] | null;
   total_count: number;
+  regulars_count: number;
 }
 
 Deno.serve(async (req) => {
@@ -118,7 +119,14 @@ Deno.serve(async (req) => {
     const totalCount = places?.[0]?.total_count ?? 0;
 
     const results = await Promise.all((places || []).map(async (p: TrendingPlace) => {
-      const signedAvatars = await signUserAvatars(adminSupabase, p.preview_avatars);
+      // Deduplicate by user_id — keep first occurrence per user
+      const seenUserIds = new Set<string>();
+      const uniqueAvatars = (p.preview_avatars ?? []).filter((a) => {
+        if (seenUserIds.has(a.user_id)) return false;
+        seenUserIds.add(a.user_id);
+        return true;
+      });
+      const signedAvatars = await signUserAvatars(adminSupabase, uniqueAvatars);
       return {
         place_id: p.id,
         name: p.name,
@@ -138,6 +146,7 @@ Deno.serve(async (req) => {
                 tags: p.review_tags,
               }
             : undefined,
+        regulars_count: p.regulars_count ?? 0,
       };
     }));
 

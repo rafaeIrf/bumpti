@@ -54,6 +54,13 @@ export function resolveDeepLink(
       };
     }
 
+    // ── Favorite New Regular → Discover tab ───────────────────────────────
+    case "favorite_new_regular": {
+      return {
+        type: "discover",
+      };
+    }
+
     // ── Match Created ─────────────────────────────────────────────────────
     case "match_created": {
       if (!data.match_id) {

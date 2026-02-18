@@ -540,6 +540,7 @@ export default function CategoryResultsScreen() {
         neighborhood: item.neighborhood,
         rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
+        regularsCount: item.regulars_count,
       };
 
       return (
@@ -741,7 +742,19 @@ export default function CategoryResultsScreen() {
         </Animated.View>
 
         {(() => {
-          if (!hasLocationPermission) {
+          // Show loading skeleton while permission is being checked
+          if (permissionLoading) {
+            return (
+              <ThemedView style={{ paddingTop: filterHeight }}>
+                <PlaceLoadingSkeleton count={6} />
+              </ThemedView>
+            );
+          }
+
+          // Location permission gate - skip for modes that don't require location
+          const requiresLocation = !trendingMode && !favoritesMode;
+
+          if (requiresLocation && !hasLocationPermission) {
             return (
               <LocationPermissionState
                 canAskAgain={canAskAgain}
@@ -751,7 +764,7 @@ export default function CategoryResultsScreen() {
             );
           }
 
-          if (isLoadingState || permissionLoading) {
+          if (isLoadingState) {
             return (
               <ThemedView style={{ paddingTop: filterHeight }}>
                 <PlaceLoadingSkeleton count={6} />
@@ -760,7 +773,6 @@ export default function CategoryResultsScreen() {
           }
 
           if (places.length === 0) {
-            // Show cityNotAvailable mode for category/nearby searches when no results
             const shouldShowCityNotAvailable =
               !favoritesMode &&
               !trendingMode &&
@@ -792,7 +804,7 @@ export default function CategoryResultsScreen() {
                 styles.listContainer,
                 {
                   paddingBottom: spacing.xxl * 2 + insets.bottom,
-                  paddingTop: filterHeight + spacing.sm, // Add padding for the absolute header
+                  paddingTop: filterHeight + spacing.sm,
                 },
               ]}
               onScroll={scrollHandler}
@@ -804,7 +816,7 @@ export default function CategoryResultsScreen() {
               onMomentumScrollBegin={() => {
                 endReachedDuringMomentumRef.current = false;
               }}
-              onScrollBeginDrag={(e) => {
+              onScrollBeginDrag={() => {
                 endReachedDuringMomentumRef.current = false;
                 hasUserScrolledSinceChangeRef.current = true;
               }}

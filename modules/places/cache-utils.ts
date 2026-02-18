@@ -119,9 +119,12 @@ function handleCacheUpdate(
         });
         
         // Filter out empty places if configured (e.g., for getTrendingPlaces)
+        // Keep places that still have active users OR regulars
         if (handler.filterEmptyPlaces && handler.setPlaces && places) {
           const filteredPlaces = places.filter(
-            (place: any) => (place.active_users ?? 0) > 0
+            (place: any) =>
+              (place.active_users ?? 0) > 0 ||
+              (place.regulars_count ?? 0) > 0
           );
           handler.setPlaces(draft, filteredPlaces);
         }

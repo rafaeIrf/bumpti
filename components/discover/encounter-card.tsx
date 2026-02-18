@@ -83,6 +83,10 @@ export default function EncounterCard({
           })
         : t("screens.discover.contextOverlapGeneric");
     }
+    if (encounter.encounter_type === "shared_favorites") {
+      // Place names shown as chips below, no text label needed
+      return null;
+    }
     if (encounter.encounter_type === "vibe_match") {
       if (encounter.place_name) {
         return t("screens.discover.contextRoutine", {
@@ -312,6 +316,50 @@ export default function EncounterCard({
                         </View>
                       );
                     })}
+                  </View>
+                );
+              })()}
+
+            {/* Place pills (shared_favorites only) */}
+            {encounter.encounter_type === "shared_favorites" &&
+              (() => {
+                const placeNames = encounter.metadata?.shared_place_names ?? [];
+                if (placeNames.length === 0) return null;
+                const maxPills = 1;
+                const visiblePlaces = placeNames.slice(0, maxPills);
+                const extraCount = placeNames.length - maxPills;
+                return (
+                  <View style={styles.interestsRow}>
+                    {visiblePlaces.map((placeName, i) => (
+                      <View
+                        key={`place-${i}`}
+                        style={[
+                          styles.interestPill,
+                          { backgroundColor: "rgba(255,255,255,0.15)" },
+                        ]}
+                      >
+                        <Text
+                          style={[typography.caption, { color: "#FFFFFF" }]}
+                          numberOfLines={1}
+                        >
+                          {placeName}
+                        </Text>
+                      </View>
+                    ))}
+                    {extraCount > 0 && (
+                      <View
+                        style={[
+                          styles.interestPill,
+                          { backgroundColor: "rgba(255,255,255,0.15)" },
+                        ]}
+                      >
+                        <Text
+                          style={[typography.caption, { color: "#FFFFFF" }]}
+                        >
+                          +{extraCount}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 );
               })()}

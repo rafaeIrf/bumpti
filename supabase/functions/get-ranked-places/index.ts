@@ -110,6 +110,7 @@ serve(async (req) => {
           count: p.review_count,
           tags: p.review_tags
         } : undefined,
+        regulars_count: p.regulars_count ?? 0,
       };
     }));
 

@@ -7,9 +7,10 @@ import { MultiSelectSheet } from "@/components/multi-select-sheet";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { spacing } from "@/constants/theme";
+import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
@@ -18,6 +19,7 @@ import React from "react";
 export default function FavoritePlacesScreen() {
   const { completeCurrentStep } = useOnboardingFlow();
   const { location: userLocation } = useCachedLocation();
+  const colors = useThemeColors();
 
   // Track screen view
   useScreenTracking({
@@ -39,6 +41,7 @@ export default function FavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   } = useFavoritePlaces({ searchPath: "./place-search" });
 
   // Check if we have no suggested places after loading completes (city not supported)
@@ -78,7 +81,7 @@ export default function FavoritePlacesScreen() {
           <ScreenBottomBar
             primaryLabel={t("common.continue")}
             onPrimaryPress={handleContinue}
-            primaryDisabled={false}
+            primaryDisabled={needsMore}
             topContent={
               selectedPlaceIds.length > 0 ? (
                 <MultiSelectSheet
@@ -106,24 +109,21 @@ export default function FavoritePlacesScreen() {
         >
           <ThemedText
             style={{
-              fontSize: 24,
-              fontWeight: "600",
-              lineHeight: 32,
+              ...typography.heading,
               marginBottom: spacing.md,
               textAlign: "center",
-              color: "#FFFFFF",
+              color: colors.text,
             }}
           >
             {t("screens.onboarding.cityNotAvailable.title")}
           </ThemedText>
           <ThemedText
             style={{
-              fontSize: 16,
-              lineHeight: 24,
+              ...typography.body,
               textAlign: "center",
               maxWidth: 320,
               marginBottom: spacing.lg,
-              color: "#8B98A5",
+              color: colors.textSecondary,
             }}
           >
             {t("screens.onboarding.cityNotAvailable.subtitle")}

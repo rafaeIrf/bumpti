@@ -1,5 +1,6 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,25 +59,55 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
+    const adminClient = createAdminClient();
 
-    // 1. Check recent presence (7-day window)
+    // 1. Check recent presence (7-day window) + shared favorites in parallel
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const { data: presenceData, error: presenceError } = await supabase
-      .from("user_presences")
-      .select("id")
-      .eq("user_id", userId)
-      .gte("entered_at", sevenDaysAgo.toISOString())
-      .limit(1);
+    const [presenceResult, sharedResult] = await Promise.all([
+      supabase
+        .from("user_presences")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("entered_at", sevenDaysAgo.toISOString())
+        .limit(1),
+      supabase.rpc("get_shared_favorite_users", { p_viewer_id: userId }),
+    ]);
 
-    if (presenceError) {
-      console.error("[get-discover-feed] presenceError:", presenceError);
+    if (presenceResult.error) {
+      console.error("[get-discover-feed] presenceError:", presenceResult.error);
     }
 
-    const hasRecentPresence = (presenceData?.length ?? 0) > 0;
+    const hasRecentPresence = (presenceResult.data?.length ?? 0) > 0;
 
-    // 2. If no recent presence, return early (empty feed)
+    // Sign avatar photos for shared favorites
+    const rawShared = sharedResult.data ?? [];
+    const sharedFavorites = await Promise.all(
+      rawShared.map(async (u: any) => {
+        const firstPhoto = u.other_photos?.[0];
+        let signedUrl: string | null = null;
+        if (firstPhoto) {
+          const { data: signed } = await adminClient.storage
+            .from("avatars")
+            .createSignedUrl(firstPhoto, 3600);
+          signedUrl = signed?.signedUrl ?? null;
+        }
+        return {
+          other_user_id: u.other_user_id,
+          other_name: u.other_name,
+          other_age: u.other_age,
+          other_photos: signedUrl ? [signedUrl] : [],
+          other_verification_status: u.other_verification_status,
+          other_bio: u.other_bio,
+          shared_count: u.shared_count,
+          shared_place_ids: u.shared_place_ids,
+          shared_place_names: u.shared_place_names,
+        };
+      })
+    );
+
+    // 2. If no recent presence, return early with only shared_favorites
     if (!hasRecentPresence) {
       return new Response(
         JSON.stringify({
@@ -85,6 +116,7 @@ Deno.serve(async (req) => {
             direct_overlap: [],
             vibe_match: [],
             path_match: [],
+            shared_favorites: sharedFavorites,
           },
         }),
         { headers: corsHeaders }
@@ -113,9 +145,13 @@ Deno.serve(async (req) => {
       direct_overlap: [] as any[],
       vibe_match: [] as any[],
       path_match: [] as any[],
+      shared_favorites: [] as any[],
     };
 
+    const seenUserIds = new Set<string>();
+
     for (const encounter of encounters ?? []) {
+      seenUserIds.add(encounter.other_user_id);
       if (encounter.encounter_type === "direct_overlap") {
         feed.direct_overlap.push(encounter);
       } else if (encounter.encounter_type === "vibe_match") {
@@ -125,6 +161,11 @@ Deno.serve(async (req) => {
         feed.path_match.push(encounter);
       }
     }
+
+    // 5. Dedup shared_favorites: exclude users already in sections 1-3
+    feed.shared_favorites = sharedFavorites.filter(
+      (u: any) => !seenUserIds.has(u.other_user_id)
+    );
 
     return new Response(
       JSON.stringify({

@@ -32,6 +32,7 @@ interface PlaceDetailsBottomSheetProps {
   isFavorite?: boolean;
   placeId: string;
   activeUsers?: number;
+  regularsCount?: number;
   onNavigate?: () => void;
   onToggleFavorite?: (
     placeId: string,
@@ -57,6 +58,7 @@ export function PlaceDetailsBottomSheet({
   review,
   placeId,
   activeUsers = 0,
+  regularsCount = 0,
   isFavorite = false,
   onNavigate,
   onToggleFavorite,
@@ -219,7 +221,10 @@ export function PlaceDetailsBottomSheet({
         </View>
 
         {/* Community & Insights Section (Moved Up & Redesigned) */}
-        {(hasRating || activeUsers > 0 || vibeTagsDisplay.length > 0) && (
+        {(hasRating ||
+          activeUsers > 0 ||
+          regularsCount > 0 ||
+          vibeTagsDisplay.length > 0) && (
           <View style={styles.communitySection}>
             {/* Vibe Cloud - Centered & Premium */}
             {vibeTagsDisplay.length > 0 && (
@@ -260,6 +265,31 @@ export function PlaceDetailsBottomSheet({
                     {activeUsers === 1
                       ? t("place.onePersonConnecting")
                       : t("place.manyPeopleConnecting", { count: activeUsers })}
+                  </ThemedText>
+                </View>
+              </View>
+            )}
+
+            {/* Regulars Badge */}
+            {regularsCount > 0 && (
+              <View
+                style={[
+                  styles.socialProofRow,
+                  { flexDirection: "row", justifyContent: "center" },
+                ]}
+              >
+                <View style={styles.socialBadge}>
+                  <StarIcon
+                    width={12}
+                    height={12}
+                    color={colors.textSecondary}
+                  />
+                  <ThemedText
+                    style={[styles.socialText, { color: colors.textSecondary }]}
+                  >
+                    {regularsCount === 1
+                      ? t("place.oneRegularHere")
+                      : t("place.manyRegularsHere", { count: regularsCount })}
                   </ThemedText>
                 </View>
               </View>
@@ -306,6 +336,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onNavigate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <NavigationIcon {...props} />}
                 color={colors.text}
               />
@@ -328,6 +359,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onRate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <StarIcon {...props} />}
                 color={colors.text}
               />
@@ -353,6 +385,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   handleFavorite();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => (
                   <HeartIcon
                     {...props}

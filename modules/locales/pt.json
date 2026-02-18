@@ -95,8 +95,10 @@
     },
     "activeUsersLabel": "pessoas no local",
     "noConnections": "Inicie a conexão",
-    "onePersonConnecting": "1 pessoa conectando",
-    "manyPeopleConnecting": "{{count}} pessoas se conectando"
+    "onePersonConnecting": "1 pessoa ativa agora",
+    "manyPeopleConnecting": "{{count}} pessoas ativas agora",
+    "oneRegularHere": "1 pessoa frequenta esse lugar",
+    "manyRegularsHere": "{{count}} pessoas frequentam esse lugar"
   },
   "matches": "Chat",
   "profile": "Perfil",
@@ -1119,10 +1121,10 @@
         }
       },
       "favoritePlaces": {
-        "title": "Quais são seus Spots preferidos?",
-        "subtitle": "Aumente suas conexões escolhendo seus Spots favoritos.",
+        "title": "Seus Spots favoritos",
+        "subtitle": "Escolha pelo menos 3 Spots que você gostaria de conhecer pessoas",
         "searchPlaceholder": "Buscar lugar...",
-        "selectAtLeastOne": "Selecione pelo menos 1 spot",
+        "selectAtLeastOne": "Selecione pelo menos 3 spots",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização."
       },
       "cityNotAvailable": {
@@ -1329,6 +1331,12 @@
       "sectionVibeDesc": "Interesses e vibes em comum",
       "sectionRoutine": "Mesma rotina",
       "sectionRoutineDesc": "Frequentam os mesmos lugares que você",
+      "sharedFavorites": {
+        "title": "Mesmos Lugares",
+        "subtitle": "Curtem os mesmos spots que você",
+        "onePlace": "Também curte {{place}}",
+        "morePlaces": "{{place}} +{{extra}}"
+      },
       "contextOverlap": "Em {{place}}",
       "contextOverlapGeneric": "Cruzou seu caminho recentemente",
       "contextVibe": "{{count}} interesses em comum",
@@ -1407,6 +1415,9 @@
     "planningToGo": "Planejando ir",
     "planningToGoToday": "Planejando ir hoje",
     "planningToGoTomorrow": "Planejando ir amanhã",
+    "planningToGoOn": "Planejando ir {{weekday}}",
+    "frequentsPlace": "Frequenta este lugar",
+    "favoritedPlace": "Favoritou este lugar",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aqui",
     "nearLocation": "Próximo de {{location}}",

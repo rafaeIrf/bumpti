@@ -1,5 +1,6 @@
 import {
   BriefcaseIcon,
+  CalendarIcon,
   CigarreteIcon,
   GlobeIcon,
   GraduationCapIcon,
@@ -26,9 +27,9 @@ import { useUserActions } from "@/hooks/use-user-actions";
 import { getCurrentLanguage, t } from "@/modules/locales";
 import { ActiveUserAtPlace } from "@/modules/presence/api";
 import { supabase } from "@/modules/supabase/client";
-import { isDateToday } from "@/utils/date";
 import { triggerLightHaptic } from "@/utils/haptics";
 import { prefetchImages } from "@/utils/image-prefetch";
+import { getPresenceBadge, PresenceBadgeIcon } from "@/utils/presence-badge";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
@@ -249,6 +250,23 @@ export function UserProfileCard({
     );
   };
 
+  const renderBadgeIcon = (icon: PresenceBadgeIcon): React.ReactNode => {
+    switch (icon) {
+      case "dot":
+        return <View style={styles.onlineDot} />;
+      case "sparkles":
+        return <SparklesIcon width={12} height={12} color="#2997FF" />;
+      case "mapPin":
+        return <MapPinIcon width={12} height={12} color="#2997FF" />;
+      case "star":
+        return <StarIcon width={12} height={12} color="#2997FF" />;
+      case "calendar":
+        return <CalendarIcon width={12} height={12} color="#2997FF" />;
+      default:
+        return null;
+    }
+  };
+
   const renderTag = (label: string, icon?: React.ReactNode, blue?: boolean) => (
     <View
       key={label}
@@ -355,27 +373,19 @@ export function UserProfileCard({
 
           {/* Quick status/location */}
           <View style={styles.quickStatusRow}>
-            {/* Contextual Tags */}
-            {profile.entry_type === "planning"
-              ? renderTag(
-                  isDateToday(profile.planned_for)
-                    ? t("userProfile.planningToGoToday")
-                    : t("userProfile.planningToGoTomorrow"),
-                  <SparklesIcon width={12} height={12} color="#2997FF" />,
-                  true,
-                )
-              : profile.entry_type === "checkin_plus"
-                ? renderTag(
-                    t("userProfile.planningToGo"),
-                    <SparklesIcon width={12} height={12} color="#2997FF" />,
-                    true,
-                  )
-                : profile.entry_type === "physical" &&
-                  renderTag(
-                    t("userProfile.hereNow"),
-                    <View style={styles.onlineDot} />,
-                    true,
-                  )}
+            {/* Contextual Tags — resolved by presence-badge helper */}
+            {(() => {
+              const badge = getPresenceBadge(
+                profile.entry_type,
+                profile.planned_for,
+              );
+              if (!badge) return null;
+              return renderTag(
+                badge.label,
+                renderBadgeIcon(badge.icon),
+                badge.highlighted,
+              );
+            })()}
           </View>
         </View>
       </View>

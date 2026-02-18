@@ -18,13 +18,14 @@ export type DiscoverEncounter = {
   user_a_id: string;
   user_b_id: string;
   place_id: string;
-  encounter_type: "direct_overlap" | "routine_match" | "vibe_match" | "path_match";
+  encounter_type: "direct_overlap" | "routine_match" | "vibe_match" | "path_match" | "shared_favorites";
   affinity_score: number;
   last_encountered_at: string;
   metadata: {
     overlap_seconds?: number;
     shared_interests?: number;
     shared_places?: number;
+    shared_place_names?: string[];
   };
   shared_interests_count: number;
   // other_user fields from the RPC
@@ -41,12 +42,29 @@ export type DiscoverEncounter = {
 
 
 /**
+ * A user who shares favorite places with the viewer.
+ * Returned by the get_shared_favorite_users RPC.
+ */
+export type SharedFavoriteUser = {
+  other_user_id: string;
+  other_name: string | null;
+  other_age: number | null;
+  other_photos: string[];
+  other_verification_status: string | null;
+  other_bio: string | null;
+  shared_count: number;
+  shared_place_ids: string[];
+  shared_place_names: string[];
+};
+
+/**
  * Categorized discover feed.
  */
 export type DiscoverFeed = {
   direct_overlap: DiscoverEncounter[];
   vibe_match: DiscoverEncounter[];
   path_match: DiscoverEncounter[];
+  shared_favorites: SharedFavoriteUser[];
 };
 
 /**

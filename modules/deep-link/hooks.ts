@@ -4,6 +4,7 @@ import { logger } from "@/utils/logger";
 import messaging, {
   type FirebaseMessagingTypes,
 } from "@react-native-firebase/messaging";
+import * as Notifications from "expo-notifications";
 
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
@@ -85,6 +86,12 @@ export function useNotificationDeepLink() {
           router.replace("/(tabs)/(chat)");
           break;
         }
+
+        // ── Discover → Discover tab ───────────────────────────────────────
+        case "discover": {
+          router.replace("/(tabs)/(discover)");
+          break;
+        }
       }
     },
     [router, handlePlaceClick],
@@ -157,4 +164,32 @@ export function useNotificationDeepLink() {
 
     return unsubscribe;
   }, [processNotification]);
+
+  // ── Expo Notifications tap (Android foreground bridge) ──────────────────
+  // On Android, foreground FCM messages are bridged to expo-notifications
+  // local notifications. Tapping those goes through expo-notifications
+  // response handler, NOT Firebase's onNotificationOpenedApp.
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        if (!data?.type) {
+          logger.log("[DeepLink] No type in expo-notification tap");
+          return;
+        }
+
+        logger.log("[DeepLink] Expo notification tap:", {
+          type: data.type,
+          placeId: data.place_id,
+        });
+
+        const action = resolveDeepLink(data as unknown as FCMDataPayload);
+        if (action) {
+          executeDeepLink(action);
+        }
+      },
+    );
+
+    return () => subscription.remove();
+  }, [executeDeepLink]);
 }
