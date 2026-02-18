@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - staging
+      - "release/*"
   workflow_dispatch:
     inputs:
       submit:
