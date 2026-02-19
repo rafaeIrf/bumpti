@@ -247,7 +247,7 @@ export default function ProfileEditScreen() {
             photos={photos}
             onPhotosChange={handlePhotosChange}
             maxPhotos={9}
-            minPhotos={3}
+            minPhotos={2}
             isUploading={isUploading}
           />
         </View>

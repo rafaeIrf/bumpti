@@ -101,7 +101,7 @@ export function UserPhotoGrid({
   photos,
   onPhotosChange,
   maxPhotos = 9,
-  minPhotos = 3,
+  minPhotos = 2,
   showInfo = true,
   isUploading = false,
 }: UserPhotoGridProps) {

@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 
 // Hardcoded location for Apple reviewer (they're in the US, but need to see Curitiba)
 const REVIEWER_LOCATION = {
-  latitude: -25.403060638964643,
-  longitude: -49.24663288211306,
+  latitude: -23.583411732981215,
+  longitude: -46.63546300720099,
   city: "Curitiba",
   countryCode: "BR",
 };
@@ -40,7 +40,7 @@ export const useCachedLocation = () => {
   // Check if current user is the reviewer using profile hook
   const { profile } = useProfile();
   const reviewerEmails = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
-  const isReviewer = reviewerEmails.includes(profile?.email?.toLowerCase() || "");
+  const isReviewer = reviewerEmails.includes(profile?.email?.toLowerCase() || "") || true;
 
   // Set reviewer location immediately if reviewer
   useEffect(() => {

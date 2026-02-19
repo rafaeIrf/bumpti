@@ -136,6 +136,14 @@ Deno.serve(async (req) => {
     
     const photos = formData.getAll("photos").filter((f): f is File => f instanceof File);
 
+    // Server-side photo limit validation (prevents abuse via direct API calls)
+    if (photos.length > 9) {
+      return new Response(
+        JSON.stringify({ error: "too_many_photos", message: "Maximum of 9 photos allowed." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const {
       data: { user },
       error: userError,

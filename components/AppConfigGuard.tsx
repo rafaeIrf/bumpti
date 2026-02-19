@@ -64,11 +64,19 @@ export function AppConfigGuard({ children }: AppConfigGuardProps) {
 
       // Determine version status
       if (isVersionSmaller(currentVersion, data.min_version)) {
-        logger.warn("[AppConfigGuard] Force update required", {
-          currentVersion,
-          minVersion: data.min_version,
-        });
-        setStatus("force_update");
+        if (__DEV__) {
+          logger.info("[AppConfigGuard] Force update skipped in dev mode", {
+            currentVersion,
+            minVersion: data.min_version,
+          });
+          setStatus("up_to_date");
+        } else {
+          logger.warn("[AppConfigGuard] Force update required", {
+            currentVersion,
+            minVersion: data.min_version,
+          });
+          setStatus("force_update");
+        }
       } else if (isVersionSmaller(currentVersion, data.latest_version)) {
         logger.info("[AppConfigGuard] Update suggested", {
           currentVersion,
