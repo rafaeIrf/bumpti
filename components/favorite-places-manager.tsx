@@ -33,6 +33,7 @@ const CATEGORIES: PlaceCategory[] = [
 ];
 
 const MAX_SELECTIONS = 12;
+export const MIN_FAVORITES = 3;
 
 export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];
@@ -157,6 +158,8 @@ export function useFavoritePlaces({
     return suggestedPlaces.find((c) => c.category === category)?.places || [];
   };
 
+  const needsMore = selectedPlaceIds.length < MIN_FAVORITES;
+
   return {
     selectedPlaceIds,
     placesMap,
@@ -169,6 +172,7 @@ export function useFavoritePlaces({
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   };
 }
 
@@ -276,6 +280,18 @@ export function FavoritePlacesContent({
           </ThemedText>
         </Pressable>
 
+        {/* Selection Counter Hint */}
+        <View style={styles.selectionHintRow}>
+          <ThemedText
+            style={[styles.selectionHint, { color: colors.textSecondary }]}
+          >
+            {t("screens.onboarding.favoritePlaces.selectionHint", {
+              current: selectedPlaceIds.length,
+              min: MIN_FAVORITES,
+            })}
+          </ThemedText>
+        </View>
+
         {/* Suggested Places by Category */}
         {isLoadingPlaces || locationLoading || isStillLoadingLocation ? (
           <View style={styles.loadingContainer}>
@@ -380,7 +396,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 999,
     borderWidth: 1,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  selectionHintRow: {
+    alignItems: "flex-end",
+    marginTop: spacing.sm,
+    marginBottom: -spacing.md - spacing.xs,
+  },
+  selectionHint: {
+    ...typography.caption,
   },
   searchButtonPressed: {
     opacity: 0.7,

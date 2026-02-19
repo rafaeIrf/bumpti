@@ -26,10 +26,13 @@ export function StackedAvatars({
   size = 32,
 }: StackedAvatarsProps) {
   const visibleAvatars = avatars.slice(0, maxVisible);
-  const overflowCount = totalCount - visibleAvatars.length;
+  // Use the larger of totalCount or actual avatar count — handles cold start
+  // where active_users=0 but regulars avatars are present
+  const effectiveCount = Math.max(totalCount, avatars.length);
+  const overflowCount = effectiveCount - visibleAvatars.length;
   const overlap = size * 0.4; // 40% overlap
 
-  if (totalCount === 0) {
+  if (effectiveCount === 0) {
     return null;
   }
 

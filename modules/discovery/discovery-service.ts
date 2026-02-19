@@ -73,18 +73,30 @@ export async function fetchDiscoveryFeed(params: {
 
     const response = await getActiveUsersAtPlace(placeId);
     const users = response?.users ?? [];
+    const regulars = response?.regulars ?? [];
+
+    // Merge regulars into the feed, skipping any already present as active users
+    const activeUserIds = new Set(users.map((u) => u.user_id));
+    const regularsMerged = regulars
+      .filter((r) => !activeUserIds.has(r.user_id))
+      .map((r) => ({
+        ...r,
+        entry_type: r.entry_type ?? ("past_visitor" as const),
+      }));
+    const allUsers = [...users, ...regularsMerged];
+
     const pendingSwipeIds = await getQueuedSwipeIds({
       database,
       placeId,
     });
     const filteredUsers =
       pendingSwipeIds.size === 0
-        ? users
-        : users.filter((user) => !pendingSwipeIds.has(user.user_id));
-    if (pendingSwipeIds.size > 0 && filteredUsers.length !== users.length) {
+        ? allUsers
+        : allUsers.filter((user) => !pendingSwipeIds.has(user.user_id));
+    if (pendingSwipeIds.size > 0 && filteredUsers.length !== allUsers.length) {
       logger.info("Filtered discovery profiles already swiped locally", {
         placeId,
-        total: users.length,
+        total: allUsers.length,
         filtered: filteredUsers.length,
       });
     }

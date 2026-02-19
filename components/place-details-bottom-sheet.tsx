@@ -32,6 +32,7 @@ interface PlaceDetailsBottomSheetProps {
   isFavorite?: boolean;
   placeId: string;
   activeUsers?: number;
+  regularsCount?: number;
   onNavigate?: () => void;
   onToggleFavorite?: (
     placeId: string,
@@ -57,6 +58,7 @@ export function PlaceDetailsBottomSheet({
   review,
   placeId,
   activeUsers = 0,
+  regularsCount = 0,
   isFavorite = false,
   onNavigate,
   onToggleFavorite,
@@ -219,7 +221,10 @@ export function PlaceDetailsBottomSheet({
         </View>
 
         {/* Community & Insights Section (Moved Up & Redesigned) */}
-        {(hasRating || activeUsers > 0 || vibeTagsDisplay.length > 0) && (
+        {(hasRating ||
+          activeUsers > 0 ||
+          regularsCount > 0 ||
+          vibeTagsDisplay.length > 0) && (
           <View style={styles.communitySection}>
             {/* Vibe Cloud - Centered & Premium */}
             {vibeTagsDisplay.length > 0 && (
@@ -306,6 +311,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onNavigate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <NavigationIcon {...props} />}
                 color={colors.text}
               />
@@ -328,6 +334,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   onRate?.();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => <StarIcon {...props} />}
                 color={colors.text}
               />
@@ -353,6 +360,7 @@ export function PlaceDetailsBottomSheet({
                   });
                   handleFavorite();
                 }}
+                style={{ borderWidth: 1 }}
                 icon={(props) => (
                   <HeartIcon
                     {...props}

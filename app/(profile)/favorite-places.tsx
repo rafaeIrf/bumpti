@@ -56,6 +56,7 @@ export default function EditFavoritePlacesScreen() {
     isLoadingPlaces,
     locationLoading,
     getPlacesByCategory,
+    needsMore,
   } = useFavoritePlaces({
     initialSelectedIds:
       initialFavorites.map((p: any) => p.placeId || p.id) || [],
@@ -122,7 +123,7 @@ export default function EditFavoritePlacesScreen() {
         <ScreenBottomBar
           primaryLabel={t("common.save")}
           onPrimaryPress={handleSave}
-          primaryDisabled={selectedPlaceIds.length < 1}
+          primaryDisabled={needsMore}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet

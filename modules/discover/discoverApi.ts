@@ -36,7 +36,7 @@ export const discoverApi = createApi({
             return {
               data: {
                 has_recent_presence: false,
-                feed: { direct_overlap: [], vibe_match: [], path_match: [] },
+                feed: { direct_overlap: [], vibe_match: [], path_match: [], shared_favorites: [] },
               },
             };
           }
@@ -46,6 +46,7 @@ export const discoverApi = createApi({
             overlap: data.feed.direct_overlap.length,
             vibe: data.feed.vibe_match.length,
             path: data.feed.path_match.length,
+            shared: data.feed.shared_favorites?.length ?? 0,
           });
 
           return { data };

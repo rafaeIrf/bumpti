@@ -95,8 +95,10 @@
     },
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
-    "onePersonConnecting": "1 person connecting",
-    "manyPeopleConnecting": "{{count}} people connecting"
+    "onePersonConnecting": "1 person recently active",
+    "manyPeopleConnecting": "{{count}} people recently active",
+    "oneRegularHere": "1 person frequents this place",
+    "manyRegularsHere": "{{count}} people frequent this place"
   },
   "matches": "Chat",
   "profile": "Profile",
@@ -701,7 +703,7 @@
       },
       "planHero": {
         "emptyState": {
-          "title": "What's the plan?",
+          "title": "Plan your week",
           "subtitle": "See who's going and connect in advance",
           "locationButton": "Where will you connect?",
           "confirmedOne": "{{count}} person confirmed today",
@@ -1119,11 +1121,12 @@
         }
       },
       "favoritePlaces": {
-        "title": "What are your favorite spots?",
-        "subtitle": "Increase your connections by choosing your favorite spots.",
+        "title": "Your favorite Spots",
+        "subtitle": "Pick at least 3 Spots where you'd like to meet people",
         "searchPlaceholder": "Search place...",
-        "selectAtLeastOne": "Select at least 1 spot",
-        "locationNeeded": "To suggest places near you, we need your location."
+        "selectAtLeastOne": "Select at least 3 spots",
+        "locationNeeded": "To suggest places near you, we need your location.",
+        "selectionHint": "{{current}}/{{min}}"
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",
@@ -1329,6 +1332,12 @@
       "sectionVibeDesc": "Shared interests and vibes",
       "sectionRoutine": "Same routine",
       "sectionRoutineDesc": "Frequent the same spots as you",
+      "sharedFavorites": {
+        "title": "Same Places",
+        "subtitle": "Love the same spots as you",
+        "onePlace": "Also loves {{place}}",
+        "morePlaces": "{{place}} +{{extra}}"
+      },
       "contextOverlap": "At {{place}}",
       "contextOverlapGeneric": "Crossed your path recently",
       "contextVibe": "{{count}} shared interests",
@@ -1407,6 +1416,9 @@
     "planningToGo": "Planning to go",
     "planningToGoToday": "Planning to go today",
     "planningToGoTomorrow": "Planning to go tomorrow",
+    "planningToGoOn": "Planning to go {{weekday}}",
+    "frequentsPlace": "Frequents this place",
+    "favoritedPlace": "Favorited this place",
     "favorite": "Favorite",
     "visitCount": "{{count}}x here",
     "nearLocation": "Near {{location}}",

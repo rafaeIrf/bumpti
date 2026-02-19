@@ -38,6 +38,11 @@ export async function identify(
   traits?: Record<string, string | number | boolean>
 ): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: identify skipped", { userId });
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.info("Analytics: identify skipped (tracking denied)");
@@ -117,6 +122,11 @@ export async function trackLogin(
   provider: string | undefined
 ): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackLogin skipped", { provider });
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackLogin skipped (tracking denied)");
@@ -147,6 +157,11 @@ export async function trackLogin(
  */
 export async function trackLogout(): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackLogout skipped");
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackLogout skipped (tracking denied)");
@@ -180,6 +195,11 @@ export async function trackAccountDeletion(
   reason?: string
 ): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackAccountDeletion skipped", { reason });
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackAccountDeletion skipped (tracking denied)");
@@ -218,6 +238,11 @@ export async function trackAccountDeletion(
  */
 export async function trackOnboardingComplete(): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackOnboardingComplete skipped");
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackOnboardingComplete skipped (tracking denied)");
@@ -258,6 +283,11 @@ type CheckinParams = {
  */
 export async function trackCheckin(params: CheckinParams): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackCheckin skipped", params);
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackCheckin skipped (tracking denied)");
@@ -302,6 +332,11 @@ type MatchParams = {
  */
 export async function trackMatch(params: MatchParams): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug("Analytics [DEV]: trackMatch skipped", params);
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug("Analytics: trackMatch skipped (tracking denied)");
@@ -344,6 +379,11 @@ export async function trackEvent(
   properties?: Record<string, string | number | boolean>
 ): Promise<void> {
   try {
+    if (__DEV__) {
+      logger.debug(`Analytics [DEV]: ${eventName} skipped`, properties);
+      return;
+    }
+
     const canTrack = await isTrackingAllowed();
     if (!canTrack) {
       logger.debug(`Analytics: trackEvent ${eventName} skipped (tracking denied)`);

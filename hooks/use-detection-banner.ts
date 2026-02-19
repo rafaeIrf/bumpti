@@ -1,7 +1,7 @@
 import DetectionStore from "@/modules/places/detection-store";
 import { useDetectPlaceQuery } from "@/modules/places/placesApi";
 import { logger } from "@/utils/logger";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface DetectedPlace {
   id: string;
@@ -10,6 +10,7 @@ interface DetectedPlace {
   active_users?: number;
   preview_avatars?: { user_id: string; url: string }[];
 }
+
 
 interface UseDetectionBannerParams {
   latitude?: number;
@@ -26,12 +27,14 @@ interface UseDetectionBannerResult {
 
 /**
  * Hook to manage detection banner logic
- * 
+ *
  * Handles:
  * - Fetching place candidates from RPC
  * - Checking dismissal state
  * - Enforcing global cooldown
  * - Initializing detection store on mount
+ *
+
  */
 export function useDetectionBanner({
   latitude,
@@ -55,11 +58,12 @@ export function useDetectionBanner({
     },
     {
       skip: !enabled || !latitude || !longitude,
-    }
+    },
   );
 
   // Process detection result
   useEffect(() => {
+
     const processDetection = async () => {
       const detected = detectedPlaceResult?.suggested;
 
@@ -72,14 +76,14 @@ export function useDetectionBanner({
         // Check global cooldown (30 seconds for testing - TODO: increase to 15 minutes in production)
         const lastShown = await DetectionStore.getLastShownAt();
         const canShow = await DetectionStore.canShowBanner(0.5); // 0.5 minutes = 30 seconds
-        
+
         logger.log(
-          `Detection banner: last_shown_at=${lastShown ? new Date(lastShown).toISOString() : 'never'}, canShow=${canShow}`
+          `Detection banner: last_shown_at=${lastShown ? new Date(lastShown).toISOString() : "never"}, canShow=${canShow}`,
         );
-        
+
         if (!canShow) {
           logger.log(
-            "Detection banner: Global cooldown active, skipping display"
+            "Detection banner: Global cooldown active, skipping display",
           );
           setVisiblePlace(null);
           return;
@@ -89,7 +93,7 @@ export function useDetectionBanner({
         const isDismissed = await DetectionStore.isDismissed(detected.id, 12);
         if (isDismissed) {
           logger.log(
-            `Detection banner: Place ${detected.name} was recently dismissed`
+            `Detection banner: Place ${detected.name} was recently dismissed`,
           );
           setVisiblePlace(null);
           return;
@@ -108,13 +112,14 @@ export function useDetectionBanner({
     processDetection();
   }, [detectedPlaceResult]);
 
-  const dismiss = async () => {
+  const dismiss = useCallback(async () => {
+
     if (visiblePlace) {
       await DetectionStore.dismissPlace(visiblePlace.id);
       logger.log(`Banner dismissed for ${visiblePlace.name}`);
     }
     setVisiblePlace(null);
-  };
+  }, [visiblePlace]);
 
   return {
     place: visiblePlace,

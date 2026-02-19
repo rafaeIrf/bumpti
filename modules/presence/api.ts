@@ -4,9 +4,9 @@ import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackCheckin } from "../analytics";
 import {
-  getMockActiveUsersForReviewer,
-  getMockPresenceForReviewer,
-  REVIEWER_EMAILS
+    getMockActiveUsersForReviewer,
+    getMockPresenceForReviewer,
+    REVIEWER_EMAILS
 } from "./reviewer-mock-data";
 
 /**
@@ -63,7 +63,7 @@ export type ActiveUserAtPlace = {
   place_id?: string | null;
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
-  entry_type?: "physical" | "checkin_plus" | "planning"; // How user entered the place
+  entry_type?: "physical" | "checkin_plus" | "planning" | "past_visitor" | "favorite"; // How user entered the place
   planned_for?: string | null; // ISO date string for planning entries
   planned_period?: "morning" | "afternoon" | "night" | null;
   // University fields
@@ -80,6 +80,8 @@ export type ActiveUsersResponse = {
   place_id: string;
   count: number;
   users: ActiveUserAtPlace[];
+  regulars?: ActiveUserAtPlace[];
+  regulars_count?: number;
   liker_ids?: string[];
 };
 

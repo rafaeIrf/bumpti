@@ -1,108 +1,187 @@
-import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 interface PlaceLoadingSkeletonProps {
   readonly count?: number;
 }
 
-/**
- * PlaceLoadingSkeleton - Skeleton loader para lista de lugares
- *
- * Exibe placeholders animados enquanto os dados estão carregando.
- * Usado em telas de listagem de lugares (categoria, busca, etc).
- */
-export function PlaceLoadingSkeleton({ count = 6 }: PlaceLoadingSkeletonProps) {
+function ShimmerBlock({
+  width,
+  height,
+  borderRadius = 4,
+  shimmerProgress,
+}: {
+  width: number | string;
+  height: number;
+  borderRadius?: number;
+  shimmerProgress: Animated.SharedValue<number>;
+}) {
   const colors = useThemeColors();
 
-  const skeletonItems = React.useMemo(
-    () => Array.from({ length: count }, (_, i) => ({ id: `skeleton-${i}` })),
-    [count]
-  );
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(shimmerProgress.value, [0, 0.5, 1], [0.25, 0.5, 0.25]),
+  }));
 
   return (
-    <ThemedView style={styles.container}>
-      {skeletonItems.map((item) => (
-        <ThemedView
-          key={item.id}
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.content}>
-            <View style={[styles.image, { backgroundColor: colors.border }]} />
-            <View style={styles.textContainer}>
-              <View
-                style={[
-                  styles.line,
-                  styles.lineTitle,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-              <View
-                style={[
-                  styles.line,
-                  styles.lineSubtitle,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-              <View
-                style={[
-                  styles.line,
-                  styles.lineSmall,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-            </View>
-          </View>
-        </ThemedView>
+    <Animated.View
+      style={[
+        {
+          width: width as any,
+          height,
+          borderRadius,
+          backgroundColor: colors.border,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
+function SkeletonCard({ index }: { index: number }) {
+  const colors = useThemeColors();
+  const shimmerProgress = useSharedValue(0);
+
+  useEffect(() => {
+    shimmerProgress.value = withDelay(
+      index * 100,
+      withRepeat(
+        withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      ),
+    );
+  }, [shimmerProgress, index]);
+
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <View style={styles.content}>
+        {/* Header: title + arrow placeholder */}
+        <View style={styles.headerRow}>
+          <ShimmerBlock
+            width="58%"
+            height={17}
+            borderRadius={4}
+            shimmerProgress={shimmerProgress}
+          />
+          <ShimmerBlock
+            width={14}
+            height={14}
+            borderRadius={3}
+            shimmerProgress={shimmerProgress}
+          />
+        </View>
+
+        {/* Meta row */}
+        <View style={styles.metaRow}>
+          <ShimmerBlock
+            width={56}
+            height={13}
+            borderRadius={3}
+            shimmerProgress={shimmerProgress}
+          />
+          <View style={styles.dot} />
+          <ShimmerBlock
+            width={68}
+            height={13}
+            borderRadius={3}
+            shimmerProgress={shimmerProgress}
+          />
+          <View style={styles.dot} />
+          <ShimmerBlock
+            width={36}
+            height={13}
+            borderRadius={3}
+            shimmerProgress={shimmerProgress}
+          />
+        </View>
+
+        {/* Footer: chip */}
+        <View style={styles.footerRow}>
+          <ShimmerBlock
+            width={110}
+            height={28}
+            borderRadius={14}
+            shimmerProgress={shimmerProgress}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * PlaceLoadingSkeleton — Skeleton loader matching PlaceCard layout.
+ *
+ * Renders shimmering placeholder cards with staggered animations
+ * while place data is loading.
+ */
+export function PlaceLoadingSkeleton({ count = 6 }: PlaceLoadingSkeletonProps) {
+  return (
+    <View style={styles.container}>
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonCard key={`skeleton-${i}`} index={i} />
       ))}
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  card: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: spacing.md,
-  },
-  content: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    paddingVertical: spacing.lg,
     gap: spacing.md,
   },
-  image: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+  card: {
+    borderRadius: spacing.lg,
+    overflow: "hidden",
+    borderWidth: 1,
   },
-  textContainer: {
-    flex: 1,
+  content: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     gap: spacing.sm,
+    marginBottom: 4,
   },
-  line: {
-    height: 16,
-    borderRadius: 4,
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: 8,
   },
-  lineTitle: {
-    width: "66%",
-    height: 20,
+  dot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "rgba(139,152,165,0.3)",
+    marginHorizontal: 2,
   },
-  lineSubtitle: {
-    width: "50%",
-  },
-  lineSmall: {
-    width: "33%",
+  footerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: 2,
   },
 });
