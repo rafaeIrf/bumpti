@@ -1334,8 +1334,8 @@
       "sectionRoutine": "Mesma rotina",
       "sectionRoutineDesc": "Frequentam os mesmos lugares que você",
       "sharedFavorites": {
-        "title": "Mesmos Lugares",
-        "subtitle": "Curtem os mesmos spots que você",
+        "title": "Mesmos lugares",
+        "subtitle": "Curtem os mesmos Spots que você",
         "onePlace": "Também curte {{place}}",
         "morePlaces": "{{place}} +{{extra}}"
       },

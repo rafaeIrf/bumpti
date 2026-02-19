@@ -344,14 +344,13 @@ Deno.serve(async (req) => {
     // Validate invisible mode: only premium users can enable it
     if (is_invisible !== undefined) {
       if (is_invisible === true) {
-        // Check if user is premium
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("subscription:user_subscriptions!inner(is_premium)")
-          .eq("id", userId)
+        const { data: subData } = await supabase
+          .from("user_subscriptions")
+          .select("status")
+          .eq("user_id", userId)
           .maybeSingle();
 
-        const isPremium = (profileData?.subscription as any)?.is_premium ?? false;
+        const isPremium = subData?.status === "active";
 
         if (!isPremium) {
           return new Response(
