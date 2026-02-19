@@ -6,6 +6,7 @@ import {
   UsersIcon,
   XIcon,
 } from "@/assets/icons";
+import { MAX_FAVORITES } from "@/components/favorite-places-manager";
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
@@ -47,6 +48,8 @@ interface PlaceDetailsBottomSheetProps {
   onConnect?: () => void;
   onReport?: () => void;
   isLoading?: boolean;
+  /** Total number of favorites the user currently has */
+  favoritesCount?: number;
 }
 
 export function PlaceDetailsBottomSheet({
@@ -67,6 +70,7 @@ export function PlaceDetailsBottomSheet({
   onConnect,
   onReport,
   isLoading = false,
+  favoritesCount = 0,
 }: PlaceDetailsBottomSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -346,34 +350,58 @@ export function PlaceDetailsBottomSheet({
             </View>
 
             <View style={styles.fabItem}>
-              <ActionButton
-                ariaLabel={
-                  localFavorite ? "Remove from favorites" : "Add to favorites"
-                }
-                size={48}
-                iconSize={22}
-                variant={localFavorite ? "accent" : "default"}
-                onPress={() => {
-                  trackEvent(ANALYTICS_EVENTS.PLACE_DETAILS.FAVORITE_CLICKED, {
-                    placeId,
-                    action: localFavorite ? "remove" : "add",
-                  });
-                  handleFavorite();
-                }}
-                style={{ borderWidth: 1 }}
-                icon={(props) => (
-                  <HeartIcon
-                    {...props}
-                    fill={localFavorite ? colors.accent : "none"}
-                  />
-                )}
-                color={localFavorite ? colors.accent : colors.text}
-              />
-              <ThemedText
-                style={[styles.fabLabel, { color: colors.textSecondary }]}
-              >
-                {localFavorite ? t("actions.saved") : t("actions.favorite")}
-              </ThemedText>
+              {(() => {
+                const atLimit =
+                  !localFavorite && favoritesCount >= MAX_FAVORITES;
+                return (
+                  <>
+                    <ActionButton
+                      ariaLabel={
+                        localFavorite
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
+                      size={48}
+                      iconSize={22}
+                      variant={localFavorite ? "accent" : "default"}
+                      disabled={atLimit}
+                      onPress={() => {
+                        trackEvent(
+                          ANALYTICS_EVENTS.PLACE_DETAILS.FAVORITE_CLICKED,
+                          {
+                            placeId,
+                            action: localFavorite ? "remove" : "add",
+                          },
+                        );
+                        handleFavorite();
+                      }}
+                      style={{ borderWidth: 1 }}
+                      icon={(props) => (
+                        <HeartIcon
+                          {...props}
+                          fill={localFavorite ? colors.accent : "none"}
+                        />
+                      )}
+                      color={localFavorite ? colors.accent : colors.text}
+                    />
+                    <ThemedText
+                      style={[
+                        styles.fabLabel,
+                        {
+                          color: colors.textSecondary,
+                          opacity: atLimit ? 0.5 : 1,
+                        },
+                      ]}
+                    >
+                      {atLimit
+                        ? t("actions.favoriteLimitReached")
+                        : localFavorite
+                          ? t("actions.saved")
+                          : t("actions.favorite")}
+                    </ThemedText>
+                  </>
+                );
+              })()}
             </View>
           </View>
 

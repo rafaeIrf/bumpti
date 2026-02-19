@@ -19,6 +19,7 @@ function PlaceDetailsWrapper({
   place,
   category,
   favoriteIds,
+  favoritesCount,
   onToggleFavorite,
   onClose,
   onRate,
@@ -28,6 +29,7 @@ function PlaceDetailsWrapper({
   place: Place;
   category: string;
   favoriteIds: Set<string>;
+  favoritesCount: number;
   onToggleFavorite: (
     id: string,
     opts?: {
@@ -82,6 +84,7 @@ function PlaceDetailsWrapper({
       activeUsers={place.active_users}
       regularsCount={place.regulars_count}
       isFavorite={favoriteIds.has(place.placeId)}
+      favoritesCount={favoritesCount}
       onNavigate={() => {
         openMapsWithChooser({
           name: place.name,
@@ -132,6 +135,7 @@ export function usePlaceDetailsSheet(
             place={place}
             category={category}
             favoriteIds={favoriteIds}
+            favoritesCount={favoriteIds.size}
             onToggleFavorite={handleToggle}
             onClose={() => bottomSheet.close()}
             onRate={() => {

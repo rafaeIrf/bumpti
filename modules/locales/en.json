@@ -39,7 +39,8 @@
     "saved": "Saved",
     "restore": "Restore",
     "openSettings": "Open Settings",
-    "skip": "Skip"
+    "skip": "Skip",
+    "favoriteLimitReached": "Limit reached"
   },
   "welcome": "Welcome!",
   "explore": "Explore",
@@ -1126,7 +1127,7 @@
         "searchPlaceholder": "Search place...",
         "selectAtLeastOne": "Select at least 3 spots",
         "locationNeeded": "To suggest places near you, we need your location.",
-        "selectionHint": "{{current}}/{{min}}"
+        "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",

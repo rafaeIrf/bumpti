@@ -33,7 +33,8 @@ const CATEGORIES: PlaceCategory[] = [
 ];
 
 const MAX_SELECTIONS = 12;
-export const MIN_FAVORITES = 1;
+export const MAX_FAVORITES = MAX_SELECTIONS;
+export const MIN_FAVORITES = 3;
 
 export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];
@@ -287,7 +288,7 @@ export function FavoritePlacesContent({
           >
             {t("screens.onboarding.favoritePlaces.selectionHint", {
               current: selectedPlaceIds.length,
-              min: MIN_FAVORITES,
+              max: MAX_SELECTIONS,
             })}
           </ThemedText>
         </View>

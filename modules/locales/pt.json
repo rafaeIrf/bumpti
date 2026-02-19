@@ -39,7 +39,8 @@
     "saved": "Favorito",
     "restore": "Restaurar",
     "openSettings": "Abrir Configurações",
-    "skip": "Pular"
+    "skip": "Pular",
+    "favoriteLimitReached": "Limite atingido"
   },
   "welcome": "Bem-vindo!",
   "explore": "Explorar",
@@ -1126,7 +1127,7 @@
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecione pelo menos 3 spots",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização.",
-        "selectionHint": "{{current}}/{{min}}"
+        "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "Ainda não chegamos aí!",

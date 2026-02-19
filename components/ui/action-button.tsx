@@ -22,6 +22,7 @@ export interface ActionButtonProps {
   variant?: ActionButtonVariant;
   iconSize?: number;
   style?: ViewStyle;
+  disabled?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -43,6 +44,7 @@ export function ActionButton({
   variant = "default",
   iconSize,
   style,
+  disabled = false,
 }: ActionButtonProps) {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
@@ -65,10 +67,12 @@ export function ActionButton({
   }));
 
   const handlePressIn = () => {
+    if (disabled) return;
     scale.value = withSpring(0.95);
   };
 
   const handlePressOut = () => {
+    if (disabled) return;
     scale.value = withSpring(1);
   };
 
@@ -84,7 +88,7 @@ export function ActionButton({
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[
@@ -98,8 +102,10 @@ export function ActionButton({
         },
         animatedStyle,
         style,
+        disabled && { opacity: 0.4 },
       ]}
       accessibilityLabel={ariaLabel}
+      accessibilityState={{ disabled }}
     >
       {IconComponent ? (
         <IconComponent
