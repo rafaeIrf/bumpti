@@ -2,7 +2,7 @@ import type { UserAvatar } from "@/modules/places/types";
 import { isAndroid } from "@/utils";
 import { Image } from "expo-image";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface StackedAvatarsProps {
   /** Avatars with user_id and url */
@@ -13,6 +13,10 @@ interface StackedAvatarsProps {
   maxVisible?: number;
   /** Avatar size in pixels (default: 24) */
   size?: number;
+  /** Optional container style */
+  style?: StyleProp<ViewStyle>;
+  /** Optional style for each avatar circle */
+  avatarStyle?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -24,6 +28,8 @@ export function StackedAvatars({
   totalCount,
   maxVisible = 4,
   size = 32,
+  style,
+  avatarStyle,
 }: StackedAvatarsProps) {
   const visibleAvatars = avatars.slice(0, maxVisible);
   // Use the larger of totalCount or actual avatar count — handles cold start
@@ -37,7 +43,7 @@ export function StackedAvatars({
   }
 
   return (
-    <View style={[styles.container, { height: size }]}>
+    <View style={[styles.container, { height: size }, style]}>
       {visibleAvatars.map((avatar, index) => (
         <View
           key={avatar.user_id}
@@ -50,6 +56,7 @@ export function StackedAvatars({
               marginLeft: index === 0 ? 0 : -overlap,
               zIndex: index + 1,
             },
+            avatarStyle,
           ]}
         >
           <Image
@@ -63,7 +70,7 @@ export function StackedAvatars({
               },
             ]}
             contentFit="cover"
-            blurRadius={isAndroid ? 2 : 70}
+            blurRadius={isAndroid ? 2 : 10}
           />
         </View>
       ))}
@@ -80,6 +87,7 @@ export function StackedAvatars({
               marginLeft: -overlap,
               zIndex: maxVisible + 1,
             },
+            avatarStyle,
           ]}
         >
           <Text style={[styles.overflowText, { fontSize: size * 0.4 }]}>
