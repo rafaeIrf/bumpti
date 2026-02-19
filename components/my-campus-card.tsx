@@ -54,6 +54,9 @@ function MyCampusCardComponent({ profile }: MyCampusCardProps) {
   const totalPeopleCount = activeCount + regularsCount;
   const hasActiveUsers = isOfficialUniversity && totalPeopleCount > 0;
 
+  console.log("activeCount", activeCount);
+  console.log("regularsCount", regularsCount);
+
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

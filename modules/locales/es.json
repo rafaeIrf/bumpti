@@ -1260,6 +1260,7 @@
       "addressFallback": "Dirección no disponible"
     },
     "universitySearch": {
+      "suggestedLabel": "Universidades sugeridas",
       "emptyTitle": "Buscar universidad",
       "emptyDescription": "Escribe el nombre de tu facultad o universidad."
     },

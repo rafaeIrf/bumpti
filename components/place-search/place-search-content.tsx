@@ -9,7 +9,7 @@ import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { SelectionCard } from "@/components/ui/selection-card";
-import { spacing } from "@/constants/theme";
+import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
@@ -66,6 +66,8 @@ export interface PlaceSearchContentProps {
     lat?: number;
     lng?: number;
   }) => void;
+  suggestedPlaces?: { id: string; name: string; address?: string }[];
+  suggestedPlacesLoading?: boolean;
 }
 
 export function PlaceSearchContent({
@@ -79,6 +81,8 @@ export function PlaceSearchContent({
   isModal = true,
   categoryFilter,
   onUniversitySelect,
+  suggestedPlaces = [],
+  suggestedPlacesLoading = false,
 }: PlaceSearchContentProps) {
   const colors = useThemeColors();
   const router = useRouter();
@@ -334,34 +338,40 @@ export function PlaceSearchContent({
       />
     );
   } else if (searchQuery.trim().length === 0) {
-    // University-specific empty state
+    // University-specific: show suggested universities
     if (categoryFilter === "university") {
       content = (
         <Animated.View entering={FadeInDown.delay(150).springify()}>
-          <ThemedView style={styles.emptyState}>
-            <ThemedView
-              style={[
-                styles.emptyIcon,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <SearchIcon width={40} height={40} color={colors.textSecondary} />
-            </ThemedView>
-            <ThemedText style={{ color: colors.text, fontSize: 18 }}>
-              {t("screens.universitySearch.emptyTitle")}
-            </ThemedText>
+          <ThemedView style={styles.suggestedSection}>
             <ThemedText
-              style={{
-                color: colors.textSecondary,
-                textAlign: "center",
-                maxWidth: 280,
-              }}
+              style={[styles.suggestedLabel, { color: colors.textSecondary }]}
             >
-              {t("screens.universitySearch.emptyDescription")}
+              {t("screens.universitySearch.suggestedLabel")}
             </ThemedText>
+            {suggestedPlacesLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={colors.accent}
+                style={{ marginTop: spacing.md }}
+              />
+            ) : (
+              suggestedPlaces.map((uni) => {
+                return (
+                  <SelectionCard
+                    key={uni.id}
+                    label={uni.name}
+                    description={uni.address || undefined}
+                    isSelected={false}
+                    onPress={() => {
+                      onUniversitySelect?.({
+                        id: uni.id,
+                        name: uni.name,
+                      });
+                    }}
+                  />
+                );
+              })
+            )}
           </ThemedView>
         </Animated.View>
       );
@@ -609,5 +619,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
     color: "#FFFFFF",
+  },
+  suggestedSection: {
+    paddingTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  suggestedLabel: {
+    ...typography.caption,
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.xs,
   },
 });

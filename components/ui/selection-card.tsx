@@ -55,6 +55,7 @@ export function SelectionCard({
         )}
         <View style={{ flex: 1 }}>
           <ThemedText
+            numberOfLines={1}
             style={[
               styles.label,
               {
@@ -104,8 +105,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   label: {
-    ...typography.body,
-    fontSize: 16,
-    fontWeight: "600",
+    ...typography.body1,
   },
 });

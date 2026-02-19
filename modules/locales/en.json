@@ -1260,6 +1260,7 @@
       "addressFallback": "Address unavailable"
     },
     "universitySearch": {
+      "suggestedLabel": "Suggested universities",
       "emptyTitle": "Search university",
       "emptyDescription": "Type the name of your college or university."
     },
