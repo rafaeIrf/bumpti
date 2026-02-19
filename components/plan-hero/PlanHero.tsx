@@ -15,7 +15,7 @@ import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -110,6 +110,10 @@ function PlanCard({
   const confirmedCount = plan.confirmedCount;
   const [sharing, setSharing] = useState(false);
 
+  // Track whether the touch moved horizontally (i.e. was a carousel swipe)
+  const touchStartX = useRef<number | null>(null);
+  const didScroll = useRef(false);
+
   // Conditional border radius: first card (left), last card (right)
   const isFirst = cardIndex === 0;
   const isLast = cardIndex === totalPlans - 1;
@@ -120,6 +124,8 @@ function PlanCard({
   const gradientEnd = isEven ? { x: 1, y: 1 } : { x: 0, y: 0 };
 
   const handleCardPress = () => {
+    // Suppress press when the user was swiping the carousel
+    if (didScroll.current) return;
     trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIBE_CHECK_CLICKED, {});
     Haptics.selectionAsync();
     router.push({
@@ -136,7 +142,22 @@ function PlanCard({
   };
 
   return (
-    <Pressable onPress={handleCardPress} style={{ flex: 1 }}>
+    <Pressable
+      onPress={handleCardPress}
+      onTouchStart={(e) => {
+        touchStartX.current = e.nativeEvent.pageX;
+        didScroll.current = false;
+      }}
+      onTouchEnd={(e) => {
+        if (
+          touchStartX.current !== null &&
+          Math.abs(e.nativeEvent.pageX - touchStartX.current) > 5
+        ) {
+          didScroll.current = true;
+        }
+      }}
+      style={{ flex: 1 }}
+    >
       <LinearGradient
         colors={["#E94B7D", "#FF7A5C"]}
         start={gradientStart}
