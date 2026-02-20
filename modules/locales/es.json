@@ -39,7 +39,8 @@
     "saved": "Guardado",
     "restore": "Restaurar",
     "openSettings": "Abrir Configuración",
-    "skip": "Omitir"
+    "skip": "Omitir",
+    "favoriteLimitReached": "Límite alcanzado"
   },
   "welcome": "¡Bienvenido!",
   "explore": "Explorar",
@@ -1003,10 +1004,10 @@
       "intentionSelectedOne": "1 objetivo seleccionado",
       "intentionSelectedMany": "{{count}} objetivos seleccionados",
       "photosTitle": "Añade tus fotos",
-      "photosSubtitle": "Selecciona de 3 a 9 fotos de una vez. ¡Los perfiles con más fotos generan más conexiones!",
+      "photosSubtitle": "Selecciona de 2 a 9 fotos de una vez. ¡Los perfiles con más fotos generan más conexiones!",
       "photosMainLabel": "Principal",
       "photosCount": "{{count}} de 9 fotos",
-      "photosMinimum": "Mínimo de 3 necesarias",
+      "photosMinimum": "Mínimo de 2 necesarias",
       "photosAddMore": "Añade al menos {{count}} foto",
       "photosAddMorePlural": "Añade al menos {{count}} fotos",
       "bioTitle": "Cuéntanos sobre ti",
@@ -1126,7 +1127,7 @@
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecciona al menos 3 spots",
         "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación.",
-        "selectionHint": "{{current}}/{{min}}"
+        "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "¡Todavía no llegamos ahí!",
@@ -1259,6 +1260,7 @@
       "addressFallback": "Dirección no disponible"
     },
     "universitySearch": {
+      "suggestedLabel": "Universidades sugeridas",
       "emptyTitle": "Buscar universidad",
       "emptyDescription": "Escribe el nombre de tu facultad o universidad."
     },

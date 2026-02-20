@@ -40,6 +40,8 @@ export type ProfileData = {
   university_lat?: number | null;
   university_lng?: number | null;
   university_active_users?: number | null;
+  university_regulars_count?: number | null;
+  university_presence_avatars?: { user_id: string; url: string }[] | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean | null;
   interests?: string[] | null;

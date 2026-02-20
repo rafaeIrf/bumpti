@@ -62,6 +62,8 @@ export async function fetchAndSetUserProfile() {
       university_lat: data.university_lat ?? null,
       university_lng: data.university_lng ?? null,
       university_active_users: data.university_active_users ?? 0,
+      university_regulars_count: data.university_regulars_count ?? 0,
+      university_presence_avatars: data.university_presence_avatars ?? [],
       graduation_year: data.graduation_year ?? null,
       show_university_on_home: data.show_university_on_home ?? true,
       interests: data.interests ?? [],

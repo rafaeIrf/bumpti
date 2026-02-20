@@ -69,7 +69,7 @@ BEGIN
       IF p_user_lat IS NOT NULL AND p_user_lng IS NOT NULL THEN
         IF v_inside_boundary THEN
           -- Dentro do boundary - renovar por mais 3 horas
-          v_new_expires_at := NOW() + INTERVAL '3 hours';
+          v_new_expires_at := NOW() + INTERVAL '24 hours';
           UPDATE user_presences
           SET expires_at = v_new_expires_at,
               lat = p_user_lat,
@@ -93,7 +93,7 @@ BEGIN
         END IF;
       ELSE
         -- Sem coordenadas - permitir refresh (backward compatibility)
-        v_new_expires_at := NOW() + INTERVAL '3 hours';
+        v_new_expires_at := NOW() + INTERVAL '24 hours';
         UPDATE user_presences
         SET expires_at = v_new_expires_at
         WHERE id = v_existing_presence.id
@@ -111,7 +111,7 @@ BEGIN
   -- 3b. No existing presence - validate and create new
   
   -- Determinar duração: 3 horas para ambos os tipos
-  v_new_expires_at := NOW() + INTERVAL '3 hours';
+  v_new_expires_at := NOW() + INTERVAL '24 hours';
   
   IF NOT v_inside_boundary THEN
     IF p_is_checkin_plus THEN

@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
-import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
+import { signPhotoUrls, signUserAvatars } from "../_shared/signPhotoUrls.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -192,17 +192,30 @@ Deno.serve(async (req) => {
         ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
         : rest.location;
 
-      // Get university active users count if university exists
+      // Get university active users + regulars + combined avatars
       let universityActiveUsers = 0;
+      let universityRegularsCount = 0;
+      let universityPresenceAvatars: { user_id: string; url: string }[] = [];
       if (rest.university_id) {
-        const { data: activeUsersCount } = await supabase.rpc(
-          "get_eligible_active_users_count",
-          {
+        const [activeCountResult, regularsCountResult, avatarsResult] = await Promise.all([
+          supabase.rpc("get_eligible_active_users_count", {
             target_place_id: rest.university_id,
             requesting_user_id: userId,
-          }
-        );
-        universityActiveUsers = activeUsersCount ?? 0;
+          }),
+          supabase.rpc("get_regulars_count_at_place", {
+            target_place_id: rest.university_id,
+            requesting_user_id: userId,
+          }),
+          supabase.rpc("get_combined_place_avatars", {
+            target_place_id: rest.university_id,
+            requesting_user_id: userId,
+            max_avatars: 5,
+          }),
+        ]);
+        universityActiveUsers = activeCountResult.data ?? 0;
+        universityRegularsCount = regularsCountResult.data ?? 0;
+        const rawAvatars = avatarsResult.data ?? [];
+        universityPresenceAvatars = await signUserAvatars(supabase, rawAvatars);
       }
 
       profilePayload = {
@@ -243,6 +256,8 @@ Deno.serve(async (req) => {
         university_lat: (university as any)?.lat ?? null,
         university_lng: (university as any)?.lng ?? null,
         university_active_users: universityActiveUsers,
+        university_regulars_count: universityRegularsCount,
+        university_presence_avatars: universityPresenceAvatars,
         graduation_year: rest.graduation_year ?? null,
         show_university_on_home: rest.show_university_on_home ?? true,
         // Include user email for client-side reviewer detection

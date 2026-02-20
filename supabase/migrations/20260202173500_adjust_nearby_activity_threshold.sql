@@ -109,7 +109,7 @@ begin
     and st_dwithin(
       st_point(user_place.lng, user_place.lat)::geography,
       st_point(ac.lng, ac.lat)::geography,
-      30000
+      50000
     )
     -- Exclude if it's a favorite (handled by favorite rules)
     and not exists (

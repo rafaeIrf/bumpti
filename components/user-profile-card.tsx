@@ -113,7 +113,7 @@ export function UserProfileCard({
     profile.university_name_custom || profile.university_name;
   const universityText = universityName
     ? profile.graduation_year
-      ? `${universityName} • ${profile.graduation_year}`
+      ? `${universityName}\n${profile.graduation_year}`
       : universityName
     : null;
 
@@ -222,7 +222,7 @@ export function UserProfileCard({
     style?: any;
   }) => (
     <View style={[styles.sectionContainer, style]}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {children}
     </View>
   );
@@ -233,14 +233,14 @@ export function UserProfileCard({
     icon,
     value,
   }: {
-    label: string;
+    label?: string;
     icon: React.ReactNode;
     value: string | null | undefined;
   }) => {
     if (!value) return null;
     return (
       <View style={styles.infoRowContainer}>
-        <Text style={styles.infoLabel}>{label}</Text>
+        {label && <Text style={styles.infoLabel}>{label}</Text>}
         <View style={styles.infoValueRow}>
           {icon}
           <Text style={styles.infoValueText}>{value}</Text>
@@ -453,12 +453,7 @@ export function UserProfileCard({
                 .join(", ")}
               icon={<GlobeIcon width={18} height={18} color="#8B98A5" />}
             />
-          </Section>
-        )}
-
-        {/* FORMATION */}
-        {hasFormation && (
-          <Section title={t("userProfile.educationSection")}>
+            {/* FORMATION */}
             <InfoRow
               label={t("userProfile.education")}
               value={educationText}
@@ -716,9 +711,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 16,
-    color: "#E7E9EA",
+    ...typography.body1,
     marginBottom: 4,
   },
   bioText: {

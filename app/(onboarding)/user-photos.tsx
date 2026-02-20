@@ -25,13 +25,13 @@ export default function UserPhotosScreen() {
   });
 
   const handleContinue = () => {
-    if (photos.length >= 3) {
+    if (photos.length >= 2) {
       onboardingActions.setPhotoUris(photos);
       completeCurrentStep("user-photos");
     }
   };
 
-  const remainingPhotos = Math.max(0, 3 - photos.length);
+  const remainingPhotos = Math.max(0, 2 - photos.length);
 
   return (
     <BaseTemplateScreen
@@ -43,7 +43,7 @@ export default function UserPhotosScreen() {
         <ScreenBottomBar
           primaryLabel={t("screens.onboarding.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={photos.length < 3}
+          primaryDisabled={photos.length < 2}
         />
       }
     >
@@ -56,7 +56,7 @@ export default function UserPhotosScreen() {
 
       <UserPhotoGrid
         maxPhotos={9}
-        minPhotos={3}
+        minPhotos={2}
         photos={photos}
         onPhotosChange={setPhotos}
       />

@@ -24,7 +24,7 @@ DECLARE
   ttl_started INT := 24;  -- Hours before re-sending "started" notification
   ttl_heating INT := 6;   -- Hours before re-sending "heating" notification
   ttl_nearby INT := 12;   -- Hours before re-sending "nearby" notification
-  distance_threshold FLOAT := 30000; -- 30km in meters
+  distance_threshold FLOAT := 50000; -- 50km in meters
 BEGIN
   RETURN QUERY
 

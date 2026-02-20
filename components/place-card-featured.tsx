@@ -1,9 +1,11 @@
+import { MapPinIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { getCardGradientColors } from "@/utils/card-gradient";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
+  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -80,22 +82,17 @@ export function PlaceCardFeatured({
           />
         </Animated.View>
 
+        {/* Count Badge - top-right corner */}
+        {count !== undefined && count > 0 && (
+          <View style={styles.countBadge}>
+            <MapPinIcon width={8} height={8} color="#FFFFFF" />
+            <ThemedText style={styles.countText}>{count}</ThemedText>
+          </View>
+        )}
+
         {/* Content Container */}
         <View style={styles.contentContainer}>
-          {Icon && <Icon />}
-
-          {count !== undefined && count > 0 && (
-            <View
-              style={[
-                styles.countBadge,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.25)",
-                },
-              ]}
-            >
-              <ThemedText style={styles.countText}>{count}</ThemedText>
-            </View>
-          )}
+          {Icon && <Icon width={32} height={32} color="#FFFFFF" />}
 
           <ThemedText
             numberOfLines={1}
@@ -112,7 +109,7 @@ export function PlaceCardFeatured({
 
 const styles = StyleSheet.create({
   card: {
-    height: 112,
+    height: 96,
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -134,17 +131,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   countBadge: {
-    paddingHorizontal: spacing.xs,
-    borderRadius: 6,
-    width: 28,
-    height: 14,
+    position: "absolute",
+    top: spacing.sm,
+    right: spacing.sm,
+    zIndex: 2,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.xs,
+    gap: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 6,
+    backgroundColor: "rgba(140, 100, 200, 0.55)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
   countText: {
     ...typography.caption,
-    lineHeight: 10,
-    fontSize: 10,
+    fontSize: 9,
+    lineHeight: Platform.select({ ios: 13, android: 10 }),
+    includeFontPadding: false,
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
 });

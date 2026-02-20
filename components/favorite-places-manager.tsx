@@ -33,6 +33,7 @@ const CATEGORIES: PlaceCategory[] = [
 ];
 
 const MAX_SELECTIONS = 12;
+export const MAX_FAVORITES = MAX_SELECTIONS;
 export const MIN_FAVORITES = 3;
 
 export interface UseFavoritePlacesProps {
@@ -150,6 +151,7 @@ export function useFavoritePlaces({
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),
+        maxSelections: String(MAX_SELECTIONS),
       },
     });
   };
@@ -287,7 +289,7 @@ export function FavoritePlacesContent({
           >
             {t("screens.onboarding.favoritePlaces.selectionHint", {
               current: selectedPlaceIds.length,
-              min: MIN_FAVORITES,
+              max: MAX_SELECTIONS,
             })}
           </ThemedText>
         </View>

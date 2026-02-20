@@ -55,9 +55,10 @@ export function SelectionCard({
         )}
         <View style={{ flex: 1 }}>
           <ThemedText
+            numberOfLines={1}
             style={[
-              styles.label,
               {
+                ...(description ? typography.body1 : typography.body),
                 color: isSelected ? colors.text : colors.textSecondary,
               },
             ]}
@@ -102,10 +103,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-  },
-  label: {
-    ...typography.body,
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

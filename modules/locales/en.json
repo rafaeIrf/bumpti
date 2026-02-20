@@ -39,7 +39,8 @@
     "saved": "Saved",
     "restore": "Restore",
     "openSettings": "Open Settings",
-    "skip": "Skip"
+    "skip": "Skip",
+    "favoriteLimitReached": "Limit reached"
   },
   "welcome": "Welcome!",
   "explore": "Explore",
@@ -1003,10 +1004,10 @@
       "intentionSelectedOne": "1 goal selected",
       "intentionSelectedMany": "{{count}} goals selected",
       "photosTitle": "Add your photos",
-      "photosSubtitle": "Select 3 to 9 photos at once. Profiles with more photos generate more connections!",
+      "photosSubtitle": "Select 2 to 9 photos at once. Profiles with more photos generate more connections!",
       "photosMainLabel": "Main",
       "photosCount": "{{count}} of 9 photos",
-      "photosMinimum": "Minimum of 3 required",
+      "photosMinimum": "Minimum of 2 required",
       "photosAddMore": "Add at least {{count}} photo",
       "photosAddMorePlural": "Add at least {{count}} photos",
       "bioTitle": "Tell us about you",
@@ -1126,7 +1127,7 @@
         "searchPlaceholder": "Search place...",
         "selectAtLeastOne": "Select at least 3 spots",
         "locationNeeded": "To suggest places near you, we need your location.",
-        "selectionHint": "{{current}}/{{min}}"
+        "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",
@@ -1259,6 +1260,7 @@
       "addressFallback": "Address unavailable"
     },
     "universitySearch": {
+      "suggestedLabel": "Suggested universities",
       "emptyTitle": "Search university",
       "emptyDescription": "Type the name of your college or university."
     },

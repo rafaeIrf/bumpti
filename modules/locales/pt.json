@@ -39,7 +39,8 @@
     "saved": "Favorito",
     "restore": "Restaurar",
     "openSettings": "Abrir Configurações",
-    "skip": "Pular"
+    "skip": "Pular",
+    "favoriteLimitReached": "Limite atingido"
   },
   "welcome": "Bem-vindo!",
   "explore": "Explorar",
@@ -1003,10 +1004,10 @@
       "intentionSelectedOne": "1 objetivo selecionado",
       "intentionSelectedMany": "{{count}} objetivos selecionados",
       "photosTitle": "Adicione suas fotos",
-      "photosSubtitle": "Selecione de 3 a 9 fotos de uma só vez. Perfis com mais fotos geram mais conexões!",
+      "photosSubtitle": "Selecione de 2 a 9 fotos de uma só vez. Perfis com mais fotos geram mais conexões!",
       "photosMainLabel": "Principal",
       "photosCount": "{{count}} de 9 fotos",
-      "photosMinimum": "Mínimo de 3 necessárias",
+      "photosMinimum": "Mínimo de 2 necessárias",
       "photosAddMore": "Adicione pelo menos {{count}} foto",
       "photosAddMorePlural": "Adicione pelo menos {{count}} fotos",
       "bioTitle": "Fale sobre você",
@@ -1126,7 +1127,7 @@
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecione pelo menos 3 spots",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização.",
-        "selectionHint": "{{current}}/{{min}}"
+        "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "Ainda não chegamos aí!",
@@ -1259,6 +1260,7 @@
       "addressFallback": "Endereço indisponível"
     },
     "universitySearch": {
+      "suggestedLabel": "Universidades sugeridas",
       "emptyTitle": "Buscar universidade",
       "emptyDescription": "Digite o nome da sua faculdade ou universidade."
     },
@@ -1333,8 +1335,8 @@
       "sectionRoutine": "Mesma rotina",
       "sectionRoutineDesc": "Frequentam os mesmos lugares que você",
       "sharedFavorites": {
-        "title": "Mesmos Lugares",
-        "subtitle": "Curtem os mesmos spots que você",
+        "title": "Mesmos lugares",
+        "subtitle": "Curtem os mesmos Spots que você",
         "onePlace": "Também curte {{place}}",
         "morePlaces": "{{place}} +{{extra}}"
       },
