@@ -141,9 +141,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 6,
-    backgroundColor: "rgba(0, 0, 0, 0.78)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.88)",
+    backgroundColor: "rgba(140, 100, 200, 0.55)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
   countText: {
     ...typography.caption,
