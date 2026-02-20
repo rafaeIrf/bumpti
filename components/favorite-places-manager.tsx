@@ -151,6 +151,7 @@ export function useFavoritePlaces({
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),
+        maxSelections: String(MAX_SELECTIONS),
       },
     });
   };

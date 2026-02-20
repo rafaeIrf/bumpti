@@ -88,10 +88,15 @@ export function PlaceSearchContent({
   const params = useLocalSearchParams<{
     multiSelectMode?: string;
     initialSelection?: string;
+    maxSelections?: string;
   }>();
 
   const multiSelectMode =
     multiSelectModeProp || params.multiSelectMode === "true";
+
+  const maxSelections: number | undefined = params.maxSelections
+    ? parseInt(params.maxSelections, 10)
+    : undefined;
 
   const initialSelection = React.useMemo(() => {
     if (!params.initialSelection) return [];
@@ -193,9 +198,14 @@ export function PlaceSearchContent({
             prev.filter((id) => id !== result.placeId),
           );
           delete selectedPlacesMapRef.current[result.placeId];
-        } else {
+        } else if (
+          maxSelections === undefined ||
+          localSelectedIds.length < maxSelections
+        ) {
           setLocalSelectedIds((prev) => [...prev, result.placeId]);
           selectedPlacesMapRef.current[result.placeId] = result.name;
+        } else {
+          return; // limit reached, silently ignore
         }
 
         onPlaceToggle?.(result.placeId, result.name);
@@ -214,7 +224,13 @@ export function PlaceSearchContent({
         });
       }
     },
-    [showPlaceDetails, multiSelectMode, onPlaceToggle, localSelectedIds],
+    [
+      showPlaceDetails,
+      multiSelectMode,
+      onPlaceToggle,
+      localSelectedIds,
+      maxSelections,
+    ],
   );
 
   const clearSearch = useCallback(() => {
