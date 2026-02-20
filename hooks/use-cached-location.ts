@@ -40,7 +40,7 @@ export const useCachedLocation = () => {
   // Check if current user is the reviewer using profile hook
   const { profile } = useProfile();
   const reviewerEmails = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
-  const isReviewer = reviewerEmails.includes(profile?.email?.toLowerCase() || "") || true;
+  const isReviewer = reviewerEmails.includes(profile?.email?.toLowerCase() || "");
 
   // Set reviewer location immediately if reviewer
   useEffect(() => {
