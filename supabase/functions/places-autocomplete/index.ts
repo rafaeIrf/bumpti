@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getActiveCategories } from "../_shared/get-active-categories.ts";
-import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -71,13 +70,6 @@ serve(async (req) => {
         });
     }
 
-    // Use admin client to sign avatar URLs
-    const adminSupabase = createAdminClient();
-
-    // NOTE: Skipping avatar fetch in autocomplete for performance
-    // Avatars will be fetched when user selects a place
-    const avatarsMap = new Map<string, { count: number; avatars: string[] }>();
-
     const results = (localPlaces || []).map((p: any) => {
         const addressParts = [];
         
@@ -93,8 +85,8 @@ serve(async (req) => {
         return {
             ...placeData,
             formatted_address: addressParts.join(", "),
-            // active_users already comes from RPC
-            preview_avatars: undefined, // No avatars in autocomplete for performance
+            active_users: p.active_users,
+            regulars_count: p.regulars_count,
             review: p.review_count > 0 ? {
                 average: p.review_average,
                 count: p.review_count,
