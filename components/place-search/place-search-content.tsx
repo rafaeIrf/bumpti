@@ -16,7 +16,6 @@ import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
-import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -278,13 +277,8 @@ export function PlaceSearchContent({
       }
 
       if (multiSelectMode) {
-        const categoryLabel = item.category
-          ? t(`place.categories.${item.category}`)
-          : "";
-        const distanceLabel = item.distance
-          ? formatDistance(item.distance)
-          : "";
-        const description = [categoryLabel, distanceLabel]
+        const address = item.formattedAddress;
+        const description = [address, item.neighborhood]
           .filter(Boolean)
           .join(" • ");
 
@@ -502,7 +496,6 @@ export function PlaceSearchContent({
     <BaseTemplateScreen
       isModal={isModal}
       TopHeader={header}
-      useKeyboardAvoidingView={multiSelectMode}
       BottomBar={
         multiSelectMode && localSelectedIds.length > 0 ? (
           <ScreenBottomBar variant="custom" showBorder>

@@ -224,11 +224,8 @@ export function PlaceDetailsBottomSheet({
           </View>
         </View>
 
-        {/* Community & Insights Section (Moved Up & Redesigned) */}
-        {(hasRating ||
-          activeUsers > 0 ||
-          regularsCount > 0 ||
-          vibeTagsDisplay.length > 0) && (
+        {/* Community & Insights Section */}
+        {(vibeTagsDisplay.length > 0 || activeUsers > 0) && (
           <View style={styles.communitySection}>
             {/* Vibe Cloud - Centered & Premium */}
             {vibeTagsDisplay.length > 0 && (
