@@ -1,4 +1,4 @@
-import { UserRoundIcon } from "@/assets/icons";
+import { MapPinIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
 import { getCardGradientColors } from "@/utils/card-gradient";
@@ -85,7 +85,7 @@ export function PlaceCardFeatured({
         {/* Count Badge - top-right corner */}
         {count !== undefined && count > 0 && (
           <View style={styles.countBadge}>
-            <UserRoundIcon width={8} height={8} color="#FFFFFF" />
+            <MapPinIcon width={8} height={8} color="#FFFFFF" />
             <ThemedText style={styles.countText}>{count}</ThemedText>
           </View>
         )}
