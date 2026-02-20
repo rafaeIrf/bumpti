@@ -3,12 +3,13 @@ import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
 import { hasLikerId, removeLikerId } from "@/modules/discovery/liker-ids-service";
 import { flushSwipeQueueNow } from "@/modules/discovery/swipe-queue-orchestrator";
 import {
-  enqueueSwipe,
-  type SwipeBatchResult,
+    enqueueSwipe,
+    type SwipeBatchResult,
 } from "@/modules/discovery/swipe-queue-service";
 import { decrementActiveUsersInCaches } from "@/modules/places/cache-utils";
 import { store } from "@/modules/store";
 import { logger } from "@/utils/logger";
+import type { PresenceEntryType } from "@/utils/presence-badge";
 import { useCallback, useEffect, useRef } from "react";
 import { AppState } from "react-native";
 
@@ -96,8 +97,10 @@ export function useDiscoverySwipes(
       targetUserId: string;
       action: SwipeAction;
       placeIdOverride?: string;
+      /** Raw entry_type of the swiped user. Forwarded to backend for match_origin computation. */
+      context?: PresenceEntryType | null;
     }) => {
-      const { targetUserId, action, placeIdOverride } = params;
+      const { targetUserId, action, placeIdOverride, context } = params;
       const resolvedPlaceId = placeIdOverride ?? placeId;
       if (!resolvedPlaceId) return { results: [], instantMatch: false };
 
@@ -115,6 +118,7 @@ export function useDiscoverySwipes(
         targetUserId,
         action,
         placeId: resolvedPlaceId,
+        context,
         removeProfileId: targetUserId,
       });
 

@@ -1287,10 +1287,13 @@
       "online": "Online",
       "connectedHere": "Vocês se conectaram aqui",
       "matchOrigin": {
-        "live": "Vocês estão no mesmo lugar",
+        "live": "Vocês estão no mesmo lugar.\nQue tal dar um oi?",
         "directOverlap": "Vocês estavam no mesmo lugar",
         "vibeMatch": "Vocês têm vibes parecidas",
-        "pathMatch": "Seus caminhos se cruzaram"
+        "pathMatch": "Seus caminhos se cruzaram",
+        "regular": "Vocês dois frequentam este lugar.\nQue tal ir juntos?",
+        "planning": "Vocês planejavam visitar este lugar.\nQue tal combinar?",
+        "mixed": "Vocês têm esse lugar em comum.\nQue tal marcar um rolê?"
       },
       "matchContext": {
         "sharedInterests": "{{count}} interesses em comum",

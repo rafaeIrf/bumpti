@@ -205,6 +205,7 @@ export default function PlacePeopleScreen() {
         targetUserId: profile.user_id,
         action: "like",
         placeIdOverride: resolvedPlaceId,
+        context: profile.entry_type,
       });
       if (instantMatch) {
         setMatchProfile(profile);
