@@ -1,5 +1,6 @@
 import { pendingLikesApi } from "@/modules/pendingLikes/pendingLikesApi";
 import { placesApi } from "@/modules/places/placesApi";
+import type { PresenceEntryType } from "@/utils/presence-badge";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
   InteractionAction,
@@ -17,11 +18,13 @@ export const interactionsApi = createApi({
         toUserId: string;
         action: InteractionAction;
         placeId: string;
+        /** Raw entry_type of the liked user. Backend maps to match_origin. */
+        context?: PresenceEntryType | null;
       }
     >({
-      queryFn: async ({ toUserId, action, placeId }) => {
+      queryFn: async ({ toUserId, action, placeId, context }) => {
         try {
-          const result = await interactUserApi({ toUserId, action, placeId });
+          const result = await interactUserApi({ toUserId, action, placeId, context });
           return { data: result };
         } catch (error) {
           return { error: { status: "CUSTOM_ERROR", error: String(error) } };
@@ -32,7 +35,7 @@ export const interactionsApi = createApi({
         { dispatch, queryFulfilled, getState }
       ) {
         // Array to store all patches for rollback
-        const patches: Array<{ undo: () => void }> = [];
+        const patches: { undo: () => void }[] = [];
 
         // Optimistic update for pending likes (when user likes/dislikes a pending like)
         // Only update if action is 'like' or 'dislike' (not other actions)

@@ -1,17 +1,23 @@
 import type DiscoveryProfile from "@/modules/database/models/DiscoveryProfile";
 import type SwipeQueue from "@/modules/database/models/SwipeQueue";
 import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
+import { removeDiscoveryProfiles } from "@/modules/discovery/discovery-service";
+import { interactUsersBatch } from "@/modules/interactions/api";
+import { logger } from "@/utils/logger";
+import type { PresenceEntryType } from "@/utils/presence-badge";
 import type { Database } from "@nozbe/watermelondb";
 import { Q } from "@nozbe/watermelondb";
-import { logger } from "@/utils/logger";
-import { interactUsersBatch } from "@/modules/interactions/api";
-import { removeDiscoveryProfiles } from "@/modules/discovery/discovery-service";
 
 export type SwipeQueueItem = {
   id: string;
   targetUserId: string;
   action: SwipeAction;
   placeId: string;
+  /**
+   * Raw entry_type of the swiped user. Forwarded as match_origin_override
+   * on flush so the backend maps it to the correct match_origin.
+   */
+  context?: PresenceEntryType | null;
   createdAt: Date;
 };
 
@@ -29,9 +35,14 @@ export async function enqueueSwipe(params: {
   targetUserId: string;
   action: SwipeAction;
   placeId: string;
+  /**
+   * Raw entry_type of the swiped user.
+   * Persisted in swipes_queue.context and forwarded on batch flush.
+   */
+  context?: PresenceEntryType | null;
   removeProfileId?: string;
 }): Promise<void> {
-  const { database, targetUserId, action, placeId, removeProfileId } = params;
+  const { database, targetUserId, action, placeId, context, removeProfileId } = params;
   const collection = database.collections.get<SwipeQueue>("swipes_queue");
   const discoveryCollection = database.collections.get<DiscoveryProfile>(
     "discovery_profiles"
@@ -48,6 +59,7 @@ export async function enqueueSwipe(params: {
         record.prepareUpdate((swipe) => {
           swipe.action = action;
           swipe.placeId = placeId;
+          swipe.context = context ?? null;
         })
       );
     } else {
@@ -56,6 +68,7 @@ export async function enqueueSwipe(params: {
           record.targetUserId = targetUserId;
           record.action = action;
           record.placeId = placeId;
+          record.context = context ?? null;
         })
       );
     }
@@ -89,6 +102,7 @@ export async function getQueuedSwipes(params: {
     targetUserId: record.targetUserId,
     action: record.action,
     placeId: record.placeId,
+    context: record.context ?? null,
     createdAt: record.createdAt,
   }));
 }
@@ -126,6 +140,8 @@ export async function flushQueuedSwipes(params: {
         to_user_id: item.targetUserId,
         action: item.action,
         place_id: item.placeId,
+        // Forward regular context so the DB trigger sets match_origin correctly
+        ...(item.context ? { match_origin_override: item.context } : {}),
       })),
     });
 

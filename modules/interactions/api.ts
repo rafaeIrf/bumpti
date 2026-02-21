@@ -2,6 +2,7 @@ import { trackMatch } from "@/modules/analytics";
 import { supabase } from "@/modules/supabase/client";
 import { extractEdgeErrorMessage } from "@/modules/supabase/edge-error";
 import { logger } from "@/utils/logger";
+import type { PresenceEntryType } from "@/utils/presence-badge";
 
 export type InteractionAction = "like" | "dislike";
 
@@ -15,6 +16,14 @@ export type InteractionBatchItem = {
   to_user_id: string;
   action: InteractionAction;
   place_id: string;
+  /**
+   * Raw entry_type of the liked user at swipe-time.
+   * Backend maps this to the correct match_origin:
+   *   past_visitor | favorite  → regular
+   *   planning | checkin_plus  → planning
+   *   physical                 → live (no-op)
+   */
+  match_origin_override?: PresenceEntryType | null;
 };
 
 export type InteractionBatchResult = {
@@ -30,15 +39,29 @@ export async function interactUser(params: {
   toUserId: string;
   action: InteractionAction;
   placeId: string;
+  /**
+   * Raw entry_type of the liked user. Backend maps to match_origin:
+   *   past_visitor | favorite  → regular
+   *   planning | checkin_plus  → planning
+   *   physical                 → live (no-op, already the fallback)
+   */
+  context?: PresenceEntryType | null;
 }): Promise<InteractionResponse> {
-  const { toUserId, action, placeId } = params;
+  const { toUserId, action, placeId, context } = params;
 
   try {
+    const body: Record<string, unknown> = {
+      to_user_id: toUserId,
+      action,
+      place_id: placeId,
+    };
+    if (context) {
+      body.match_origin_override = context;
+    }
+
     const { data, error } = await supabase.functions.invoke<InteractionResponse>(
       "interact-user",
-      {
-        body: { to_user_id: toUserId, action, place_id: placeId },
-      }
+      { body },
     );
 
     if (error) {

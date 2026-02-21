@@ -196,6 +196,8 @@ Deno.serve(async (req) => {
             to_user_id: body?.to_user_id,
             action: body?.action,
             place_id: body?.place_id,
+            // Optional: 'regular' for frequentadores surfaced by get_eligible_regulars_at_place
+            match_origin_override: body?.match_origin_override ?? null,
           },
         ];
 
@@ -341,21 +343,25 @@ Deno.serve(async (req) => {
           Date.now() + 30 * 24 * 60 * 60 * 1000
         ).toISOString();
 
+        // Build the interaction row — include match_origin_override when present
+        // (only 'regular' is a valid value; the DB trigger validates allowed values)
+        const interactionRow: Record<string, unknown> = {
+          from_user_id: user.id,
+          to_user_id: item.to_user_id,
+          action: "like",
+          action_expires_at: expiresAt,
+          place_id: item.place_id,
+        };
+        if (item.match_origin_override) {
+          interactionRow.match_origin_override = item.match_origin_override;
+        }
+
         const { error: likeError } = await dbClient
           .from("user_interactions")
-          .upsert(
-            {
-              from_user_id: user.id,
-              to_user_id: item.to_user_id,
-              action: "like",
-              action_expires_at: expiresAt,
-              place_id: item.place_id,
-            },
-            {
-              onConflict: "from_user_id,to_user_id",
-              ignoreDuplicates: false,
-            }
-          );
+          .upsert(interactionRow, {
+            onConflict: "from_user_id,to_user_id",
+            ignoreDuplicates: false,
+          });
 
         if (likeError) {
           results.push({

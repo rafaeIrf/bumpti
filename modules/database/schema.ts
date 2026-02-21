@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 9,
+  version: 10,
   tables: [
     // Tabela de matches
     tableSchema({
@@ -92,6 +92,9 @@ export const schema = appSchema({
         { name: 'target_user_id', type: 'string', isIndexed: true },
         { name: 'action', type: 'string' },
         { name: 'place_id', type: 'string' },
+        // Optional match_origin_override: 'regular' for frequentadores.
+        // Stored here so the context survives offline queue flush.
+        { name: 'context', type: 'string', isOptional: true },
         { name: 'created_at', type: 'number' },
       ],
     }),
