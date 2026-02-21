@@ -20,17 +20,6 @@ AS $$
 DECLARE
   result jsonb;
 BEGIN
-  -- Check if user already has an active check-in
-  -- If yes, don't suggest new places
-  IF EXISTS (
-    SELECT 1 FROM user_presences
-    WHERE user_id = p_user_id
-      AND active = true
-      AND ended_at IS NULL
-      AND expires_at > NOW()
-  ) THEN
-    RETURN NULL; -- No suggestion if already checked in
-  END IF;
 
   -- Return the best candidate place with full information
   -- Uses get_combined_place_avatars for active + regular avatars (deduped)
