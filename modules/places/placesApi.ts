@@ -1,26 +1,30 @@
 import {
-  detectPlace as detectPlaceApi,
-  type DetectPlaceResult,
-  getFavoritePlaces as getFavoritePlacesApi,
-  getNearbyPlaces as getNearbyPlacesApi,
-  getPlacesByFavorites as getPlacesByFavoritesApi,
-  getRankedPlaces as getRankedPlacesApi,
-  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
-  getTrendingPlaces as getTrendingPlacesApi,
-  type PlacesByCategory,
-  type RankByOption,
-  saveSocialReview,
-  searchPlacesByText as searchPlacesByTextApi,
-  toggleFavoritePlace as toggleFavoritePlaceApi
+    detectPlace as detectPlaceApi,
+    type DetectPlaceResult,
+    getFavoritePlaces as getFavoritePlacesApi,
+    getMapActivePlaces as getMapActivePlacesApi,
+    getNearbyPlaces as getNearbyPlacesApi,
+    getPlacesByFavorites as getPlacesByFavoritesApi,
+    getPlaceSocialSummary as getPlaceSocialSummaryApi,
+    getRankedPlaces as getRankedPlacesApi,
+    getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+    getTrendingPlaces as getTrendingPlacesApi,
+    type MapActivePlace,
+    type PlacesByCategory,
+    type PlaceSocialSummary,
+    type RankByOption,
+    saveSocialReview,
+    searchPlacesByText as searchPlacesByTextApi,
+    toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { updateProfile } from "@/modules/profile/api";
 import { setFavoritePlaces, setFilterOnlyVerified } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-  buildNearbyCacheKey,
-  mergeNearbyPlaces,
-  roundToGrid,
-  shouldRefetchNearby,
+    buildNearbyCacheKey,
+    mergeNearbyPlaces,
+    roundToGrid,
+    shouldRefetchNearby,
 } from "./nearby-cache";
 import { Place, PlaceCategory } from "./types";
 
@@ -51,6 +55,8 @@ export const placesApi = createApi({
     "SuggestedPlaces",
     "RankedPlaces",
     "PlaceById",
+    "PlaceSocialSummary",
+    "MapActivePlaces",
   ],
   endpoints: (builder) => ({
     getSuggestedPlaces: builder.query<
@@ -586,6 +592,37 @@ export const placesApi = createApi({
       },
     }),
 
+    getPlaceSocialSummary: builder.query<PlaceSocialSummary | null, string>({
+      queryFn: async (placeId) => {
+        try {
+          const data = await getPlaceSocialSummaryApi(placeId);
+          return { data };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, placeId) => [
+        { type: "PlaceSocialSummary", id: placeId },
+      ],
+      keepUnusedDataFor: 30,
+    }),
+
+    getMapActivePlaces: builder.query<
+      MapActivePlace[],
+      { lat: number; lng: number; radiusMeters?: number }
+    >({
+      queryFn: async ({ lat, lng, radiusMeters }) => {
+        try {
+          const data = await getMapActivePlacesApi(lat, lng, radiusMeters);
+          return { data };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: ["MapActivePlaces"],
+      keepUnusedDataFor: 30,
+    }),
+
   }),
 });
 
@@ -603,6 +640,8 @@ export const {
   useGetSuggestedPlacesQuery,
   useSaveReviewMutation,
   useUpdateProfileSettingsMutation,
+  useLazyGetPlaceSocialSummaryQuery,
+  useLazyGetMapActivePlacesQuery,
 } = placesApi;
 
 /**

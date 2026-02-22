@@ -37,6 +37,7 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
+import Mapbox from "@rnmapbox/maps";
 import { useEffect, useRef, useState } from "react";
 import { AppState, type AppStateStatus, StyleSheet, View } from "react-native";
 import RNBootSplash from "react-native-bootsplash";
@@ -45,6 +46,11 @@ import { WELCOME_BG_IMAGE } from "./(auth)/welcome";
 export const unstable_settings = {
   initialRouteName: "index",
 };
+
+// Initialise Mapbox once at app startup — must run before any MapView renders.
+// Token is read from EXPO_PUBLIC env var (inlined by Metro at bundle time).
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
+Mapbox.setTelemetryEnabled(false);
 
 const styles = StyleSheet.create({
   splashOverlay: {

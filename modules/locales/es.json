@@ -622,7 +622,23 @@
       },
       "toolbar": {
         "filters": "Filtros",
-        "search": "Buscar"
+        "search": "Buscar",
+        "map": "Mapa",
+        "list": "Lista"
+      },
+      "map": {
+        "comingSoon": "Mapa próximamente",
+        "comingSoonDescription": "Estamos preparando el mapa para que puedas encontrar personas cercanas.",
+        "activeNow": "{{count}} aquí ahora",
+        "planning": "{{count}} planificando ir",
+        "enter": "Entrar",
+        "preview": {
+          "activeNow": "{{count}} personas en el radar ahora",
+          "planningWeek": "{{count}} confirmados para esta semana",
+          "regularsFavorite": "Uno de los lugares favoritos de la gente",
+          "connectNow": "Conectar ahora",
+          "createPlan": "Crear Plan"
+        }
       },
       "infoTitle": "¿Cómo funciona?",
       "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",

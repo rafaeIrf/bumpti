@@ -62,6 +62,8 @@ interface BaseTemplateScreenProps {
   // Styling
   containerStyle?: ViewStyle;
   contentContainerStyle?: ViewStyle;
+  // Style applied to the wrapping View when scrollEnabled=false
+  viewContainerStyle?: ViewStyle;
 
   // Scroll configuration
   scrollEnabled?: boolean;
@@ -92,6 +94,7 @@ export function BaseTemplateScreen({
   onRefresh,
   containerStyle,
   contentContainerStyle,
+  viewContainerStyle,
   scrollEnabled = true,
   showsVerticalScrollIndicator = false,
   hasStackHeader = false,
@@ -211,12 +214,15 @@ export function BaseTemplateScreen({
           </View>
         ) : (
           <View
-            style={{
-              flex: 1,
-              paddingHorizontal: spacing.md,
-              paddingBottom:
-                !BottomBar && !ignoreBottomSafeArea ? insets.bottom : 0,
-            }}
+            style={[
+              {
+                flex: 1,
+                paddingHorizontal: spacing.md,
+                paddingBottom:
+                  !BottomBar && !ignoreBottomSafeArea ? insets.bottom : 0,
+              },
+              viewContainerStyle,
+            ]}
           >
             {children}
           </View>

@@ -1,4 +1,10 @@
-import { MapPinIcon, SearchIcon, SlidersHorizontalIcon } from "@/assets/icons";
+import {
+  ListIcon,
+  MapIcon,
+  MapPinIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+} from "@/assets/icons";
 import {
   BarsIcon,
   ClubIcon,
@@ -21,6 +27,7 @@ import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
+import { HomeMapView } from "@/components/home-map-view";
 import { MyCampusCard } from "@/components/my-campus-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { PlanHero } from "@/components/plan-hero";
@@ -64,10 +71,13 @@ interface Category {
   illustration?: React.ComponentType<SvgProps>;
 }
 
+const MAP_TOGGLE_COLOR = "#1D9BF0";
+
 export default function HomeScreen() {
   const colors = useThemeColors();
   const { location } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isMapView, setIsMapView] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
   const [todayPlansCount, setTodayPlansCount] = useState(0);
@@ -411,6 +421,10 @@ export default function HomeScreen() {
   return (
     <BaseTemplateScreen
       ignoreBottomSafeArea
+      scrollEnabled={!isMapView}
+      viewContainerStyle={
+        isMapView ? { paddingHorizontal: 0, paddingBottom: 0 } : undefined
+      }
       TopHeader={
         <ScreenToolbar
           leftAction={{
@@ -426,6 +440,14 @@ export default function HomeScreen() {
           titleIconColor={colors.accent}
           rightActions={[
             {
+              icon: isMapView ? ListIcon : MapIcon,
+              onClick: () => setIsMapView((v) => !v),
+              ariaLabel: isMapView
+                ? t("screens.home.toolbar.list")
+                : t("screens.home.toolbar.map"),
+              color: isMapView ? MAP_TOGGLE_COLOR : colors.icon,
+            },
+            {
               icon: SearchIcon,
               onClick: handleOpenSearch,
               ariaLabel: t("screens.home.toolbar.search"),
@@ -435,159 +457,185 @@ export default function HomeScreen() {
         />
       }
     >
-      {/* Main Content */}
-      <ThemedView style={styles.mainContent}>
-        {/* Detection Banner - Fixed at top */}
-        {detectedPlace && (
-          <DetectionBanner
-            place={detectedPlace}
-            onConnect={handleConnectPlace}
-            onDismiss={handleDismissDetection}
-            isConnecting={isConnecting}
-          />
-        )}
-
-        {/* Plan Hero - Create or view plans */}
-        <PlanHero
-          plans={sortedPlans}
-          initialIndex={initialIndex}
-          loading={planLoading}
-          defaultConfirmedCount={todayPlansCount}
-          onViewPeoplePress={async (plan) => {
-            setPlanLoading(true);
-            try {
-              await handlePlaceClick({
-                placeId: plan.placeId,
-                name: plan.locationName,
-                latitude: 0,
-                longitude: 0,
-                distance: 0,
-                active_users: plan.confirmedCount,
-              });
-            } finally {
-              setPlanLoading(false);
-            }
-          }}
-        />
-
-        {/* Title Section */}
-        {/* <ScreenSectionHeading
-          titleStyle={{ marginTop: 24 }}
-          title={t("screens.home.heroTitle")}
-          subtitle={t("screens.home.heroSubtitle")}
-        /> */}
-
-        <ThemedView style={styles.contentContainer}>
-          {/* Featured Section */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={styles.gridContainer}>
-              {featuredCategoriesItems.map((item) => (
-                <PlaceCardFeatured
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  color={item.color}
-                  onClick={() => handleCategoryClick(item)}
-                  containerStyle={styles.featuredItem}
-                  count={item.id === "highlighted" ? trendingCount : undefined}
-                />
-              ))}
-            </View>
-          </Animated.View>
-
-          {/* My Campus Card - Between Featured and Nearby */}
-          {profile &&
-            profile.university_id &&
-            profile.show_university_on_home && (
-              <>
-                <ScreenSectionHeading
-                  titleStyle={{ marginTop: 16 }}
-                  title={t("screens.home.myCampus.sectionTitle")}
-                />
-                <MyCampusCard profile={profile} />
-              </>
+      {isMapView ? (
+        <HomeMapView />
+      ) : (
+        <Animated.View
+          key="list"
+          entering={FadeInDown.duration(220).springify()}
+        >
+          {/* Main Content */}
+          <ThemedView style={styles.mainContent}>
+            {/* Detection Banner - Fixed at top */}
+            {detectedPlace && (
+              <DetectionBanner
+                place={detectedPlace}
+                onConnect={handleConnectPlace}
+                onDismiss={handleDismissDetection}
+                isConnecting={isConnecting}
+              />
             )}
 
-          {/* Nearby Section - Between Featured and Explore */}
-          {/* Intermediate Section - Nearby & Explore */}
-          <Animated.View entering={FadeInDown.delay(250).springify()}>
-            <ScreenSectionHeading
-              titleStyle={{ marginTop: 16 }}
-              title={t("screens.home.intermediateTitle")}
-              subtitle={t("screens.home.intermediateSubtitle")}
+            {/* Plan Hero - Create or view plans */}
+            <PlanHero
+              plans={sortedPlans}
+              initialIndex={initialIndex}
+              loading={planLoading}
+              defaultConfirmedCount={todayPlansCount}
+              onViewPeoplePress={async (plan) => {
+                setPlanLoading(true);
+                try {
+                  await handlePlaceClick({
+                    placeId: plan.placeId,
+                    name: plan.locationName,
+                    latitude: 0,
+                    longitude: 0,
+                    distance: 0,
+                    active_users: plan.confirmedCount,
+                  });
+                } finally {
+                  setPlanLoading(false);
+                }
+              }}
             />
-            <CategoryCard
-              category={nearbyCategory}
-              isSelected={selectedCategory === nearbyCategory.id}
-              onClick={() => handleCategoryClick(nearbyCategory)}
-              color={nearbyCategory.color}
-              illustration={nearbyCategory.illustration}
-              style={styles.nearbyCard}
-              textStyle={{ textAlign: "left" }}
-            />
-          </Animated.View>
-          {/* Explore Section */}
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <View style={styles.gridContainer}>
-              {browseCategories.map((item, index) => (
-                <Animated.View
-                  key={item.id}
-                  entering={FadeInDown.delay(300 + index * 80).springify()}
-                  style={styles.categoryItem}
-                >
-                  <CategoryCard
-                    category={item}
-                    isSelected={selectedCategory === item.id}
-                    onClick={() => handleCategoryClick(item)}
-                    color={item.color}
-                    illustration={item.illustration}
-                  />
-                </Animated.View>
-              ))}
-            </View>
-          </Animated.View>
-        </ThemedView>
 
-        {/* Info Card */}
-        <Animated.View entering={FadeInDown.delay(700).springify()}>
-          <View style={styles.section}>
-            <View
-              style={[
-                styles.infoCard,
-                {
-                  backgroundColor: colors.surface,
-                },
-              ]}
-            >
-              <View style={styles.infoContent}>
-                <View style={[styles.infoIconContainer]}>
-                  <MapPinIcon width={20} height={20} color={colors.accent} />
+            {/* Title Section */}
+            {/* <ScreenSectionHeading
+              titleStyle={{ marginTop: 24 }}
+              title={t("screens.home.heroTitle")}
+              subtitle={t("screens.home.heroSubtitle")}
+            /> */}
+
+            <ThemedView style={styles.contentContainer}>
+              {/* Featured Section */}
+              <Animated.View entering={FadeInDown.delay(200).springify()}>
+                <View style={styles.gridContainer}>
+                  {featuredCategoriesItems.map((item) => (
+                    <PlaceCardFeatured
+                      key={item.id}
+                      title={item.title}
+                      icon={item.icon}
+                      color={item.color}
+                      onClick={() => handleCategoryClick(item)}
+                      containerStyle={styles.featuredItem}
+                      count={
+                        item.id === "highlighted" ? trendingCount : undefined
+                      }
+                    />
+                  ))}
                 </View>
-                <View style={styles.infoTextContainer}>
-                  <ThemedText
-                    style={[styles.infoTitle, { color: colors.text }]}
-                  >
-                    {t("screens.home.infoTitle")}
-                  </ThemedText>
-                  <ThemedText
-                    style={[
-                      styles.infoDescription,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {t("screens.home.infoDescription")}
-                  </ThemedText>
+              </Animated.View>
+
+              {/* My Campus Card - Between Featured and Nearby */}
+              {profile &&
+                profile.university_id &&
+                profile.show_university_on_home && (
+                  <>
+                    <ScreenSectionHeading
+                      titleStyle={{ marginTop: 16 }}
+                      title={t("screens.home.myCampus.sectionTitle")}
+                    />
+                    <MyCampusCard profile={profile} />
+                  </>
+                )}
+
+              {/* Nearby Section - Between Featured and Explore */}
+              {/* Intermediate Section - Nearby & Explore */}
+              <Animated.View entering={FadeInDown.delay(250).springify()}>
+                <ScreenSectionHeading
+                  titleStyle={{ marginTop: 16 }}
+                  title={t("screens.home.intermediateTitle")}
+                  subtitle={t("screens.home.intermediateSubtitle")}
+                />
+                <CategoryCard
+                  category={nearbyCategory}
+                  isSelected={selectedCategory === nearbyCategory.id}
+                  onClick={() => handleCategoryClick(nearbyCategory)}
+                  color={nearbyCategory.color}
+                  illustration={nearbyCategory.illustration}
+                  style={styles.nearbyCard}
+                  textStyle={{ textAlign: "left" }}
+                />
+              </Animated.View>
+              {/* Explore Section */}
+              <Animated.View entering={FadeInDown.delay(300).springify()}>
+                <View style={styles.gridContainer}>
+                  {browseCategories.map((item, index) => (
+                    <Animated.View
+                      key={item.id}
+                      entering={FadeInDown.delay(300 + index * 80).springify()}
+                      style={styles.categoryItem}
+                    >
+                      <CategoryCard
+                        category={item}
+                        isSelected={selectedCategory === item.id}
+                        onClick={() => handleCategoryClick(item)}
+                        color={item.color}
+                        illustration={item.illustration}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+              </Animated.View>
+            </ThemedView>
+
+            {/* Info Card */}
+            <Animated.View entering={FadeInDown.delay(700).springify()}>
+              <View style={styles.section}>
+                <View
+                  style={[
+                    styles.infoCard,
+                    {
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
+                >
+                  <View style={styles.infoContent}>
+                    <View style={[styles.infoIconContainer]}>
+                      <MapPinIcon
+                        width={20}
+                        height={20}
+                        color={colors.accent}
+                      />
+                    </View>
+                    <View style={styles.infoTextContainer}>
+                      <ThemedText
+                        style={[styles.infoTitle, { color: colors.text }]}
+                      >
+                        {t("screens.home.infoTitle")}
+                      </ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.infoDescription,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {t("screens.home.infoDescription")}
+                      </ThemedText>
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
+            </Animated.View>
+          </ThemedView>
         </Animated.View>
-      </ThemedView>
+      )}
     </BaseTemplateScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  mapContainer: {
+    flex: 1,
+  },
+  mapHeaderOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  mainContent: {},
   section: {
     paddingTop: 24,
   },

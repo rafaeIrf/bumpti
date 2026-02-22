@@ -114,8 +114,6 @@ module.exports = {
         {
           android: {
             kotlinVersion: "2.2.0",
-            // If you're targeting Expo SDK 54 or newer, confirm whether this manual override is still required.
-            // Please share findings with the community at https://github.com/hyochan/expo-iap/discussions.
           },
           ios: {
             useFrameworks: "static",
@@ -123,6 +121,7 @@ module.exports = {
           },
         },
       ],
+      "@rnmapbox/maps",
     ],
     experiments: {
       typedRoutes: true,

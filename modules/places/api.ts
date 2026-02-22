@@ -490,4 +490,76 @@ export async function createPlaceReport(
     return { success: false, error: "Unexpected error" };
   }
 }
+export interface PlaceSocialSummary {
+  active_count: number;
+  regulars_count: number;
+  planning_count: number;
+  avatars: { user_id: string; url: string }[];
+}
 
+/**
+ * Fetches unified social signals for a place (active, regulars, planning, avatars).
+ * Calls the `place-social-summary` Edge Function — never calls the RPC directly.
+ */
+export async function getPlaceSocialSummary(
+  placeId: string
+): Promise<PlaceSocialSummary | null> {
+  const { data, error } = await supabase.functions.invoke<PlaceSocialSummary>(
+    "place-social-summary",
+    {
+      body: { place_id: placeId },
+    }
+  );
+
+  if (error) {
+    logger.error("[place-social-summary] edge function error:", error);
+    return null;
+  }
+
+  return data ?? null;
+}
+
+// ─── Map Active Places ────────────────────────────────────────────────────────
+
+/** Lightweight place representation for map pins. */
+export interface MapActivePlace {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  neighborhood: string | null;
+  category: string;
+  active_users: number;
+  planning_count: number;
+  regulars_count: number;
+  preview_avatars: { user_id: string; url: string }[];
+}
+
+/**
+ * Fetches places with activity (active users / plans / regulars) near a coordinate.
+ * Calls the `map-active-places` Edge Function — never calls the RPC directly.
+ */
+export async function getMapActivePlaces(
+  lat: number,
+  lng: number,
+  radiusMeters = 50000
+): Promise<MapActivePlace[]> {
+  logger.log("[map-active-places] Calling EF with:", { lat, lng, radius_meters: radiusMeters });
+
+  const { data, error } = await supabase.functions.invoke<{
+    places: MapActivePlace[];
+  }>("map-active-places", {
+    body: { lat, lng, radius_meters: radiusMeters },
+  });
+
+  logger.log("[map-active-places] Raw response — data:", JSON.stringify(data)?.slice(0, 200), "error:", error);
+
+  if (error) {
+    logger.error("[map-active-places] edge function error:", error);
+    return [];
+  }
+
+  const places = data?.places ?? [];
+  logger.log("[map-active-places] Returning", places.length, "places");
+  return places;
+}
