@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import {
   FavoritePlacesContent,
@@ -79,9 +80,10 @@ export default function FavoritePlacesScreen() {
       BottomBar={
         userLocation && (
           <ScreenBottomBar
-            primaryLabel={t("common.continue")}
+            variant="wizard"
             onPrimaryPress={handleContinue}
             primaryDisabled={needsMore}
+            primaryIcon={ArrowRightIcon}
             topContent={
               selectedPlaceIds.length > 0 ? (
                 <MultiSelectSheet

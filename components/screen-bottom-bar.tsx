@@ -11,7 +11,9 @@ interface ScreenBottomBarProps {
   primaryLabel?: string;
   onPrimaryPress?: () => void;
   primaryDisabled?: boolean;
-  primaryIcon?: React.ReactNode;
+  primaryIcon?:
+    | React.ComponentType<{ width: number; height: number; color: string }>
+    | React.ReactNode;
 
   // Secondary action button (optional)
   secondaryLabel?: string;
@@ -99,10 +101,10 @@ export function ScreenBottomBar({
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const keyboardShowListener = Keyboard.addListener(showEvent, () =>
-      setKeyboardVisible(true)
+      setKeyboardVisible(true),
     );
     const keyboardHideListener = Keyboard.addListener(hideEvent, () =>
-      setKeyboardVisible(false)
+      setKeyboardVisible(false),
     );
 
     return () => {
@@ -214,7 +216,17 @@ export function ScreenBottomBar({
                 variant="secondary"
                 size="fab"
               >
-                {primaryIcon}
+                {primaryIcon &&
+                  (typeof primaryIcon === "function"
+                    ? React.createElement(
+                        primaryIcon as React.ComponentType<{
+                          width: number;
+                          height: number;
+                          color: string;
+                        }>,
+                        { width: 24, height: 24, color: "#FFF" },
+                      )
+                    : primaryIcon)}
               </Button>
             )}
           </View>

@@ -1,4 +1,10 @@
-import { BriefcaseIcon, FlameIcon, HeartIcon, UsersIcon } from "@/assets/icons";
+import {
+  ArrowRightIcon,
+  BriefcaseIcon,
+  FlameIcon,
+  HeartIcon,
+  UsersIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -31,7 +37,7 @@ const intentionIconMap: Record<
 
 export default function IntentionScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -74,9 +80,12 @@ export default function IntentionScreen() {
       hasStackHeader
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={false}
+          primaryIcon={ArrowRightIcon}
+          secondaryLabel={t("common.skip")}
+          onSecondaryPress={() => completeCurrentStep("intention")}
         />
       }
     >
