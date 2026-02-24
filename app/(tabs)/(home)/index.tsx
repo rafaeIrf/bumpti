@@ -66,7 +66,7 @@ interface Category {
 
 export default function HomeScreen() {
   const colors = useThemeColors();
-  const { location } = useCachedLocation();
+  const { location, cityOverride } = useCachedLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
@@ -86,13 +86,13 @@ export default function HomeScreen() {
     );
   }, [location?.latitude, location?.longitude]);
 
-  // Detection banner with smart cooldowns and dismissal
+  // Detection banner — disabled when city override is active (user is browsing remotely)
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
     useDetectionBanner({
       latitude: location?.latitude,
       longitude: location?.longitude,
       accuracy: location?.accuracy,
-      enabled: !!location?.latitude && !!location?.longitude,
+      enabled: !!location?.latitude && !!location?.longitude && !cityOverride,
     });
 
   // Place click handler for auto check-in

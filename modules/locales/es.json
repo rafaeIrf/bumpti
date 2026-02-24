@@ -205,7 +205,8 @@
   },
   "errors": {
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
-    "profileUnavailable": "Perfil no disponible"
+    "profileUnavailable": "Perfil no disponible",
+    "network": "Algo salió mal. Verifica tu conexión e intenta nuevamente."
   },
   "moderation": {
     "validatingPhoto": "Validando tu foto...",
@@ -254,7 +255,10 @@
         "presence": {
           "title": "PREFERENCIAS DE PRESENCIA",
           "invisible": "Modo invisible",
-          "invisibleDescription": "Oculta tu presencia para otros usuarios."
+          "invisibleDescription": "Oculta tu presencia para otros usuarios.",
+          "cityOverride": "Ciudad",
+          "cityOverrideDescription": "Explorar lugares en otra ciudad",
+          "myLocation": "Ubicación actual"
         },
         "notifications": {
           "title": "Notificaciones",
@@ -789,7 +793,6 @@
           "subtitle": "Elige dónde vas",
           "suggestionsTitle": "Sugerencias",
           "searchPlaceholder": "Buscar lugar...",
-
           "noResults": "No se encontraron lugares",
           "searchEmptyState": "Busca un bar, restaurante o cualquier otro lugar al que quieras ir"
         },
@@ -1359,6 +1362,11 @@
       "likedConfirmation": "Te gustó {{name}}",
       "skipLabel": "Saltar",
       "likeLabel": "Me gusta"
+    },
+    "citySelector": {
+      "title": "Elegir ciudad",
+      "useMyLocation": "Usar mi ubicación",
+      "useMyLocationDescription": "Usar ubicación GPS"
     }
   },
   "venue": {

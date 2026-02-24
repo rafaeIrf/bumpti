@@ -205,7 +205,8 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
-    "profileUnavailable": "Profile unavailable"
+    "profileUnavailable": "Profile unavailable",
+    "network": "Something went wrong. Please check your connection and try again."
   },
   "moderation": {
     "validatingPhoto": "Validating your photo...",
@@ -254,7 +255,10 @@
         "presence": {
           "title": "PRESENCE PREFERENCES",
           "invisible": "Invisible mode",
-          "invisibleDescription": "Hides your presence from other users."
+          "invisibleDescription": "Hides your presence from other users.",
+          "cityOverride": "City",
+          "cityOverrideDescription": "Browse places in another city",
+          "myLocation": "Current location"
         },
         "notifications": {
           "title": "Notifications",
@@ -789,7 +793,6 @@
           "subtitle": "Choose where you're going",
           "suggestionsTitle": "Suggestions",
           "searchPlaceholder": "Search place...",
-
           "noResults": "No places found",
           "searchEmptyState": "Search for a bar, restaurant, or any other place you want to go"
         },
@@ -1365,6 +1368,11 @@
       "likedConfirmation": "You liked {{name}}",
       "skipLabel": "Skip",
       "likeLabel": "Like"
+    },
+    "citySelector": {
+      "title": "Choose city",
+      "useMyLocation": "Use my location",
+      "useMyLocationDescription": "Use GPS location"
     }
   },
   "venue": {

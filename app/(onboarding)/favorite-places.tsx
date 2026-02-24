@@ -78,11 +78,11 @@ export default function FavoritePlacesScreen() {
         paddingBottom: spacing.xxl * 4,
       }}
       BottomBar={
-        userLocation && (
+        (userLocation || isCityNotAvailable) && (
           <ScreenBottomBar
             variant="wizard"
             onPrimaryPress={handleContinue}
-            primaryDisabled={needsMore}
+            primaryDisabled={!isCityNotAvailable && needsMore}
             primaryIcon={ArrowRightIcon}
             topContent={
               selectedPlaceIds.length > 0 ? (
