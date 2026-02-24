@@ -1123,9 +1123,9 @@
       },
       "favoritePlaces": {
         "title": "Your favorite Spots",
-        "subtitle": "Pick at least 3 Spots where you'd like to meet people",
+        "subtitle": "Pick at least 1 Spot where you'd like to meet people",
         "searchPlaceholder": "Search place...",
-        "selectAtLeastOne": "Select at least 3 spots",
+        "selectAtLeastOne": "Select at least 1 spot",
         "locationNeeded": "To suggest places near you, we need your location.",
         "selectionHint": "{{current}}/{{max}}"
       },
