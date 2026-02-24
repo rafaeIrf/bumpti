@@ -245,8 +245,8 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await grantCheckinCredits(supabase, user.id, 10, "onboarding_bonus");
-      console.log(`Granted 10 checkin+ credits to user ${user.id}`);
+      await grantCheckinCredits(supabase, user.id, 3, "onboarding_bonus");
+      console.log(`Granted 3 checkin+ credits to user ${user.id}`);
     } catch (creditError) {
       console.error("Failed to grant onboarding credits:", creditError);
     }
