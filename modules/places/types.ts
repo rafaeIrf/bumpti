@@ -65,6 +65,14 @@ export type CityPrediction = {
   formattedAddress: string | null;
 };
 
+export type SupportedCity = {
+  id: string;
+  city_name: string;
+  country_code: string;
+  lat: number;
+  lng: number;
+};
+
 export type NearbyPlacesResponse = { places: Place[] };
 
 export type PlaceCategory =

@@ -6,6 +6,7 @@ import {
   getPlacesByFavorites as getPlacesByFavoritesApi,
   getRankedPlaces as getRankedPlacesApi,
   getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+  getSupportedCities as getSupportedCitiesApi,
   getTrendingPlaces as getTrendingPlacesApi,
   type PlacesByCategory,
   type RankByOption,
@@ -22,7 +23,7 @@ import {
   roundToGrid,
   shouldRefetchNearby,
 } from "./nearby-cache";
-import { Place, PlaceCategory } from "./types";
+import { Place, PlaceCategory, SupportedCity } from "./types";
 
 // TTL configurations (in seconds)
 // Default to short cache in dev for easier testing.
@@ -37,6 +38,8 @@ const CACHE_TIME = {
   SUGGESTED_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
   DETECTED_PLACE: __DEV__ ? DEV_CACHE_TTL : 60,
   RANKED_PLACES: __DEV__ ? DEV_CACHE_TTL : 60,
+  // Cities barely change (new city added ~monthly), high TTL is safe
+  SUPPORTED_CITIES: __DEV__ ? DEV_CACHE_TTL : 24 * 60 * 60,
 };
 
 export const placesApi = createApi({
@@ -51,8 +54,27 @@ export const placesApi = createApi({
     "SuggestedPlaces",
     "RankedPlaces",
     "PlaceById",
+    "SupportedCities",
   ],
   endpoints: (builder) => ({
+    // Supported cities list — very high TTL, cities change rarely
+    // Accepts optional lat/lng to sort by proximity in the edge function
+    getSupportedCities: builder.query<
+      SupportedCity[],
+      { lat?: number; lng?: number } | void
+    >({
+      queryFn: async (args) => {
+        try {
+          const cities = await getSupportedCitiesApi(args?.lat, args?.lng);
+          return { data: cities };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: [{ type: "SupportedCities", id: "list" }],
+      keepUnusedDataFor: CACHE_TIME.SUPPORTED_CITIES,
+    }),
+
     getSuggestedPlaces: builder.query<
       { data: PlacesByCategory[] },
       { latitude: number; longitude: number; categories: PlaceCategory[] }
@@ -594,6 +616,7 @@ export const {
   useGetNearbyPlacesQuery,
   useGetPlacesByFavoritesQuery,
   useGetRankedPlacesQuery,
+  useGetSupportedCitiesQuery,
   useSearchPlacesByTextQuery,
   useGetTrendingPlacesQuery,
   useGetFavoritePlacesQuery,
