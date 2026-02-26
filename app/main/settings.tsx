@@ -12,9 +12,11 @@ import { ThemedText } from "@/components/themed-text";
 import ToggleSwitch from "@/components/toogle-switch";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
+import { useCityOverride } from "@/hooks/use-city-override";
 import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
+import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
 import { useInvisibleMode } from "@/modules/profile/hooks/use-invisible-mode";
 import { getAppVersion, getBuildNumber } from "@/utils";
@@ -50,6 +52,8 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
   const { profile } = useProfile();
   const { isInvisible, toggleInvisibleMode, isPremium } = useInvisibleMode();
+  const { isPremium: userIsPremium } = useUserSubscription();
+  const { selectedCity } = useCityOverride();
   const bottomSheet = useCustomBottomSheet();
 
   const handleClose = () => {
@@ -245,6 +249,35 @@ export default function SettingsScreen() {
               </View>
             }
             showChevron={false}
+          />
+          <SettingItem
+            title={t("screens.profile.settingsPage.presence.cityOverride")}
+            description={
+              selectedCity
+                ? selectedCity.city_name
+                : t("screens.profile.settingsPage.presence.myLocation")
+            }
+            rightContent={
+              !userIsPremium ? (
+                <View
+                  style={[
+                    styles.premiumBadge,
+                    { backgroundColor: colors.accent },
+                  ]}
+                >
+                  <ThemedText style={styles.premiumBadgeText}>
+                    Premium
+                  </ThemedText>
+                </View>
+              ) : undefined
+            }
+            onClick={() => {
+              if (userIsPremium) {
+                router.push("/main/city-selector");
+              } else {
+                router.push("/(modals)/premium-paywall");
+              }
+            }}
           />
         </View>
 

@@ -1,3 +1,4 @@
+import { registerCityChangeCallback, useCityOverride } from "@/hooks/use-city-override";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useProfile } from "@/hooks/use-profile";
 import { getUserPosition } from "@/modules/places";
@@ -14,7 +15,7 @@ const REVIEWER_LOCATION = {
   countryCode: "BR",
 };
 
-// Cache the user location globally
+// Cache the user GPS location globally
 let cachedLocation: {
   latitude: number;
   longitude: number;
@@ -25,6 +26,11 @@ let cachedLocation: {
 let lastFetchTime = 0;
 const LOCATION_CACHE_TIME = 1 * 60 * 1000; // 1 minute in milliseconds
 
+// When city override changes, invalidate the GPS cache so it refreshes if override is cleared
+registerCityChangeCallback(() => {
+  cachedLocation = null;
+  lastFetchTime = 0;
+});
 
 export const useCachedLocation = () => {
   const [location, setLocation] = useState<{
@@ -37,10 +43,18 @@ export const useCachedLocation = () => {
   const [loading, setLoading] = useState(!cachedLocation);
   const { hasPermission } = useLocationPermission();
 
+  // City override (reactive — updates instantly on change)
+  const { selectedCity: cityOverride } = useCityOverride();
+
   // Check if current user is the reviewer using profile hook
   const { profile } = useProfile();
-  const reviewerEmails = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
-  const isReviewer = reviewerEmails.includes(profile?.email?.toLowerCase() || "");
+  const reviewerEmails = [
+    "reviewer@bumpti.com",
+    "reviewer_onboarding@bumpti.com",
+  ];
+  const isReviewer = reviewerEmails.includes(
+    profile?.email?.toLowerCase() || "",
+  );
 
   // Set reviewer location immediately if reviewer
   useEffect(() => {
@@ -50,9 +64,29 @@ export const useCachedLocation = () => {
     }
   }, [isReviewer]);
 
+  // If city override is active, use it directly — takes priority over GPS
   useEffect(() => {
-    // Skip location fetch for reviewer - they use hardcoded Curitiba
     if (isReviewer) return;
+
+    if (cityOverride) {
+      const overrideLocation = {
+        latitude: cityOverride.lat,
+        longitude: cityOverride.lng,
+        city: cityOverride.city_name,
+        countryCode: cityOverride.country_code,
+      };
+      logger.info(
+        "useCachedLocation: using city override",
+        cityOverride.city_name,
+      );
+      setLocation(overrideLocation);
+      setLoading(false);
+    }
+  }, [cityOverride, isReviewer]);
+
+  useEffect(() => {
+    // Skip GPS fetch if reviewer or city override is active
+    if (isReviewer || cityOverride) return;
 
     const fetchLocation = async () => {
       // Only fetch if we have permission
@@ -62,7 +96,7 @@ export const useCachedLocation = () => {
       }
 
       const now = Date.now();
-      // If we have cached location and it's less than CACHE_TIME old, use it
+      // Use cached GPS if fresh
       if (cachedLocation && now - lastFetchTime < LOCATION_CACHE_TIME) {
         logger.info("Using cached location:", cachedLocation);
         setLocation(cachedLocation);
@@ -74,13 +108,16 @@ export const useCachedLocation = () => {
       try {
         logger.info("Fetching fresh location...");
         const { latitude, longitude, accuracy } = await getUserPosition();
-        
+
         let city: string | undefined;
         let countryCode: string | undefined;
 
         try {
           // Reverse geocode to get city and country
-          const address = await Location.reverseGeocodeAsync({ latitude, longitude });
+          const address = await Location.reverseGeocodeAsync({
+            latitude,
+            longitude,
+          });
           if (address && address.length > 0) {
             city = address[0].city ?? address[0].subregion ?? undefined;
             countryCode = address[0].isoCountryCode ?? undefined;
@@ -90,7 +127,6 @@ export const useCachedLocation = () => {
         }
 
         const newLocation = { latitude, longitude, accuracy, city, countryCode };
-
         cachedLocation = newLocation;
         lastFetchTime = now;
 
@@ -107,14 +143,13 @@ export const useCachedLocation = () => {
     };
 
     fetchLocation();
-  }, [hasPermission, isReviewer]);
+  }, [hasPermission, isReviewer, cityOverride]);
 
-  return { location, loading };
+  return { location, loading, cityOverride };
 };
 
-// Function to manually invalidate the location cache
+// Function to manually invalidate the GPS location cache
 export const invalidateLocationCache = () => {
   cachedLocation = null;
   lastFetchTime = 0;
 };
-

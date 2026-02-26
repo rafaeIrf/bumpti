@@ -1,4 +1,10 @@
-import { CompassIcon, MapPinIcon, SparklesIcon } from "@/assets/icons";
+import {
+  CalendarIcon,
+  CompassIcon,
+  MapPinIcon,
+  SparklesIcon,
+  StarIcon,
+} from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { RemoteImage } from "@/components/ui/remote-image";
@@ -15,6 +21,9 @@ export type MatchOriginType =
   | "vibe_match"
   | "routine_match"
   | "path_match"
+  | "regular"
+  | "planning"
+  | "mixed"
   | null
   | undefined;
 
@@ -57,6 +66,21 @@ function getOriginConfig(origin: MatchOriginType) {
       return {
         icon: CompassIcon,
         labelKey: "screens.chatMessages.matchOrigin.pathMatch" as const,
+      };
+    case "regular":
+      return {
+        icon: StarIcon,
+        labelKey: "screens.chatMessages.matchOrigin.regular" as const,
+      };
+    case "planning":
+      return {
+        icon: CalendarIcon,
+        labelKey: "screens.chatMessages.matchOrigin.planning" as const,
+      };
+    case "mixed":
+      return {
+        icon: MapPinIcon,
+        labelKey: "screens.chatMessages.matchOrigin.mixed" as const,
       };
     default:
       return {

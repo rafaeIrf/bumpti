@@ -1,6 +1,6 @@
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import { CityPrediction, Place, PlaceCategory } from "./types";
+import { CityPrediction, Place, PlaceCategory, SupportedCity } from "./types";
 
 type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating" | "trending";
 
@@ -19,6 +19,32 @@ export async function searchCities(
   }
 
   return data?.places || [];
+}
+
+export async function getSupportedCities(
+  lat?: number,
+  lng?: number,
+): Promise<SupportedCity[]> {
+  const params = new URLSearchParams();
+  if (lat !== undefined && lng !== undefined) {
+    params.set("lat", String(lat));
+    params.set("lng", String(lng));
+  }
+  const queryString = params.toString();
+  const functionPath = queryString
+    ? `get-supported-cities?${queryString}`
+    : "get-supported-cities";
+
+  const { data, error } = await supabase.functions.invoke<{
+    cities: SupportedCity[];
+  }>(functionPath);
+
+  if (error) {
+    logger.error("get-supported-cities (edge) error:", error);
+    return [];
+  }
+
+  return data?.cities || [];
 }
 
 export async function searchPlacesByText(

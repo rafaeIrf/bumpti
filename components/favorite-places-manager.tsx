@@ -34,7 +34,7 @@ const CATEGORIES: PlaceCategory[] = [
 
 const MAX_SELECTIONS = 12;
 export const MAX_FAVORITES = MAX_SELECTIONS;
-export const MIN_FAVORITES = 3;
+export const MIN_FAVORITES = 1;
 
 export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];

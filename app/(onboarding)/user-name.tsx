@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -13,7 +14,7 @@ import { StyleSheet } from "react-native";
 
 export default function UserNameScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
   const [name, setName] = useState(userData.name || "");
 
   // Track screen view
@@ -48,9 +49,10 @@ export default function UserNameScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={!isValid}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >

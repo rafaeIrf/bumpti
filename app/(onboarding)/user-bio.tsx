@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -21,7 +22,7 @@ export default function UserBioScreen() {
     visible: boolean;
     message: string;
   }>({ visible: false, message: "" });
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
   const [bio, setBio] = useState(userData.bio || "");
   const [isValidating, setIsValidating] = useState(false);
 
@@ -83,13 +84,12 @@ export default function UserBioScreen() {
       scrollEnabled
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={
-            isValidating
-              ? t("moderation.validatingBio")
-              : t("screens.onboarding.continue")
-          }
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={isValidating}
+          primaryIcon={ArrowRightIcon}
+          secondaryLabel={t("common.skip")}
+          onSecondaryPress={() => completeCurrentStep("user-bio")}
         />
       }
     >

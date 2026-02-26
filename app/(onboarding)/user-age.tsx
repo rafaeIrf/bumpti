@@ -1,4 +1,4 @@
-import { CalendarIcon } from "@/assets/icons";
+import { ArrowRightIcon, CalendarIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -17,7 +17,7 @@ import { Platform, StyleSheet, View } from "react-native";
 
 export default function UserAgeScreen() {
   const colors = useThemeColors();
-  const { completeCurrentStep } = useOnboardingFlow();
+  const { completeCurrentStep} = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -119,9 +119,10 @@ export default function UserAgeScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={!isValid}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >

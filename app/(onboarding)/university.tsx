@@ -1,4 +1,4 @@
-import { SearchIcon, XIcon } from "@/assets/icons";
+import { ArrowRightIcon, SearchIcon, XIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -30,7 +30,7 @@ const MAX_YEAR = CURRENT_YEAR + 10;
 export default function UniversityScreen() {
   const colors = useThemeColors();
   const router = useRouter();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -240,9 +240,10 @@ export default function UniversityScreen() {
       scrollEnabled
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={!isFormValid}
+          primaryIcon={ArrowRightIcon}
           secondaryLabel={t("common.skip")}
           onSecondaryPress={handleSkip}
         />

@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -13,7 +14,7 @@ import { StyleSheet } from "react-native";
 
 export default function UserPhotosScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
   const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
 
   // Track screen view
@@ -31,8 +32,6 @@ export default function UserPhotosScreen() {
     }
   };
 
-  const remainingPhotos = Math.max(0, 2 - photos.length);
-
   return (
     <BaseTemplateScreen
       hasStackHeader
@@ -41,9 +40,10 @@ export default function UserPhotosScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={photos.length < 2}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >

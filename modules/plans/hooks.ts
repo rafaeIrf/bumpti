@@ -41,8 +41,13 @@ function toActivePlan(p: UserPlan): ActivePlan {
  * plan (nextPlan), and the index to start the carousel on.
  */
 export function useUserPlans() {
-  const plans = useAppSelector((state) => state.plans?.data ?? []);
+  const rawPlans = useAppSelector((state) => state.plans?.data ?? []);
   const loading = useAppSelector((state) => state.plans?.loading ?? false);
+
+  // Client-side guard: filter out any past-date plans that might remain in the
+  // store from a previous session or when the app stays open past midnight.
+  const today = new Date().toISOString().split("T")[0];
+  const plans = rawPlans.filter((p) => p.planned_for >= today);
 
   const { sortedPlans, nextPlan, initialIndex } = useMemo(() => {
     if (plans.length === 0) {

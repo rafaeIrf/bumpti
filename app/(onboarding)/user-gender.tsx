@@ -1,6 +1,7 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
-import Button from "@/components/ui/button";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { GENDER_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
@@ -17,7 +18,7 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 export default function UserGenderScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -90,7 +91,19 @@ export default function UserGenderScreen() {
   const isNonBinaryGender = gender === "non-binary";
 
   return (
-    <BaseTemplateScreen hasStackHeader>
+    <BaseTemplateScreen
+      hasStackHeader
+      BottomBar={
+        <ScreenBottomBar
+          variant="wizard"
+          onPrimaryPress={handleContinue}
+          primaryDisabled={false}
+          primaryIcon={ArrowRightIcon}
+          secondaryLabel={t("common.skip")}
+          onSecondaryPress={() => completeCurrentStep("user-gender")}
+        />
+      }
+    >
       <KeyboardAvoidingView
         behavior={isIOS ? "padding" : "height"}
         style={styles.container}
@@ -136,16 +149,6 @@ export default function UserGenderScreen() {
             })}
           </Animated.View>
 
-          {/* Continue & Skip Buttons */}
-          <Animated.View
-            entering={FadeInUp.delay(600).duration(600)}
-            style={styles.buttonContainer}
-          >
-            <Button onPress={handleContinue} size="lg" fullWidth>
-              {t("screens.onboarding.continue")}
-            </Button>
-          </Animated.View>
-
           {/* Info text */}
           <ThemedText
             style={[styles.infoText, { color: colors.textSecondary }]}
@@ -184,11 +187,6 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  buttonContainer: {
-    gap: spacing.sm,
-    marginTop: spacing.md,
     marginBottom: spacing.lg,
   },
   infoText: {

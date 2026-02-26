@@ -1,7 +1,12 @@
-import { HeartIcon, UserRoundIcon, UsersIcon } from "@/assets/icons";
+import {
+  ArrowRightIcon,
+  HeartIcon,
+  UserRoundIcon,
+  UsersIcon,
+} from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
+import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
-import { Button } from "@/components/ui/button";
 import { CONNECT_WITH_OPTIONS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
 import { useOnboardingFlow } from "@/hooks/use-onboarding-flow";
@@ -27,7 +32,7 @@ const optionIconMap: Record<
 
 export default function ConnectWithScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -41,8 +46,6 @@ export default function ConnectWithScreen() {
     ConnectWithOptionKey[]
   >((userData.connectWith as ConnectWithOptionKey[]) || []);
 
-  // Initialize with 'all' if nothing selected? Or validate?
-  // Previous logic had a useEffect to filter valid keys.
   useEffect(() => {
     const validKeys = CONNECT_WITH_OPTIONS.map((opt) => opt.id);
     setSelectedOptions((current) =>
@@ -83,7 +86,19 @@ export default function ConnectWithScreen() {
   };
 
   return (
-    <BaseTemplateScreen hasStackHeader>
+    <BaseTemplateScreen
+      hasStackHeader
+      BottomBar={
+        <ScreenBottomBar
+          variant="wizard"
+          onPrimaryPress={handleContinue}
+          primaryDisabled={false}
+          primaryIcon={ArrowRightIcon}
+          secondaryLabel={t("common.skip")}
+          onSecondaryPress={() => completeCurrentStep("connect-with")}
+        />
+      }
+    >
       <View style={styles.container}>
         <Animated.View entering={FadeInDown.delay(200).duration(500)}>
           <ThemedText style={[styles.heading, { color: colors.text }]}>
@@ -94,9 +109,6 @@ export default function ConnectWithScreen() {
           >
             {t("screens.onboarding.connectWithSubtitle")}
           </ThemedText>
-          {/* <ThemedText style={[styles.info, { color: colors.textTertiary }]}>
-            {t("screens.onboarding.connectWithInfo")}
-          </ThemedText> */}
         </Animated.View>
 
         <Animated.View
@@ -109,9 +121,7 @@ export default function ConnectWithScreen() {
               const Icon = optionIconMap[key] ?? HeartIcon;
               const isSelected =
                 selectedOptions.includes(key) &&
-                !selectedOptions.includes("all"); // Visual selection logic
-              // Actually, if 'all' is selected, should individual ones look selected?
-              // Previous logic: if 'all', only 'all' is selected in state.
+                !selectedOptions.includes("all");
 
               return (
                 <Animated.View
@@ -198,16 +208,7 @@ export default function ConnectWithScreen() {
           {t("screens.onboarding.connectWithPrivacy")}
         </ThemedText>
 
-        <Button
-          onPress={handleContinue}
-          size="lg"
-          fullWidth
-          style={styles.continueButton}
-        >
-          {t("screens.onboarding.continue")}
-        </Button>
-
-        <ThemedText style={[styles.footer, { color: colors.textTertiary }]}>
+        <ThemedText style={[styles.footer, { color: colors.textSecondary }]}>
           {t("screens.onboarding.connectWithFooter")}
         </ThemedText>
       </View>
@@ -265,12 +266,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   optionLabel: {
-    ...typography.h4,
+    ...typography.body,
     textAlign: "center",
-  },
-  continueButton: {
-    marginTop: "auto",
-    marginBottom: spacing.md,
   },
   footer: {
     ...typography.caption,

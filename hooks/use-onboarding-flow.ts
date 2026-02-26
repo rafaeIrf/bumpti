@@ -117,11 +117,16 @@ export function useOnboardingFlow() {
     }
   };
   
+  const goBack = () => {
+    router.back();
+  };
+
   return {
     currentStep,
     completedSteps,
     userData,
     completeCurrentStep,
     getNextStep,
+    goBack,
   };
 }

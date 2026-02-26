@@ -130,5 +130,18 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 10,
+      steps: [
+        // Add context to swipes_queue to carry match_origin_override for regulars
+        // (frequentadores who appear via get_eligible_regulars_at_place)
+        addColumns({
+          table: 'swipes_queue',
+          columns: [
+            { name: 'context', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });
