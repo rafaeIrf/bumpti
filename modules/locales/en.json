@@ -92,7 +92,9 @@
       "casino": "Casino",
       "shopping": "Shopping",
       "plaza": "Plaza",
-      "skate_park": "Skate Park"
+      "skate_park": "Skate Park",
+      "hotel": "Hotel",
+      "hostel": "Hostel"
     },
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
@@ -158,7 +160,9 @@
       "dance_club": "Dance Schools",
       "theatre": "Theatres",
       "casino": "Casinos",
-      "shopping": "Shopping Centers"
+      "shopping": "Shopping Centers",
+      "hotel": "Hotels",
+      "hostel": "Hostels"
     }
   },
   "referral": {

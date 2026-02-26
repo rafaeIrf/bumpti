@@ -109,7 +109,11 @@
     "speakeasy": "bar",
     "tiki_bar": "bar",
     "drive_thru_bar": "bar",
-    "irish_pub": "bar"
+    "irish_pub": "bar",
+    "hotel": "hotel",
+    "hostel": "hostel",
+    "boutique_hotel": "hotel",
+    "bed_and_breakfast": "hostel"
   },
   "blacklist": [
     "adult_entertainment",

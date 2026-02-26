@@ -94,7 +94,9 @@ export type PlaceCategory =
   | "theatre"
   | "plaza"
   | "shopping"
-  | "skate_park";
+  | "skate_park"
+  | "hotel"
+  | "hostel";
 
 // Place Reports
 export type PlaceReportReason =
