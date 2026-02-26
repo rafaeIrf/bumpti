@@ -1,4 +1,9 @@
-import { MapPinIcon, SearchIcon, SlidersHorizontalIcon } from "@/assets/icons";
+import {
+  FlameIcon,
+  MapPinIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+} from "@/assets/icons";
 import {
   BarsIcon,
   ClubIcon,
@@ -12,7 +17,6 @@ import {
   ParkIcon,
   Passion,
   PopularIcon,
-  RadarIcon,
   RunningIcon,
   StadiumIcon,
   UniversityIcon,
@@ -185,10 +189,10 @@ export default function HomeScreen() {
   const categories: Category[] = [
     {
       id: "highlighted",
-      icon: RadarIcon,
+      icon: FlameIcon,
       title: t("screens.home.categories.highlighted.title"),
       description: t("screens.home.categories.highlighted.description"),
-      iconColor: "#FFFFFF",
+      iconColor: colors.white,
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
       illustration: Passion,
@@ -198,7 +202,7 @@ export default function HomeScreen() {
       icon: HotspotsIcon,
       title: t("screens.home.categories.ranking.title"),
       description: t("screens.home.categories.ranking.description"),
-      iconColor: "#FFFFFF",
+      iconColor: "#7050C4",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
       illustration: Passion,
@@ -486,6 +490,7 @@ export default function HomeScreen() {
                   key={item.id}
                   title={item.title}
                   icon={item.icon}
+                  iconColor={item.iconColor}
                   color={item.color}
                   onClick={() => handleCategoryClick(item)}
                   containerStyle={styles.featuredItem}

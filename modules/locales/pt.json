@@ -694,7 +694,7 @@
           "description": "Veja o movimento ao redor"
         },
         "ranking": {
-          "title": "Hotspots",
+          "title": "+Frequentados",
           "description": "Lugares que a galera sempre vai.",
           "filterMonth": "Esse mês",
           "filterGeneral": "Geral"

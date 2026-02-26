@@ -694,7 +694,7 @@
           "description": "See what's happening around"
         },
         "ranking": {
-          "title": "Hotspots",
+          "title": "+Frequentados",
           "description": "Places people always go to.",
           "filterMonth": "This month",
           "filterGeneral": "All time"
