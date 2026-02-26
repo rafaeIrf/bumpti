@@ -117,7 +117,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
             color="#FFFFFF"
             style={{
               backgroundColor: `${categoryColor}30`,
-              borderColor: `${categoryColor}40`,
+              borderWidth: 0,
             }}
           />
           <ThemedText

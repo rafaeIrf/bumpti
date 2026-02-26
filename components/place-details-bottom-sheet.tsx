@@ -190,23 +190,27 @@ export function PlaceDetailsBottomSheet({
 
           {/* Address with neighborhood */}
           <View style={styles.addressRow}>
-            <ThemedText
-              style={[
-                typography.caption,
-                {
-                  color: colors.textSecondary,
-                  textAlign: "center",
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {address}
-            </ThemedText>
-            {neighborhood && (
+            {address && (
               <>
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: "center",
+                    },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {address}
+                </ThemedText>
                 <View
                   style={[styles.dot, { backgroundColor: colors.border }]}
                 />
+              </>
+            )}
+            {neighborhood && (
+              <>
                 <ThemedText
                   style={[
                     typography.caption,
