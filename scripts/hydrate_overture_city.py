@@ -57,7 +57,8 @@ def load_curation_config():
     }
 
 
-def apply_scoring_modifiers(relevance_score, internal_category, overture_category, config):
+def apply_scoring_modifiers(relevance_score, internal_category, overture_category, config,
+                             taxonomy_hierarchy=None):
     """Apply taxonomic penalties and boosts to relevance score.
     
     Returns: (modified_score, modifier_applied)
@@ -79,10 +80,12 @@ def apply_scoring_modifiers(relevance_score, internal_category, overture_categor
     if overture_lower in taxonomy_primary:
         modifier = min(modifier, taxonomy_primary[overture_lower])
     
-    # Check HIERARCHY KEYWORD penalties
+    # Check HIERARCHY KEYWORD penalties — scan both primary and full hierarchy path
     taxonomy_keywords = penalties.get('taxonomy_hierarchy_keywords', {})
+    hierarchy_str = ' '.join(taxonomy_hierarchy or []).lower()
+    combined_str = f"{overture_lower} {hierarchy_str}"
     for keyword, penalty in taxonomy_keywords.items():
-        if keyword in overture_lower:
+        if keyword in combined_str:
             modifier = min(modifier, penalty)
     
     # Check INTERNAL CATEGORY boosts (only if no penalty applied)
@@ -195,8 +198,8 @@ def discover_city_from_overture(lat: float, lng: float):
     con.execute("SET s3_region='us-west-2';")
     
     # Use divisions theme (replaces deprecated admins)
-    # Note: If 2026-01-21.0 gives "No files found", fallback to 2024-11-13.0
-    release = '2026-01-21.0'
+    # Note: If 2026-02-18.0 gives "No files found", fallback to 2024-11-13.0
+    release = '2026-02-18.0'
     area_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division_area/*'
     division_path = f's3://overturemaps-us-west-2/release/{release}/theme=divisions/type=division/*'
     
@@ -483,8 +486,8 @@ def main():
         SELECT 
           id AS overture_id,
           JSON_EXTRACT_STRING(names, 'primary') AS name,
-          categories.primary AS overture_category,
-          categories.alternate AS alternate_categories,
+          COALESCE(taxonomy.primary, categories.primary) AS overture_category,
+          COALESCE(taxonomy.alternate, categories.alternate) AS alternate_categories,
           ST_AsWKB(geometry) AS geom_wkb,
           addresses[1].freeform AS street,
           NULL AS house_number,  -- number field doesn't exist in Overture schema
@@ -496,13 +499,14 @@ def main():
           websites,
           socials,
           len(sources) AS source_magnitude,
-          (brand IS NOT NULL) AS has_brand
-        FROM read_parquet('s3://overturemaps-us-west-2/release/2026-01-21.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
+          (brand IS NOT NULL) AS has_brand,
+          taxonomy.hierarchy AS taxonomy_hierarchy
+        FROM read_parquet('s3://overturemaps-us-west-2/release/2026-02-18.0/theme=places/type=place/*', filename=true, hive_partitioning=1)
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
-          AND categories.primary IN ({category_filter})
-          AND categories.primary NOT IN ({blacklist_sql})
+          AND COALESCE(taxonomy.primary, categories.primary) IN ({category_filter})
+          AND COALESCE(taxonomy.primary, categories.primary) NOT IN ({blacklist_sql})
           AND confidence >= 0.5
           AND (operating_status IS NULL OR operating_status = 'open')
         LIMIT 500000
@@ -510,16 +514,6 @@ def main():
         
         all_pois = con.execute(query).fetchall()
         con.close()
-        
-        # DEBUG: Check if Bossa Bar is in results
-        bossa_found = [poi for poi in all_pois if 'bossa' in poi[1].lower()]
-        if bossa_found:
-            print(f"\n🔍 DEBUG: Found {len(bossa_found)} POI(s) with 'bossa' in name:")
-            for poi in bossa_found:
-                print(f"   Name: {poi[1]}, Primary: {poi[2]}, Alternates: {poi[3]}, Confidence: {poi[10]}")
-        else:
-            print(f"\n⚠️  DEBUG: 'Bossa Bar' NOT found in query results")
-        
         
         total_pois = len(all_pois)
         print(f"✅ Loaded {total_pois:,} social POIs (filtered at source)")
@@ -614,27 +608,14 @@ def main():
                 overture_cat = row[POIColumn.OVERTURE_CATEGORY]
                 internal_cat = category_map.get(overture_cat)
                 
-                # DEBUG: Track Bossa Bar
-                if 'bossa' in row[POIColumn.NAME].lower():
-                    print(f"\n🔍 DEBUG [Bossa Bar] - Category mapping:")
-                    print(f"   Overture category: {overture_cat}")
-                    print(f"   Internal category: {internal_cat}")
-                
+
                 if not internal_cat:
-                    if 'bossa' in row[POIColumn.NAME].lower():
-                        print(f"   ❌ REJECTED: No category mapping for '{overture_cat}'")
                     continue
                 
                 raw_name = row[POIColumn.NAME]
                 sanitized_name = sanitize_name(raw_name, config)
                 
-                # DEBUG: Track Bossa Bar
-                if 'bossa' in raw_name.lower():
-                    print(f"   Name sanitization: '{raw_name}' → '{sanitized_name}'")
-                
                 if not sanitized_name:
-                    if 'bossa' in raw_name.lower():
-                        print(f"   ❌ REJECTED: Sanitized name is empty")
                     continue
                 
                 poi_id = len(poi_data)
@@ -673,33 +654,14 @@ def main():
                     continue
                 
                 # Validation
-                # DEBUG: Track Bossa Bar through validation
-                if 'bossa' in name.lower():
-                    print(f"\n🔍 DEBUG [Bossa Bar] - Validation check:")
-                    print(f"   Name: {name}, Internal cat: {internal_cat}, Overture cat: {overture_cat}")
-                    val_result = validate_category_name(name, internal_cat, overture_cat, config)
-                    print(f"   validate_category_name result: {val_result}")
-                    if not val_result:
-                        print(f"   ❌ REJECTED by validate_category_name")
-                        debug_rejected['validate_name'] += 1
-                        continue
-                else:
-                    if not validate_category_name(name, internal_cat, overture_cat, config):
-                        debug_rejected['validate_name'] += 1
-                        continue
+                if not validate_category_name(name, internal_cat, overture_cat, config):
+                    debug_rejected['validate_name'] += 1
+                    continue
                 
-                # DEBUG: Track Bossa Bar through taxonomy check
-                if 'bossa' in name.lower():
-                    tax_result = check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config)
-                    print(f"   check_taxonomy_hierarchy result: {tax_result}")
-                    if not tax_result:
-                        print(f"   ❌ REJECTED by taxonomy check")
-                        debug_rejected['taxonomy'] += 1
-                        continue
-                else:
-                    if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config):
-                        debug_rejected['taxonomy'] += 1
-                        continue
+                if not check_taxonomy_hierarchy(internal_cat, overture_cat, row[POIColumn.ALTERNATE_CATEGORIES], config,
+                                                taxonomy_hierarchy=row[POIColumn.TAXONOMY_HIERARCHY]):
+                    debug_rejected['taxonomy'] += 1
+                    continue
                 
                 if filter_osm_source_tags(row[POIColumn.SOURCE_RAW], config):  # Fixed: was row[10] (CONFIDENCE)
                     debug_rejected['osm_flags'] += 1
@@ -734,7 +696,10 @@ def main():
                 relevance_score += taxonomy_bonus
                 
                 # Apply modifiers
-                relevance_score, modifier = apply_scoring_modifiers(relevance_score, internal_cat, overture_cat, config)
+                relevance_score, modifier = apply_scoring_modifiers(
+                    relevance_score, internal_cat, overture_cat, config,
+                    taxonomy_hierarchy=row[POIColumn.TAXONOMY_HIERARCHY]
+                )
                 
                 # Prepare for staging
                 geom_wkb = row[POIColumn.GEOM_WKB]

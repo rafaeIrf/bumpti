@@ -48,6 +48,7 @@ class POIColumn(IntEnum):
     SOCIALS = 13
     SOURCE_MAGNITUDE = 14
     HAS_BRAND = 15
+    TAXONOMY_HIERARCHY = 16   # NEW: taxonomy.hierarchy path array
 
 
 # Configuration constants
