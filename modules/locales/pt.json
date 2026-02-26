@@ -514,7 +514,8 @@
         "turboWeekly": "Connect+ (5/semana)",
         "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/semana)",
-        "morePlansDaily": "10 planos por dia"
+        "morePlansDaily": "10 planos por dia",
+        "exploreCities": "Explorar novas cidades"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -884,6 +885,10 @@
         "morePlans": {
           "title": "10 planos por dia",
           "subtitle": "Crie mais planos diários e maximize suas chances de encontrar pessoas."
+        },
+        "exploreCities": {
+          "title": "Explore novas cidades",
+          "subtitle": "Altere sua cidade para ver o movimento, descobrir lugares e criar planos antecipadamente."
         }
       },
       "terms": "A renovação da sua assinatura é automática pelo mesmo valor e período, a menos que seja cancelada nas configurações da {{store}}. Ao confirmar a assinatura, você concorda com nossos",
