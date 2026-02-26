@@ -54,20 +54,6 @@ jobs:
       - name: 🔧 Setup Expo (Prebuild iOS)
         run: npx expo prebuild --platform ios --clean
 
-      - name: 📦 Setup CocoaPods Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ~/Library/Caches/CocoaPods
-            ~/.cocoapods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      - name: 📦 Install CocoaPods
-        run: cd ios && pod install
-
       - name: 📦 Install Bundler & Dependencies
         run: |
           gem install bundler
