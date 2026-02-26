@@ -1,4 +1,5 @@
-import { MapPinIcon, UsersIcon } from "@/assets/icons";
+import { ArrowRightIcon, UsersIcon } from "@/assets/icons";
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { ThemedText } from "@/components/themed-text";
 import { Chip } from "@/components/ui/chip";
 import { spacing, typography } from "@/constants/theme";
@@ -10,7 +11,8 @@ import { Pressable, StyleSheet, View } from "react-native";
 export interface PlaceCardIconData {
   id: string;
   name: string;
-  category: string;
+  category: string; // display label
+  tag?: string; // raw internal key (e.g. "bar", "cafe") used for icon lookup
   address: string;
   neighborhood?: string;
   distance: number;
@@ -25,6 +27,8 @@ interface PlaceCardIconProps {
 export default function PlaceCardIcon({ place, onPress }: PlaceCardIconProps) {
   const colors = useThemeColors();
   const hasActiveUsers = place.activeUsers > 0;
+  const categoryColor = getCategoryColor(place.tag ?? "default");
+  const CategoryIcon = getPlaceIcon(place.tag ?? "default");
 
   return (
     <Pressable
@@ -37,9 +41,16 @@ export default function PlaceCardIcon({ place, onPress }: PlaceCardIconProps) {
     >
       <View style={styles.iconCol}>
         <View
-          style={[styles.iconCircle, { backgroundColor: colors.accent + "20" }]}
+          style={[
+            styles.iconCircle,
+            {
+              backgroundColor: `${categoryColor}30`,
+              borderWidth: 1,
+              borderColor: `${categoryColor}40`,
+            },
+          ]}
         >
-          <MapPinIcon width={18} height={18} color={colors.accent} />
+          <CategoryIcon width={18} height={18} color="#FFFFFF" />
         </View>
         <ThemedText
           style={[
@@ -61,7 +72,7 @@ export default function PlaceCardIcon({ place, onPress }: PlaceCardIconProps) {
         <ThemedText
           style={[typography.caption, { color: colors.textSecondary }]}
         >
-          {[place.category, place.neighborhood].filter(Boolean).join(" · ")}
+          {[place.neighborhood].filter(Boolean).join(" · ")}
         </ThemedText>
       </View>
 
@@ -74,6 +85,7 @@ export default function PlaceCardIcon({ place, onPress }: PlaceCardIconProps) {
           size="sm"
         />
       )}
+      <ArrowRightIcon color={colors.textSecondary} />
     </Pressable>
   );
 }

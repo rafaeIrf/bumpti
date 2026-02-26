@@ -1,13 +1,14 @@
-import { ArrowRightIcon, UsersIcon } from "@/assets/icons";
+import { ArrowRightIcon } from "@/assets/icons";
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
-import { Chip } from "@/components/ui/chip";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import { RatingBadge } from "@/components/ui/rating-badge";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import { t } from "@/modules/locales";
 import type { UserAvatar } from "@/modules/places/types";
 import { formatDistance } from "@/utils/distance";
+import { toTitleCase } from "@/utils/string";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -73,27 +74,24 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
     overlay.value = withSpring(0);
   };
 
-  const hasActiveUsers = place.activeUsers > 0;
   const hasAvatars =
     place.activeUserAvatars && place.activeUserAvatars.length > 0;
   const hasReview = place.review && place.review.average > 0;
 
-  // Label for active users chip (when no avatars)
-  const activeUsersLabel = t(
-    place.activeUsers === 0
-      ? "place.noConnections"
-      : place.activeUsers === 1
-        ? "place.onePersonConnecting"
-        : "place.manyPeopleConnecting",
-    { count: place.activeUsers },
-  );
+  const categoryTag = place.tag ?? "default";
+  const categoryColor = getCategoryColor(categoryTag);
+  const CategoryIcon = getPlaceIcon(categoryTag);
 
   return (
     <AnimatedPressable
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.card, animatedStyle, { borderColor: colors.border }]}
+      style={[
+        styles.card,
+        animatedStyle,
+        { borderColor: colors.border, backgroundColor: colors.surface },
+      ]}
     >
       <Animated.View
         pointerEvents="none"
@@ -111,77 +109,68 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
       )}
 
       <View style={styles.content}>
-        {/* Header: Name + Arrow */}
-        <View style={styles.headerRow}>
-          <ThemedText style={styles.placeTitle} numberOfLines={1}>
-            {place.name.toUpperCase()}
-          </ThemedText>
-          <ArrowRightIcon
-            color={colors.textSecondary}
-            style={styles.arrowIcon}
+        {/* Category Icon + Distance */}
+        <View style={styles.iconCol}>
+          <BrandIcon
+            icon={CategoryIcon}
+            size="md"
+            color="#FFFFFF"
+            style={{
+              backgroundColor: `${categoryColor}30`,
+              borderColor: `${categoryColor}40`,
+            }}
           />
-        </View>
-
-        {/* Meta: Category • Neighborhood • Distance • Rating */}
-        <View style={styles.metaRow}>
-          {place.tag && (
-            <>
-              <ThemedText
-                style={[styles.metaText, { color: colors.textSecondary }]}
-              >
-                {t(`place.categories.${place.tag}`)}
-              </ThemedText>
-              <View style={styles.dot} />
-            </>
-          )}
-          {place.neighborhood && (
-            <>
-              <ThemedText
-                style={[styles.metaText, { color: colors.textSecondary }]}
-                numberOfLines={1}
-              >
-                {place.neighborhood}
-              </ThemedText>
-              <View style={styles.dot} />
-            </>
-          )}
           <ThemedText
-            style={[styles.metaText, { color: colors.textSecondary }]}
+            style={[styles.distanceLabel, { color: colors.textSecondary }]}
           >
             {formatDistance(place.distance)}
           </ThemedText>
-          {hasReview && (
-            <>
-              <View style={styles.dot} />
-              <RatingBadge rating={place.review!.average} variant="minimal" />
-            </>
+        </View>
+
+        {/* Text Column */}
+        <View style={styles.textColumn}>
+          {/* Header: Name */}
+          <View style={styles.headerRow}>
+            <ThemedText style={styles.placeTitle} numberOfLines={1}>
+              {toTitleCase(place.name)}
+            </ThemedText>
+          </View>
+
+          {/* Meta: Category • Neighborhood • Distance • Rating */}
+          <View style={styles.metaRow}>
+            {place.neighborhood && (
+              <>
+                <ThemedText
+                  style={[styles.metaText, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {place.neighborhood}
+                </ThemedText>
+              </>
+            )}
+            {hasReview && (
+              <>
+                <View style={styles.dot} />
+                <RatingBadge rating={place.review!.average} variant="minimal" />
+              </>
+            )}
+          </View>
+
+          {/* Footer: avatars */}
+          {hasAvatars && (
+            <View style={styles.footerRow}>
+              <StackedAvatars
+                avatars={place.activeUserAvatars!}
+                totalCount={place.activeUsers}
+                maxVisible={4}
+                size={34}
+              />
+            </View>
           )}
         </View>
 
-        {/* Footer: avatars or chip */}
-        <View style={styles.footerRow}>
-          {hasAvatars ? (
-            <StackedAvatars
-              avatars={place.activeUserAvatars!}
-              totalCount={place.activeUsers}
-              maxVisible={4}
-              size={34}
-            />
-          ) : (
-            <Chip
-              label={activeUsersLabel}
-              icon={
-                <UsersIcon
-                  width={12}
-                  height={12}
-                  color={hasActiveUsers ? colors.accent : colors.textSecondary}
-                />
-              }
-              color={hasActiveUsers ? colors.accent : colors.textSecondary}
-              size="sm"
-            />
-          )}
-        </View>
+        {/* Arrow centered on the right */}
+        <ArrowRightIcon color={colors.textSecondary} />
       </View>
     </AnimatedPressable>
   );
@@ -191,8 +180,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: spacing.lg,
     overflow: "hidden",
-    backgroundColor: "#0F0F0F",
-    borderWidth: 1,
+    borderWidth: 0,
   },
   hoverOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -201,14 +189,27 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    gap: spacing.xs,
+    flexDirection: "row",
+    gap: spacing.md,
+    alignItems: "center",
+  },
+  textColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  iconCol: {
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+  },
+  distanceLabel: {
+    ...typography.caption,
+    fontSize: 10,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: spacing.sm,
-    marginBottom: 4,
   },
   placeTitle: {
     ...typography.body1,
@@ -222,8 +223,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: spacing.xs,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   metaText: {
     ...typography.caption,
