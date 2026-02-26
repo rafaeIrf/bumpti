@@ -538,7 +538,6 @@ export default function CategoryResultsScreen() {
         activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
         neighborhood: item.neighborhood,
-        rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
         regularsCount: item.regulars_count,
       };
@@ -566,13 +565,6 @@ export default function CategoryResultsScreen() {
               });
               showPlaceDetails(item);
             }}
-            isFavorite={favoriteIds.has(item.placeId)}
-            onToggleFavorite={() =>
-              handleToggle(item.placeId, {
-                place: item,
-                details: { name: item.name, emoji: (item as any).emoji },
-              })
-            }
           />
         </Animated.View>
       );

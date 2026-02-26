@@ -44,9 +44,7 @@ export default function PlaceCardIcon({ place, onPress }: PlaceCardIconProps) {
           style={[
             styles.iconCircle,
             {
-              backgroundColor: `${categoryColor}30`,
-              borderWidth: 1,
-              borderColor: `${categoryColor}40`,
+              backgroundColor: `${categoryColor}`,
             },
           ]}
         >

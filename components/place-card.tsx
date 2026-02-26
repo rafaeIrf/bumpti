@@ -27,7 +27,6 @@ interface PlaceCardData {
   activeUserAvatars?: UserAvatar[];
   tag?: string;
   neighborhood?: string;
-  rank?: number;
   review?: {
     average: number;
     count: number;
@@ -41,15 +40,6 @@ interface PlaceCardProps {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-const MEDAL_COLORS = {
-  1: "#FFD700",
-  2: "#C0C0C0",
-  3: "#CD7F32",
-};
-
-const getRankBadgeColor = (rank: number): string =>
-  MEDAL_COLORS[rank as keyof typeof MEDAL_COLORS] || "#6B7280";
 
 export function PlaceCard({ place, onPress }: PlaceCardProps) {
   const colors = useThemeColors();
@@ -98,16 +88,6 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
         style={[styles.hoverOverlay, overlayStyle]}
       />
 
-      {/* Rank Indicator */}
-      {place.rank && place.rank <= 3 && (
-        <View
-          style={[
-            styles.rankLine,
-            { backgroundColor: getRankBadgeColor(place.rank) },
-          ]}
-        />
-      )}
-
       <View style={styles.content}>
         {/* Category Icon + Distance */}
         <View style={styles.iconCol}>
@@ -116,7 +96,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
             size="md"
             color="#FFFFFF"
             style={{
-              backgroundColor: `${categoryColor}30`,
+              backgroundColor: `${categoryColor}`,
               borderWidth: 0,
             }}
           />
@@ -240,15 +220,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 2,
     gap: spacing.sm,
-  },
-  rankLine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 5,
-    borderTopLeftRadius: spacing.lg,
-    borderTopRightRadius: spacing.lg,
-    zIndex: 1,
   },
 });
