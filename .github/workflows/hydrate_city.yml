@@ -3,9 +3,32 @@ name: Hydrate City from Overture Maps
 on:
   repository_dispatch:
     types: [hydrate_city]
+  workflow_dispatch:
+    inputs:
+      lat:
+        description: "Latitude of the city point"
+        required: true
+        type: string
+      lng:
+        description: "Longitude of the city point"
+        required: true
+        type: string
+      city_id:
+        description: "City ID (optional — leave blank for auto-discovery)"
+        required: false
+        default: "null"
+        type: string
+      is_update:
+        description: "Force re-hydration of an already-completed city"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 concurrency:
-  group: city-hydration-${{ github.event.client_payload.city_id || format('{0}-{1}', github.event.client_payload.lat, github.event.client_payload.lng) }}
+  group: city-hydration-${{ github.event.client_payload.city_id || github.event.inputs.city_id || format('{0}-{1}', github.event.client_payload.lat || github.event.inputs.lat, github.event.client_payload.lng || github.event.inputs.lng) }}
   cancel-in-progress: false # Don't cancel running hydrations
 
 jobs:
@@ -36,17 +59,22 @@ jobs:
           GH_HYDRATION_TOKEN: ${{ secrets.GH_HYDRATION_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          CITY_ID="${{ github.event.client_payload.city_id || github.event.inputs.city_id }}"
+          LAT="${{ github.event.client_payload.lat || github.event.inputs.lat }}"
+          LNG="${{ github.event.client_payload.lng || github.event.inputs.lng }}"
+          IS_UPDATE="${{ github.event.client_payload.is_update || github.event.inputs.is_update }}"
+
           python scripts/hydrate_overture_city.py \
-            "${{ github.event.client_payload.city_id }}" \
-            "${{ github.event.client_payload.lat }}" \
-            "${{ github.event.client_payload.lng }}" \
-            "${{ github.event.client_payload.is_update }}"
+            "$CITY_ID" \
+            "$LAT" \
+            "$LNG" \
+            "$IS_UPDATE"
 
       - name: Upload GeoJSON artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: geojson-audit-${{ github.event.client_payload.city_id || 'unknown' }}
+          name: geojson-audit-${{ github.event.client_payload.city_id || github.event.inputs.city_id || 'unknown' }}
           path: scripts/output/geojson/
           retention-days: 7
           if-no-files-found: ignore
@@ -63,9 +91,11 @@ jobs:
             STATUS="failed"
           fi
 
+          CITY_ID="${{ github.event.client_payload.city_id || github.event.inputs.city_id }}"
+
           # Call finalize edge function
           curl -X POST \
             -H "x-github-token: $GH_HYDRATION_TOKEN" \
             -H "Content-Type: application/json" \
             "$SUPABASE_URL/functions/v1/finalize-city-hydration" \
-            -d "{\"city_id\": \"${{ github.event.client_payload.city_id }}\", \"status\": \"$STATUS\"}"
+            -d "{\"city_id\": \"$CITY_ID\", \"status\": \"$STATUS\"}"
