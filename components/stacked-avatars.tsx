@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { UserAvatar } from "@/modules/places/types";
 import { isAndroid } from "@/utils";
 import { Image } from "expo-image";
@@ -31,6 +32,7 @@ export function StackedAvatars({
   style,
   avatarStyle,
 }: StackedAvatarsProps) {
+  const colors = useThemeColors();
   const visibleAvatars = avatars.slice(0, maxVisible);
   // Use the larger of totalCount or actual avatar count — handles cold start
   // where active_users=0 but regulars avatars are present
@@ -55,6 +57,7 @@ export function StackedAvatars({
               borderRadius: size / 2,
               marginLeft: index === 0 ? 0 : -overlap,
               zIndex: index + 1,
+              borderColor: colors.border,
             },
             avatarStyle,
           ]}
@@ -86,6 +89,7 @@ export function StackedAvatars({
               borderRadius: size / 2,
               marginLeft: -overlap,
               zIndex: maxVisible + 1,
+              borderColor: colors.border,
             },
             avatarStyle,
           ]}
@@ -107,7 +111,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     overflow: "hidden",
     borderWidth: 1.5,
-    borderColor: "#0F0F0F",
   },
   avatar: {
     backgroundColor: "#2F3336",
@@ -117,7 +120,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#0F0F0F",
   },
   overflowText: {
     color: "#FFFFFF",
