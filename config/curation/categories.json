@@ -111,9 +111,10 @@
     "drive_thru_bar": "bar",
     "irish_pub": "bar",
     "hotel": "hotel",
-    "hostel": "hostel",
+    "hostel": "hotel",
     "boutique_hotel": "hotel",
-    "bed_and_breakfast": "hostel"
+    "bed_and_breakfast": "hotel",
+    "lodging": "hotel"
   },
   "blacklist": [
     "adult_entertainment",
@@ -176,8 +177,7 @@
         "sports_centre": 1.1,
         "community_centre": 1.1,
         "language_school": 1.0,
-        "hostel": 1.5,
-        "hotel": 1.1
+        "hotel": 1.4
       }
     },
     "base_scoring": {
