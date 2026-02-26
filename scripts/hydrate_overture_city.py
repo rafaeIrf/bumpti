@@ -486,8 +486,8 @@ def main():
         SELECT 
           id AS overture_id,
           JSON_EXTRACT_STRING(names, 'primary') AS name,
-          COALESCE(taxonomy.primary, categories.primary) AS overture_category,
-          COALESCE(taxonomy.alternates, categories.alternates) AS alternate_categories,
+          taxonomy.primary AS overture_category,
+          taxonomy.alternate AS alternate_categories,
           ST_AsWKB(geometry) AS geom_wkb,
           addresses[1].freeform AS street,
           NULL AS house_number,  -- number field doesn't exist in Overture schema
@@ -505,8 +505,8 @@ def main():
         WHERE 
           bbox.xmin >= {bbox[0]} AND bbox.xmax <= {bbox[2]}
           AND bbox.ymin >= {bbox[1]} AND bbox.ymax <= {bbox[3]}
-          AND COALESCE(taxonomy.primary, categories.primary) IN ({category_filter})
-          AND COALESCE(taxonomy.primary, categories.primary) NOT IN ({blacklist_sql})
+          AND taxonomy.primary IN ({category_filter})
+          AND taxonomy.primary NOT IN ({blacklist_sql})
           AND confidence >= 0.5
           AND (operating_status IS NULL OR operating_status = 'open')
         LIMIT 500000
