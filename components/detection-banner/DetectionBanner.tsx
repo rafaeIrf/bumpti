@@ -7,6 +7,7 @@ import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
+import { toTitleCase } from "@/utils/string";
 import * as Haptics from "expo-haptics";
 import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useEffect } from "react";
@@ -69,6 +70,13 @@ export function DetectionBanner({
 
   const hasAvatars = place.preview_avatars && place.preview_avatars.length > 0;
 
+  const MAX_NAME_LENGTH = 25;
+  const rawName = toTitleCase(place.name);
+  const displayName =
+    rawName.length > MAX_NAME_LENGTH
+      ? rawName.slice(0, MAX_NAME_LENGTH).trimEnd() + "…"
+      : rawName;
+
   return (
     <Animated.View
       entering={FadeInDown.springify().damping(20).mass(0.8)}
@@ -99,7 +107,7 @@ export function DetectionBanner({
           numberOfLines={2}
         >
           {t("screens.home.detectionBanner.question", {
-            placeName: place.name,
+            placeName: displayName,
           })}
         </ThemedText>
       </View>
