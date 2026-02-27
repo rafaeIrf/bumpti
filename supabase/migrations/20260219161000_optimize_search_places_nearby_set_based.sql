@@ -239,7 +239,14 @@ BEGIN
   LEFT JOIN active_counts   ac ON ac.place_id = wr.id
   LEFT JOIN active_avatars  aa ON aa.place_id = wr.id
   LEFT JOIN regulars_counts rc ON rc.place_id = wr.id
-  LEFT JOIN regular_avatars ra ON ra.place_id = wr.id;
+  LEFT JOIN regular_avatars ra ON ra.place_id = wr.id
+  ORDER BY
+    CASE WHEN sort_by = 'distance'   THEN wr.dist_meters END ASC,
+    CASE WHEN sort_by = 'popularity' THEN wr.total_checkins END DESC,
+    CASE WHEN sort_by = 'popularity' THEN wr.last_activity_at END DESC,
+    CASE WHEN sort_by = 'relevance'  THEN wr.relevance_score END DESC,
+    CASE WHEN sort_by = 'relevance'  THEN wr.confidence END DESC,
+    wr.dist_meters ASC;
 
 END;
 $function$;
