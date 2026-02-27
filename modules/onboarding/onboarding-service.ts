@@ -89,6 +89,14 @@ export async function saveOnboarding(userData: OnboardingUserData) {
         type: photo.type,
       } as any);
     });
+
+    // Build ordered hash array matching photo positions
+    if (userData.photoHashes && Object.keys(userData.photoHashes).length > 0) {
+      const hashes = userData.photoUris.map(
+        (uri) => userData.photoHashes?.[uri] ?? null
+      );
+      formData.append("photo_hashes", JSON.stringify(hashes));
+    }
   }
 
   const { error } = await supabase.functions.invoke("save-onboarding", {

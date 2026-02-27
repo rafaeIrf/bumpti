@@ -38,6 +38,37 @@ function createJsonResponse<T>(data: T, status = 200): Response {
   });
 }
 
+/**
+ * Compute SHA-256 hash of a base64 image string (Deno Web Crypto)
+ */
+async function hashImage(base64: string): Promise<string> {
+  // Strip data URL prefix if present
+  const raw = base64.startsWith("data:") ? base64.split(",")[1] : base64;
+  const bytes = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Check if a hash already exists for this user in profile_photos.
+ * Returns true if duplicate found.
+ */
+async function isDuplicatePhoto(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  hash: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("profile_photos")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("image_hash", hash)
+    .maybeSingle();
+  return data !== null;
+}
+
 // ============================================================================
 // Request Handlers
 // ============================================================================
@@ -60,8 +91,17 @@ async function handleSingleModeration(
     });
   }
 
-  // For images, use the shared moderation logic (safety + human/pet detection)
+  // For images: duplicate check before hitting OpenAI
   if (type === "image") {
+    const hash = await hashImage(content);
+    const duplicate = await isDuplicatePhoto(supabase, userId, hash);
+
+    if (duplicate) {
+      console.log(`[DUPLICATE] Image hash ${hash.slice(0, 8)}... already exists for user ${userId}`);
+      await logModerationResult(supabase, userId, type, "rejected", "not_human", null);
+      return createJsonResponse<SingleModerationResponse>({ approved: false, reason: "not_human" });
+    }
+
     const result = await moderateSingleImage(openaiApiKey, content);
     
     await logModerationResult(
@@ -73,9 +113,12 @@ async function handleSingleModeration(
       result.scores
     );
 
+    // Return hash for approved images — caller is responsible for persisting it
+    // (e.g. update-profile passes it in the INSERT, onboarding passes it to save-onboarding RPC)
     return createJsonResponse<SingleModerationResponse>({ 
       approved: result.approved, 
-      reason: result.reason 
+      reason: result.reason,
+      ...(result.approved && { hash }),
     });
   }
 
@@ -136,11 +179,29 @@ async function handleBatchModeration(
 ): Promise<Response> {
   const imageCount = images.length;
   
-  console.log(`[BILLING] Batch moderation started: ${imageCount} photos`);
+  // Step 0: Compute hashes and filter out duplicates before calling OpenAI
+  const hashes = await Promise.all(images.map(hashImage));
+  const duplicateFlags = await Promise.all(
+    hashes.map((hash) => isDuplicatePhoto(supabase, userId, hash))
+  );
 
-  // Step 1: Parallel Moderation API calls (OpenAI doesn't support batch for moderation)
-  const safetyResults = await Promise.all(
-    images.map(async (base64, index) => {
+  const deduplicatedImages: string[] = [];
+  const deduplicatedIndices: number[] = [];
+  const preRejectedResults: ({ approved: boolean; reason: "not_human"; scores: null } | null)[] = images.map((_, i) => {
+    if (duplicateFlags[i]) {
+      console.log(`[DUPLICATE] Batch image ${i}: hash ${hashes[i].slice(0, 8)}... already exists`);
+      return { approved: false, reason: "not_human" as const, scores: null };
+    }
+    deduplicatedImages.push(images[i]);
+    deduplicatedIndices.push(i);
+    return null;
+  });
+
+  console.log(`[BILLING] Batch moderation started: ${deduplicatedImages.length}/${imageCount} photos after dedup`);
+
+  // Step 1: Parallel Moderation API calls for non-duplicate images
+  const safetyResultsForDeduped = await Promise.all(
+    deduplicatedImages.map(async (base64, index) => {
       const result = await callModerationAPI(openaiApiKey, "image", base64);
       
       if (!result.success || !result.results) {
@@ -165,7 +226,15 @@ async function handleBatchModeration(
     })
   );
 
-  console.log(`[BILLING] Batch safety check: ${imageCount} photos in ${imageCount} parallel API calls`);
+  // Merge back to full index space
+  const safetyResults = images.map((_, i) => {
+    const preRejected = preRejectedResults[i];
+    if (preRejected) return preRejected;
+    const deduplicatedIndex = deduplicatedIndices.indexOf(i);
+    return safetyResultsForDeduped[deduplicatedIndex];
+  });
+
+  console.log(`[BILLING] Batch safety check: ${deduplicatedImages.length} photos processed (${imageCount - deduplicatedImages.length} duplicates skipped)`);
 
   // Step 2: Collect images that passed safety
   const safeImages: string[] = [];
@@ -223,7 +292,8 @@ async function handleBatchModeration(
       const isHumanOrAnimal = humanResults[humanResultIndex++];
       
       if (isHumanOrAnimal) {
-        finalResults.push({ approved: true, reason: null });
+        // Include hash so caller can persist it alongside the photo record
+        finalResults.push({ approved: true, reason: null, hash: hashes[i] });
         approvedCount++;
         
         // Log individual approval

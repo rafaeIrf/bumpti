@@ -1,24 +1,25 @@
 import { store } from "@/modules/store";
 import {
-    completeOnboarding as completeOnboardingAction,
-    completeStep as completeStepAction,
-    OnboardingStep,
-    resetOnboarding as resetOnboardingAction,
-    setAuthProvider as setAuthProviderAction,
-    setBio as setBioAction,
-    setConnectWith as setConnectWithAction,
-    setCurrentStep as setCurrentStepAction,
-    setFavoritePlaces as setFavoritePlacesAction,
-    setIntentions as setIntentionsAction,
-    setInterests as setInterestsAction,
-    setLocationPermission as setLocationPermissionAction,
-    setNotificationPermission as setNotificationPermissionAction,
-    setPhotoUris as setPhotoUrisAction,
-    setTrackingPermission as setTrackingPermissionAction,
-    setUniversityData as setUniversityDataAction,
-    setUserBirthdate as setUserBirthdateAction,
-    setUserGender as setUserGenderAction,
-    setUserName as setUserNameAction,
+  completeOnboarding as completeOnboardingAction,
+  completeStep as completeStepAction,
+  OnboardingStep,
+  resetOnboarding as resetOnboardingAction,
+  setAuthProvider as setAuthProviderAction,
+  setBio as setBioAction,
+  setConnectWith as setConnectWithAction,
+  setCurrentStep as setCurrentStepAction,
+  setFavoritePlaces as setFavoritePlacesAction,
+  setIntentions as setIntentionsAction,
+  setInterests as setInterestsAction,
+  setLocationPermission as setLocationPermissionAction,
+  setNotificationPermission as setNotificationPermissionAction,
+  setPhotoHashes as setPhotoHashesAction,
+  setPhotoUris as setPhotoUrisAction,
+  setTrackingPermission as setTrackingPermissionAction,
+  setUniversityData as setUniversityDataAction,
+  setUserBirthdate as setUserBirthdateAction,
+  setUserGender as setUserGenderAction,
+  setUserName as setUserNameAction
 } from "./onboardingSlice";
 
 // Action creators that encapsulate dispatch
@@ -53,6 +54,10 @@ export const onboardingActions = {
 
   setPhotoUris: (photoUris: string[]) => {
     store.dispatch(setPhotoUrisAction(photoUris));
+  },
+
+  setPhotoHashes: (hashes: Record<string, string>) => {
+    store.dispatch(setPhotoHashesAction(hashes));
   },
 
   setBio: (bio: string) => {

@@ -1,5 +1,7 @@
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import Button from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -10,35 +12,6 @@ import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
-import Svg, { Path } from "react-native-svg";
-
-// Location pin icon
-function LocationPinIcon({
-  size = 18,
-  color,
-}: {
-  size?: number;
-  color: string;
-}) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 interface DetectionBannerProps {
   place: DetectedPlace;
@@ -54,6 +27,8 @@ export function DetectionBanner({
   isConnecting = false,
 }: DetectionBannerProps) {
   const colors = useThemeColors();
+  const categoryColor = getCategoryColor(place.category ?? "default");
+  const CategoryIcon = getPlaceIcon(place.category ?? "default");
   const [show, setShow] = React.useState(false);
   const posthog = usePostHog();
   const ctaVariant = useFeatureFlag("detect-place-cta-test");
@@ -107,16 +82,14 @@ export function DetectionBanner({
         },
       ]}
     >
-      {/* Location icon at top - centered */}
+      {/* Category icon at top - centered */}
       <View style={styles.iconWrapper}>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: `${colors.accent}15` },
-          ]}
-        >
-          <LocationPinIcon size={24} color={colors.accent} />
-        </View>
+        <BrandIcon
+          icon={CategoryIcon}
+          size="md"
+          color="#FFFFFF"
+          style={{ backgroundColor: categoryColor, borderWidth: 0 }}
+        />
       </View>
 
       {/* Question text - centered */}

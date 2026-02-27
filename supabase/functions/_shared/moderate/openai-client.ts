@@ -75,15 +75,18 @@ export async function callModerationAPI(
 /**
  * Vision prompt for human/pet detection
  */
-const HUMAN_DETECTION_PROMPT = `You are a strict content moderator for a social app. 
+const HUMAN_DETECTION_PROMPT = `You are a strict content moderator for a social app.
 Analyze each photo in the EXACT order they are provided.
 
 DECISION LOGIC:
-- APPROVE (true): The photo is a clear, real-life picture of an ADULT human (or young adult) OR a real PET (dog, cat, etc.).
-- REJECT (false): 
-    1. CHILD SAFETY: The photo contains babies, infants, toddlers, or young children (even if an adult is present).
-    2. LOW QUALITY: The photo is extremely blurry, dark, or unrecognizable.
-    3. INVALID SUBJECT: The photo shows ONLY landscapes, cars, food, memes, cartoons, drawings, or objects.
+- APPROVE (true): The photo is a genuine personal photo of a real ADULT human (selfie, casual snapshot, group photo) OR a real PET (dog, cat, etc.).
+
+- REJECT (false) if ANY of these apply:
+    1. NOT AUTHENTIC: Stock photo, commercial/professional shoot, modeling portfolio, magazine spread, AI-generated portrait, or heavily digitally altered image.
+       Signs: perfect studio lighting, flawless CGI-like skin, watermarks, overly polished composition, obvious AI artifacts (unnatural eyes/hands/background).
+    2. CHILD SAFETY: The photo contains babies, infants, toddlers, or young children (even if an adult is present).
+    3. LOW QUALITY: The photo is extremely blurry, dark, or unrecognizable.
+    4. INVALID SUBJECT: The photo shows ONLY landscapes, cars, food, memes, cartoons, drawings, or objects.
 
 OUTPUT: Return ONLY a JSON object with a "results" array of booleans.
 Example: {"results": [true, false, true]}`;
