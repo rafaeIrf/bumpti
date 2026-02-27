@@ -9,6 +9,7 @@ import { SearchingEverywhere } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import DiscoverEmptyState from "@/components/discover/discover-empty-state";
+import { DiscoverLoadingSkeleton } from "@/components/discover/discover-loading-skeleton";
 import DiscoverSection from "@/components/discover/discover-section";
 import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
 import { ItsMatchModal } from "@/components/its-match-modal";
@@ -36,7 +37,6 @@ import React, {
   useState,
 } from "react";
 import {
-  Dimensions,
   InteractionManager,
   LayoutAnimation,
   StyleSheet,
@@ -72,8 +72,6 @@ function mapSharedFavoritesToEncounters(
     additional_encounters: null,
   }));
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface StepConfig {
   icon: ComponentType<{ width: number; height: number; color: string }>;
@@ -368,63 +366,7 @@ export default function DiscoverScreen() {
       </View>
 
       {/* Loading skeleton */}
-      {isLoading && (
-        <View>
-          {/* Skeleton section 1 */}
-          <View style={styles.skeletonSection}>
-            <View
-              style={[
-                styles.skeletonTitle,
-                { backgroundColor: `${colors.textSecondary}15` },
-              ]}
-            />
-            <View
-              style={[
-                styles.skeletonSubtitle,
-                { backgroundColor: `${colors.textSecondary}10` },
-              ]}
-            />
-            <View style={styles.skeletonCards}>
-              {[1, 2].map((i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.skeletonCardLarge,
-                    { backgroundColor: `${colors.textSecondary}12` },
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Skeleton section 2 */}
-          <View style={styles.skeletonSection}>
-            <View
-              style={[
-                styles.skeletonTitle,
-                { backgroundColor: `${colors.textSecondary}15` },
-              ]}
-            />
-            <View
-              style={[
-                styles.skeletonSubtitle,
-                { backgroundColor: `${colors.textSecondary}10` },
-              ]}
-            />
-            <View style={styles.skeletonCards}>
-              {[1, 2, 3].map((i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.skeletonCardMedium,
-                    { backgroundColor: `${colors.textSecondary}12` },
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
-        </View>
-      )}
+      {isLoading && <DiscoverLoadingSkeleton />}
 
       {/* Gate: no recent presence → show only shared favorites or empty state */}
       {!isLoading && !hasRecentPresence && (
@@ -569,34 +511,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.md,
-  },
-  skeletonSection: {
-    marginBottom: spacing.xl,
-  },
-  skeletonTitle: {
-    width: 160,
-    height: 18,
-    borderRadius: 8,
-    marginBottom: spacing.xs,
-  },
-  skeletonSubtitle: {
-    width: 220,
-    height: 14,
-    borderRadius: 6,
-    marginBottom: spacing.md,
-  },
-  skeletonCards: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  skeletonCardLarge: {
-    width: SCREEN_WIDTH * 0.72,
-    height: SCREEN_WIDTH * 0.72 * (4 / 3),
-    borderRadius: 20,
-  },
-  skeletonCardMedium: {
-    width: SCREEN_WIDTH * 0.52,
-    height: SCREEN_WIDTH * 0.52 * (4 / 3),
-    borderRadius: 20,
   },
 });

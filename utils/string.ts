@@ -21,3 +21,19 @@ export function toTitleCase(str: string): string {
       : word;
   });
 }
+
+/**
+ * Extracts and normalizes the first name from a full name string:
+ * - Takes only the first word (splits on whitespace)
+ * - Capitalizes the first letter and lowercases the rest
+ * - Handles accented characters correctly (ã, é, ç…)
+ *
+ * @example extractFirstName("GustaVo de Souza") // "Gustavo"
+ * @example extractFirstName("RAFAEL")           // "Rafael"
+ * @example extractFirstName("  ana maria  ")    // "Ana"
+ */
+export function extractFirstName(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0];
+  if (!first) return "";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}

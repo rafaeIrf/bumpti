@@ -118,9 +118,16 @@ export default function EncounterCard({
         userId: encounter.other_user_id,
         source: "discover",
         placeId: encounter.place_id,
+        encounterType: encounter.encounter_type,
       },
     });
-  }, [isPremium, router, encounter.other_user_id, encounter.place_id]);
+  }, [
+    isPremium,
+    router,
+    encounter.other_user_id,
+    encounter.place_id,
+    encounter.encounter_type,
+  ]);
 
   const animateDismiss = useCallback(
     (direction: 1 | -1, callback?: () => void) => {

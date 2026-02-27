@@ -19,6 +19,13 @@ if (!supabaseUrl || !serviceKey) {
 
 const supabase = createClient(supabaseUrl, serviceKey);
 
+/** Extracts and normalizes the first name: first word only, properly capitalized. */
+function extractFirstName(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0];
+  if (!first) return "";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
 function getFileExtension(fileName?: string, contentType?: string) {
   if (fileName && fileName.includes(".")) {
     return fileName.split(".").pop() ?? "jpg";
@@ -104,7 +111,9 @@ Deno.serve(async (req) => {
     }
 
     const formData = await req.formData();
-    const name = (formData.get("name") as string | null) || null;
+    const rawName = (formData.get("name") as string | null)?.trim() || null;
+    // Normalize: keep only the first word, capitalize properly (e.g. "GustaVo de" → "Gustavo")
+    const name = rawName ? extractFirstName(rawName) : null;
     const birthdateRaw = (formData.get("birthdate") as string | null) || null;
     const birthdate =
       birthdateRaw && /^\d{4}-\d{2}-\d{2}$/.test(birthdateRaw) ? birthdateRaw : null;
