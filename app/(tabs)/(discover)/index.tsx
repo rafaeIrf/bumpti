@@ -22,6 +22,7 @@ import {
   useEncounterActions,
 } from "@/hooks/use-encounter-actions";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useIsReviewer } from "@/modules/auth";
 import { useGetDiscoverFeedQuery } from "@/modules/discover/discoverApi";
 import type {
   DiscoverEncounter,
@@ -311,7 +312,14 @@ export default function DiscoverScreen() {
     });
   }, [bottomSheet]);
 
-  const hasRecentPresence = data?.has_recent_presence ?? false;
+  const isReviewer = useIsReviewer();
+
+  // 🍎 Reviewer bypass: treat as if they always have recent presence
+  // so the full feed sections are shown. The reviewer has no real
+  // presence records to avoid appearing to other users.
+  const hasRecentPresence = isReviewer
+    ? true
+    : (data?.has_recent_presence ?? false);
   const rawFeed = data?.feed;
 
   // Filter out dismissed cards from feed

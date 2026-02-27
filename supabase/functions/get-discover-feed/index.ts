@@ -100,6 +100,11 @@ Deno.serve(async (req) => {
 
     const hasRecentPresence = (presenceResult.data?.length ?? 0) > 0;
 
+    // 🍎 Reviewer bypass: check if viewer is a known reviewer account
+    // so the discover feed RPC is always called even without a physical presence.
+    const REVIEWER_EMAILS = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
+    const isReviewer = REVIEWER_EMAILS.includes(user.email?.toLowerCase() ?? "");
+
     // Sign avatar photos for shared favorites
     const rawShared = sharedResult.data ?? [];
     const sharedFavorites = await Promise.all(
@@ -127,8 +132,8 @@ Deno.serve(async (req) => {
       })
     );
 
-    // 2. If no recent presence, return early with only shared_favorites
-    if (!hasRecentPresence) {
+    // 2. If no recent presence (and not a reviewer), return early with only shared_favorites
+    if (!hasRecentPresence && !isReviewer) {
       return new Response(
         JSON.stringify({
           has_recent_presence: false,

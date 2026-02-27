@@ -1,6 +1,6 @@
 import { registerCityChangeCallback, useCityOverride } from "@/hooks/use-city-override";
 import { useLocationPermission } from "@/hooks/use-location-permission";
-import { useProfile } from "@/hooks/use-profile";
+import { useIsReviewer } from "@/modules/auth";
 import { getUserPosition } from "@/modules/places";
 import { syncLocationToBackend } from "@/modules/profile/helpers";
 import { logger } from "@/utils/logger";
@@ -46,15 +46,8 @@ export const useCachedLocation = () => {
   // City override (reactive — updates instantly on change)
   const { selectedCity: cityOverride } = useCityOverride();
 
-  // Check if current user is the reviewer using profile hook
-  const { profile } = useProfile();
-  const reviewerEmails = [
-    "reviewer@bumpti.com",
-    "reviewer_onboarding@bumpti.com",
-  ];
-  const isReviewer = reviewerEmails.includes(
-    profile?.email?.toLowerCase() || "",
-  );
+  // Check if current user is the reviewer (reads from auth session, not profile)
+  const isReviewer = useIsReviewer();
 
   // Set reviewer location immediately if reviewer
   useEffect(() => {
