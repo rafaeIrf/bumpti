@@ -14,6 +14,7 @@ import { GenericConfirmationBottomSheet } from "@/components/generic-confirmatio
 import { ItsMatchModal } from "@/components/its-match-modal";
 import { ActionButton } from "@/components/ui/action-button";
 import { spacing, typography } from "@/constants/theme";
+import { useCachedLocation } from "@/hooks/use-cached-location";
 import {
   consumeActedUserIds,
   consumePendingMatch,
@@ -58,6 +59,7 @@ function mapSharedFavoritesToEncounters(
     metadata: {
       shared_places: u.shared_count,
       shared_place_names: u.shared_place_names ?? [],
+      shared_interest_keys: u.shared_interest_keys ?? [],
     },
     shared_interests_count: 0,
     other_user_id: u.other_user_id,
@@ -202,7 +204,12 @@ export default function DiscoverScreen() {
   );
   const bottomSheet = useCustomBottomSheet();
 
-  const { data, isLoading, refetch } = useGetDiscoverFeedQuery();
+  const { location: userLocation } = useCachedLocation();
+
+  const { data, isLoading, refetch } = useGetDiscoverFeedQuery({
+    lat: userLocation?.latitude ?? null,
+    lng: userLocation?.longitude ?? null,
+  });
   const hasMounted = useRef(false);
 
   const {
@@ -349,14 +356,6 @@ export default function DiscoverScreen() {
           <View style={styles.headerText}>
             <Text style={[typography.heading, { color: colors.text }]}>
               {t("screens.discover.title")}
-            </Text>
-            <Text
-              style={[
-                typography.body,
-                { color: colors.textSecondary, marginTop: spacing.xs },
-              ]}
-            >
-              {t("screens.discover.subtitle")}
             </Text>
           </View>
           <ActionButton
