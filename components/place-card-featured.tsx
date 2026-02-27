@@ -24,6 +24,7 @@ export interface PlaceCardFeaturedProps {
   onClick: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   color?: string;
+  iconColor?: string;
   count?: number;
 }
 
@@ -34,6 +35,7 @@ export function PlaceCardFeatured({
   icon: Icon,
   onClick,
   containerStyle,
+  iconColor = "#FFFFFF",
   color = "#2997FF",
   count,
 }: PlaceCardFeaturedProps) {
@@ -85,14 +87,14 @@ export function PlaceCardFeatured({
         {/* Count Badge - top-right corner */}
         {count !== undefined && count > 0 && (
           <View style={styles.countBadge}>
-            <MapPinIcon width={8} height={8} color="#FFFFFF" />
+            <MapPinIcon width={8} height={8} color={iconColor} />
             <ThemedText style={styles.countText}>{count}</ThemedText>
           </View>
         )}
 
         {/* Content Container */}
         <View style={styles.contentContainer}>
-          {Icon && <Icon width={32} height={32} color="#FFFFFF" />}
+          {Icon && <Icon width={32} height={32} color={iconColor} />}
 
           <ThemedText
             numberOfLines={1}

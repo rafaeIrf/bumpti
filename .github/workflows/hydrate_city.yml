@@ -5,18 +5,18 @@ on:
     types: [hydrate_city]
   workflow_dispatch:
     inputs:
-      lat:
-        description: "Latitude of the city point"
-        required: true
-        type: string
-      lng:
-        description: "Longitude of the city point"
-        required: true
-        type: string
       city_id:
-        description: "City ID (optional — leave blank for auto-discovery)"
+        description: "City ID from cities_registry — lat/lng will be looked up automatically"
         required: false
         default: "null"
+        type: string
+      lat:
+        description: "Latitude (optional — leave blank if city_id is provided)"
+        required: false
+        type: string
+      lng:
+        description: "Longitude (optional — leave blank if city_id is provided)"
+        required: false
         type: string
       is_update:
         description: "Force re-hydration of an already-completed city"
@@ -50,6 +50,40 @@ jobs:
           pip install --upgrade pip
           pip install psycopg2-binary duckdb requests openai scipy unidecode rapidfuzz geopandas shapely
 
+      - name: Resolve lat/lng from city_id if not provided
+        id: resolve
+        env:
+          DB_POOLER_URL: ${{ secrets.DB_POOLER_URL }}
+        run: |
+          CITY_ID="${{ github.event.client_payload.city_id || github.event.inputs.city_id }}"
+          LAT="${{ github.event.client_payload.lat || github.event.inputs.lat }}"
+          LNG="${{ github.event.client_payload.lng || github.event.inputs.lng }}"
+          IS_UPDATE="${{ github.event.client_payload.is_update || github.event.inputs.is_update }}"
+
+          # If lat/lng are missing but city_id is provided, look them up from cities_registry
+          if [ -z "$LAT" ] || [ "$LAT" = "null" ] && [ -n "$CITY_ID" ] && [ "$CITY_ID" != "null" ]; then
+            echo "🔍 Looking up coordinates for city_id=$CITY_ID from cities_registry..."
+            RESULT=$(python3 -c "
+          import psycopg2, os, sys
+          conn = psycopg2.connect(os.environ['DB_POOLER_URL'])
+          cur = conn.cursor()
+          cur.execute('SELECT lat, lng FROM cities_registry WHERE id = %s', ('$CITY_ID',))
+          row = cur.fetchone()
+          if not row:
+              print('ERROR: city not found', file=sys.stderr)
+              sys.exit(1)
+          print(f'{row[0]},{row[1]}')
+          ")
+            LAT=$(echo "$RESULT" | cut -d',' -f1)
+            LNG=$(echo "$RESULT" | cut -d',' -f2)
+            echo "✅ Resolved: lat=$LAT lng=$LNG"
+          fi
+
+          echo "city_id=$CITY_ID" >> $GITHUB_OUTPUT
+          echo "lat=$LAT" >> $GITHUB_OUTPUT
+          echo "lng=$LNG" >> $GITHUB_OUTPUT
+          echo "is_update=${IS_UPDATE:-false}" >> $GITHUB_OUTPUT
+
       - name: Run hydration script
         id: hydrate
         env:
@@ -59,22 +93,17 @@ jobs:
           GH_HYDRATION_TOKEN: ${{ secrets.GH_HYDRATION_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          CITY_ID="${{ github.event.client_payload.city_id || github.event.inputs.city_id }}"
-          LAT="${{ github.event.client_payload.lat || github.event.inputs.lat }}"
-          LNG="${{ github.event.client_payload.lng || github.event.inputs.lng }}"
-          IS_UPDATE="${{ github.event.client_payload.is_update || github.event.inputs.is_update }}"
-
           python scripts/hydrate_overture_city.py \
-            "$CITY_ID" \
-            "$LAT" \
-            "$LNG" \
-            "$IS_UPDATE"
+            "${{ steps.resolve.outputs.city_id }}" \
+            "${{ steps.resolve.outputs.lat }}" \
+            "${{ steps.resolve.outputs.lng }}" \
+            "${{ steps.resolve.outputs.is_update }}"
 
       - name: Upload GeoJSON artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: geojson-audit-${{ github.event.client_payload.city_id || github.event.inputs.city_id || 'unknown' }}
+          name: geojson-audit-${{ steps.resolve.outputs.city_id || 'unknown' }}
           path: scripts/output/geojson/
           retention-days: 7
           if-no-files-found: ignore
@@ -91,7 +120,7 @@ jobs:
             STATUS="failed"
           fi
 
-          CITY_ID="${{ github.event.client_payload.city_id || github.event.inputs.city_id }}"
+          CITY_ID="${{ steps.resolve.outputs.city_id }}"
 
           # Call finalize edge function
           curl -X POST \

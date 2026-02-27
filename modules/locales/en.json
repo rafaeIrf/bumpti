@@ -514,7 +514,8 @@
         "turboWeekly": "Connect+ (5/week)",
         "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/week)",
-        "morePlansDaily": "10 plans per day"
+        "morePlansDaily": "10 plans per day",
+        "exploreCities": "Explore new cities"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -694,7 +695,7 @@
           "description": "See what's happening around"
         },
         "ranking": {
-          "title": "Hotspots",
+          "title": "+Frequentados",
           "description": "Places people always go to.",
           "filterMonth": "This month",
           "filterGeneral": "All time"
@@ -884,6 +885,10 @@
         "morePlans": {
           "title": "10 plans per day",
           "subtitle": "Create more daily plans and maximize your chances of meeting people."
+        },
+        "exploreCities": {
+          "title": "Explore new cities",
+          "subtitle": "Change your city to see the scene, discover places, and create plans in advance."
         }
       },
       "terms": "Your subscription renews automatically for the same price and period unless cancelled in your {{store}} settings. By confirming the subscription, you agree to our",
