@@ -1340,7 +1340,6 @@
     },
     "discover": {
       "title": "Descubra",
-      "subtitle": "Suas segundas chances de conexão",
       "sectionOverlap": "Cruzaram seu caminho",
       "sectionOverlapDesc": "Pessoas que estiveram no mesmo lugar que você",
       "sectionVibe": "Mesma sintonia",
@@ -1348,8 +1347,8 @@
       "sectionRoutine": "Mesma rotina",
       "sectionRoutineDesc": "Frequentam os mesmos lugares que você",
       "sharedFavorites": {
-        "title": "Mesmos lugares",
-        "subtitle": "Curtem os mesmos Spots que você",
+        "title": "Sua vibe, seus spots",
+        "subtitle": "Curtem os mesmos rolês e interesses",
         "onePlace": "Também curte {{place}}",
         "morePlaces": "{{place}} +{{extra}}"
       },

@@ -9,12 +9,13 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { extractFirstName } from "@/utils/string";
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
 
 export default function UserNameScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep} = useOnboardingFlow();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
   const [name, setName] = useState(userData.name || "");
 
   // Track screen view
@@ -27,8 +28,7 @@ export default function UserNameScreen() {
 
   const handleContinue = () => {
     if (name.trim()) {
-      // Extract only the first name (in case user enters full name)
-      const firstName = name.trim().split(/\s+/)[0];
+      const firstName = extractFirstName(name);
 
       // Save only the first name to Redux
       onboardingActions.setUserName(firstName);

@@ -17,7 +17,7 @@ import { Platform, StyleSheet, View } from "react-native";
 
 export default function UserAgeScreen() {
   const colors = useThemeColors();
-  const { completeCurrentStep} = useOnboardingFlow();
+  const { completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -140,6 +140,7 @@ export default function UserAgeScreen() {
           placeholder="DD/MM/AAAA"
           keyboardType="number-pad"
           maxLength={10}
+          autoFocus
           leftIcon={CalendarIcon}
           onLeftIconPress={() => setShowPicker(true)}
         />

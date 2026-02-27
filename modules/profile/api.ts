@@ -108,8 +108,12 @@ export async function updateProfile(payload: UpdateProfilePayload) {
   return data?.profile;
 }
 
-export async function updateProfilePhotos(photos: string[]) {
+export async function updateProfilePhotos(photos: string[], photoHashes?: Record<string, string>) {
   const formData = new FormData();
+
+  // Build an ordered hash list (null for existing photos, hash for new ones)
+  // The edge function reads this array positionally to avoid the local-URI vs Storage-path mismatch.
+  const photoHashList: (string | null)[] = [];
 
   for (let i = 0; i < photos.length; i++) {
     const photoUri = photos[i];
@@ -117,6 +121,7 @@ export async function updateProfilePhotos(photos: string[]) {
     if (photoUri.startsWith("http") || photoUri.startsWith("https")) {
       // Existing photo URL
       formData.append("photos", photoUri);
+      photoHashList.push(null);
     } else {
       // New local photo
       const processed = await processProfileImage(photoUri, `photo-${i}.jpg`);
@@ -125,7 +130,13 @@ export async function updateProfilePhotos(photos: string[]) {
         name: processed.name,
         type: processed.type,
       } as any);
+      photoHashList.push(photoHashes?.[photoUri] ?? null);
     }
+  }
+
+  // Append ordered hash array if any new photo has a hash
+  if (photoHashList.some((h) => h !== null)) {
+    formData.append("photo_hashes", JSON.stringify(photoHashList));
   }
 
   const { data, error } = await supabase.functions.invoke<{

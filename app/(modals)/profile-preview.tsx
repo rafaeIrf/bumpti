@@ -28,6 +28,7 @@ export default function ProfilePreviewModal() {
     initialProfile?: string;
     source?: string;
     placeId?: string;
+    encounterType?: string;
   }>();
 
   const isFromDiscover = params.source === "discover";
@@ -182,7 +183,9 @@ export default function ProfilePreviewModal() {
       user_a_id: "",
       user_b_id: "",
       place_id: params.placeId ?? "",
-      encounter_type: "direct_overlap",
+      encounter_type:
+        (params.encounterType as DiscoverEncounter["encounter_type"]) ??
+        "direct_overlap",
       affinity_score: 0,
       last_encountered_at: new Date().toISOString(),
       metadata: {},
@@ -196,7 +199,7 @@ export default function ProfilePreviewModal() {
       place_name: null,
       additional_encounters: null,
     } satisfies DiscoverEncounter;
-  }, [isFromDiscover, profileCardData, params.placeId]);
+  }, [isFromDiscover, profileCardData, params.placeId, params.encounterType]);
 
   const onLikePress = useCallback(async () => {
     if (!encounterForActions) return;

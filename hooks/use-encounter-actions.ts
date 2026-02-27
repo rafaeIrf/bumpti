@@ -5,6 +5,7 @@ import type { SwipeAction } from "@/modules/database/models/SwipeQueue";
 import type { DiscoverEncounter } from "@/modules/discover/types";
 import { skipEncounters } from "@/modules/discovery/api";
 import { removeDiscoveryProfile } from "@/modules/discovery/discovery-service";
+import { interactUser } from "@/modules/interactions/api";
 import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { useCallback, useRef, useState } from "react";
@@ -100,24 +101,48 @@ export function useEncounterActions() {
         // Cache profile data for the onMatch callback (deferred matches)
         matchProfileCache.set(userId, { name: resolvedName, photoUrl: resolvedPhoto });
 
-        const result = await queueSwipe({
-          targetUserId: userId,
-          action: "like" as SwipeAction,
-          placeIdOverride: encounter.place_id,
-        });
-        // queueSwipe already removes from discovery_profiles locally
-        // interact-user Edge Function now also deletes from user_encounters
+        if (encounter.encounter_type === "shared_favorites") {
+          // shared_favorites have no placeId — bypass swipe queue, call interact-user directly.
+          // Remove from local cache immediately (UI doesn't block), then fire API call.
+          await removeDiscoveryProfile({ database, userId });
+          interactUser({
+            toUserId: userId,
+            action: "like",
+            placeId: encounter.place_id || undefined,
+          }).then((result) => {
+            if (result.status === "liked" && result.match) {
+              const info: MatchInfo = {
+                userId,
+                name: resolvedName,
+                photoUrl: resolvedPhoto,
+              };
+              setMatchInfo(info);
+              pendingMatchInfo = info;
+              matchProfileCache.delete(userId);
+            }
+          }).catch((err) => {
+            logger.error("interactUser like (shared_favorites) failed", { err });
+          });
+        } else {
+          const result = await queueSwipe({
+            targetUserId: userId,
+            action: "like" as SwipeAction,
+            placeIdOverride: encounter.place_id,
+          });
+          // queueSwipe already removes from discovery_profiles locally
+          // interact-user Edge Function now also deletes from user_encounters
 
-        if (result?.instantMatch) {
-          // Instant match detected via local likerIds — show modal immediately
-          const info: MatchInfo = {
-            userId,
-            name: resolvedName,
-            photoUrl: resolvedPhoto,
-          };
-          setMatchInfo(info);
-          pendingMatchInfo = info;
-          matchProfileCache.delete(userId);
+          if (result?.instantMatch) {
+            // Instant match detected via local likerIds — show modal immediately
+            const info: MatchInfo = {
+              userId,
+              name: resolvedName,
+              photoUrl: resolvedPhoto,
+            };
+            setMatchInfo(info);
+            pendingMatchInfo = info;
+            matchProfileCache.delete(userId);
+          }
         }
       } catch (error) {
         logger.error("handleLike failed", { userId, error });
@@ -141,8 +166,17 @@ export function useEncounterActions() {
         // 1. Permanently remove from local WatermelonDB cache
         await removeDiscoveryProfile({ database, userId });
 
-        // 2. Delete from server user_encounters (fire-and-forget)
-        skipEncounters({ otherUserIds: [userId] });
+        // 2. Server-side: shared_favorites have no encounter row,
+        //    so we record a dislike instead of skipping an encounter.
+        if (encounter.encounter_type === "shared_favorites") {
+          interactUser({
+            toUserId: userId,
+            action: "dislike",
+            placeId: encounter.place_id ?? undefined,
+          });
+        } else {
+          skipEncounters({ otherUserIds: [userId] });
+        }
       } catch (error) {
         logger.error("handleSkip failed", { userId, error });
       } finally {

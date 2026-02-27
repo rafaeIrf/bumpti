@@ -26,6 +26,7 @@ export type DiscoverEncounter = {
     shared_interests?: number;
     shared_places?: number;
     shared_place_names?: string[];
+    shared_interest_keys?: string[];
   };
   shared_interests_count: number;
   // other_user fields from the RPC
@@ -55,6 +56,7 @@ export type SharedFavoriteUser = {
   shared_count: number;
   shared_place_ids: string[];
   shared_place_names: string[];
+  shared_interest_keys: string[];
 };
 
 /**

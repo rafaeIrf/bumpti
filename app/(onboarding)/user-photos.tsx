@@ -14,16 +14,24 @@ import { StyleSheet } from "react-native";
 
 export default function UserPhotosScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep} = useOnboardingFlow();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
   const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
+  const photoHashes = userData.photoHashes ?? {};
 
-  // Track screen view
+  const handlePhotosChange = (newPhotos: string[]) => {
+    setPhotos(newPhotos);
+    onboardingActions.setPhotoUris(newPhotos);
+  };
   useScreenTracking({
     screenName: "onboarding_photos",
     params: {
       step_name: "photos",
     },
   });
+
+  const handlePhotoHashesChange = (hashes: Record<string, string>) => {
+    onboardingActions.setPhotoHashes(hashes);
+  };
 
   const handleContinue = () => {
     if (photos.length >= 2) {
@@ -58,7 +66,9 @@ export default function UserPhotosScreen() {
         maxPhotos={9}
         minPhotos={2}
         photos={photos}
-        onPhotosChange={setPhotos}
+        onPhotosChange={handlePhotosChange}
+        onPhotoHashesChange={handlePhotoHashesChange}
+        photoHashes={photoHashes}
       />
     </BaseTemplateScreen>
   );

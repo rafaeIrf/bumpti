@@ -48,6 +48,8 @@ type UpdateProfilePayload = {
   show_university_on_home?: boolean;
   last_lat?: number; // GPS latitude for nearby notifications
   last_lng?: number; // GPS longitude for nearby notifications
+  /** Internal: normalised hash array for new File uploads (set during FormData parsing) */
+  _fileHashes?: string[];
   [key: string]: unknown;
 };
 
@@ -96,10 +98,27 @@ Deno.serve(async (req) => {
       if (formData.has("photos")) {
         photosToUpdate = formData.getAll("photos");
       }
-      
-      // Parse other fields from formData if needed (currently only photos are sent via FormData)
-      // If we wanted to support mixed updates, we'd parse them here.
-      // For now, we assume FormData is primarily for photos.
+
+      // Read photo hashes sent by the mobile client after moderation.
+      // Accepts two formats for backward compat:
+      //   photo_hashes  — (string|null)[] positional array matching photos order
+      //   photo_hash_map — {localUri: hash} map; values used in File-upload order
+      // Both are normalised into a string[] of hashes for new File uploads only.
+      let fileHashes: string[] = [];
+      if (formData.has("photo_hashes")) {
+        try {
+          const list = JSON.parse(formData.get("photo_hashes") as string) as (string | null)[];
+          fileHashes = list.filter((h): h is string => h !== null);
+        } catch { /* malformed — proceed without hashes */ }
+      } else if (formData.has("photo_hash_map")) {
+        try {
+          const map = JSON.parse(formData.get("photo_hash_map") as string) as Record<string, string>;
+          fileHashes = Object.values(map);
+        } catch { /* malformed — proceed without hashes */ }
+      }
+      if (fileHashes.length > 0) {
+        payload._fileHashes = fileHashes;
+      }
     } else {
       return new Response(
         JSON.stringify({ error: "invalid_content_type", message: "Content-Type must be application/json or multipart/form-data" }),
@@ -146,8 +165,12 @@ Deno.serve(async (req) => {
       show_university_on_home,
       last_lat,
       last_lng,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ...rest
     } = payload;
+
+    // Photo hashes for new File uploads — normalised from FormData parsing above
+    const fileHashes: string[] = (payload._fileHashes as string[] | undefined) ?? [];
 
     // Lookup IDs for keys
     let educationId: number | undefined;
@@ -713,13 +736,22 @@ Deno.serve(async (req) => {
       const MAX_PHOTOS = 9;
       const limitedPhotos = photosToUpdate.slice(0, MAX_PHOTOS);
       
-      // Fetch current photos to identify what needs to be deleted later
+      // Fetch current photos (including hashes) to preserve hashes and clean up storage
       const { data: currentPhotos } = await supabase
         .from("profile_photos")
-        .select("url")
+        .select("url, image_hash")
         .eq("user_id", userId);
 
-      const newPhotos: { url: string; position: number }[] = [];
+      // Build lookup of existing hashes by storage path so we can preserve them
+      const existingHashByUrl = new Map<string, string>();
+      if (currentPhotos) {
+        for (const p of currentPhotos) {
+          if (p.image_hash) existingHashByUrl.set(p.url, p.image_hash);
+        }
+      }
+
+      const newPhotos: { url: string; position: number; hash?: string | null }[] = [];
+      let fileIndex = 0;
 
       for (let i = 0; i < limitedPhotos.length; i++) {
         const item = limitedPhotos[i];
@@ -736,7 +768,7 @@ Deno.serve(async (req) => {
           } catch (e) {
             // Not a URL, assume it is the path
           }
-          newPhotos.push({ url: path, position: i });
+          newPhotos.push({ url: path, position: i, hash: existingHashByUrl.get(path) ?? null });
 
         } else if (item instanceof File) {
           // New file upload
@@ -755,7 +787,8 @@ Deno.serve(async (req) => {
              throw new Error("Failed to upload photo");
           }
           
-          newPhotos.push({ url: fileName, position: i });
+          newPhotos.push({ url: fileName, position: i, hash: fileHashes[fileIndex] ?? null });
+          fileIndex++;
         }
       }
 
@@ -798,6 +831,8 @@ Deno.serve(async (req) => {
               user_id: userId,
               url: p.url,
               position: p.position,
+              // Include hash if provided by caller (from moderation response)
+              ...(p.hash ? { image_hash: p.hash } : {}),
             }))
           );
           

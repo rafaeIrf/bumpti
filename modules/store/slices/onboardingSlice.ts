@@ -23,6 +23,8 @@ export interface OnboardingUserData {
   connectWith?: string[];
   intentions?: string[];
   photoUris?: string[];
+  /** Accumulated {localUri: hash} map from moderation results */
+  photoHashes?: Record<string, string>;
   bio?: string;
   universityId?: string | null;
   universityName?: string | null;
@@ -83,6 +85,9 @@ const onboardingSlice = createSlice({
     },
     setPhotoUris: (state, action: PayloadAction<string[]>) => {
       state.userData.photoUris = action.payload;
+    },
+    setPhotoHashes: (state, action: PayloadAction<Record<string, string>>) => {
+      state.userData.photoHashes = { ...state.userData.photoHashes, ...action.payload };
     },
     setBio: (state, action: PayloadAction<string>) => {
       state.userData.bio = action.payload;
@@ -158,6 +163,7 @@ export const {
   setConnectWith,
   setIntentions,
   setPhotoUris,
+  setPhotoHashes,
   setBio,
   setInterests,
   setFavoritePlaces,

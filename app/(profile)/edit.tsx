@@ -136,7 +136,13 @@ function SectionHeader({ title, subtitle }: SectionHeaderProps) {
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { profile, photos, isUploading, updatePhotos } = useProfileEdit();
+  const {
+    profile,
+    photos,
+    isUploading,
+    updatePhotos,
+    handlePhotoHashesChange,
+  } = useProfileEdit();
 
   const professionValue = React.useMemo(() => {
     const parts = [profile?.job_title, profile?.company_name].filter(
@@ -246,6 +252,7 @@ export default function ProfileEditScreen() {
           <UserPhotoGrid
             photos={photos}
             onPhotosChange={handlePhotosChange}
+            onPhotoHashesChange={handlePhotoHashesChange}
             maxPhotos={9}
             minPhotos={2}
             isUploading={isUploading}
