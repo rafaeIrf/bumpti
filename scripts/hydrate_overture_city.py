@@ -238,7 +238,9 @@ def discover_city_from_overture(lat: float, lng: float):
         'bbox': [result[5], result[7], result[6], result[8]],  # [xmin, ymin, xmax, ymax]
         'geom_wkb': result[9],
         'country_code': result[3],
-        'state': result[4]
+        'state': result[4],
+        'lat': lat,
+        'lng': lng
     }
 
 
