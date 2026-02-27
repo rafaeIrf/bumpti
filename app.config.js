@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: "Bumpti",
     slug: "bumpti",
-    version: "1.0.2",
+    version: "1.0.7",
     orientation: "portrait",
     icon: "./assets/images/bumpti-logo.png",
     scheme: "bumpti",
