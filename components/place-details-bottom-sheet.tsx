@@ -15,6 +15,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { PlaceReview } from "@/modules/places/types";
+import { toTitleCase } from "@/utils/string";
 import { useFeatureFlag, usePostHog } from "posthog-react-native";
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -158,7 +159,7 @@ export function PlaceDetailsBottomSheet({
             ]}
             numberOfLines={2}
           >
-            {placeName.toUpperCase()}
+            {toTitleCase(placeName)}
           </ThemedText>
 
           <View style={styles.metaRow}>
