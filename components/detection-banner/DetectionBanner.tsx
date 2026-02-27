@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   iconWrapper: {
     width: "100%",
     alignItems: "center",
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   iconContainer: {
     width: 48,
