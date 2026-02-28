@@ -3,11 +3,13 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { LocationPermissionState } from "@/components/location-permission-state";
 import { MapDataAttribution } from "@/components/map-data-attribution";
 import { PlaceCard } from "@/components/place-card";
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { PlacesEmptyState } from "@/components/places-empty-state";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
@@ -16,16 +18,11 @@ import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
+import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface SearchResult {
@@ -65,8 +62,14 @@ export interface PlaceSearchContentProps {
     lat?: number;
     lng?: number;
   }) => void;
-  suggestedPlaces?: { id: string; name: string; address?: string }[];
+  suggestedPlaces?: {
+    id: string;
+    name: string;
+    address?: string;
+    distance?: number;
+  }[];
   suggestedPlacesLoading?: boolean;
+  placeholder?: string;
 }
 
 export function PlaceSearchContent({
@@ -82,6 +85,7 @@ export function PlaceSearchContent({
   onUniversitySelect,
   suggestedPlaces = [],
   suggestedPlacesLoading = false,
+  placeholder: placeholderProp,
 }: PlaceSearchContentProps) {
   const colors = useThemeColors();
   const router = useRouter();
@@ -89,6 +93,7 @@ export function PlaceSearchContent({
     multiSelectMode?: string;
     initialSelection?: string;
     maxSelections?: string;
+    otherSelectionsCount?: string;
   }>();
 
   const multiSelectMode =
@@ -97,6 +102,10 @@ export function PlaceSearchContent({
   const maxSelections: number | undefined = params.maxSelections
     ? parseInt(params.maxSelections, 10)
     : undefined;
+
+  const otherSelectionsCount = params.otherSelectionsCount
+    ? parseInt(params.otherSelectionsCount, 10)
+    : 0;
 
   const initialSelection = React.useMemo(() => {
     if (!params.initialSelection) return [];
@@ -244,9 +253,11 @@ export function PlaceSearchContent({
         onChangeText={handleSearch}
         onClear={clearSearch}
         placeholder={
-          isPremium
-            ? t("screens.placeSearch.placeholderPremium")
-            : t("screens.placeSearch.placeholderDefault")
+          placeholderProp
+            ? placeholderProp
+            : isPremium
+              ? t("screens.placeSearch.placeholderPremium")
+              : t("screens.placeSearch.placeholderDefault")
         }
         onBack={onBack ?? router.back}
         autoFocus={autoFocus}
@@ -259,8 +270,62 @@ export function PlaceSearchContent({
       onBack,
       autoFocus,
       isPremium,
+      placeholderProp,
       router,
     ],
+  );
+
+  // Shared helper for rendering a SelectionCard with BrandIcon in multi-select mode
+  const renderMultiSelectItem = useCallback(
+    (opts: {
+      id: string;
+      name: string;
+      category: string;
+      address?: string;
+      distance?: number;
+      isSelected: boolean;
+      onPress: () => void;
+    }) => {
+      const catColor = getCategoryColor(opts.category);
+      const CatIcon = getPlaceIcon(opts.category);
+      const isAtLimit =
+        maxSelections !== undefined && localSelectedIds.length >= maxSelections;
+
+      const brandIconElement = (
+        <View style={{ alignItems: "center", gap: 2 }}>
+          <BrandIcon
+            icon={CatIcon}
+            size="md"
+            color="#FFFFFF"
+            style={{ backgroundColor: catColor, borderWidth: 0 }}
+          />
+          {opts.distance != null && opts.distance > 0 && (
+            <ThemedText
+              style={[
+                typography.caption,
+                { fontSize: 10, color: colors.textSecondary },
+              ]}
+            >
+              {formatDistance(opts.distance)}
+            </ThemedText>
+          )}
+        </View>
+      );
+
+      return (
+        <SelectionCard
+          key={opts.id}
+          label={opts.name}
+          description={opts.address || undefined}
+          isSelected={opts.isSelected}
+          leftElement={brandIconElement}
+          accentColor={catColor}
+          onPress={opts.onPress}
+          disabled={isAtLimit}
+        />
+      );
+    },
+    [colors.textSecondary, maxSelections, localSelectedIds.length],
   );
 
   const renderResult = useCallback(
@@ -274,38 +339,38 @@ export function PlaceSearchContent({
         );
         const description = addressParts.join(" • ");
 
-        return (
-          <SelectionCard
-            label={item.name}
-            description={description || undefined}
-            isSelected={false}
-            onPress={() => {
-              onUniversitySelect({
-                id: item.placeId,
-                name: item.name,
-                address: item.formattedAddress,
-                lat: item.lat,
-                lng: item.lng,
-              });
-            }}
-          />
-        );
+        return renderMultiSelectItem({
+          id: item.placeId,
+          name: item.name,
+          category: item.category,
+          address: description || undefined,
+          isSelected: false,
+          onPress: () => {
+            onUniversitySelect({
+              id: item.placeId,
+              name: item.name,
+              address: item.formattedAddress,
+              lat: item.lat,
+              lng: item.lng,
+            });
+          },
+        });
       }
 
       if (multiSelectMode) {
-        const address = item.formattedAddress;
-        const description = [address, item.neighborhood]
+        const description = [item.formattedAddress, item.neighborhood]
           .filter(Boolean)
           .join(" • ");
 
-        return (
-          <SelectionCard
-            label={item.name}
-            description={description || undefined}
-            isSelected={isSelected}
-            onPress={() => handleResultPress(item)}
-          />
-        );
+        return renderMultiSelectItem({
+          id: item.placeId,
+          name: item.name,
+          category: item.category,
+          address: description || undefined,
+          distance: item.distance,
+          isSelected,
+          onPress: () => handleResultPress(item),
+        });
       }
 
       return (
@@ -333,10 +398,9 @@ export function PlaceSearchContent({
       localSelectedIds,
       categoryFilter,
       onUniversitySelect,
+      renderMultiSelectItem,
     ],
   );
-
-  const ItemSeparator: React.FC = () => <View style={{ height: spacing.sm }} />;
 
   let content: React.ReactNode;
   if (!hasLocationPermission) {
@@ -347,16 +411,19 @@ export function PlaceSearchContent({
         onOpenSettings={openSettings}
       />
     );
-  } else if (searchQuery.trim().length === 0) {
-    // University-specific: show suggested universities
-    if (categoryFilter === "university") {
+  } else if (
+    searchQuery.length === 0 &&
+    (suggestedPlaces.length > 0 || suggestedPlacesLoading)
+  ) {
+    // Show suggested places with category icons
+    if (multiSelectMode && categoryFilter) {
       content = (
         <Animated.View entering={FadeInDown.delay(150).springify()}>
           <ThemedView style={styles.suggestedSection}>
             <ThemedText
               style={[styles.suggestedLabel, { color: colors.textSecondary }]}
             >
-              {t("screens.universitySearch.suggestedLabel")}
+              {t("screens.placeSearch.suggestedPlacesLabel")}
             </ThemedText>
             {suggestedPlacesLoading ? (
               <ActivityIndicator
@@ -365,25 +432,54 @@ export function PlaceSearchContent({
                 style={{ marginTop: spacing.md }}
               />
             ) : (
-              suggestedPlaces.map((uni) => {
-                return (
-                  <SelectionCard
-                    key={uni.id}
-                    label={uni.name}
-                    description={uni.address || undefined}
-                    isSelected={false}
-                    onPress={() => {
-                      onUniversitySelect?.({
-                        id: uni.id,
-                        name: uni.name,
+              suggestedPlaces.map((place) => {
+                const isSelected = localSelectedIds.includes(place.id);
+                const firstCat = categoryFilter.split(",")[0] ?? "default";
+
+                if (categoryFilter === "university" && onUniversitySelect) {
+                  return renderMultiSelectItem({
+                    id: place.id,
+                    name: place.name,
+                    category: firstCat,
+                    address: place.address,
+                    distance: place.distance,
+                    isSelected: false,
+                    onPress: () => {
+                      onUniversitySelect({
+                        id: place.id,
+                        name: place.name,
                       });
-                    }}
-                  />
-                );
+                    },
+                  });
+                }
+
+                return renderMultiSelectItem({
+                  id: place.id,
+                  name: place.name,
+                  category: firstCat,
+                  address: place.address,
+                  distance: place.distance,
+                  isSelected,
+                  onPress: () =>
+                    handleResultPress({
+                      placeId: place.id,
+                      name: place.name,
+                      category: categoryFilter,
+                      formattedAddress: place.address,
+                      lat: 0,
+                      lng: 0,
+                    }),
+                });
               })
             )}
           </ThemedView>
         </Animated.View>
+      );
+    } else if (suggestedPlacesLoading && categoryFilter) {
+      content = (
+        <ThemedView style={{ paddingTop: spacing.xl, alignItems: "center" }}>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </ThemedView>
       );
     } else {
       // Default place search empty state
@@ -469,15 +565,12 @@ export function PlaceSearchContent({
     );
   } else if (searchResults.length > 0) {
     content = (
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item) => item.placeId}
-        ItemSeparatorComponent={ItemSeparator}
-        renderItem={renderResult}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
-        ListFooterComponent={<MapDataAttribution />}
-      />
+      <View style={{ gap: spacing.sm, paddingBottom: spacing.xl }}>
+        {searchResults.map((item) => (
+          <View key={item.placeId}>{renderResult({ item })}</View>
+        ))}
+        <MapDataAttribution />
+      </View>
     );
   } else {
     content = <PlacesEmptyState mode="search" onPress={clearSearch} />;
@@ -489,31 +582,41 @@ export function PlaceSearchContent({
       return;
     }
 
-    // @ts-ignore
-    const callback = globalThis.__favoritePlacesCallback;
-
-    if (typeof callback === "function") {
-      const selectedPlaces = localSelectedIds.map((id) => ({
-        id,
-        name: selectedPlacesMapRef.current[id] || "",
-      }));
-
-      logger.log("[PlaceSearch] Returning", selectedPlaces.length, "places");
-      callback(selectedPlaces);
-
-      // @ts-ignore
-      delete globalThis.__favoritePlacesCallback;
-    }
-
     router.back();
-  }, [onSelectionComplete, router, localSelectedIds]);
+  }, [onSelectionComplete, router]);
+
+  // Fire callback on unmount (back navigation) if not already done
+  const localSelectedIdsRef = useRef(localSelectedIds);
+  localSelectedIdsRef.current = localSelectedIds;
+
+  React.useEffect(() => {
+    const placesMap = selectedPlacesMapRef.current;
+    return () => {
+      // @ts-ignore
+      const callback = globalThis.__favoritePlacesCallback;
+      if (typeof callback === "function") {
+        const selectedPlaces = localSelectedIdsRef.current.map((id) => ({
+          id,
+          name: placesMap[id] || "",
+        }));
+        logger.log(
+          "[PlaceSearch] Unmount — returning",
+          selectedPlaces.length,
+          "places",
+        );
+        callback(selectedPlaces);
+        // @ts-ignore
+        delete globalThis.__favoritePlacesCallback;
+      }
+    };
+  }, []);
 
   return (
     <BaseTemplateScreen
       isModal={isModal}
       TopHeader={header}
       BottomBar={
-        multiSelectMode && localSelectedIds.length > 0 ? (
+        multiSelectMode && (localSelectedIds.length > 0 || categoryFilter) ? (
           <ScreenBottomBar variant="custom" showBorder>
             <View style={styles.bottomBarContent}>
               <View style={styles.bottomBarText}>
@@ -528,8 +631,10 @@ export function PlaceSearchContent({
                 <ThemedText
                   style={[styles.bottomBarCount, { color: colors.text }]}
                 >
-                  {localSelectedIds.length}{" "}
-                  {localSelectedIds.length === 1 ? "lugar" : "lugares"}
+                  {otherSelectionsCount + localSelectedIds.length}{" "}
+                  {otherSelectionsCount + localSelectedIds.length === 1
+                    ? "lugar"
+                    : "lugares"}
                 </ThemedText>
               </View>
               <Pressable
@@ -599,21 +704,17 @@ const styles = StyleSheet.create({
   bottomBarContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
     width: "100%",
+    marginBottom: spacing.md,
   },
   bottomBarText: {
     flex: 1,
   },
   bottomBarLabel: {
-    fontFamily: "Poppins",
-    fontWeight: "400",
-    fontSize: 13,
+    ...typography.captionBold,
   },
   bottomBarCount: {
-    fontFamily: "Poppins",
-    fontWeight: "600",
-    fontSize: 18,
+    ...typography.caption,
   },
   doneButton: {
     paddingHorizontal: spacing.lg,
@@ -624,14 +725,12 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   doneButtonText: {
-    fontFamily: "Poppins",
-    fontWeight: "600",
-    fontSize: 15,
+    ...typography.body1,
     color: "#FFFFFF",
   },
   suggestedSection: {
     paddingTop: spacing.sm,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   suggestedLabel: {
     ...typography.caption,

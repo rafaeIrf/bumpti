@@ -1,6 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
-import { spacing } from "@/constants/theme";
+import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React from "react";
 import {
@@ -55,8 +55,7 @@ export function MultiSelectSheet<T>({
       style={[
         styles.container,
         {
-          backgroundColor: colors.background,
-          borderColor: colors.surface,
+          backgroundColor: colors.surface,
         },
         animatedStyle,
         style,
@@ -77,7 +76,7 @@ export function MultiSelectSheet<T>({
             </ThemedText>
             <ThemedText style={styles.count}>
               {selectedItems.length}{" "}
-              {selectedItems.length === 1 ? "spot" : "spots"}
+              {selectedItems.length === 1 ? "lugar" : "lugares"}
             </ThemedText>
           </View>
         </View>
@@ -102,7 +101,9 @@ export function MultiSelectSheet<T>({
               onPress={() => onRemoveItem(item)}
               style={({ pressed }) => [
                 styles.listItem,
-                { backgroundColor: colors.surface, borderColor: colors.border },
+                {
+                  backgroundColor: colors.background,
+                },
                 pressed && styles.listItemPressed,
               ]}
             >
@@ -154,15 +155,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   label: {
-    fontFamily: "Poppins",
-    fontWeight: "400",
-    fontSize: 13,
+    ...typography.captionBold,
   },
   count: {
-    fontFamily: "Poppins",
-    fontWeight: "600",
-    fontSize: 16,
-    color: "#FFFFFF",
+    ...typography.caption,
   },
   list: {
     paddingHorizontal: spacing.md,
@@ -184,9 +180,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   listItemText: {
-    fontFamily: "Poppins",
-    fontWeight: "500",
-    fontSize: 14,
-    color: "#FFFFFF",
+    ...typography.captionBold,
   },
 });

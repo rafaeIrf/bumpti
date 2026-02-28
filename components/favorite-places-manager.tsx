@@ -40,12 +40,16 @@ export interface UseFavoritePlacesProps {
   initialSelectedIds?: string[];
   initialPlacesMap?: Record<string, string>;
   searchPath?: string; // Path to place-search screen, e.g. "/main/place-search" or "./place-search"
+  maxSelections?: number;
+  minSelections?: number;
 }
 
 export function useFavoritePlaces({
   initialSelectedIds = [],
   initialPlacesMap = {},
   searchPath = "/(modals)/place-search", // Default to modals/place-search so it appears on top
+  maxSelections = MAX_SELECTIONS,
+  minSelections = MIN_FAVORITES,
 }: UseFavoritePlacesProps) {
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
@@ -122,7 +126,7 @@ export function useFavoritePlaces({
         const { [placeId]: _, ...rest } = prev;
         return rest;
       });
-    } else if (selectedPlaceIds.length < MAX_SELECTIONS) {
+    } else if (selectedPlaceIds.length < maxSelections) {
       setSelectedPlaceIds((prev) => [...prev, placeId]);
       setPlacesMap((prev) => ({ ...prev, [placeId]: placeName }));
     }
@@ -151,7 +155,7 @@ export function useFavoritePlaces({
       params: {
         multiSelectMode: "true",
         initialSelection: JSON.stringify(initialSelection),
-        maxSelections: String(MAX_SELECTIONS),
+        maxSelections: String(maxSelections),
       },
     });
   };
@@ -160,7 +164,7 @@ export function useFavoritePlaces({
     return suggestedPlaces.find((c) => c.category === category)?.places || [];
   };
 
-  const needsMore = selectedPlaceIds.length < MIN_FAVORITES;
+  const needsMore = selectedPlaceIds.length < minSelections;
 
   return {
     selectedPlaceIds,

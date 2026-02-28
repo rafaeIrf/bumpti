@@ -45,6 +45,13 @@ export type ProfilePayload = {
   graduation_year?: number | null;
   show_university_on_home?: boolean | null;
   interests?: string[] | null;
+  socialHubs?: {
+    id: string;
+    name: string;
+    category: string;
+    visible?: boolean;
+    avatars?: { user_id: string; url: string }[];
+  }[] | null;
 };
 
 export type UpdateProfilePayload = {
@@ -70,6 +77,7 @@ export type UpdateProfilePayload = {
   graduation_year?: number | null;
   show_university_on_home?: boolean;
   interests?: string[];
+  socialHubs?: string[];
   last_lat?: number;
   last_lng?: number;
   [key: string]: unknown;

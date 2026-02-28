@@ -50,6 +50,10 @@ export async function saveOnboarding(userData: OnboardingUserData) {
     "favoritePlaces",
     JSON.stringify(userData.favoritePlaces ?? [])
   );
+  formData.append(
+    "socialHubs",
+    JSON.stringify(userData.socialHubs ?? [])
+  );
   
   if (userData.bio) {
     formData.append("bio", userData.bio);

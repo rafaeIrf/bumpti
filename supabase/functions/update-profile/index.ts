@@ -17,6 +17,37 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
+type PlaceSummary = { id: string; name: string; category: string };
+
+/** Extract { id, name, category } from joined place rows. */
+function parsePlaceRows(rows: any[]): PlaceSummary[] {
+  return rows.reduce<PlaceSummary[]>((acc, row) => {
+    const place = row.places;
+    if (place) acc.push({ id: place.id, name: place.name || "", category: place.category || "" });
+    return acc;
+  }, []);
+}
+
+/** Extract social hub data including visibility flag. */
+function parseSocialHubRows(rows: any[]) {
+  return rows.reduce<(PlaceSummary & { visible: boolean })[]>((acc, row) => {
+    const place = row.places;
+    if (place) {
+      acc.push({
+        id: place.id,
+        name: place.name || "",
+        category: place.category || "",
+        visible: row.visible ?? true,
+      });
+    }
+    return acc;
+  }, []);
+}
+
+// ─── Types ──────────────────────────────────────────────────────────
+
 type UpdateProfilePayload = {
   name?: string;
   birthdate?: string; // ISO date
@@ -39,6 +70,7 @@ type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
+  socialHubs?: string[]; // array of place_ids (max 4)
   interests?: string[]; // interest keys
   is_invisible?: boolean; // Invisible mode flag
   filter_only_verified?: boolean; // Trust Circle filter flag
@@ -730,6 +762,23 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Social hubs CRUD (max 4) ────────────────────────────────
+    if (Array.isArray(payload.socialHubs)) {
+      const { error: deleteErr } = await supabase
+        .from("profile_social_hubs")
+        .delete()
+        .eq("user_id", userId);
+      if (deleteErr) throw deleteErr;
+
+      const hubIds = payload.socialHubs.slice(0, 4);
+      if (hubIds.length > 0) {
+        const { error: insertErr } = await supabase
+          .from("profile_social_hubs")
+          .insert(hubIds.map((placeId) => ({ user_id: userId, place_id: placeId })));
+        if (insertErr) throw insertErr;
+      }
+    }
+
     // Manage photos
     if (photosToUpdate && photosToUpdate.length > 0) {
       // Backend enforcement: limit to 9 photos max (prevents bypass attacks)
@@ -850,6 +899,7 @@ Deno.serve(async (req) => {
       photosResult,
       favoritePlacesResult,
       interestsResult,
+      socialHubsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -887,6 +937,10 @@ Deno.serve(async (req) => {
         .from("profile_interests")
         .select("interest:interests(key)")
         .eq("profile_id", userId),
+      supabase
+        .from("profile_social_hubs")
+        .select("place_id, visible, places:places(id, name, category)")
+        .eq("user_id", userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -961,18 +1015,9 @@ Deno.serve(async (req) => {
         : rest.location;
 
 
-      // Favorite places with joined data
-      const favoritePlaces = (favoritePlacesRows ?? [])
-        .map((row: any) => {
-          const place = row.places;
-          if (!place) return null;
-          return {
-            id: place.id,
-            name: place.name || "",
-            category: place.category || "",
-          };
-        })
-        .filter((p): p is { id: string; name: string; category: string } => p !== null);
+      // ── Places ─────────────────────────────────────────────────
+      const favoritePlaces = parsePlaceRows(favoritePlacesRows ?? []);
+      const socialHubs = parseSocialHubRows(socialHubsResult.data ?? []);
 
       profilePayload = {
         ...rest,
@@ -989,11 +1034,11 @@ Deno.serve(async (req) => {
           profile_languages
             ?.map((pl: any) => pl.language?.key)
             .filter(Boolean) ?? [],
-        // University fields from joined places table
         university_name: university?.name ?? null,
         university_lat: university?.lat ?? null,
         university_lng: university?.lng ?? null,
         interests: interestKeys,
+        socialHubs,
       };
     }
 

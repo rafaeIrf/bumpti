@@ -45,6 +45,13 @@ export type ProfileData = {
   graduation_year?: number | null;
   show_university_on_home?: boolean | null;
   interests?: string[] | null;
+  socialHubs?: {
+    id: string;
+    name: string;
+    category: string;
+    visible?: boolean;
+    avatars?: { user_id: string; url: string }[];
+  }[] | null;
 };
 
 export interface SubscriptionData {
@@ -98,6 +105,11 @@ const profileSlice = createSlice({
         state.data.favoritePlaces = action.payload;
       }
     },
+    setSocialHubs: (state, action: PayloadAction<any[]>) => {
+      if (state.data) {
+        state.data.socialHubs = action.payload;
+      }
+    },
     setSubscription: (state, action: PayloadAction<SubscriptionData>) => {
       if (state.data) {
         state.data.subscription = action.payload;
@@ -136,6 +148,7 @@ export const {
   setProfile,
   setProfileLoading,
   setFavoritePlaces,
+  setSocialHubs,
   setSubscription,
   setNotificationSettings,
   setCheckinCredits,

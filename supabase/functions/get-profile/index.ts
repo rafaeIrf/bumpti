@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
-import { signPhotoUrls, signUserAvatars } from "../_shared/signPhotoUrls.ts";
+import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +20,86 @@ if (!supabaseUrl || !serviceKey) {
 }
 
 const supabase = createClient(supabaseUrl, serviceKey);
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+type PlaceHub = {
+  id: string;
+  name: string;
+  category: string;
+  visible: boolean;
+  avatars: { user_id: string; url: string }[];
+};
+
+/** Fetch active users, regulars count, and signed avatars for a university. */
+async function enrichUniversity(client: any, universityId: string | null, userId: string) {
+  if (!universityId) {
+    return { activeUsers: 0, regularsCount: 0, avatars: [] as { user_id: string; url: string }[] };
+  }
+
+  const [activeResult, regularsResult, avatarsResult] = await Promise.all([
+    client.rpc("get_eligible_active_users_count", {
+      target_place_id: universityId,
+      requesting_user_id: userId,
+    }),
+    client.rpc("get_regulars_count_at_place", {
+      target_place_id: universityId,
+      requesting_user_id: userId,
+    }),
+    client.rpc("get_combined_place_avatars", {
+      target_place_id: universityId,
+      requesting_user_id: userId,
+      max_avatars: 5,
+    }),
+  ]);
+
+  return {
+    activeUsers: activeResult.data ?? 0,
+    regularsCount: regularsResult.data ?? 0,
+    avatars: await signUserAvatars(client, avatarsResult.data ?? []),
+  };
+}
+
+/** Parse social hub rows and enrich each hub with signed avatars. */
+async function enrichSocialHubs(
+  client: any,
+  socialHubRows: any[] | null,
+  userId: string
+): Promise<PlaceHub[]> {
+  const hubs = (socialHubRows ?? [])
+    .map((row: any) => {
+      const place = row.places;
+      if (!place) return null;
+      return {
+        id: place.id as string,
+        name: (place.name || "") as string,
+        category: (place.category || "") as string,
+        visible: (row.visible ?? true) as boolean,
+      };
+    })
+    .filter((p): p is Exclude<typeof p, null> => p !== null);
+
+  if (hubs.length === 0) return [];
+
+  // Fetch avatars for every hub in parallel
+  const enriched = await Promise.all(
+    hubs.map(async (hub) => {
+      const { data } = await client.rpc("get_combined_place_avatars", {
+        target_place_id: hub.id,
+        requesting_user_id: userId,
+        max_avatars: 5,
+      });
+      return {
+        ...hub,
+        avatars: await signUserAvatars(client, data ?? []),
+      };
+    })
+  );
+
+  return enriched;
+}
+
+// ─── Handler ────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -54,6 +134,7 @@ Deno.serve(async (req) => {
       subscription,
       genderOptionsResult,
       interestsResult,
+      socialHubsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -103,6 +184,10 @@ Deno.serve(async (req) => {
         .from("profile_interests")
         .select("interest:interests(key)")
         .eq("profile_id", userId),
+      supabase
+        .from("profile_social_hubs")
+        .select("place_id, visible, places:places(id, name, category)")
+        .eq("user_id", userId),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -115,6 +200,7 @@ Deno.serve(async (req) => {
       notificationSettingsResult;
     const { data: genderOptions, error: genderError } = genderOptionsResult;
     const { data: interestRows, error: interestsError } = interestsResult;
+    const { data: socialHubRows, error: socialHubsError } = socialHubsResult;
 
     if (profileError) throw profileError;
     if (connectError) throw connectError;
@@ -123,6 +209,7 @@ Deno.serve(async (req) => {
     if (favoritePlacesError) throw favoritePlacesError;
     if (interestsError) throw interestsError;
     if (genderError) throw genderError;
+    if (socialHubsError) throw socialHubsError;
     // notificationError is optional, if missing we can execute default logic or just ignore
     // But maybeSingle shouldn't error on no rows, just return null data.
     if (notificationError) console.error("Error fetching notification settings", notificationError);
@@ -192,31 +279,15 @@ Deno.serve(async (req) => {
         ? `${rest.city_name}${rest.city_state ? `, ${rest.city_state}` : ""}`
         : rest.location;
 
-      // Get university active users + regulars + combined avatars
-      let universityActiveUsers = 0;
-      let universityRegularsCount = 0;
-      let universityPresenceAvatars: { user_id: string; url: string }[] = [];
-      if (rest.university_id) {
-        const [activeCountResult, regularsCountResult, avatarsResult] = await Promise.all([
-          supabase.rpc("get_eligible_active_users_count", {
-            target_place_id: rest.university_id,
-            requesting_user_id: userId,
-          }),
-          supabase.rpc("get_regulars_count_at_place", {
-            target_place_id: rest.university_id,
-            requesting_user_id: userId,
-          }),
-          supabase.rpc("get_combined_place_avatars", {
-            target_place_id: rest.university_id,
-            requesting_user_id: userId,
-            max_avatars: 5,
-          }),
-        ]);
-        universityActiveUsers = activeCountResult.data ?? 0;
-        universityRegularsCount = regularsCountResult.data ?? 0;
-        const rawAvatars = avatarsResult.data ?? [];
-        universityPresenceAvatars = await signUserAvatars(supabase, rawAvatars);
-      }
+      // ── Enrich university with live stats ──────────────────────────
+      const universityData = await enrichUniversity(
+        supabase, rest.university_id, userId
+      );
+
+      // ── Enrich social hubs with avatars + active count ─────────
+      const socialHubs = await enrichSocialHubs(
+        supabase, socialHubRows, userId
+      );
 
       profilePayload = {
         ...rest,
@@ -249,19 +320,19 @@ Deno.serve(async (req) => {
           matches: true,
           likes: true,
         },
-        // University fields
+        // University
         university_id: rest.university_id ?? null,
         university_name_custom: rest.university_name_custom ?? null,
         university_name: (university as any)?.name ?? rest.university_name_custom ?? null,
         university_lat: (university as any)?.lat ?? null,
         university_lng: (university as any)?.lng ?? null,
-        university_active_users: universityActiveUsers,
-        university_regulars_count: universityRegularsCount,
-        university_presence_avatars: universityPresenceAvatars,
+        university_active_users: universityData.activeUsers,
+        university_regulars_count: universityData.regularsCount,
+        university_presence_avatars: universityData.avatars,
         graduation_year: rest.graduation_year ?? null,
         show_university_on_home: rest.show_university_on_home ?? true,
-        // Include user email for client-side reviewer detection
         email: user.email ?? null,
+        socialHubs,
       };
     }
 

@@ -48,6 +48,7 @@ export function OnboardingProgressProvider({
     ];
     if (shouldShowLocation) base.push("location");
     base.push("favorite-places");
+    base.push("social-hubs");
     base.push("university");
     if (shouldShowNotifications) base.push("notifications");
     if (isIOS) base.push("tracking");

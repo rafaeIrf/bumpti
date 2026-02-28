@@ -70,6 +70,7 @@ export default function OnboardingLayout() {
         />
         <Stack.Screen name="location" />
         <Stack.Screen name="favorite-places" />
+        <Stack.Screen name="social-hubs" />
         <Stack.Screen
           name="place-search"
           options={{

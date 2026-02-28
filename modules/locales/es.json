@@ -659,11 +659,11 @@
           "description": "Lugares para conversar y relajarse."
         },
         "university": {
-          "title": "Vida universitaria",
+          "title": "Universidades",
           "description": "Donde los encuentros suceden en la rutina."
         },
         "fitness": {
-          "title": "Bienestar y movimiento",
+          "title": "Gimnasios",
           "description": "Conexiones que empiezan en el entrenamiento."
         },
         "parks": {
@@ -1143,6 +1143,11 @@
         "title": "¡Todavía no llegamos ahí!",
         "subtitle": "Por el momento, Bumpti solo está disponible en algunas ciudades. Pero puedes terminar tu registro y te avisaremos en cuanto lleguemos a tu zona."
       },
+      "socialHubs": {
+        "title": "Tus Hubs sociales",
+        "subtitle": "Elige de 1 a 6 lugares donde te gustaría conocer personas.",
+        "others": "Otros"
+      },
       "locationTitle": "Tu ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
       "locationEnable": "Continuar",
@@ -1258,6 +1263,18 @@
       "emptyTitle": "Buscar lugares",
       "emptyDescription": "Escribe el nombre de un lugar o elige una sugerencia.",
       "suggestionsLabel": "Sugerencias de búsqueda",
+      "suggestedPlacesLabel": "Lugares sugeridos",
+      "categoryPlaceholder": {
+        "bar": "Buscar bares...",
+        "nightclub": "Buscar discotecas...",
+        "cafe": "Buscar cafeterías...",
+        "restaurant": "Buscar restaurantes...",
+        "gym": "Buscar gimnasios...",
+        "park": "Buscar parques...",
+        "stadium": "Buscar estadios...",
+        "club": "Buscar clubes...",
+        "university": "Buscar universidades..."
+      },
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Café",

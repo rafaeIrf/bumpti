@@ -659,11 +659,11 @@
           "description": "Places to talk and relax."
         },
         "university": {
-          "title": "University Life",
+          "title": "Universities",
           "description": "Where meetings happen in the routine."
         },
         "fitness": {
-          "title": "Fitness & Wellness",
+          "title": "Gyms",
           "description": "Connections that start at the workout."
         },
         "parks": {
@@ -1143,6 +1143,11 @@
         "title": "We haven't reached there yet!",
         "subtitle": "Bumpti is currently available in select cities only. But you can finish signing up and we'll notify you as soon as we arrive in your area."
       },
+      "socialHubs": {
+        "title": "Your Social Hubs",
+        "subtitle": "Choose 1 to 6 places where you'd like to meet people.",
+        "others": "Others"
+      },
       "locationTitle": "Your location",
       "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
       "locationEnable": "Continue",
@@ -1258,6 +1263,18 @@
       "emptyTitle": "Search places",
       "emptyDescription": "Type the name of a place or choose a suggestion.",
       "suggestionsLabel": "Search suggestions",
+      "suggestedPlacesLabel": "Suggested places",
+      "categoryPlaceholder": {
+        "bar": "Search bars...",
+        "nightclub": "Search nightclubs...",
+        "cafe": "Search cafes...",
+        "restaurant": "Search restaurants...",
+        "gym": "Search gyms...",
+        "park": "Search parks...",
+        "stadium": "Search stadiums...",
+        "club": "Search clubs...",
+        "university": "Search universities..."
+      },
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Cafe",
