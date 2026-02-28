@@ -1,4 +1,6 @@
 
+import type { PresenceEntryType } from "@/utils/presence-badge";
+
 /**
  * A secondary encounter type that was deduplicated away by the priority system.
  * Included in the winning row so the UI can show consolidated context.
@@ -39,6 +41,12 @@ export type DiscoverEncounter = {
   place_name: string | null;
   /** Secondary encounter types deduplicated away by priority hierarchy */
   additional_encounters: AdditionalEncounter[] | null;
+  /**
+   * Raw presence entry_type of the other user at the time of exposure.
+   * Set for shared_favorites ("favorite") so interact-user can populate
+   * match_origin_override and the DB trigger can compute the correct match_origin.
+   */
+  entry_type?: PresenceEntryType | null;
 };
 
 

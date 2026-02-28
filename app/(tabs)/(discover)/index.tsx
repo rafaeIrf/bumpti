@@ -71,6 +71,7 @@ function mapSharedFavoritesToEncounters(
     other_bio: u.other_bio,
     place_name: u.shared_place_names?.[0] ?? null,
     additional_encounters: null,
+    entry_type: "favorite" as const,
   }));
 }
 
