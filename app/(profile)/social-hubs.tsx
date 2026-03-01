@@ -103,6 +103,7 @@ export default function EditSocialHubsScreen() {
         <ScreenBottomBar
           primaryLabel={t("common.save")}
           onPrimaryPress={handleSave}
+          primaryDisabled={selectedPlaceIds.length < 1}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet

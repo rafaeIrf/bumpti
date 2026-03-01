@@ -1,21 +1,21 @@
 import {
-  AwardIcon,
-  BeerIcon,
-  BookOpenIcon,
-  BuildingIcon,
-  CoffeeIcon,
-  DumbbellIcon,
-  GlobeIcon,
-  GraduationCapIcon,
-  HotelIcon,
-  MapPinIcon,
-  MartiniIcon,
-  MusicIcon,
-  ShoppingBagIcon,
-  TreeIcon,
-  TreesIcon,
-  UsersIcon,
-  UtensilsCrossedIcon
+    AwardIcon,
+    BeerIcon,
+    BookOpenIcon,
+    BuildingIcon,
+    CoffeeIcon,
+    DumbbellIcon,
+    GlobeIcon,
+    GraduationCapIcon,
+    HotelIcon,
+    MapPinIcon,
+    MartiniIcon,
+    MusicIcon,
+    ShoppingBagIcon,
+    TreeIcon,
+    TreesIcon,
+    UsersIcon,
+    UtensilsCrossedIcon
 } from "@/assets/icons";
 import { ComponentType } from "react";
 import { SvgProps } from "react-native-svg";
@@ -52,9 +52,9 @@ export const PLACE_ICON_MAP: Record<
 // Colors match the pastel palette used in the home screen category cards.
 export const PLACE_CATEGORY_COLOR_MAP: Record<string, string> = {
   restaurant: "#A1887F", // pastelCocoa
-  bar: "#9575CD",        // pastelPurple
+  bar: "#7C3AED",        // pastelPurple
   cafe: "#A1887F",       // pastelCocoa
-  nightclub: "#9575CD",  // pastelPurple
+  nightclub: "#7C3AED",  // pastelPurple
   gym: "#64B5F6",        // pastelBlue
   park: "#4DB6AC",       // pastelTeal
   university: "#64B5F6", // pastelBlue
@@ -62,10 +62,10 @@ export const PLACE_CATEGORY_COLOR_MAP: Record<string, string> = {
   club: "#4DB6AC",       // pastelTeal
   sports_centre: "#4DB6AC", // pastelTeal
   skate_park: "#4DB6AC", // pastelTeal
-  stadium: "#9575CD",    // pastelPurple
-  event_venue: "#9575CD", // pastelPurple
-  hotel: "#9575CD",      // pastelPurple
-  theatre: "#9575CD",    // pastelPurple
+  stadium: "#7C3AED",    // pastelPurple
+  event_venue: "#7C3AED", // pastelPurple
+  hotel: "#7C3AED",      // pastelPurple
+  theatre: "#7C3AED",    // pastelPurple
   museum: "#64B5F6",     // pastelBlue
   library: "#64B5F6",    // pastelBlue
   plaza: "#4DB6AC",      // pastelTeal

@@ -642,7 +642,9 @@
       "categories": {
         "highlighted": {
           "title": "En el radar",
-          "description": "Lugares llenos y con gente conectando."
+          "description": "Lugares llenos y con gente conectando.",
+          "activePlaces": "{{count}} lugares activos en este momento",
+          "noActivePlaces": "Descubre lugares en tendencia cerca de ti"
         },
         "favorites": {
           "title": "Favoritos",
@@ -1467,6 +1469,9 @@
     "planningToGo": "Planeando ir",
     "planningToGoToday": "Planeando ir hoy",
     "planningToGoTomorrow": "Planeando ir mañana",
+    "planningToGoOn": "Planeando ir el {{weekday}}",
+    "frequentsPlace": "Frecuenta este lugar",
+    "favoritedPlace": "Favoritó este lugar",
     "favorite": "Favorito",
     "visitCount": "{{count}}x aquí",
     "nearLocation": "Cerca de {{location}}",

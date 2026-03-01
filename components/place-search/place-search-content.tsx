@@ -209,6 +209,8 @@ export function PlaceSearchContent({
     ),
   );
 
+  const selectedCategoriesMapRef = useRef<Record<string, string>>({});
+
   const [triggerSearch, { data: searchData, isFetching }] =
     useLazySearchPlacesByTextQuery();
 
@@ -261,12 +263,14 @@ export function PlaceSearchContent({
             prev.filter((id) => id !== result.placeId),
           );
           delete selectedPlacesMapRef.current[result.placeId];
+          delete selectedCategoriesMapRef.current[result.placeId];
         } else if (
           maxSelections === undefined ||
           localSelectedIds.length < maxSelections
         ) {
           setLocalSelectedIds((prev) => [...prev, result.placeId]);
           selectedPlacesMapRef.current[result.placeId] = result.name;
+          selectedCategoriesMapRef.current[result.placeId] = result.category;
         } else {
           return; // limit reached, silently ignore
         }
@@ -626,6 +630,79 @@ export function PlaceSearchContent({
         <MapDataAttribution />
       </View>
     );
+  } else if (searchQuery.length === 0) {
+    // No search query yet — show default state with search suggestions
+    content = (
+      <Animated.View entering={FadeInDown.delay(150).springify()}>
+        <ThemedView style={styles.emptyState}>
+          <ThemedView
+            style={[
+              styles.emptyIcon,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <SearchIcon width={40} height={40} color={colors.textSecondary} />
+          </ThemedView>
+          <ThemedText style={{ color: colors.text, fontSize: 18 }}>
+            {t("screens.placeSearch.emptyTitle")}
+          </ThemedText>
+          <ThemedText
+            style={{
+              color: colors.textSecondary,
+              textAlign: "center",
+              maxWidth: 280,
+            }}
+          >
+            {t("screens.placeSearch.emptyDescription")}
+          </ThemedText>
+        </ThemedView>
+        <ThemedView style={styles.suggestions}>
+          <ThemedText
+            style={[styles.suggestionsLabel, { color: colors.textSecondary }]}
+          >
+            {t("screens.placeSearch.suggestionsLabel")}
+          </ThemedText>
+          {["bar", "cafe", "club", "restaurant"]
+            .sort((a, b) => {
+              const textA = t(`screens.placeSearch.suggestionsOptions.${a}`);
+              const textB = t(`screens.placeSearch.suggestionsOptions.${b}`);
+              return textA.length - textB.length;
+            })
+            .map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                onPress={() =>
+                  handleSearch(
+                    t(`screens.placeSearch.suggestionsOptions.${suggestion}`),
+                  )
+                }
+              >
+                <ThemedView
+                  style={[
+                    styles.suggestionButton,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SearchIcon
+                    width={16}
+                    height={16}
+                    color={colors.textSecondary}
+                  />
+                  <ThemedText style={{ color: colors.text }}>
+                    {t(`screens.placeSearch.suggestionsOptions.${suggestion}`)}
+                  </ThemedText>
+                </ThemedView>
+              </Pressable>
+            ))}
+        </ThemedView>
+      </Animated.View>
+    );
   } else {
     content = <PlacesEmptyState mode="search" onPress={clearSearch} />;
   }
@@ -645,6 +722,7 @@ export function PlaceSearchContent({
 
   React.useEffect(() => {
     const placesMap = selectedPlacesMapRef.current;
+    const categoriesMap = selectedCategoriesMapRef.current;
     return () => {
       // @ts-ignore
       const callback = globalThis.__favoritePlacesCallback;
@@ -652,6 +730,7 @@ export function PlaceSearchContent({
         const selectedPlaces = localSelectedIdsRef.current.map((id) => ({
           id,
           name: placesMap[id] || "",
+          category: categoriesMap[id] || "",
         }));
         logger.log(
           "[PlaceSearch] Unmount — returning",

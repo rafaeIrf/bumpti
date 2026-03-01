@@ -1,15 +1,16 @@
-import { FlameIcon, SearchIcon, SlidersHorizontalIcon } from "@/assets/icons";
 import {
-  Heart,
-  HotspotsIcon,
-  Passion,
-  PopularIcon,
-} from "@/assets/illustrations";
+  CircleStarIcon,
+  FlameIcon,
+  MapIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+  TrendingUpIcon,
+} from "@/assets/icons";
+
 import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
-import { ExploreCategoriesCard } from "@/components/explore-categories-card";
-import { HighlightedHeroCard } from "@/components/highlighted-hero-card";
+import { GradientActionCard } from "@/components/gradient-action-card";
 import { MyHubsSection } from "@/components/my-hubs-section";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { PlanHero } from "@/components/plan-hero";
@@ -42,14 +43,13 @@ import { SvgProps } from "react-native-svg";
 
 interface Category {
   id: string;
-  icon?: React.ComponentType<{ width: number; height: number; color: string }>;
+  icon?: React.ComponentType<SvgProps>;
   title: string;
   description: string;
   iconColor: string;
   iconBgColor: string;
   category?: PlaceCategory[]; // General category name for backend
   color: string;
-  illustration?: React.ComponentType<SvgProps>;
 }
 
 export default function HomeScreen() {
@@ -166,29 +166,26 @@ export default function HomeScreen() {
     iconColor: colors.white,
     iconBgColor: "rgba(255, 255, 255, 0.2)",
     color: colors.pastelPurple,
-    illustration: FlameIcon,
   };
 
   const featuredCategoriesItems: Category[] = [
     {
       id: "most_frequent",
-      icon: HotspotsIcon,
+      icon: TrendingUpIcon,
       title: t("screens.home.categories.ranking.title"),
       description: t("screens.home.categories.ranking.description"),
-      iconColor: "#7050C4",
+      iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
-      illustration: Passion,
     },
     {
       id: "community_favorites",
-      icon: PopularIcon,
+      icon: CircleStarIcon,
       title: t("screens.home.categories.communityFavorites.title"),
       description: t("screens.home.categories.communityFavorites.description"),
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
-      illustration: Heart,
     },
   ];
 
@@ -310,14 +307,22 @@ export default function HomeScreen() {
             }}
           />
           {/* My Hubs Section */}
-          <HighlightedHeroCard
+          <GradientActionCard
+            style={{ marginTop: spacing.smd }}
             title={highlightedCategory.title}
-            description={highlightedCategory.description}
-            count={trendingCount}
+            subtitle={
+              trendingCount > 0
+                ? t("screens.home.categories.highlighted.activePlaces", {
+                    count: trendingCount,
+                  })
+                : t("screens.home.categories.highlighted.noActivePlaces")
+            }
+            gradientColors={["#7C3AED", "#A855F7"]}
+            icon={FlameIcon}
             onPress={() => handleCategoryClick(highlightedCategory)}
           />
           <ScreenSectionHeading
-            titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
+            titleStyle={{ marginTop: spacing.smd, marginBottom: spacing.sm }}
             title={t("screens.home.myHubs.sectionTitle")}
           />
           <MyHubsSection
@@ -327,7 +332,7 @@ export default function HomeScreen() {
 
           {/* Featured Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={[styles.gridContainer, { marginTop: spacing.md }]}>
+            <View style={[styles.gridContainer, { marginTop: spacing.smd }]}>
               {featuredCategoriesItems.map((item) => (
                 <PlaceCardFeatured
                   key={item.id}
@@ -344,8 +349,13 @@ export default function HomeScreen() {
 
           {/* Explore Categories CTA */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
-            <View style={{ marginTop: spacing.md }}>
-              <ExploreCategoriesCard
+            <View style={{ marginTop: spacing.smd }}>
+              <GradientActionCard
+                title={t("screens.home.explorePlaces.title")}
+                subtitle={t("screens.home.explorePlaces.subtitle")}
+                gradientColors={["#E8573D", "#D4206B"]}
+                icon={MapIcon}
+                iconSize={28}
                 onPress={() => router.push("/main/explore-categories")}
               />
             </View>

@@ -119,7 +119,7 @@ export function useSocialHubs({
 
       // @ts-ignore
       globalThis.__favoritePlacesCallback = (
-        places: { id: string; name: string }[],
+        places: { id: string; name: string; category?: string }[],
       ) => {
         callbackRegistered.current = false;
 
@@ -146,7 +146,12 @@ export function useSocialHubs({
             }
           });
           places.forEach((p) => {
-            updated[p.id] = category.id;
+            // For generic search, derive grid ID from the place's actual category
+            const gridId =
+              category.id === "search" && p.category
+                ? mapCategoryToGridId(p.category)
+                : category.id;
+            updated[p.id] = gridId;
           });
           return updated;
         });
@@ -159,7 +164,7 @@ export function useSocialHubs({
           multiSelectMode: "true",
           maxSelections: String(remainingSlots),
           initialSelection: JSON.stringify(currentCategorySelections),
-          categoryFilter: category.category.join(","),
+          categoryFilter: category.category.join(",") || undefined,
           otherSelectionsCount: String(
             currentSelectedCount - currentCategorySelections.length,
           ),
