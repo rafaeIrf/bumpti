@@ -3,7 +3,7 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
-import ToggleSwitch from "@/components/toogle-switch";
+
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -56,9 +56,7 @@ export default function UniversityEditScreen() {
   const [graduationYear, setGraduationYear] = useState(
     profile?.graduation_year?.toString() || "",
   );
-  const [showOnHome, setShowOnHome] = useState(
-    profile?.show_university_on_home !== false,
-  );
+
   const [yearError, setYearError] = useState<string | null>(null);
 
   const isYearValid = useCallback((value: string): boolean => {
@@ -166,12 +164,10 @@ export default function UniversityEditScreen() {
       university_id?: string | null;
       university_name_custom?: string | null;
       graduation_year?: number | null;
-      show_university_on_home?: boolean;
     } = {
       university_id: selectedUniversity?.id ?? null,
       university_name_custom: isManualMode ? customUniversityName.trim() : null,
       graduation_year: graduationYear ? parseInt(graduationYear, 10) : null,
-      show_university_on_home: showOnHome,
     };
 
     const updatedProfile = {
@@ -201,7 +197,6 @@ export default function UniversityEditScreen() {
     isManualMode,
     customUniversityName,
     graduationYear,
-    showOnHome,
     validateGraduationYear,
     dispatch,
   ]);
@@ -392,37 +387,6 @@ export default function UniversityEditScreen() {
           </Animated.View>
         )}
       </View>
-
-      {/* Show on Home Toggle */}
-      {!isManualMode && selectedUniversity && (
-        <View style={styles.section}>
-          <View
-            style={[
-              styles.toggleContainer,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={styles.toggleContent}>
-              <ThemedText style={[typography.body, { color: colors.text }]}>
-                {t("screens.onboarding.university.showOnHomeTitle")}
-              </ThemedText>
-              <ThemedText
-                style={[typography.caption, { color: colors.textSecondary }]}
-              >
-                {t("screens.onboarding.university.showOnHomeSubtitle")}
-              </ThemedText>
-            </View>
-            <ToggleSwitch
-              value={showOnHome}
-              onValueChange={setShowOnHome}
-              colors={colors}
-            />
-          </View>
-        </View>
-      )}
     </BaseTemplateScreen>
   );
 }
@@ -483,19 +447,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: "500",
   },
-  toggleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: spacing.md,
-  },
-  toggleContent: {
-    flex: 1,
-    gap: 2,
-  },
+
   errorText: {
     ...typography.caption,
     marginTop: spacing.xs,

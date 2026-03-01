@@ -9,7 +9,6 @@ export type OnboardingStep =
   | "user-photos"
   | "user-bio"
   | "interests"
-  | "university"
   | "location"
   | "social-hubs-intro"
   | "social-hubs"

@@ -1253,7 +1253,7 @@
         },
         "search": {
           "title": "Ningún lugar encontrado",
-          "description": "No pudimos encontrar nada con ese nombre. Intenta simplificar o buscar por una categoría.",
+          "description": "No pudimos encontrar nada con ese nombre. Intenta simplificar la búsqueda.",
           "button": "Limpiar búsqueda"
         },
         "ranking": {

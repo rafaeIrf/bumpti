@@ -470,7 +470,7 @@ export function PlaceSearchContent({
     (suggestedPlaces.length > 0 || suggestedPlacesLoading)
   ) {
     // Show suggested places with category icons
-    if (multiSelectMode && categoryFilter) {
+    if ((multiSelectMode || onUniversitySelect) && categoryFilter) {
       content = (
         <Animated.View entering={FadeInDown.delay(150).springify()}>
           <ThemedView style={styles.suggestedSection}>

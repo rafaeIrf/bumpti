@@ -1253,7 +1253,7 @@
         },
         "search": {
           "title": "No places found",
-          "description": "We couldn't find anything with that name. Try simplifying or searching by category.",
+          "description": "We couldn't find anything with that name. Try simplifying your search.",
           "button": "Clear search"
         },
         "ranking": {

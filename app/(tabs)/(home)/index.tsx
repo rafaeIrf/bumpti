@@ -319,9 +319,19 @@ export default function HomeScreen() {
         />
 
         <ThemedView style={styles.contentContainer}>
+          {/* My Hubs Section */}
+          <ScreenSectionHeading
+            titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
+            title={t("screens.home.myHubs.sectionTitle")}
+          />
+          <MyHubsSection
+            hubs={profile?.socialHubs ?? []}
+            onAddHubs={() => router.push("/(profile)/social-hubs")}
+          />
+
           {/* Featured Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={styles.gridContainer}>
+            <View style={[styles.gridContainer, { marginTop: spacing.md }]}>
               {featuredCategoriesItems.map((item) => (
                 <PlaceCardFeatured
                   key={item.id}
@@ -335,16 +345,6 @@ export default function HomeScreen() {
               ))}
             </View>
           </Animated.View>
-
-          {/* My Hubs Section */}
-          <ScreenSectionHeading
-            titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
-            title={t("screens.home.myHubs.sectionTitle")}
-          />
-          <MyHubsSection
-            hubs={profile?.socialHubs ?? []}
-            onAddHubs={() => router.push("/(profile)/social-hubs")}
-          />
 
           {/* Explore Categories CTA */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
