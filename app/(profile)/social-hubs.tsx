@@ -15,7 +15,6 @@ import { updateProfile } from "@/modules/profile/api";
 import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
 import { logger } from "@/utils/logger";
-import { navigateToNextProfileField } from "@/utils/profile-flow";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 
@@ -75,11 +74,9 @@ export default function EditSocialHubsScreen() {
       updateProfile({ socialHubs: selectedPlaceIds }).catch((error) => {
         logger.error("Failed to update social hubs", error);
       });
-
-      navigateToNextProfileField("socialHubs", updatedProfile);
-    } else {
-      router.back();
     }
+
+    router.back();
   }, [
     profile,
     selectedPlaceIds,
