@@ -1,3 +1,4 @@
+import { MapPinIcon } from "@/assets/icons";
 import { LoadingView } from "@/components/loading-view";
 import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { StackedAvatars } from "@/components/stacked-avatars";
@@ -128,12 +129,31 @@ const MyHubCardComponent = memo(function MyHubCard({ hub }: MyHubCardProps) {
 
 interface MyHubsSectionProps {
   hubs: SocialHub[];
+  onAddHubs?: () => void;
 }
 
-function MyHubsSectionComponent({ hubs }: MyHubsSectionProps) {
+function MyHubsSectionComponent({ hubs, onAddHubs }: MyHubsSectionProps) {
   const visibleHubs = hubs.filter((h) => h.visible !== false);
 
-  if (visibleHubs.length === 0) return null;
+  if (visibleHubs.length === 0) {
+    if (!onAddHubs) return null;
+
+    return (
+      <Pressable onPress={onAddHubs} style={styles.emptyCard}>
+        <View style={styles.emptyIconCircle}>
+          <MapPinIcon width={22} height={22} color="rgba(255,255,255,0.7)" />
+        </View>
+        <ThemedText style={styles.emptyText}>
+          {t("screens.home.myHubs.addHubs")}
+        </ThemedText>
+        <IconSymbol
+          name="chevron.right"
+          size={16}
+          color="rgba(255,255,255,0.4)"
+        />
+      </Pressable>
+    );
+  }
 
   return (
     <View style={styles.section}>
@@ -200,5 +220,29 @@ const styles = StyleSheet.create({
   avatarBorder: {
     borderColor: "#FFFFFF",
     borderWidth: 0.5,
+  },
+  emptyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    gap: spacing.sm,
+  },
+  emptyIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    ...typography.caption,
+    color: "rgba(255,255,255,0.5)",
+    flex: 1,
   },
 });

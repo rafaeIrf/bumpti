@@ -633,6 +633,10 @@
         "filters": "Filtros",
         "search": "Buscar"
       },
+      "explorePlaces": {
+        "title": "Explorar lugares",
+        "subtitle": "Explora lugares en tu región por categoría"
+      },
       "infoTitle": "¿Cómo funciona?",
       "infoDescription": "Elige una categoría y mira lugares cercanos donde puedes conectar con otras personas.",
       "categories": {
@@ -713,7 +717,8 @@
       },
       "myHubs": {
         "sectionTitle": "Mis Hubs",
-        "tapToConnect": "Toca para explorar"
+        "tapToConnect": "Toca para explorar",
+        "addHubs": "Agrega tus hubs favoritos"
       },
       "planHero": {
         "emptyState": {

@@ -1,36 +1,20 @@
+import { FlameIcon, SearchIcon, SlidersHorizontalIcon } from "@/assets/icons";
 import {
-  FlameIcon,
-  MapPinIcon,
-  SearchIcon,
-  SlidersHorizontalIcon,
-} from "@/assets/icons";
-import {
-  BarsIcon,
-  ClubIcon,
-  CoffeIcon,
   Heart,
   HotspotsIcon,
-  MealIcon,
-  NearbyIcon,
-  NightclubIcon,
-  ParkIcon,
   Passion,
   PopularIcon,
-  RunningIcon,
-  StadiumIcon,
-  UniversityIcon,
 } from "@/assets/illustrations";
 import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
+import { ExploreCategoriesCard } from "@/components/explore-categories-card";
 import { HighlightedHeroCard } from "@/components/highlighted-hero-card";
 import { MyHubsSection } from "@/components/my-hubs-section";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { PlanHero } from "@/components/plan-hero";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
-import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
@@ -43,7 +27,6 @@ import {
   trackEvent,
   useScreenTracking,
 } from "@/modules/analytics";
-import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
@@ -72,7 +55,6 @@ interface Category {
 export default function HomeScreen() {
   const colors = useThemeColors();
   const { location, cityOverride } = useCachedLocation();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
   const [todayPlansCount, setTodayPlansCount] = useState(0);
@@ -176,17 +158,6 @@ export default function HomeScreen() {
     showNotificationSheet,
   ]);
 
-  const nearbyCategory: Category = {
-    id: "nearby",
-    icon: MapPinIcon,
-    title: t("screens.home.categories.nearby.title"),
-    description: t("screens.home.categories.nearby.description"),
-    iconColor: "#FFFFFF",
-    iconBgColor: "rgba(255, 255, 255, 0.2)",
-    color: colors.pastelTeal,
-    illustration: NearbyIcon,
-  };
-
   const highlightedCategory: Category = {
     id: "highlighted",
     icon: FlameIcon,
@@ -198,7 +169,7 @@ export default function HomeScreen() {
     illustration: FlameIcon,
   };
 
-  const categories: Category[] = [
+  const featuredCategoriesItems: Category[] = [
     {
       id: "most_frequent",
       icon: HotspotsIcon,
@@ -217,123 +188,11 @@ export default function HomeScreen() {
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
-      illustration: Heart, // Reusing Heart illustration as it fits "Favorites"
-    },
-    {
-      id: "university",
-      title: t("screens.home.categories.university.title"),
-      description: t("screens.home.categories.university.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["university"],
-      color: colors.pastelBlue,
-      illustration: UniversityIcon,
-    },
-    {
-      id: "bars",
-      title: t("screens.home.categories.nightlife.title"),
-      description: t("screens.home.categories.nightlife.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["bar"],
-      color: colors.pastelPurple,
-      illustration: BarsIcon,
-    },
-    {
-      id: "nightclubs",
-      title: t("screens.home.categories.nightclubs.title"),
-      description: t("screens.home.categories.nightclubs.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["nightclub"],
-      color: colors.pastelPurple,
-      illustration: NightclubIcon,
-    },
-    {
-      id: "cafes",
-      title: t("screens.home.categories.cafes.title"),
-      description: t("screens.home.categories.cafes.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["cafe"],
-      color: colors.pastelCocoa,
-      illustration: CoffeIcon,
-    },
-    {
-      id: "fitness",
-      title: t("screens.home.categories.fitness.title"),
-      description: t("screens.home.categories.fitness.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["gym"],
-      color: colors.pastelBlue,
-      illustration: RunningIcon,
-    },
-    {
-      id: "parks",
-      title: t("screens.home.categories.parks.title"),
-      description: t("screens.home.categories.parks.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["park"],
-      color: colors.pastelTeal,
-      illustration: ParkIcon,
-    },
-    {
-      id: "restaurants",
-      title: t("screens.home.categories.restaurants.title"),
-      description: t("screens.home.categories.restaurants.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["restaurant"],
-      color: colors.pastelCocoa,
-      illustration: MealIcon,
-    },
-    {
-      id: "stadium",
-      title: t("screens.home.categories.stadium.title"),
-      description: t("screens.home.categories.stadium.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["stadium", "event_venue"],
-      color: colors.pastelPurple,
-      illustration: StadiumIcon,
-    },
-    {
-      id: "club",
-      title: t("screens.home.categories.club.title"),
-      description: t("screens.home.categories.club.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      category: ["club", "sports_centre"],
-      color: colors.pastelTeal,
-      illustration: ClubIcon,
+      illustration: Heart,
     },
   ];
 
-  const activeCategories = useActiveCategories();
-
-  // Filter categories based on active categories from remote config
-  // Keep special categories (favorites, community_favorites, most_frequent) always visible
-  // For location-based categories, only show if at least one of its backend categories is active
-  const filteredCategories = categories.filter((cat) => {
-    // Special categories without backend mapping are always shown
-    if (!cat.category || cat.category.length === 0) {
-      return true;
-    }
-
-    // Check if any of this category's backend types are active
-    return cat.category.some((backendCat) =>
-      activeCategories.includes(backendCat as any),
-    );
-  });
-
-  const featuredCategoriesItems = filteredCategories.slice(0, 2);
-  const browseCategories = filteredCategories.slice(4);
-
   const handleCategoryClick = (category: Category) => {
-    setSelectedCategory(category.id);
-
     // Track category click
     trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
       categoryId: category.id,
@@ -347,32 +206,17 @@ export default function HomeScreen() {
         ...(category.id === "favorites"
           ? { favorites: "true" }
           : category.id === "nearby"
-            ? {
-                nearby: "true",
-                categoryName: category.title,
-              }
+            ? { nearby: "true" }
             : category.id === "community_favorites"
-              ? {
-                  communityFavorites: "true",
-                  categoryName: category.title,
-                }
+              ? { communityFavorites: "true" }
               : category.id === "highlighted"
-                ? {
-                    trending: "true",
-                    categoryName: category.title,
-                  }
+                ? { trending: "true" }
                 : category.id === "most_frequent"
-                  ? {
-                      mostFrequent: "true",
-                      categoryName: category.title,
-                    }
-                  : {
-                      category: category.category,
-                    }),
-        isPremium: "false", // TODO: Get from user premium status
+                  ? { mostFrequent: "true" }
+                  : { category: category.category }),
+        isPremium: "false",
       },
     });
-    setSelectedCategory(null);
   };
 
   const handleOpenSearch = () => {
@@ -432,7 +276,7 @@ export default function HomeScreen() {
       }
     >
       {/* Main Content */}
-      <ThemedView style={styles.mainContent}>
+      <ThemedView>
         {/* Detection Banner - Fixed at top */}
         {detectedPlace && (
           <DetectionBanner
@@ -493,90 +337,24 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* My Hubs Section */}
-          {profile?.socialHubs && profile.socialHubs.length > 0 && (
-            <>
-              <ScreenSectionHeading
-                titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
-                title={t("screens.home.myHubs.sectionTitle")}
-              />
-              <MyHubsSection hubs={profile.socialHubs} />
-            </>
-          )}
+          <ScreenSectionHeading
+            titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
+            title={t("screens.home.myHubs.sectionTitle")}
+          />
+          <MyHubsSection
+            hubs={profile?.socialHubs ?? []}
+            onAddHubs={() => router.push("/(profile)/social-hubs")}
+          />
 
-          {/* Nearby Section - Between Featured and Explore */}
-          {/* Intermediate Section - Nearby & Explore */}
+          {/* Explore Categories CTA */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
-            <ScreenSectionHeading
-              titleStyle={{ marginTop: 16 }}
-              title={t("screens.home.intermediateTitle")}
-              subtitle={t("screens.home.intermediateSubtitle")}
-            />
-            <CategoryCard
-              category={nearbyCategory}
-              isSelected={selectedCategory === nearbyCategory.id}
-              onClick={() => handleCategoryClick(nearbyCategory)}
-              color={nearbyCategory.color}
-              illustration={nearbyCategory.illustration}
-              style={styles.nearbyCard}
-              textStyle={{ textAlign: "left" }}
-            />
-          </Animated.View>
-          {/* Explore Section */}
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <View style={styles.gridContainer}>
-              {browseCategories.map((item, index) => (
-                <Animated.View
-                  key={item.id}
-                  entering={FadeInDown.delay(300 + index * 80).springify()}
-                  style={styles.categoryItem}
-                >
-                  <CategoryCard
-                    category={item}
-                    isSelected={selectedCategory === item.id}
-                    onClick={() => handleCategoryClick(item)}
-                    color={item.color}
-                    illustration={item.illustration}
-                  />
-                </Animated.View>
-              ))}
+            <View style={{ marginTop: spacing.md }}>
+              <ExploreCategoriesCard
+                onPress={() => router.push("/main/explore-categories")}
+              />
             </View>
           </Animated.View>
         </ThemedView>
-
-        {/* Info Card */}
-        <Animated.View entering={FadeInDown.delay(700).springify()}>
-          <View style={styles.section}>
-            <View
-              style={[
-                styles.infoCard,
-                {
-                  backgroundColor: colors.surface,
-                },
-              ]}
-            >
-              <View style={styles.infoContent}>
-                <View style={[styles.infoIconContainer]}>
-                  <MapPinIcon width={20} height={20} color={colors.accent} />
-                </View>
-                <View style={styles.infoTextContainer}>
-                  <ThemedText
-                    style={[styles.infoTitle, { color: colors.text }]}
-                  >
-                    {t("screens.home.infoTitle")}
-                  </ThemedText>
-                  <ThemedText
-                    style={[
-                      styles.infoDescription,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {t("screens.home.infoDescription")}
-                  </ThemedText>
-                </View>
-              </View>
-            </View>
-          </View>
-        </Animated.View>
       </ThemedView>
     </BaseTemplateScreen>
   );
@@ -600,49 +378,10 @@ const styles = StyleSheet.create({
     width: "48.5%",
     maxWidth: "48.5%",
   },
-  nearbyCard: {
-    width: "100%",
-    marginTop: 16, // Add space from the section above
-    marginBottom: 16,
-  },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 8,
-  },
-  categoryItem: {
-    width: "48.5%",
-    maxWidth: "48.5%",
-  },
-  infoCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 24,
-  },
-  infoContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  infoIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoTextContainer: {
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  infoDescription: {
-    fontSize: 14,
-    lineHeight: 20,
   },
 });
