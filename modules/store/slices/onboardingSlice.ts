@@ -11,7 +11,6 @@ export type OnboardingStep =
   | "interests"
   | "university"
   | "location"
-  | "favorite-places"
   | "social-hubs"
   | "notifications"
   | "tracking"
