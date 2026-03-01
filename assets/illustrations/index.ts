@@ -6,6 +6,7 @@ export { default as Cocktail } from "./cocktail.svg";
 export { default as Cocktail2 } from "./cocktail2.svg";
 export { default as Cocoa } from "./cocoa.svg";
 export { default as CoffeIcon } from "./coffe.svg";
+export { default as CurrentLocation } from "./current-location.svg";
 export { default as FavoritesIcon } from "./favorites.svg";
 export { default as Graduation } from "./graduation.svg";
 export { default as Heart } from "./heart.svg";

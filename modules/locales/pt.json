@@ -661,7 +661,7 @@
           "description": "Pra curtir a festa até tarde."
         },
         "cafes": {
-          "title": "Cafés & bate-papo",
+          "title": "Cafés",
           "description": "Lugares pra conversar e relaxar."
         },
         "university": {
@@ -673,7 +673,7 @@
           "description": "Conexões que começam no treino."
         },
         "parks": {
-          "title": "Parques & ar livre",
+          "title": "Parques",
           "description": "Encontros ao ar livre e na natureza."
         },
         "restaurants": {
@@ -685,7 +685,7 @@
           "description": "Arte, história e inspiração."
         },
         "stadium": {
-          "title": "Estádios e Eventos",
+          "title": "Locais de eventos",
           "description": "Grandes jogos, grandes públicos."
         },
         "club": {
@@ -1153,6 +1153,10 @@
       "cityNotAvailable": {
         "title": "Ainda não chegamos aí!",
         "subtitle": "No momento, o Bumpti está disponível apenas em algumas cidades. Mas você pode terminar seu cadastro e nós te avisaremos assim que chegarmos na sua região."
+      },
+      "socialHubsIntro": {
+        "title": "{{name}}, agora vamos selecionar seus Hubs sociais",
+        "description": "Hubs são os lugares onde você vive sua vida social e está aberto a conhecer novas pessoas. Escolha os lugares que mais combinam com você e conecte-se com quem frequenta os mesmos lugares."
       },
       "socialHubs": {
         "title": "Seus Hubs sociais",
