@@ -67,6 +67,7 @@ export async function fetchAndSetUserProfile() {
       graduation_year: data.graduation_year ?? null,
       show_university_on_home: data.show_university_on_home ?? true,
       interests: data.interests ?? [],
+      socialHubs: data.socialHubs ?? [],
     };
 
     logger.log("[fetchAndSetUserProfile] Setting profile in Redux store");

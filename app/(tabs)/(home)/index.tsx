@@ -8,7 +8,6 @@ import {
   BarsIcon,
   ClubIcon,
   CoffeIcon,
-  FavoritesIcon,
   Heart,
   HotspotsIcon,
   MealIcon,
@@ -25,13 +24,15 @@ import { BumptiWideLogo } from "@/assets/images";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
-import { MyCampusCard } from "@/components/my-campus-card";
+import { HighlightedHeroCard } from "@/components/highlighted-hero-card";
+import { MyHubsSection } from "@/components/my-hubs-section";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { PlanHero } from "@/components/plan-hero";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { spacing } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
@@ -186,17 +187,18 @@ export default function HomeScreen() {
     illustration: NearbyIcon,
   };
 
+  const highlightedCategory: Category = {
+    id: "highlighted",
+    icon: FlameIcon,
+    title: t("screens.home.categories.highlighted.title"),
+    description: t("screens.home.categories.highlighted.description"),
+    iconColor: colors.white,
+    iconBgColor: "rgba(255, 255, 255, 0.2)",
+    color: colors.pastelPurple,
+    illustration: FlameIcon,
+  };
+
   const categories: Category[] = [
-    {
-      id: "highlighted",
-      icon: FlameIcon,
-      title: t("screens.home.categories.highlighted.title"),
-      description: t("screens.home.categories.highlighted.description"),
-      iconColor: colors.white,
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelPurple,
-      illustration: Passion,
-    },
     {
       id: "most_frequent",
       icon: HotspotsIcon,
@@ -206,16 +208,6 @@ export default function HomeScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       color: colors.pastelPurple,
       illustration: Passion,
-    },
-    {
-      id: "favorites",
-      icon: FavoritesIcon,
-      title: t("screens.home.categories.favorites.title"),
-      description: t("screens.home.categories.favorites.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelBlue,
-      illustration: Heart,
     },
     {
       id: "community_favorites",
@@ -336,7 +328,7 @@ export default function HomeScreen() {
     );
   });
 
-  const featuredCategoriesItems = filteredCategories.slice(0, 4);
+  const featuredCategoriesItems = filteredCategories.slice(0, 2);
   const browseCategories = filteredCategories.slice(4);
 
   const handleCategoryClick = (category: Category) => {
@@ -474,12 +466,13 @@ export default function HomeScreen() {
           }}
         />
 
-        {/* Title Section */}
-        {/* <ScreenSectionHeading
-          titleStyle={{ marginTop: 24 }}
-          title={t("screens.home.heroTitle")}
-          subtitle={t("screens.home.heroSubtitle")}
-        /> */}
+        {/* No Radar — compact gradient hero card */}
+        <HighlightedHeroCard
+          title={highlightedCategory.title}
+          description={highlightedCategory.description}
+          count={trendingCount}
+          onPress={() => handleCategoryClick(highlightedCategory)}
+        />
 
         <ThemedView style={styles.contentContainer}>
           {/* Featured Section */}
@@ -494,24 +487,21 @@ export default function HomeScreen() {
                   color={item.color}
                   onClick={() => handleCategoryClick(item)}
                   containerStyle={styles.featuredItem}
-                  count={item.id === "highlighted" ? trendingCount : undefined}
                 />
               ))}
             </View>
           </Animated.View>
 
-          {/* My Campus Card - Between Featured and Nearby */}
-          {profile &&
-            profile.university_id &&
-            profile.show_university_on_home && (
-              <>
-                <ScreenSectionHeading
-                  titleStyle={{ marginTop: 16 }}
-                  title={t("screens.home.myCampus.sectionTitle")}
-                />
-                <MyCampusCard profile={profile} />
-              </>
-            )}
+          {/* My Hubs Section */}
+          {profile?.socialHubs && profile.socialHubs.length > 0 && (
+            <>
+              <ScreenSectionHeading
+                titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
+                title={t("screens.home.myHubs.sectionTitle")}
+              />
+              <MyHubsSection hubs={profile.socialHubs} />
+            </>
+          )}
 
           {/* Nearby Section - Between Featured and Explore */}
           {/* Intermediate Section - Nearby & Explore */}

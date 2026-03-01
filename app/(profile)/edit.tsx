@@ -48,7 +48,8 @@ type FieldType =
   | "smoking"
   | "gender"
   | "relationshipStatus"
-  | "university";
+  | "university"
+  | "socialHubs";
 
 interface EditRowProps {
   icon: React.ComponentType<SvgProps> | React.ComponentType<any>;
@@ -170,6 +171,10 @@ export default function ProfileEditScreen() {
   const handleFieldPress = (field: FieldType) => {
     if (field === "spots") {
       router.push("/(profile)/favorite-places");
+      return;
+    }
+    if (field === "socialHubs") {
+      router.push("/(profile)/social-hubs");
       return;
     }
     if (field === "university") {
@@ -351,6 +356,18 @@ export default function ProfileEditScreen() {
                 : ""
             }
             onPress={() => handleFieldPress("spots")}
+          />
+          <EditRow
+            icon={MapPinIcon}
+            label={t("screens.profile.profileEdit.interests.socialHubs")}
+            value={
+              profile?.socialHubs && profile.socialHubs.length > 0
+                ? t("screens.profile.profileEdit.interests.socialHubsCount", {
+                    count: profile.socialHubs.length,
+                  })
+                : ""
+            }
+            onPress={() => handleFieldPress("socialHubs")}
           />
         </View>
 

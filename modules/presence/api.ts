@@ -74,6 +74,8 @@ export type ActiveUserAtPlace = {
   university_lng?: number | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean;
+  // Social hubs
+  social_hubs?: { id: string; name: string; category: string }[];
 };
 
 export type ActiveUsersResponse = {

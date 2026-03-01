@@ -47,8 +47,8 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF (SELECT count(*) FROM profile_social_hubs WHERE user_id = NEW.user_id) >= 4 THEN
-    RAISE EXCEPTION 'Maximum of 4 social hubs allowed';
+  IF (SELECT count(*) FROM profile_social_hubs WHERE user_id = NEW.user_id) >= 6 THEN
+    RAISE EXCEPTION 'Maximum of 6 social hubs allowed';
   END IF;
   RETURN NEW;
 END;

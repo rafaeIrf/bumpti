@@ -10,6 +10,7 @@ export const PROFILE_FIELDS_ORDER = [
   "smoking",
   "interests",
   "spots",
+  "socialHubs",
   "education",
   "university",
   "location",
@@ -43,6 +44,8 @@ export function getNextMissingField(
       isEmpty = !profile.interests || profile.interests.length < 3;
     } else if (nextFieldKey === "spots") {
       isEmpty = !profile.favoritePlaces || profile.favoritePlaces.length === 0;
+    } else if (nextFieldKey === "socialHubs") {
+      isEmpty = !profile.socialHubs || profile.socialHubs.length === 0;
     } else if (nextFieldKey === "languages") {
       isEmpty = !profile.languages || profile.languages.length === 0;
     } else if (nextFieldKey === "profession") {
@@ -65,7 +68,7 @@ export function getNextMissingField(
 
 // Fields that are full screens (not modals)
 // NOTE: spots and university are now modals too (but full-screen modals with their own toolbar/bottom bar)
-const SCREEN_FIELDS = ["interests", "spots", "university"];
+const SCREEN_FIELDS = ["interests", "spots", "socialHubs", "university"];
 
 // Check if a field is a screen-like modal or a simple field modal
 function isScreenField(field: string): boolean {
@@ -93,6 +96,12 @@ export function navigateToNextProfileField(
         router.replace("/(profile)/favorite-places");
       } else {
         router.replace("/(profile)/favorite-places");
+      }
+    } else if (nextFieldKey === "socialHubs") {
+      if (currentIsScreen) {
+        router.replace("/(profile)/social-hubs");
+      } else {
+        router.replace("/(profile)/social-hubs");
       }
     } else if (nextFieldKey === "university") {
       // Navigate to university modal

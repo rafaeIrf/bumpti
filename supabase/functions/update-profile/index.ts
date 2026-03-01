@@ -70,7 +70,7 @@ type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
-  socialHubs?: string[]; // array of place_ids (max 4)
+  socialHubs?: string[]; // array of place_ids (max 6)
   interests?: string[]; // interest keys
   is_invisible?: boolean; // Invisible mode flag
   filter_only_verified?: boolean; // Trust Circle filter flag
@@ -762,7 +762,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Social hubs CRUD (max 4) ────────────────────────────────
+    // ── Social hubs CRUD (max 6) ────────────────────────────────
     if (Array.isArray(payload.socialHubs)) {
       const { error: deleteErr } = await supabase
         .from("profile_social_hubs")
@@ -770,7 +770,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId);
       if (deleteErr) throw deleteErr;
 
-      const hubIds = payload.socialHubs.slice(0, 4);
+      const hubIds = payload.socialHubs.slice(0, 6);
       if (hubIds.length > 0) {
         const { error: insertErr } = await supabase
           .from("profile_social_hubs")

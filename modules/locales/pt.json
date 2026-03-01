@@ -478,7 +478,9 @@
           "vibes": "Vibes",
           "vibesCount": "{{count}} vibes",
           "spots": "Spots favoritos",
-          "spotsPlaceholder": "Adicionar spots"
+          "spotsPlaceholder": "Adicionar spots",
+          "socialHubs": "Hubs sociais",
+          "socialHubsCount": "{{count}} hubs"
         },
         "more": {
           "title": "Mais sobre você",
@@ -708,6 +710,10 @@
         "noActiveNow": "Ninguém no campus agora",
         "findOnMap": "Encontre sua faculdade no mapa",
         "tapToConnect": "Toque para se conectar"
+      },
+      "myHubs": {
+        "sectionTitle": "Meus Hubs",
+        "tapToConnect": "Toque para explorar"
       },
       "planHero": {
         "emptyState": {
@@ -1470,6 +1476,7 @@
     "zodiac": "Signo",
     "interest": "INTERESSE",
     "favoritePlaces": "Locais favoritos",
+    "socialHubs": "Hubs sociais",
     "lookingFor": {
       "friendship": "Fazer novas amizades",
       "networking": "Networking profissional",

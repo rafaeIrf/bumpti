@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAuth } from "../_shared/auth.ts";
 import { getEntitlements } from "../_shared/iap-validation.ts";
-import { signPhotoUrls } from "../_shared/signPhotoUrls.ts";
+import { signPhotoUrls, signUserAvatars } from "../_shared/signPhotoUrls.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

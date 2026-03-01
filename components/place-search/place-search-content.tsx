@@ -17,7 +17,10 @@ import { useLocationPermission } from "@/hooks/use-location-permission";
 import { usePlaceDetailsSheet } from "@/hooks/use-place-details-sheet";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
-import { useLazySearchPlacesByTextQuery } from "@/modules/places/placesApi";
+import {
+  useGetNearbyPlacesQuery,
+  useLazySearchPlacesByTextQuery,
+} from "@/modules/places/placesApi";
 import { formatDistance } from "@/utils/distance";
 import { logger } from "@/utils/logger";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -83,8 +86,8 @@ export function PlaceSearchContent({
   isModal = true,
   categoryFilter,
   onUniversitySelect,
-  suggestedPlaces = [],
-  suggestedPlacesLoading = false,
+  suggestedPlaces: suggestedPlacesProp,
+  suggestedPlacesLoading: suggestedPlacesLoadingProp,
   placeholder: placeholderProp,
 }: PlaceSearchContentProps) {
   const colors = useThemeColors();
@@ -123,6 +126,57 @@ export function PlaceSearchContent({
 
   const { location: userLocation, loading: locationLoading } =
     useCachedLocation();
+
+  // ── Internal nearby places fetch (when categoryFilter provided, no external suggestions) ──
+  const categoryArray = useMemo(
+    () => (categoryFilter ? categoryFilter.split(",") : []),
+    [categoryFilter],
+  );
+
+  const hasExternalSuggestions = suggestedPlacesProp !== undefined;
+
+  const { data: nearbyPlacesData, isLoading: nearbyLoading } =
+    useGetNearbyPlacesQuery(
+      {
+        latitude: userLocation?.latitude ?? 0,
+        longitude: userLocation?.longitude ?? 0,
+        category: categoryArray,
+        pageSize: 20,
+        sortBy: "relevance",
+      },
+      {
+        skip:
+          hasExternalSuggestions || !userLocation || categoryArray.length === 0,
+      },
+    );
+
+  const internalSuggestedPlaces = useMemo(() => {
+    if (hasExternalSuggestions) return suggestedPlacesProp ?? [];
+    if (!nearbyPlacesData) return [];
+    return nearbyPlacesData.map((p) => ({
+      id: p.placeId,
+      name: p.name,
+      address: p.formattedAddress,
+      distance: p.distance,
+    }));
+  }, [hasExternalSuggestions, suggestedPlacesProp, nearbyPlacesData]);
+
+  const suggestedPlaces = internalSuggestedPlaces;
+  const suggestedPlacesLoading = hasExternalSuggestions
+    ? (suggestedPlacesLoadingProp ?? false)
+    : nearbyLoading;
+
+  // Resolve category-specific placeholder internally
+  const resolvedPlaceholder = useMemo(() => {
+    if (placeholderProp) return placeholderProp;
+    const firstCat = categoryArray[0];
+    if (firstCat) {
+      const key = `screens.placeSearch.categoryPlaceholder.${firstCat}`;
+      const translated = t(key);
+      if (translated !== key) return translated;
+    }
+    return undefined;
+  }, [placeholderProp, categoryArray]);
   const {
     hasPermission: hasLocationPermission,
     canAskAgain,
@@ -253,8 +307,8 @@ export function PlaceSearchContent({
         onChangeText={handleSearch}
         onClear={clearSearch}
         placeholder={
-          placeholderProp
-            ? placeholderProp
+          resolvedPlaceholder
+            ? resolvedPlaceholder
             : isPremium
               ? t("screens.placeSearch.placeholderPremium")
               : t("screens.placeSearch.placeholderDefault")
@@ -270,7 +324,7 @@ export function PlaceSearchContent({
       onBack,
       autoFocus,
       isPremium,
-      placeholderProp,
+      resolvedPlaceholder,
       router,
     ],
   );
