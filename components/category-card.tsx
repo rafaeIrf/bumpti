@@ -18,6 +18,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 import { ThemedText } from "./themed-text";
+import { BrandIcon } from "./ui/brand-icon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -38,6 +39,7 @@ interface CategoryCardProps {
   onClick: () => void;
   color?: string;
   illustration?: React.ComponentType<SvgProps>;
+  useRawIllustration?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
@@ -48,6 +50,7 @@ export function CategoryCard({
   onClick,
   color,
   illustration,
+  useRawIllustration,
   style,
   textStyle,
 }: CategoryCardProps) {
@@ -79,7 +82,22 @@ export function CategoryCard({
     if (!illustration) return null;
 
     const Illustration = illustration as React.ComponentType<SvgProps>;
-    return <Illustration />;
+
+    if (useRawIllustration) {
+      return <Illustration width={80} height={80} />;
+    }
+
+    return (
+      <BrandIcon
+        icon={Illustration}
+        size="md"
+        color="#FFFFFF"
+        style={{
+          backgroundColor: "rgba(255,255,255,0.2)",
+          borderWidth: 0,
+        }}
+      />
+    );
   };
 
   return (
@@ -87,7 +105,7 @@ export function CategoryCard({
       onPress={onClick}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[animatedStyle, style]}
+      style={[styles.pressable, animatedStyle, style]}
     >
       <ThemedView
         style={[
@@ -129,13 +147,12 @@ export function CategoryCard({
                 {renderIllustration()}
               </View>
             )}
-            <View style={styles.infoRow}>
-              <View style={styles.iconAndText}>
-                <ThemedText style={[typography.body1, styles.title, textStyle]}>
-                  {category.title}
-                </ThemedText>
-              </View>
-            </View>
+            <ThemedText
+              style={[typography.body1, styles.title, textStyle]}
+              numberOfLines={2}
+            >
+              {category.title}
+            </ThemedText>
           </View>
         </View>
       </ThemedView>
@@ -144,21 +161,24 @@ export function CategoryCard({
 }
 
 const styles = StyleSheet.create({
+  pressable: {
+    height: 140,
+  },
   container: {
     borderRadius: 24,
     overflow: "hidden",
     width: "100%",
-    minHeight: 220,
+    flex: 1,
     shadowColor: "#000000",
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
   cardBackground: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
-    minHeight: 220,
+    flex: 1,
     position: "relative",
   },
   hoverOverlay: {
@@ -171,58 +191,19 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
-    justifyContent: "space-between",
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoRow: {
-    justifyContent: "space-between",
-    marginTop: spacing.md,
-    flexShrink: 1,
-  },
-  iconAndText: {
-    flex: 1,
-    minWidth: 0,
-    flexShrink: 1,
-  },
-  title: {
-    flex: 1,
-    textAlign: "center",
-    flexWrap: "wrap",
-    paddingHorizontal: spacing.md,
-  },
-  arrowContainer: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.xs,
   },
   illustrationContainer: {
     alignItems: "center",
     justifyContent: "center",
-    flexGrow: 1,
   },
-  illustrationImage: {
-    width: "70%",
-    height: "70%",
-  },
-  peopleBadge: {
-    position: "absolute",
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  peopleBadgeText: {
+  title: {
+    textAlign: "center",
     color: "#FFFFFF",
+    fontWeight: "600",
   },
 });

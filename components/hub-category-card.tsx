@@ -92,7 +92,7 @@ function HubCategoryCardInner({
           {Illustration && (
             <BrandIcon
               icon={Illustration}
-              size="md"
+              size="sm"
               color="#FFFFFF"
               style={{
                 backgroundColor: "rgba(255,255,255,0.2)",
@@ -100,7 +100,10 @@ function HubCategoryCardInner({
               }}
             />
           )}
-          <ThemedText style={[typography.body, styles.title]} numberOfLines={2}>
+          <ThemedText
+            style={[typography.body1, styles.title]}
+            numberOfLines={2}
+          >
             {category.title}
           </ThemedText>
         </View>
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 20,
     overflow: "hidden",
-    height: 120,
+    height: 96,
     position: "relative",
   },
   darkOverlay: {

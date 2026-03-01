@@ -131,7 +131,11 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
             {hasReview && (
               <>
                 <View style={styles.dot} />
-                <RatingBadge rating={place.review!.average} variant="minimal" />
+                <RatingBadge
+                  style={{ marginLeft: spacing.sm }}
+                  rating={place.review!.average}
+                  variant="minimal"
+                />
               </>
             )}
           </View>
@@ -214,6 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: "#8B98A5",
     marginHorizontal: 2,
+    marginLeft: spacing.sm,
   },
   footerRow: {
     flexDirection: "row",

@@ -187,7 +187,8 @@ Deno.serve(async (req) => {
       supabase
         .from("profile_social_hubs")
         .select("place_id, visible, places:places(id, name, category)")
-        .eq("user_id", userId),
+        .eq("user_id", userId)
+        .order("position", { ascending: true }),
     ]);
 
     const { data: profile, error: profileError } = profileResult;

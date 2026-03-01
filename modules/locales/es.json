@@ -719,8 +719,10 @@
       },
       "myHubs": {
         "sectionTitle": "Mis Hubs",
-        "tapToConnect": "Toca para explorar",
-        "addHubs": "Agrega tus hubs favoritos"
+        "tapToConnect": "Toca para entrar",
+        "addHubs": "Agrega tus hubs favoritos",
+        "addHubsEmpty": "Agrega tu primer hub y conéctate con los lugares que amas",
+        "addHubsMore": "Agregar otro hub"
       },
       "planHero": {
         "emptyState": {
@@ -753,6 +755,8 @@
       },
       "myPlans": {
         "title": "Mis Planes",
+        "cardTitle": "Planes",
+        "cardSubtitle": "Ve y gestiona tus planes",
         "createPlan": "Crear nuevo plan",
         "emptyTitle": "Sin planes aún",
         "emptyDescription": "¡Crea tu primer plan y mira quién va!",
@@ -1146,7 +1150,7 @@
       },
       "favoritePlaces": {
         "title": "Tus Spots favoritos",
-        "subtitle": "Elige al menos 1 Spot donde te gustaría conocer personas",
+        "subtitle": "Elige tus lugares favoritos en tu región",
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecciona al menos 1 spot",
         "locationNeeded": "Para sugerir lugares cerca de ti, necesitamos tu ubicación.",

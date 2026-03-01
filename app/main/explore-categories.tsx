@@ -1,18 +1,21 @@
-import { ArrowLeftIcon, MapPinIcon } from "@/assets/icons";
 import {
-  BarsIcon,
-  ClubIcon,
-  CoffeIcon,
-  MealIcon,
-  NearbyIcon,
-  NightclubIcon,
-  ParkIcon,
-  RunningIcon,
-  StadiumIcon,
-  UniversityIcon,
-} from "@/assets/illustrations";
+  ArrowLeftIcon,
+  AwardIcon,
+  BeerIcon,
+  CircleStarIcon,
+  CoffeeIcon,
+  DumbbellIcon,
+  GraduationCapIcon,
+  MapPinIcon,
+  MartiniIcon,
+  TreesIcon,
+  TrendingUpIcon,
+  UtensilsCrossedIcon,
+} from "@/assets/icons";
+import { ClubIcon, NearbyIcon } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
+import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedView } from "@/components/themed-view";
 import { spacing } from "@/constants/theme";
@@ -69,7 +72,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["university"],
       color: colors.pastelBlue,
-      illustration: UniversityIcon,
+      illustration: GraduationCapIcon,
     },
     {
       id: "bars",
@@ -79,7 +82,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["bar"],
       color: colors.pastelPurple,
-      illustration: BarsIcon,
+      illustration: BeerIcon,
     },
     {
       id: "nightclubs",
@@ -89,7 +92,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["nightclub"],
       color: colors.pastelPurple,
-      illustration: NightclubIcon,
+      illustration: MartiniIcon,
     },
     {
       id: "cafes",
@@ -99,7 +102,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["cafe"],
       color: colors.pastelCocoa,
-      illustration: CoffeIcon,
+      illustration: CoffeeIcon,
     },
     {
       id: "fitness",
@@ -109,7 +112,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["gym"],
       color: colors.pastelBlue,
-      illustration: RunningIcon,
+      illustration: DumbbellIcon,
     },
     {
       id: "parks",
@@ -119,7 +122,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["park"],
       color: colors.pastelTeal,
-      illustration: ParkIcon,
+      illustration: TreesIcon,
     },
     {
       id: "restaurants",
@@ -129,7 +132,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["restaurant"],
       color: colors.pastelCocoa,
-      illustration: MealIcon,
+      illustration: UtensilsCrossedIcon,
     },
     {
       id: "stadium",
@@ -139,7 +142,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["stadium", "event_venue"],
       color: colors.pastelPurple,
-      illustration: StadiumIcon,
+      illustration: AwardIcon,
     },
     {
       id: "club",
@@ -202,6 +205,65 @@ export default function ExploreCategoriesScreen() {
       }
     >
       <ThemedView>
+        {/* Featured: +Frequentados & Populares */}
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <View
+            style={[
+              styles.gridContainer,
+              { marginTop: spacing.smd, marginBottom: spacing.smd },
+            ]}
+          >
+            <PlaceCardFeatured
+              title={t("screens.home.categories.ranking.title")}
+              icon={TrendingUpIcon}
+              iconColor="#FFFFFF"
+              color={colors.pastelPurple}
+              onClick={() => {
+                trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
+                  categoryId: "most_frequent",
+                  categoryName: t("screens.home.categories.ranking.title"),
+                  source: "explore_categories",
+                });
+                router.push({
+                  pathname: "/main/category-results",
+                  params: {
+                    categoryName: t("screens.home.categories.ranking.title"),
+                    mostFrequent: "true",
+                    isPremium: "false",
+                  },
+                });
+              }}
+              containerStyle={styles.featuredItem}
+            />
+            <PlaceCardFeatured
+              title={t("screens.home.categories.communityFavorites.title")}
+              icon={CircleStarIcon}
+              iconColor="#FFFFFF"
+              color={colors.pastelPurple}
+              onClick={() => {
+                trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
+                  categoryId: "community_favorites",
+                  categoryName: t(
+                    "screens.home.categories.communityFavorites.title",
+                  ),
+                  source: "explore_categories",
+                });
+                router.push({
+                  pathname: "/main/category-results",
+                  params: {
+                    categoryName: t(
+                      "screens.home.categories.communityFavorites.title",
+                    ),
+                    communityFavorites: "true",
+                    isPremium: "false",
+                  },
+                });
+              }}
+              containerStyle={styles.featuredItem}
+            />
+          </View>
+        </Animated.View>
+
         {/* Nearby */}
         <Animated.View entering={FadeInDown.delay(150).springify()}>
           <CategoryCard
@@ -210,6 +272,7 @@ export default function ExploreCategoriesScreen() {
             onClick={() => handleCategoryClick(nearbyCategory)}
             color={nearbyCategory.color}
             illustration={nearbyCategory.illustration}
+            useRawIllustration
             style={styles.nearbyCard}
             textStyle={{ textAlign: "left" }}
           />
@@ -224,12 +287,13 @@ export default function ExploreCategoriesScreen() {
                 entering={FadeInDown.delay(200 + index * 60).springify()}
                 style={styles.categoryItem}
               >
-                <CategoryCard
-                  category={item}
-                  isSelected={selectedCategory === item.id}
-                  onClick={() => handleCategoryClick(item)}
+                <PlaceCardFeatured
+                  title={item.title}
+                  icon={item.illustration}
+                  iconColor="#FFFFFF"
                   color={item.color}
-                  illustration={item.illustration}
+                  onClick={() => handleCategoryClick(item)}
+                  containerStyle={styles.categoryCard}
                 />
               </Animated.View>
             ))}
@@ -245,15 +309,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    gap: 8,
+  },
+  featuredItem: {
+    width: "48.5%",
   },
   nearbyCard: {
     width: "100%",
-    marginTop: spacing.md,
-    marginBottom: spacing.md,
+    height: 140,
+    marginBottom: spacing.smd,
   },
   categoryItem: {
     width: "48.5%",
-    maxWidth: "48.5%",
+    marginBottom: spacing.smd,
+  },
+  categoryCard: {
+    height: 96,
   },
 });

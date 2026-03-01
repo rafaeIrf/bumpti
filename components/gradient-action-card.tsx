@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from "@/assets/icons";
 import { spacing, typography } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
@@ -138,6 +139,11 @@ function GradientActionCardInner({
             ) : null}
             {children}
           </View>
+
+          {/* Chevron */}
+          {showChevron && (
+            <ChevronRightIcon width={24} height={24} color="#FFFFFF" />
+          )}
         </LinearGradient>
       </Pressable>
     </Animated.View>

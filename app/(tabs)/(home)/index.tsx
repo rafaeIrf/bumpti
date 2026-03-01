@@ -1,10 +1,8 @@
 import {
-  CircleStarIcon,
+  CalendarIcon,
   FlameIcon,
   MapIcon,
-  SearchIcon,
   SlidersHorizontalIcon,
-  TrendingUpIcon,
 } from "@/assets/icons";
 
 import { BumptiWideLogo } from "@/assets/images";
@@ -12,7 +10,7 @@ import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { DetectionBanner } from "@/components/detection-banner/DetectionBanner";
 import { GradientActionCard } from "@/components/gradient-action-card";
 import { MyHubsSection } from "@/components/my-hubs-section";
-import { PlaceCardFeatured } from "@/components/place-card-featured";
+
 import { PlanHero } from "@/components/plan-hero";
 import { ScreenSectionHeading } from "@/components/screen-section-heading";
 import { ScreenToolbar } from "@/components/screen-toolbar";
@@ -31,26 +29,16 @@ import {
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
-import { PlaceCategory } from "@/modules/places/types";
 import { fetchSuggestedPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
-import { useAppSelector } from "@/modules/store/hooks";
+import { updateProfile } from "@/modules/profile/api";
+import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { setProfile } from "@/modules/store/slices/profileSlice";
+import { logger } from "@/utils/logger";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SvgProps } from "react-native-svg";
-
-interface Category {
-  id: string;
-  icon?: React.ComponentType<SvgProps>;
-  title: string;
-  description: string;
-  iconColor: string;
-  iconBgColor: string;
-  category?: PlaceCategory[]; // General category name for backend
-  color: string;
-}
 
 export default function HomeScreen() {
   const colors = useThemeColors();
@@ -61,6 +49,7 @@ export default function HomeScreen() {
 
   // Get user profile for MyCampusCard
   const profile = useAppSelector((state) => state.profile.data);
+  const dispatch = useAppDispatch();
 
   // Get user plans for PlanHero carousel
   const { sortedPlans, initialIndex } = useUserPlans();
@@ -158,67 +147,19 @@ export default function HomeScreen() {
     showNotificationSheet,
   ]);
 
-  const highlightedCategory: Category = {
-    id: "highlighted",
-    icon: FlameIcon,
-    title: t("screens.home.categories.highlighted.title"),
-    description: t("screens.home.categories.highlighted.description"),
-    iconColor: colors.white,
-    iconBgColor: "rgba(255, 255, 255, 0.2)",
-    color: colors.pastelPurple,
-  };
-
-  const featuredCategoriesItems: Category[] = [
-    {
-      id: "most_frequent",
-      icon: TrendingUpIcon,
-      title: t("screens.home.categories.ranking.title"),
-      description: t("screens.home.categories.ranking.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelPurple,
-    },
-    {
-      id: "community_favorites",
-      icon: CircleStarIcon,
-      title: t("screens.home.categories.communityFavorites.title"),
-      description: t("screens.home.categories.communityFavorites.description"),
-      iconColor: "#FFFFFF",
-      iconBgColor: "rgba(255, 255, 255, 0.2)",
-      color: colors.pastelPurple,
-    },
-  ];
-
-  const handleCategoryClick = (category: Category) => {
-    // Track category click
+  const handleHighlightedClick = () => {
     trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
-      categoryId: category.id,
-      categoryName: category.title,
+      categoryId: "highlighted",
+      categoryName: t("screens.home.categories.highlighted.title"),
     });
-
     router.push({
       pathname: "/main/category-results",
       params: {
-        categoryName: category.title,
-        ...(category.id === "favorites"
-          ? { favorites: "true" }
-          : category.id === "nearby"
-            ? { nearby: "true" }
-            : category.id === "community_favorites"
-              ? { communityFavorites: "true" }
-              : category.id === "highlighted"
-                ? { trending: "true" }
-                : category.id === "most_frequent"
-                  ? { mostFrequent: "true" }
-                  : { category: category.category }),
+        categoryName: t("screens.home.categories.highlighted.title"),
+        trending: "true",
         isPremium: "false",
       },
     });
-  };
-
-  const handleOpenSearch = () => {
-    trackEvent(ANALYTICS_EVENTS.HOME.SEARCH_OPENED, {});
-    router.push("/main/place-search");
   };
 
   const handleConnectPlace = async (placeData: DetectedPlace) => {
@@ -261,14 +202,6 @@ export default function HomeScreen() {
           }}
           customTitleView={<BumptiWideLogo height={28} width={100} />}
           titleIconColor={colors.accent}
-          rightActions={[
-            {
-              icon: SearchIcon,
-              onClick: handleOpenSearch,
-              ariaLabel: t("screens.home.toolbar.search"),
-              color: colors.icon,
-            },
-          ]}
         />
       }
     >
@@ -309,7 +242,7 @@ export default function HomeScreen() {
           {/* My Hubs Section */}
           <GradientActionCard
             style={{ marginTop: spacing.smd }}
-            title={highlightedCategory.title}
+            title={t("screens.home.categories.highlighted.title")}
             subtitle={
               trendingCount > 0
                 ? t("screens.home.categories.highlighted.activePlaces", {
@@ -317,9 +250,20 @@ export default function HomeScreen() {
                   })
                 : t("screens.home.categories.highlighted.noActivePlaces")
             }
-            gradientColors={["#7C3AED", "#A855F7"]}
+            gradientColors={["#7E57C2", "#B39DDB"]}
             icon={FlameIcon}
-            onPress={() => handleCategoryClick(highlightedCategory)}
+            onPress={handleHighlightedClick}
+            showChevron
+          />
+          <GradientActionCard
+            style={{ marginTop: spacing.smd }}
+            title={t("screens.home.myPlans.cardTitle")}
+            subtitle={t("screens.home.myPlans.cardSubtitle")}
+            gradientColors={["#4B87B9", "#64B5F6", "#87C8F8"]}
+            gradientLocations={[0, 0.5, 1]}
+            icon={CalendarIcon}
+            onPress={() => router.push("/main/my-plans")}
+            showChevron
           />
           <ScreenSectionHeading
             titleStyle={{ marginTop: spacing.smd, marginBottom: spacing.sm }}
@@ -328,37 +272,37 @@ export default function HomeScreen() {
           <MyHubsSection
             hubs={profile?.socialHubs ?? []}
             onAddHubs={() => router.push("/(profile)/social-hubs")}
+            onReorder={(orderedIds) => {
+              if (!profile) return;
+              // Reorder socialHubs array to match orderedIds
+              const hubMap = new Map(
+                (profile.socialHubs ?? []).map((h: any) => [h.id, h]),
+              );
+              const reordered = orderedIds
+                .map((id) => hubMap.get(id))
+                .filter(Boolean);
+
+              // Optimistic update
+              dispatch(setProfile({ ...profile, socialHubs: reordered }));
+
+              // Persist in background
+              updateProfile({ socialHubs: orderedIds }).catch((error) => {
+                logger.error("Failed to reorder social hubs", error);
+              });
+            }}
           />
-
-          {/* Featured Section */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={[styles.gridContainer, { marginTop: spacing.smd }]}>
-              {featuredCategoriesItems.map((item) => (
-                <PlaceCardFeatured
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  iconColor={item.iconColor}
-                  color={item.color}
-                  onClick={() => handleCategoryClick(item)}
-                  containerStyle={styles.featuredItem}
-                />
-              ))}
-            </View>
-          </Animated.View>
-
           {/* Explore Categories CTA */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
-            <View style={{ marginTop: spacing.smd }}>
-              <GradientActionCard
-                title={t("screens.home.explorePlaces.title")}
-                subtitle={t("screens.home.explorePlaces.subtitle")}
-                gradientColors={["#E8573D", "#D4206B"]}
-                icon={MapIcon}
-                iconSize={28}
-                onPress={() => router.push("/main/explore-categories")}
-              />
-            </View>
+            <GradientActionCard
+              style={{ marginTop: spacing.lg }}
+              title={t("screens.home.explorePlaces.title")}
+              subtitle={t("screens.home.explorePlaces.subtitle")}
+              gradientColors={["#FF7A5C", "#E94B7D"]}
+              icon={MapIcon}
+              iconSize={28}
+              onPress={() => router.push("/main/explore-categories")}
+              showChevron
+            />
           </Animated.View>
         </ThemedView>
       </ThemedView>
@@ -372,19 +316,5 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     marginBottom: 12,
-  },
-  featuredList: {
-    gap: 8,
-    paddingRight: 16, // Add padding to the end of the scroll
-  },
-  featuredItem: {
-    width: "48.5%",
-    maxWidth: "48.5%",
-  },
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 8,
   },
 });

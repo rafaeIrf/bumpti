@@ -1,6 +1,6 @@
 import { ShareIcon } from "@/assets/icons";
 import MapPinIcon from "@/assets/icons/map-pin.svg";
-import SettingsIcon from "@/assets/icons/settings.svg";
+
 import { ThemedText } from "@/components/themed-text";
 import Button from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -220,26 +220,6 @@ function PlanCard({
                 color="rgba(255,255,255,0.85)"
               />
             )}
-          </Pressable>
-
-          {/* Settings icon */}
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_SETTINGS_CLICKED, {
-                activePlansCount: totalPlans,
-              });
-              Haptics.selectionAsync();
-              router.push("/main/my-plans");
-            }}
-            hitSlop={10}
-            style={styles.actionButton}
-          >
-            <SettingsIcon
-              width={20}
-              height={20}
-              color="rgba(255,255,255,0.85)"
-            />
           </Pressable>
         </View>
 

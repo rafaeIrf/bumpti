@@ -1,24 +1,31 @@
-import { MapPinIcon } from "@/assets/icons";
+import { ChevronRightIcon, MapPinIcon } from "@/assets/icons";
 import { GradientActionCard } from "@/components/gradient-action-card";
 import { LoadingView } from "@/components/loading-view";
 import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+
 import { spacing, typography } from "@/constants/theme";
 import { usePlaceClick } from "@/hooks/use-place-click";
 import { t } from "@/modules/locales";
 import { getCardGradientColors } from "@/utils/card-gradient";
 import { toTitleCase } from "@/utils/string";
-import React, { memo, useCallback, useState } from "react";
+import * as Haptics from "expo-haptics";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Sortable from "react-native-sortables";
 
-interface SocialHub {
+export interface SocialHub {
   id: string;
   name: string;
   category: string;
   visible?: boolean;
   avatars?: { user_id: string; url: string }[];
+}
+
+interface SortableHubItem {
+  key: string;
+  hub: SocialHub;
 }
 
 interface MyHubCardProps {
@@ -91,36 +98,84 @@ const MyHubCardComponent = memo(function MyHubCard({ hub }: MyHubCardProps) {
 interface MyHubsSectionProps {
   hubs: SocialHub[];
   onAddHubs?: () => void;
+  onReorder?: (orderedIds: string[]) => void;
 }
 
-function MyHubsSectionComponent({ hubs, onAddHubs }: MyHubsSectionProps) {
-  const visibleHubs = hubs.filter((h) => h.visible !== false);
+function MyHubsSectionComponent({
+  hubs,
+  onAddHubs,
+  onReorder,
+}: MyHubsSectionProps) {
+  const visibleHubs = useMemo(
+    () => hubs.filter((h) => h.visible !== false),
+    [hubs],
+  );
 
-  if (visibleHubs.length === 0) {
+  const sortableData = useMemo<SortableHubItem[]>(
+    () => visibleHubs.map((hub) => ({ key: hub.id, hub })),
+    [visibleHubs],
+  );
+
+  const handleDragStart = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    ({ data }: { data: SortableHubItem[] }) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const orderedIds = data.map((item) => item.hub.id);
+      onReorder?.(orderedIds);
+    },
+    [onReorder],
+  );
+
+  const renderHubItem = useCallback(
+    ({ item }: { item: SortableHubItem }) => (
+      <MyHubCardComponent hub={item.hub} />
+    ),
+    [],
+  );
+
+  const MAX_HUBS = 6;
+  const canAddMore = visibleHubs.length < MAX_HUBS;
+  const isEmpty = visibleHubs.length === 0;
+
+  if (isEmpty && canAddMore) {
     if (!onAddHubs) return null;
-
     return (
       <Pressable onPress={onAddHubs} style={styles.emptyCard}>
         <View style={styles.emptyIconCircle}>
           <MapPinIcon width={22} height={22} color="rgba(255,255,255,0.7)" />
         </View>
         <ThemedText style={styles.emptyText}>
-          {t("screens.home.myHubs.addHubs")}
+          {t("screens.home.myHubs.addHubsEmpty")}
         </ThemedText>
-        <IconSymbol
-          name="chevron.right"
-          size={16}
-          color="rgba(255,255,255,0.4)"
-        />
+        <ChevronRightIcon width={24} height={24} color="#FFFFFF" />
       </Pressable>
     );
   }
 
   return (
     <View style={styles.section}>
-      {visibleHubs.map((hub) => (
-        <MyHubCardComponent key={hub.id} hub={hub} />
-      ))}
+      <Sortable.Grid
+        columns={1}
+        data={sortableData}
+        renderItem={renderHubItem}
+        rowGap={spacing.smd}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      />
+      {canAddMore && onAddHubs && (
+        <Pressable onPress={onAddHubs} style={styles.addMoreCard}>
+          <View style={styles.emptyIconCircle}>
+            <MapPinIcon width={22} height={22} color="rgba(255,255,255,0.7)" />
+          </View>
+          <ThemedText style={styles.emptyText}>
+            {t("screens.home.myHubs.addHubsMore")}
+          </ThemedText>
+          <ChevronRightIcon width={24} height={24} color="#FFFFFF" />
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -154,7 +209,20 @@ const styles = StyleSheet.create({
   emptyCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    gap: spacing.sm,
+  },
+  addMoreCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: "dashed",

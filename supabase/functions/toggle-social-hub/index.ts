@@ -48,9 +48,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === "add") {
+      // Get next position for this user's hubs
+      const { data: maxRow } = await supabase
+        .from("profile_social_hubs")
+        .select("position")
+        .eq("user_id", user.id)
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextPosition = (maxRow?.position ?? -1) + 1;
+
       const { error } = await supabase
         .from("profile_social_hubs")
-        .insert({ user_id: user.id, place_id: placeId });
+        .insert({ user_id: user.id, place_id: placeId, position: nextPosition });
 
       // Ignore duplicate key (23505) — already added
       if (error && error.code !== "23505") {
