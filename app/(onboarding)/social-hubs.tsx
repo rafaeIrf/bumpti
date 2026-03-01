@@ -69,6 +69,14 @@ export default function SocialHubsScreen() {
         selectedPlaceIds={selectedPlaceIds}
         getCountForCategory={getCountForCategory}
         handleCategoryPress={handleCategoryPress}
+        onSearchPress={() =>
+          handleCategoryPress({
+            id: "search",
+            title: "",
+            category: [],
+            color: "",
+          })
+        }
       />
     </BaseTemplateScreen>
   );

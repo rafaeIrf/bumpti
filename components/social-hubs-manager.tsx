@@ -1,14 +1,14 @@
 import {
-  BarsIcon,
-  CoffeIcon,
-  MealIcon,
-  NearbyIcon,
-  NightclubIcon,
-  ParkIcon,
-  RunningIcon,
-  StadiumIcon,
-  UniversityIcon,
-} from "@/assets/illustrations";
+  AwardIcon,
+  BeerIcon,
+  CoffeeIcon,
+  DumbbellIcon,
+  GraduationCapIcon,
+  MartiniIcon,
+  SearchIcon,
+  TreesIcon,
+  UtensilsCrossedIcon,
+} from "@/assets/icons";
 import { HubCategory, HubCategoryCard } from "@/components/hub-category-card";
 import { ThemedText } from "@/components/themed-text";
 import { spacing, typography } from "@/constants/theme";
@@ -17,7 +17,7 @@ import { t } from "@/modules/locales";
 import { PlaceCategory } from "@/modules/places/types";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, StyleSheet } from "react-native";
+import { FlatList, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -211,12 +211,14 @@ export interface SocialHubsContentProps {
   selectedPlaceIds: string[];
   getCountForCategory: (categoryId: string) => number;
   handleCategoryPress: (category: HubCategory) => void;
+  onSearchPress?: () => void;
 }
 
 export function SocialHubsContent({
   selectedPlaceIds,
   getCountForCategory,
   handleCategoryPress,
+  onSearchPress,
 }: SocialHubsContentProps) {
   const colors = useThemeColors();
 
@@ -227,63 +229,56 @@ export function SocialHubsContent({
         title: t("screens.home.categories.fitness.title"),
         category: ["gym"],
         color: colors.pastelBlue,
-        illustration: RunningIcon,
+        illustration: DumbbellIcon,
       },
       {
         id: "university",
         title: t("screens.home.categories.university.title"),
         category: ["university"],
         color: colors.pastelBlue,
-        illustration: UniversityIcon,
+        illustration: GraduationCapIcon,
       },
       {
         id: "parks",
         title: t("screens.home.categories.parks.title"),
         category: ["park"],
         color: colors.pastelTeal,
-        illustration: ParkIcon,
+        illustration: TreesIcon,
       },
       {
         id: "bars",
         title: t("screens.home.categories.nightlife.title"),
         category: ["bar"],
         color: colors.pastelPurple,
-        illustration: BarsIcon,
+        illustration: BeerIcon,
       },
       {
         id: "nightclubs",
         title: t("screens.home.categories.nightclubs.title"),
         category: ["nightclub"],
         color: colors.pastelPurple,
-        illustration: NightclubIcon,
+        illustration: MartiniIcon,
       },
       {
         id: "stadium",
         title: t("screens.home.categories.stadium.title"),
         category: ["stadium", "event_venue"],
         color: colors.pastelPurple,
-        illustration: StadiumIcon,
+        illustration: AwardIcon,
       },
       {
         id: "cafes",
         title: t("screens.home.categories.cafes.title"),
         category: ["cafe"],
         color: colors.pastelCocoa,
-        illustration: CoffeIcon,
+        illustration: CoffeeIcon,
       },
       {
         id: "restaurants",
         title: t("screens.home.categories.restaurants.title"),
         category: ["restaurant"],
         color: colors.pastelCocoa,
-        illustration: MealIcon,
-      },
-      {
-        id: "others",
-        title: t("screens.onboarding.socialHubs.others"),
-        category: [],
-        color: colors.pastelGreen,
-        illustration: NearbyIcon,
+        illustration: UtensilsCrossedIcon,
       },
     ],
     [colors],
@@ -319,6 +314,28 @@ export function SocialHubsContent({
         >
           {t("screens.onboarding.socialHubs.subtitle")}
         </ThemedText>
+
+        {onSearchPress && (
+          <Pressable
+            onPress={onSearchPress}
+            style={({ pressed }) => [
+              styles.searchButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              pressed && styles.searchButtonPressed,
+            ]}
+          >
+            <SearchIcon width={18} height={18} color={colors.textSecondary} />
+            <ThemedText
+              style={[
+                styles.searchPlaceholder,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {t("screens.onboarding.favoritePlaces.searchPlaceholder")}
+            </ThemedText>
+          </Pressable>
+        )}
+
         <ThemedText
           style={[
             typography.caption,
@@ -361,7 +378,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   subtitle: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  searchButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+  },
+  searchButtonPressed: {
+    opacity: 0.7,
+  },
+  searchPlaceholder: {
+    ...typography.body,
   },
   counter: {
     textAlign: "right",

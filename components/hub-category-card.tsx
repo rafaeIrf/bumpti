@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
 import { ThemedText } from "./themed-text";
+import { BrandIcon } from "./ui/brand-icon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -89,9 +90,15 @@ function HubCategoryCardInner({
 
         <View style={styles.content}>
           {Illustration && (
-            <View style={styles.illustrationContainer}>
-              <Illustration width={48} height={48} />
-            </View>
+            <BrandIcon
+              icon={Illustration}
+              size="md"
+              color="#FFFFFF"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.2)",
+                borderWidth: 0,
+              }}
+            />
           )}
           <ThemedText style={[typography.body, styles.title]} numberOfLines={2}>
             {category.title}

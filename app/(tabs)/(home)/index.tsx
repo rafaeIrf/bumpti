@@ -286,40 +286,36 @@ export default function HomeScreen() {
             isConnecting={isConnecting}
           />
         )}
-
-        {/* Plan Hero - Create or view plans */}
-        <PlanHero
-          plans={sortedPlans}
-          initialIndex={initialIndex}
-          loading={planLoading}
-          defaultConfirmedCount={todayPlansCount}
-          onViewPeoplePress={async (plan) => {
-            setPlanLoading(true);
-            try {
-              await handlePlaceClick({
-                placeId: plan.placeId,
-                name: plan.locationName,
-                latitude: 0,
-                longitude: 0,
-                distance: 0,
-                active_users: plan.confirmedCount,
-              });
-            } finally {
-              setPlanLoading(false);
-            }
-          }}
-        />
-
-        {/* No Radar — compact gradient hero card */}
-        <HighlightedHeroCard
-          title={highlightedCategory.title}
-          description={highlightedCategory.description}
-          count={trendingCount}
-          onPress={() => handleCategoryClick(highlightedCategory)}
-        />
-
-        <ThemedView style={styles.contentContainer}>
+        <ThemedView>
+          {/* Plan Hero - Create or view plans */}
+          <PlanHero
+            plans={sortedPlans}
+            initialIndex={initialIndex}
+            loading={planLoading}
+            defaultConfirmedCount={todayPlansCount}
+            onViewPeoplePress={async (plan) => {
+              setPlanLoading(true);
+              try {
+                await handlePlaceClick({
+                  placeId: plan.placeId,
+                  name: plan.locationName,
+                  latitude: 0,
+                  longitude: 0,
+                  distance: 0,
+                  active_users: plan.confirmedCount,
+                });
+              } finally {
+                setPlanLoading(false);
+              }
+            }}
+          />
           {/* My Hubs Section */}
+          <HighlightedHeroCard
+            title={highlightedCategory.title}
+            description={highlightedCategory.description}
+            count={trendingCount}
+            onPress={() => handleCategoryClick(highlightedCategory)}
+          />
           <ScreenSectionHeading
             titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
             title={t("screens.home.myHubs.sectionTitle")}
@@ -363,9 +359,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   section: {
     paddingTop: 24,
-  },
-  contentContainer: {
-    paddingTop: 16,
   },
   sectionHeading: {
     marginBottom: 12,
