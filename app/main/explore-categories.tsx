@@ -141,7 +141,7 @@ export default function ExploreCategoriesScreen() {
       iconColor: "#FFFFFF",
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["stadium", "event_venue"],
-      color: colors.pastelPurple,
+      color: colors.pastelTeal,
       illustration: AwardIcon,
     },
     {

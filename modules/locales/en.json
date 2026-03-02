@@ -1161,8 +1161,15 @@
         "subtitle": "Bumpti is currently available in select cities only. But you can finish signing up and we'll notify you as soon as we arrive in your area."
       },
       "socialHubsIntro": {
-        "title": "{{name}}, now let's pick your Social Hubs",
-        "description": "Hubs are the places where you live your social life and are open to meeting new people. Pick the spots that match your vibe and connect with those who frequent the same places."
+        "title": "Your Social Hubs",
+        "tagline": "{{name}}, now let's pick the places in your social routine where you'd like to meet new people.",
+        "benefit1Title": "Your everyday places",
+        "benefit1Body": "Mark the places that are part of your social routine.",
+        "benefit2Title": "Meet people who go to the same places",
+        "benefit2Body": "Discover people who frequent the same places as you.",
+        "benefit3Title": "Connections that happen naturally",
+        "benefit3Body": "When the place is the same, the conversation flows easier.",
+        "button": "Choose my places"
       },
       "socialHubs": {
         "title": "Your Social Hubs",

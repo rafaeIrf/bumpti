@@ -81,7 +81,6 @@ function HubCategoryCardInner({
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[StyleSheet.absoluteFill, styles.darkOverlay]} />
 
         <Animated.View
           pointerEvents="none"
@@ -130,9 +129,7 @@ const styles = StyleSheet.create({
     height: 96,
     position: "relative",
   },
-  darkOverlay: {
-    backgroundColor: "rgba(13, 13, 13, 0.25)",
-  },
+
   hoverOverlay: {
     position: "absolute",
     top: 0,

@@ -268,7 +268,7 @@ export function SocialHubsContent({
         id: "stadium",
         title: t("screens.home.categories.stadium.title"),
         category: ["stadium", "event_venue"],
-        color: colors.pastelGreen,
+        color: colors.pastelTeal,
         illustration: AwardIcon,
       },
       {
