@@ -102,6 +102,7 @@ export default function ProfilePreviewModal() {
           university_name_custom: cachedProfileData.university_name_custom,
           graduation_year: cachedProfileData.graduation_year,
           show_university_on_home: cachedProfileData.show_university_on_home,
+          social_hubs: cachedProfileData.social_hubs,
         };
       }
 
@@ -148,6 +149,12 @@ export default function ProfilePreviewModal() {
       university_name_custom: myProfile.university_name_custom ?? null,
       graduation_year: myProfile.graduation_year ?? null,
       show_university_on_home: myProfile.show_university_on_home ?? false,
+      social_hubs:
+        (myProfile as any).socialHubs?.map((h: any) => ({
+          id: h.id || h.place_id,
+          name: h.name,
+          category: h.category || "",
+        })) ?? [],
     };
   }, [isScanningOther, cachedProfileData, otherUserProfile, myProfile]);
 

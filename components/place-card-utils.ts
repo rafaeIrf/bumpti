@@ -62,8 +62,8 @@ export const PLACE_CATEGORY_COLOR_MAP: Record<string, string> = {
   club: "#4DB6AC",       // pastelTeal
   sports_centre: "#4DB6AC", // pastelTeal
   skate_park: "#4DB6AC", // pastelTeal
-  stadium: "#9575CD",    // pastelPurple
-  event_venue: "#9575CD", // pastelPurple
+  stadium: "#4DB6AC",    // pastelPurple
+  event_venue: "#4DB6AC", // pastelPurple
   hotel: "#9575CD",      // pastelPurple
   theatre: "#9575CD",    // pastelPurple
   museum: "#64B5F6",     // pastelBlue

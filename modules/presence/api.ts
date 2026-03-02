@@ -63,7 +63,7 @@ export type ActiveUserAtPlace = {
   place_id?: string | null;
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
-  entry_type?: "physical" | "checkin_plus" | "planning" | "past_visitor" | "favorite"; // How user entered the place
+  entry_type?: "physical" | "checkin_plus" | "planning" | "past_visitor" | "favorite" | "social_hub" | "university_member"; // How user entered the place
   planned_for?: string | null; // ISO date string for planning entries
   planned_period?: "morning" | "afternoon" | "night" | null;
   // University fields
@@ -74,6 +74,8 @@ export type ActiveUserAtPlace = {
   university_lng?: number | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean;
+  // Social hubs
+  social_hubs?: { id: string; name: string; category: string }[];
 };
 
 export type ActiveUsersResponse = {

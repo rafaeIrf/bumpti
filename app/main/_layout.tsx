@@ -44,6 +44,13 @@ export default function MainLayout() {
           animation: "slide_from_right",
         }}
       />
+      <Stack.Screen
+        name="explore-categories"
+        options={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
     </Stack>
   );
 }

@@ -478,7 +478,9 @@
           "vibes": "Vibes",
           "vibesCount": "{{count}} vibes",
           "spots": "Spots favoritos",
-          "spotsPlaceholder": "Adicionar spots"
+          "spotsPlaceholder": "Adicionar spots",
+          "socialHubs": "Hubs sociais",
+          "socialHubsCount": "{{count}} hubs"
         },
         "more": {
           "title": "Mais sobre você",
@@ -631,12 +633,18 @@
         "filters": "Filtros",
         "search": "Pesquisar"
       },
+      "explorePlaces": {
+        "title": "Explorar lugares",
+        "subtitle": "Explore lugares na sua região por categoria"
+      },
       "infoTitle": "Como funciona?",
       "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
       "categories": {
         "highlighted": {
-          "title": "No radar",
-          "description": "Lugares cheios e com gente se conectando."
+          "title": "Destaques",
+          "description": "Os lugares mais procurados recentemente.",
+          "activePlaces": "{{count}} lugares em destaque hoje",
+          "noActivePlaces": "Lugares em alta no momento"
         },
         "favorites": {
           "title": "Favoritos",
@@ -655,19 +663,19 @@
           "description": "Pra curtir a festa até tarde."
         },
         "cafes": {
-          "title": "Cafés & bate-papo",
+          "title": "Cafés",
           "description": "Lugares pra conversar e relaxar."
         },
         "university": {
-          "title": "Vida universitária",
+          "title": "Universidades",
           "description": "Onde os encontros acontecem na rotina."
         },
         "fitness": {
-          "title": "Bem-estar & movimento",
+          "title": "Academias",
           "description": "Conexões que começam no treino."
         },
         "parks": {
-          "title": "Parques & ar livre",
+          "title": "Parques",
           "description": "Encontros ao ar livre e na natureza."
         },
         "restaurants": {
@@ -679,7 +687,7 @@
           "description": "Arte, história e inspiração."
         },
         "stadium": {
-          "title": "Estádios e Eventos",
+          "title": "Locais de eventos",
           "description": "Grandes jogos, grandes públicos."
         },
         "club": {
@@ -709,6 +717,13 @@
         "findOnMap": "Encontre sua faculdade no mapa",
         "tapToConnect": "Toque para se conectar"
       },
+      "myHubs": {
+        "sectionTitle": "Meus Hubs",
+        "tapToConnect": "Toque para entrar",
+        "addHubs": "Adicione seus hubs favoritos",
+        "addHubsEmpty": "Adicione seu primeiro hub e conecte-se com os lugares que você ama",
+        "addHubsMore": "Adicionar outro hub"
+      },
       "planHero": {
         "emptyState": {
           "title": "Planeje sua semana",
@@ -723,7 +738,7 @@
         },
         "confirmedOne": "{{count}} pessoa confirmou",
         "confirmed": "{{count}} pessoas confirmaram",
-        "beFirstToConfirm": "Você já está no radar!",
+        "beFirstToConfirm": "Esperando a galera",
         "periodLabels": {
           "todayMorning": "Hoje de manhã",
           "todayAfternoon": "Hoje à tarde",
@@ -740,6 +755,8 @@
       },
       "myPlans": {
         "title": "Meus Planos",
+        "cardTitle": "Planos",
+        "cardSubtitle": "Veja e gerencie seus planos",
         "createPlan": "Criar novo plano",
         "emptyTitle": "Nenhum plano ainda",
         "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
@@ -755,7 +772,7 @@
         "upgradeForMore": "Assine o Premium para criar até 10 planos por dia"
       },
       "vibeCheck": {
-        "title": "Você está no radar! 🎉",
+        "title": "Você confirmou presença! 🎉",
         "subtitle": "Veja quem mais vai para ",
         "totalPlanningLabel": "pessoas indo nessa semana",
         "totalPlanningLabelOne": "pessoa indo nessa semana",
@@ -1133,7 +1150,7 @@
       },
       "favoritePlaces": {
         "title": "Seus Spots favoritos",
-        "subtitle": "Escolha pelo menos 1 Spot que você gostaria de conhecer pessoas",
+        "subtitle": "Escolha seus lugares favoritos na sua região",
         "searchPlaceholder": "Buscar lugar...",
         "selectAtLeastOne": "Selecione pelo menos 1 spot",
         "locationNeeded": "Para sugerir lugares perto de você, precisamos da sua localização.",
@@ -1142,6 +1159,22 @@
       "cityNotAvailable": {
         "title": "Ainda não chegamos aí!",
         "subtitle": "No momento, o Bumpti está disponível apenas em algumas cidades. Mas você pode terminar seu cadastro e nós te avisaremos assim que chegarmos na sua região."
+      },
+      "socialHubsIntro": {
+        "title": "Seus Hubs Sociais",
+        "tagline": "{{name}}, agora vamos escolher os lugares da sua rotina social onde você gostaria de conhecer novas pessoas.",
+        "benefit1Title": "Seus lugares de sempre",
+        "benefit1Body": "Marque os lugares que fazem parte da sua rotina social.",
+        "benefit2Title": "Conheça quem frequenta os mesmos lugares",
+        "benefit2Body": "Descubra pessoas que frequentam os mesmos lugares que você.",
+        "benefit3Title": "Conexões que nascem naturalmente",
+        "benefit3Body": "Quando o lugar é o mesmo, a conversa flui mais fácil.",
+        "button": "Escolher meus lugares"
+      },
+      "socialHubs": {
+        "title": "Seus Hubs sociais",
+        "subtitle": "Escolha de 1 a 6 lugares onde você gostaria de conhecer pessoas.",
+        "others": "Outros"
       },
       "locationTitle": "Sua localização",
       "locationSubtitle": "Para encontrar pessoas e lugares perto de você, precisamos da sua localização. Você pode desativar isso a qualquer momento",
@@ -1233,7 +1266,7 @@
         },
         "search": {
           "title": "Nenhum lugar encontrado",
-          "description": "Não conseguimos encontrar nada com esse nome. Tente simplificar ou buscar por uma categoria.",
+          "description": "Não conseguimos encontrar nada com esse nome. Tente simplificar a busca.",
           "button": "Limpar busca"
         },
         "ranking": {
@@ -1258,6 +1291,18 @@
       "emptyTitle": "Buscar lugares",
       "emptyDescription": "Digite o nome de um local ou escolha uma sugestão.",
       "suggestionsLabel": "Sugestões de busca",
+      "suggestedPlacesLabel": "Lugares sugeridos",
+      "categoryPlaceholder": {
+        "bar": "Buscar bares...",
+        "nightclub": "Buscar baladas...",
+        "cafe": "Buscar cafés...",
+        "restaurant": "Buscar restaurantes...",
+        "gym": "Buscar academias...",
+        "park": "Buscar parques...",
+        "stadium": "Buscar estádios...",
+        "club": "Buscar clubes...",
+        "university": "Buscar universidades..."
+      },
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Café",
@@ -1453,6 +1498,7 @@
     "zodiac": "Signo",
     "interest": "INTERESSE",
     "favoritePlaces": "Locais favoritos",
+    "socialHubs": "Hubs sociais",
     "lookingFor": {
       "friendship": "Fazer novas amizades",
       "networking": "Networking profissional",

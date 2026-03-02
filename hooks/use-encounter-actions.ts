@@ -109,6 +109,7 @@ export function useEncounterActions() {
             toUserId: userId,
             action: "like",
             placeId: encounter.place_id || undefined,
+            context: encounter.entry_type ?? undefined,
           }).then((result) => {
             if (result.status === "liked" && result.match) {
               const info: MatchInfo = {

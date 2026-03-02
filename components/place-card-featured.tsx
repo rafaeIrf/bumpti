@@ -1,5 +1,6 @@
 import { MapPinIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import { spacing, typography } from "@/constants/theme";
 import { getCardGradientColors } from "@/utils/card-gradient";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,10 +18,11 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { SvgProps } from "react-native-svg";
 
 export interface PlaceCardFeaturedProps {
   title: string;
-  icon?: React.ComponentType<{ width: number; height: number; color: string }>;
+  icon?: React.ComponentType<SvgProps>;
   onClick: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   color?: string;
@@ -94,7 +96,14 @@ export function PlaceCardFeatured({
 
         {/* Content Container */}
         <View style={styles.contentContainer}>
-          {Icon && <Icon width={32} height={32} color={iconColor} />}
+          {Icon && (
+            <BrandIcon
+              icon={Icon}
+              size="sm"
+              color={iconColor}
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            />
+          )}
 
           <ThemedText
             numberOfLines={1}
@@ -128,6 +137,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
     textAlign: "center",

@@ -1,25 +1,26 @@
 import { store } from "@/modules/store";
 import {
-  completeOnboarding as completeOnboardingAction,
-  completeStep as completeStepAction,
-  OnboardingStep,
-  resetOnboarding as resetOnboardingAction,
-  setAuthProvider as setAuthProviderAction,
-  setBio as setBioAction,
-  setConnectWith as setConnectWithAction,
-  setCurrentStep as setCurrentStepAction,
-  setFavoritePlaces as setFavoritePlacesAction,
-  setIntentions as setIntentionsAction,
-  setInterests as setInterestsAction,
-  setLocationPermission as setLocationPermissionAction,
-  setNotificationPermission as setNotificationPermissionAction,
-  setPhotoHashes as setPhotoHashesAction,
-  setPhotoUris as setPhotoUrisAction,
-  setTrackingPermission as setTrackingPermissionAction,
-  setUniversityData as setUniversityDataAction,
-  setUserBirthdate as setUserBirthdateAction,
-  setUserGender as setUserGenderAction,
-  setUserName as setUserNameAction
+    completeOnboarding as completeOnboardingAction,
+    completeStep as completeStepAction,
+    OnboardingStep,
+    resetOnboarding as resetOnboardingAction,
+    setAuthProvider as setAuthProviderAction,
+    setBio as setBioAction,
+    setConnectWith as setConnectWithAction,
+    setCurrentStep as setCurrentStepAction,
+    setFavoritePlaces as setFavoritePlacesAction,
+    setIntentions as setIntentionsAction,
+    setInterests as setInterestsAction,
+    setLocationPermission as setLocationPermissionAction,
+    setNotificationPermission as setNotificationPermissionAction,
+    setPhotoHashes as setPhotoHashesAction,
+    setPhotoUris as setPhotoUrisAction,
+    setSocialHubs as setSocialHubsAction,
+    setTrackingPermission as setTrackingPermissionAction,
+    setUniversityData as setUniversityDataAction,
+    setUserBirthdate as setUserBirthdateAction,
+    setUserGender as setUserGenderAction,
+    setUserName as setUserNameAction
 } from "./onboardingSlice";
 
 // Action creators that encapsulate dispatch
@@ -70,6 +71,10 @@ export const onboardingActions = {
 
   setInterests: (interests: string[]) => {
     store.dispatch(setInterestsAction(interests));
+  },
+
+  setSocialHubs: (socialHubs: string[]) => {
+    store.dispatch(setSocialHubsAction(socialHubs));
   },
 
   setLocationPermission: (hasPermission: boolean) => {

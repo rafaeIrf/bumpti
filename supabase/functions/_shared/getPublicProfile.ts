@@ -1,22 +1,53 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 
-// Signed URLs válidas por 24 horas
-// Garantem que fotos funcionem offline por um dia inteiro após o fetch
-const SIGNED_URL_EXPIRES = 60 * 60 * 24; // 86400 segundos = 24 horas
+const SIGNED_URL_EXPIRES = 60 * 60 * 24; // 24 hours
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+type PlaceSummary = { id: string; name: string; category: string };
+
+/** Extract { id, name, category } from joined place rows, discarding nulls. */
+function parsePlaceRows(rows: any[]): PlaceSummary[] {
+  return rows.reduce<PlaceSummary[]>((acc, row) => {
+    const place = row.places;
+    if (place) {
+      acc.push({
+        id: place.id,
+        name: place.name || "",
+        category: place.category || "",
+      });
+    }
+    return acc;
+  }, []);
+}
+
+/** Calculate age from a birthdate string. */
+function calculateAge(birthdate: string | null): number | null {
+  if (!birthdate) return null;
+  const birth = new Date(birthdate);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+// ─── Main ───────────────────────────────────────────────────────────
 
 export async function getPublicProfile(
-  supabaseClient: any,
+  _supabaseClient: any,
   supabaseService: any,
   userId: string
 ) {
-  // Parallel fetch of profile data
+  // ── Parallel data fetch ─────────────────────────────────────────
   const [
     profileResult,
-    connectResult,
+    ,                       // connectResult — unused
     intentionResult,
     photosResult,
     favoritePlacesResult,
     interestsResult,
+    socialHubsResult,
   ] = await Promise.all([
     supabaseService
       .from("profiles")
@@ -54,34 +85,36 @@ export async function getPublicProfile(
       .from("profile_interests")
       .select("interest:interests(key)")
       .eq("profile_id", userId),
+    supabaseService
+      .from("profile_social_hubs")
+      .select("place_id, visible, places:places(id, name, category)")
+      .eq("user_id", userId),
   ]);
 
   const profile = profileResult.data;
-  if (!profile) {
-    return null;
-  }
+  if (!profile) return null;
 
-  // Calculate age
-  let age = null;
-  if (profile.birthdate) {
-    const birth = new Date(profile.birthdate);
-    const now = new Date();
-    age = now.getFullYear() - birth.getFullYear();
-    const m = now.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-      age--;
-    }
-  }
+  // ── Derived fields ──────────────────────────────────────────────
 
-  // Process lists
+  const age = calculateAge(profile.birthdate);
+
   const intentions = (intentionResult.data ?? [])
     .map((row: any) => row.intention?.key)
     .filter(Boolean);
 
-  // Photos - sign urls
-  const photoRows = photosResult.data ?? [];
+  const interests = (interestsResult.data ?? [])
+    .map((row: any) => row.interest?.key)
+    .filter(Boolean);
+
+  const languages =
+    profile.profile_languages
+      ?.map((pl: any) => pl.language?.key)
+      .filter(Boolean) ?? [];
+
+  // ── Photos (signed URLs) ────────────────────────────────────────
+
   const signedPhotos = await Promise.all(
-    photoRows.map(async (row: any) => {
+    (photosResult.data ?? []).map(async (row: any) => {
       if (!row.url) return null;
       const { data } = await supabaseService.storage
         .from("user_photos")
@@ -91,29 +124,16 @@ export async function getPublicProfile(
   );
   const photos = signedPhotos.filter((url): url is string => !!url);
 
-  // Favorite Places - now with joined data
-  const favorite_places = (favoritePlacesResult.data ?? [])
-    .map((row: any) => {
-      const place = row.places;
-      if (!place) return null;
-      return {
-        id: place.id,
-        name: place.name || "",
-        category: place.category || "",
-      };
-    })
-    .filter((p): p is { id: string; name: string; category: string } => p !== null);
+  // ── Places (no avatars needed — this is the public card payload) ─
 
-  // Languages
-  const languages =
-    profile.profile_languages
-      ?.map((pl: any) => pl.language?.key)
-      .filter(Boolean) ?? [];
+  const favorite_places = parsePlaceRows(favoritePlacesResult.data ?? []);
 
-  // Interests (vibes)
-  const interests = (interestsResult.data ?? [])
-    .map((row: any) => row.interest?.key)
-    .filter(Boolean);
+  const visibleHubRows = (socialHubsResult.data ?? []).filter(
+    (row: any) => row.visible !== false
+  );
+  const social_hubs = parsePlaceRows(visibleHubRows);
+
+  // ── Response ────────────────────────────────────────────────────
 
   return {
     user_id: profile.id,
@@ -134,14 +154,16 @@ export async function getPublicProfile(
     smoking_habit: profile.smoking?.key,
     verification_status: profile.verification_status || null,
     university_id: profile.university_id || null,
-    university_name: profile.university?.name || profile.university_name_custom || null,
+    university_name:
+      profile.university?.name || profile.university_name_custom || null,
     university_name_custom: profile.university_name_custom || null,
     graduation_year: profile.graduation_year || null,
     show_university_on_home: profile.show_university_on_home ?? false,
     favorite_places,
-    entered_at: null, // Context specific
-    expires_at: null, // Context specific
-    place_id: null, // Context specific
+    social_hubs,
+    entered_at: null,
+    expires_at: null,
+    place_id: null,
     visited_places_count: favorite_places.length,
   };
 }
