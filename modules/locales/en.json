@@ -641,10 +641,10 @@
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "On Radar",
-          "description": "Crowded places with people connecting.",
-          "activePlaces": "{{count}} active places right now",
-          "noActivePlaces": "Discover trending places near you"
+          "title": "Highlights",
+          "description": "The most sought-after places recently.",
+          "activePlaces": "{{count}} featured places today",
+          "noActivePlaces": "The most sought-after places recently"
         },
         "favorites": {
           "title": "Favorites",
@@ -738,7 +738,7 @@
         },
         "confirmedOne": "{{count}} person confirmed",
         "confirmed": "{{count}} people confirmed",
-        "beFirstToConfirm": "You're already on the radar!",
+        "beFirstToConfirm": "Waiting for the crew",
         "periodLabels": {
           "todayMorning": "Today in the morning",
           "todayAfternoon": "Today in the afternoon",
@@ -772,7 +772,7 @@
         "upgradeForMore": "Upgrade to Premium for up to 10 plans per day"
       },
       "vibeCheck": {
-        "title": "You're on the radar! 🎉",
+        "title": "You confirmed your spot! 🎉",
         "subtitle": "See who else is going to ",
         "totalPlanningLabel": "people going this week",
         "totalPlanningLabelOne": "person going this week",

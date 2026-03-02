@@ -88,6 +88,7 @@ export default function EditSocialHubsScreen() {
 
   return (
     <BaseTemplateScreen
+      isModal
       contentContainerStyle={styles.screenContent}
       TopHeader={
         <ScreenToolbar
