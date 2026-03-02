@@ -2,7 +2,7 @@ import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
 import { BrandIcon } from "@/components/ui/brand-icon";
-import Button from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
@@ -114,7 +114,6 @@ export function DetectionBanner({
             totalCount={place.active_users ?? place.preview_avatars!.length}
             maxVisible={3}
             size={36}
-            borderColor={colors.surface}
           />
         </View>
       )}
@@ -124,7 +123,7 @@ export function DetectionBanner({
         <Button
           onPress={handleConnect}
           style={styles.connectButton}
-          variant="primary"
+          variant="default"
           disabled={isConnecting}
           loading={isConnecting}
           label={ctaLabel}

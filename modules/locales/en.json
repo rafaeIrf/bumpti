@@ -644,7 +644,7 @@
           "title": "Highlights",
           "description": "The most sought-after places recently.",
           "activePlaces": "{{count}} featured places today",
-          "noActivePlaces": "The most sought-after places recently"
+          "noActivePlaces": "Trending places right now"
         },
         "favorites": {
           "title": "Favorites",

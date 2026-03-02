@@ -10,7 +10,6 @@ export default function ProfileModalLayout() {
         name="favorite-places"
         options={{ presentation: "modal" }}
       />
-      <Stack.Screen name="social-hubs" options={{ presentation: "modal" }} />
     </Stack>
   );
 }

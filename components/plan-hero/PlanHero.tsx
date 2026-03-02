@@ -2,7 +2,7 @@ import { ShareIcon } from "@/assets/icons";
 import MapPinIcon from "@/assets/icons/map-pin.svg";
 
 import { ThemedText } from "@/components/themed-text";
-import Button from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
 import { spacing, typography } from "@/constants/theme";
 
