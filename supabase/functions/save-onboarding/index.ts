@@ -130,6 +130,10 @@ Deno.serve(async (req) => {
       (formData.get("favoritePlaces") as string | null)?.length
         ? JSON.parse(formData.get("favoritePlaces") as string)
         : [];
+    const socialHubs =
+      (formData.get("socialHubs") as string | null)?.length
+        ? JSON.parse(formData.get("socialHubs") as string)
+        : [];
     const bio = (formData.get("bio") as string | null) || null;
     const interests =
       (formData.get("interests") as string | null)?.length
@@ -265,6 +269,7 @@ Deno.serve(async (req) => {
       p_graduation_year: graduationYear,
       p_show_university_on_home: showUniversityOnHome,
       p_interest_ids: interestIds,
+      p_social_hub_ids: socialHubs,
     });
 
     if (rpcError) {

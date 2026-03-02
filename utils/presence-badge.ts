@@ -8,7 +8,9 @@ export type PresenceEntryType =
   | "checkin_plus"
   | "planning"
   | "past_visitor"
-  | "favorite";
+  | "favorite"
+  | "social_hub"
+  | "university_member";
 
 export type PresenceBadgeIcon =
   | "dot"
@@ -71,6 +73,14 @@ export function getPresenceBadge(
       return {
         label: t("userProfile.favoritedPlace"),
         icon: "star",
+        highlighted: true,
+      };
+
+    case "social_hub":
+    case "university_member":
+      return {
+        label: t("userProfile.frequentsPlace"),
+        icon: "mapPin",
         highlighted: true,
       };
 

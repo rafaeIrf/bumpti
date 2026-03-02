@@ -135,7 +135,7 @@ export const Colors = {
     pastelCoral: "#FF8A65",
     pastelPink: "#F06292",
     pastelRed: "#EF5350",
-    pastelPurple: "#8C76C7",
+    pastelPurple: "#9575CD",
     pastelPurple1: "#8195C7",
     pastelCocoa: "#9E8B80", 
     pastelBlue: "#6FA8DC",
@@ -192,6 +192,7 @@ export const typography = {
 export const spacing = {
   xs: 4,
   sm: 8,
+  smd: 12,
   md: 16,
   lg: 24,
   xl: 32,

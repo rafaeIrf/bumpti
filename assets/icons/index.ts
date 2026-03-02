@@ -43,6 +43,8 @@ export { default as MapPinIcon } from "./map-pin.svg";
 export { default as MapIcon } from "./map.svg";
 
 export { default as AlarmClockIcon } from "./alarm-clock.svg";
+export { default as ChevronRightIcon } from "./chevron-right.svg";
+export { default as CircleStarIcon } from "./circle-star.svg";
 export { default as HotelIcon } from "./hotel.svg";
 export { default as MartiniIcon } from "./martini.svg";
 export { default as MessageCircleIcon } from "./message-circle.svg";

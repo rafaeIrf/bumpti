@@ -9,9 +9,9 @@ export type OnboardingStep =
   | "user-photos"
   | "user-bio"
   | "interests"
-  | "university"
-  | "favorite-places"
   | "location"
+  | "social-hubs-intro"
+  | "social-hubs"
   | "notifications"
   | "tracking"
   | "complete";
@@ -35,6 +35,7 @@ export interface OnboardingUserData {
   showUniversityOnHome?: boolean;
   interests?: string[];
   favoritePlaces?: string[];
+  socialHubs?: string[];
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
   hasTrackingPermission?: boolean;
@@ -97,6 +98,9 @@ const onboardingSlice = createSlice({
     },
     setFavoritePlaces: (state, action: PayloadAction<string[]>) => {
       state.userData.favoritePlaces = action.payload;
+    },
+    setSocialHubs: (state, action: PayloadAction<string[]>) => {
+      state.userData.socialHubs = action.payload;
     },
     setLocationPermission: (state, action: PayloadAction<boolean>) => {
       state.userData.hasLocationPermission = action.payload;
@@ -167,6 +171,7 @@ export const {
   setBio,
   setInterests,
   setFavoritePlaces,
+  setSocialHubs,
   setLocationPermission,
   setNotificationPermission,
   setTrackingPermission,

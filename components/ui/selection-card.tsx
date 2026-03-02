@@ -18,8 +18,14 @@ export interface SelectionCardProps {
     height: number;
     color: string;
   }>;
+  /** Optional custom left element (takes precedence over icon) */
+  readonly leftElement?: React.ReactNode;
   /** Whether to show checkmark when selected (default: true) */
   readonly showCheckmark?: boolean;
+  /** Custom accent color for selected state (border, tint, check icon) */
+  readonly accentColor?: string;
+  /** Whether the card is disabled (e.g. max selections reached) */
+  readonly disabled?: boolean;
 }
 
 export function SelectionCard({
@@ -29,30 +35,38 @@ export function SelectionCard({
   onPress,
   testID,
   icon: Icon,
+  leftElement,
   showCheckmark = true,
+  accentColor,
+  disabled = false,
 }: SelectionCardProps) {
   const colors = useThemeColors();
+  const accent = accentColor || colors.accent;
 
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
+      disabled={disabled && !isSelected}
       style={[
         styles.container,
         {
-          backgroundColor: isSelected ? `${colors.accent}1A` : colors.surface,
-          borderColor: isSelected ? colors.accent : colors.border,
+          backgroundColor: isSelected ? `${accent}3A` : colors.surface,
+          borderColor: isSelected ? accent : "transparent",
+          opacity: disabled && !isSelected ? 0.4 : 1,
         },
       ]}
     >
       <View style={styles.content}>
-        {Icon && (
-          <Icon
-            width={24}
-            height={24}
-            color={isSelected ? colors.accent : colors.textSecondary}
-          />
-        )}
+        {leftElement
+          ? leftElement
+          : Icon && (
+              <Icon
+                width={24}
+                height={24}
+                color={isSelected ? accent : colors.textSecondary}
+              />
+            )}
         <View style={{ flex: 1 }}>
           <ThemedText
             numberOfLines={1}
@@ -84,7 +98,7 @@ export function SelectionCard({
             entering={FadeIn.duration(200)}
             style={{ marginLeft: spacing.sm }}
           >
-            <CheckIcon width={20} height={20} color={colors.accent} />
+            <CheckIcon width={20} height={20} color={accent} />
           </Animated.View>
         )}
       </View>
@@ -94,10 +108,9 @@ export function SelectionCard({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: spacing.lg,
-    borderWidth: 2,
   },
   content: {
     flexDirection: "row",
