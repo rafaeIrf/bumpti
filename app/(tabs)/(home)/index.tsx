@@ -271,7 +271,7 @@ export default function HomeScreen() {
           />
           <MyHubsSection
             hubs={profile?.socialHubs ?? []}
-            onAddHubs={() => router.push("/(profile)/social-hubs")}
+            onAddHubs={() => router.push("/(modals)/social-hubs")}
             onReorder={(orderedIds) => {
               if (!profile) return;
               // Reorder socialHubs array to match orderedIds

@@ -174,7 +174,7 @@ export default function ProfileEditScreen() {
       return;
     }
     if (field === "socialHubs") {
-      router.push("/(profile)/social-hubs");
+      router.push("/(modals)/social-hubs");
       return;
     }
     if (field === "university") {
