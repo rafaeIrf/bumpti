@@ -787,7 +787,14 @@ export function PlaceSearchContent({
         ) : undefined
       }
     >
-      <ThemedView style={{ flex: 1 }}>{content}</ThemedView>
+      <ThemedView
+        style={{
+          flex: 1,
+          paddingBottom: multiSelectMode ? spacing.xxl * 3 : 0,
+        }}
+      >
+        {content}
+      </ThemedView>
     </BaseTemplateScreen>
   );
 }

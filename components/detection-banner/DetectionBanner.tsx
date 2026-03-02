@@ -9,7 +9,7 @@ import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { toTitleCase } from "@/utils/string";
 import * as Haptics from "expo-haptics";
-import { useFeatureFlag, usePostHog } from "posthog-react-native";
+import { usePostHog } from "posthog-react-native";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
@@ -32,11 +32,7 @@ export function DetectionBanner({
   const CategoryIcon = getPlaceIcon(place.category ?? "default");
   const [show, setShow] = React.useState(false);
   const posthog = usePostHog();
-  const ctaVariant = useFeatureFlag("detect-place-cta-test");
-  const ctaLabel =
-    ctaVariant === "variant-entrar"
-      ? t("screens.home.detectionBanner.connectEntrar")
-      : t("screens.home.detectionBanner.connect");
+  const ctaLabel = t("screens.home.detectionBanner.connectEntrar");
 
   useEffect(() => {
     if (place) {
@@ -58,8 +54,6 @@ export function DetectionBanner({
     Haptics.selectionAsync();
     posthog?.capture("detect_place_connect_clicked", {
       place_id: place.id,
-      cta_variant: ctaVariant || "control",
-      cta_text: ctaLabel,
       active_users: place.active_users || 0,
     });
     onConnect(place);

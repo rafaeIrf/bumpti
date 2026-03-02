@@ -154,7 +154,7 @@ export const GradientActionCard = React.memo(GradientActionCardInner);
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: 16,
+    borderRadius: spacing.lg,
     overflow: "hidden",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

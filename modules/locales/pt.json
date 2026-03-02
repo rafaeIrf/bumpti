@@ -641,10 +641,10 @@
       "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
       "categories": {
         "highlighted": {
-          "title": "No radar",
-          "description": "Lugares cheios e com gente se conectando.",
-          "activePlaces": "{{count}} lugares ativos nesse momento",
-          "noActivePlaces": "Descubra lugares em alta perto de você"
+          "title": "Destaques",
+          "description": "Os lugares mais procurados recentemente.",
+          "activePlaces": "{{count}} lugares em destaque hoje",
+          "noActivePlaces": "Os lugares mais procurados recentemente"
         },
         "favorites": {
           "title": "Favoritos",
@@ -738,7 +738,7 @@
         },
         "confirmedOne": "{{count}} pessoa confirmou",
         "confirmed": "{{count}} pessoas confirmaram",
-        "beFirstToConfirm": "Você já está no radar!",
+        "beFirstToConfirm": "Esperando a galera",
         "periodLabels": {
           "todayMorning": "Hoje de manhã",
           "todayAfternoon": "Hoje à tarde",
@@ -772,7 +772,7 @@
         "upgradeForMore": "Assine o Premium para criar até 10 planos por dia"
       },
       "vibeCheck": {
-        "title": "Você está no radar! 🎉",
+        "title": "Você confirmou presença! 🎉",
         "subtitle": "Veja quem mais vai para ",
         "totalPlanningLabel": "pessoas indo nessa semana",
         "totalPlanningLabelOne": "pessoa indo nessa semana",
