@@ -20,6 +20,7 @@ import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import {
   ANALYTICS_EVENTS,
@@ -31,8 +32,8 @@ import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
 import { fetchSuggestedPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
-import { updateProfile } from "@/modules/profile/api";
-import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { updateProfile } from "@/modules/profile";
+import { useAppDispatch } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
 import { logger } from "@/utils/logger";
 import { router } from "expo-router";
@@ -45,11 +46,42 @@ export default function HomeScreen() {
   const { location, cityOverride } = useCachedLocation();
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [todayPlansCount, setTodayPlansCount] = useState(0);
 
-  // Get user profile for MyCampusCard
-  const profile = useAppSelector((state) => state.profile.data);
+  const { profile, refetch: refetchProfile } = useProfile();
   const dispatch = useAppDispatch();
+
+  // Trending places count for "No radar" card
+  const { data: trendingData, refetch: refetchTrending } =
+    useGetTrendingPlacesQuery(
+      location?.latitude && location?.longitude
+        ? {
+            lat: location.latitude,
+            lng: location.longitude,
+            page: 1,
+            pageSize: 20,
+          }
+        : undefined,
+      {
+        skip: !location?.latitude || !location?.longitude,
+        refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
+      },
+    );
+  // Use actual count of places in the filtered array, not backend totalCount
+  // This ensures the count updates when places with 0 active_users are filtered out
+  const trendingCount = trendingData?.places?.length ?? 0;
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchProfile(), refetchTrending()]);
+    } catch (error) {
+      logger.error("[HomeScreen] Failed to refresh", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchProfile, refetchTrending]);
 
   // Get user plans for PlanHero carousel
   const { sortedPlans, initialIndex } = useUserPlans();
@@ -73,25 +105,6 @@ export default function HomeScreen() {
 
   // Place click handler for auto check-in
   const { handlePlaceClick } = usePlaceClick();
-
-  // Trending places count for "No radar" card
-  const { data: trendingData } = useGetTrendingPlacesQuery(
-    location?.latitude && location?.longitude
-      ? {
-          lat: location.latitude,
-          lng: location.longitude,
-          page: 1,
-          pageSize: 20,
-        }
-      : undefined,
-    {
-      skip: !location?.latitude || !location?.longitude,
-      refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
-    },
-  );
-  // Use actual count of places in the filtered array, not backend totalCount
-  // This ensures the count updates when places with 0 active_users are filtered out
-  const trendingCount = trendingData?.places?.length ?? 0;
 
   // Track detection banner shown
   useEffect(() => {
@@ -189,6 +202,8 @@ export default function HomeScreen() {
   return (
     <BaseTemplateScreen
       ignoreBottomSafeArea
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
       TopHeader={
         <ScreenToolbar
           leftAction={{
