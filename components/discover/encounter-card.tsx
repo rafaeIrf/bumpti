@@ -52,6 +52,7 @@ export default function EncounterCard({
 }: EncounterCardProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  // const { isPremium } = useUserSubscription();
   const isPremium = true;
   const { profile, isLoading } = useHydratedProfile(encounter.other_user_id);
   const isDismissed = useRef(false);
