@@ -37,3 +37,16 @@ export interface SuggestedPlan {
   plan_count: number;
   distance: number;
 }
+
+export interface AllPlanFeedItem {
+  place_id: string;
+  name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  planned_for: string; // YYYY-MM-DD
+  planned_period: PlanPeriod;
+  plan_count: number;
+  preview_avatars: { user_id: string; url: string }[];
+  distance: number;
+}

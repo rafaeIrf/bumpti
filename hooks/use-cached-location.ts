@@ -146,3 +146,6 @@ export const invalidateLocationCache = () => {
   cachedLocation = null;
   lastFetchTime = 0;
 };
+
+// Expose cached location for non-hook consumers (e.g. redux-provider)
+export const getCachedLocation = () => cachedLocation;

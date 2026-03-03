@@ -1,6 +1,7 @@
 import { ShareIcon } from "@/assets/icons";
 import MapPinIcon from "@/assets/icons/map-pin.svg";
 
+import { StackedAvatars } from "@/components/stacked-avatars";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { InputText } from "@/components/ui/input-text";
@@ -8,6 +9,7 @@ import { spacing, typography } from "@/constants/theme";
 
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
+import { computeExpiresAt, createPlan } from "@/modules/plans/api";
 import type { ActivePlan } from "@/modules/plans/hooks";
 import { createPlanInvite } from "@/modules/plans/invite";
 import { getPeriodLabel } from "@/utils/date";
@@ -34,6 +36,8 @@ import Carousel from "react-native-reanimated-carousel";
 
 interface PlanHeroProps {
   plans: ActivePlan[];
+  allPlans?: ActivePlan[];
+  userHasPlans?: boolean;
   initialIndex?: number;
   onViewPeoplePress?: (plan: ActivePlan) => void;
   defaultConfirmedCount?: number;
@@ -109,6 +113,7 @@ function PlanCard({
   const router = useRouter();
   const confirmedCount = plan.confirmedCount;
   const [sharing, setSharing] = useState(false);
+  const [joining, setJoining] = useState(false);
 
   // Track whether the touch moved horizontally (i.e. was a carousel swipe)
   const touchStartX = useRef<number | null>(null);
@@ -126,6 +131,8 @@ function PlanCard({
   const handleCardPress = () => {
     // Suppress press when the user was swiping the carousel
     if (didScroll.current) return;
+    // Community plans: card tap is a no-op — use the "Entrar" button instead
+    if (!plan.isOwn) return;
     trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_VIBE_CHECK_CLICKED, {});
     Haptics.selectionAsync();
     router.push({
@@ -176,7 +183,7 @@ function PlanCard({
       >
         {/* Top-right action buttons */}
         <View style={styles.topRightActions}>
-          {/* Share invite */}
+          {/* Share invite — for community plans, auto-join first */}
           <Pressable
             onPress={async (e) => {
               e.stopPropagation();
@@ -184,15 +191,34 @@ function PlanCard({
               setSharing(true);
               Haptics.selectionAsync();
               try {
-                const inviteUrl = await createPlanInvite(plan.id);
+                let presenceId = plan.isOwn ? plan.id : null;
+
+                // For community plans, join first to get a presence_id
+                if (!plan.isOwn) {
+                  const result = await createPlan({
+                    placeId: plan.placeId,
+                    plannedFor: plan.plannedFor,
+                    period: plan.plannedPeriod,
+                    expiresAt: computeExpiresAt(
+                      plan.plannedFor,
+                      plan.plannedPeriod,
+                    ),
+                  });
+                  presenceId = result?.id ?? null;
+                }
+
+                if (!presenceId) {
+                  setSharing(false);
+                  return;
+                }
+
+                const inviteUrl = await createPlanInvite(presenceId);
                 setSharing(false);
                 if (inviteUrl) {
                   const message = t("screens.home.planHero.shareMessage", {
                     placeName: plan.locationName,
                   });
                   await Share.share({
-                    // Android ignores `url`, so we append the link to `message`.
-                    // iOS uses `url` separately (enables link preview / image).
                     message:
                       Platform.OS === "android"
                         ? `${message}\n${inviteUrl}`
@@ -244,32 +270,76 @@ function PlanCard({
         </View>
 
         <View style={styles.activePlanFooter}>
-          <ThemedText
-            style={[
-              typography.caption,
-              styles.confirmedText,
-              { color: "#FFFFFF" },
-            ]}
-          >
-            {confirmedCount > 0
-              ? confirmedCount === 1
-                ? t("screens.home.planHero.confirmedOne", {
-                    count: confirmedCount,
-                  })
-                : t("screens.home.planHero.confirmed", {
-                    count: confirmedCount,
-                  })
-              : t("screens.home.planHero.beFirstToConfirm")}
-          </ThemedText>
+          {plan.previewAvatars && plan.previewAvatars.length > 0 ? (
+            <StackedAvatars
+              avatars={plan.previewAvatars}
+              totalCount={confirmedCount}
+              maxVisible={3}
+              avatarStyle={{ borderColor: "rgba(255,255,255,0.6)" }}
+            />
+          ) : (
+            <ThemedText
+              style={[
+                typography.caption,
+                styles.confirmedText,
+                { color: "#FFFFFF" },
+              ]}
+            >
+              {confirmedCount > 0
+                ? confirmedCount === 1
+                  ? t("screens.home.planHero.confirmedOne", {
+                      count: confirmedCount,
+                    })
+                  : t("screens.home.planHero.confirmed", {
+                      count: confirmedCount,
+                    })
+                : t("screens.home.planHero.beFirstToConfirm")}
+            </ThemedText>
+          )}
 
           <Button
-            onPress={(e: any) => {
+            onPress={async (e: any) => {
               e?.stopPropagation?.();
-              onViewPeople();
+              if (plan.isOwn) {
+                onViewPeople();
+              } else {
+                // Auto-join the community plan, then open vibe-check
+                setJoining(true);
+                try {
+                  const result = await createPlan({
+                    placeId: plan.placeId,
+                    plannedFor: plan.plannedFor,
+                    period: plan.plannedPeriod,
+                    expiresAt: computeExpiresAt(
+                      plan.plannedFor,
+                      plan.plannedPeriod,
+                    ),
+                  });
+                  if (result) {
+                    router.push({
+                      pathname: "/(modals)/vibe-check",
+                      params: {
+                        placeId: plan.placeId,
+                        placeName: plan.locationName,
+                        plannedFor: plan.plannedFor,
+                        planPeriod: t(
+                          `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
+                        ),
+                      },
+                    });
+                  }
+                } finally {
+                  setJoining(false);
+                }
+              }
             }}
-            loading={loading}
+            loading={loading || joining}
             style={[{ backgroundColor: "rgba(255, 255, 255, 0.2)" }]}
-            label={t("screens.home.planHero.activeState.viewPeopleButton")}
+            label={
+              plan.isOwn
+                ? t("screens.home.planHero.activeState.viewPeopleButton")
+                : t("screens.home.planHero.activeState.joinCommunityButton")
+            }
             textStyle={[typography.caption, { color: "#FFFFFF" }]}
           />
         </View>
@@ -292,21 +362,152 @@ function PlanCard({
 }
 
 // ──────────────────────────────────────────────
+// Empty State Slide (carousel-ready)
+// ──────────────────────────────────────────────
+
+function EmptyStateSlide({
+  onPress,
+  totalCommunityPlans,
+  isFirst,
+  isLast,
+  showDots,
+  totalItems,
+  currentIndex,
+}: {
+  onPress: () => void;
+  totalCommunityPlans: number;
+  isFirst: boolean;
+  isLast: boolean;
+  showDots: boolean;
+  totalItems: number;
+  currentIndex: number;
+}) {
+  return (
+    <Pressable onPress={onPress} style={{ flex: 1 }}>
+      <LinearGradient
+        colors={["#E94B7D", "#FF7A5C"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.gradient,
+          isFirst && {
+            borderTopLeftRadius: spacing.lg,
+            borderBottomLeftRadius: spacing.lg,
+          },
+          isLast && {
+            borderTopRightRadius: spacing.lg,
+            borderBottomRightRadius: spacing.lg,
+          },
+        ]}
+      >
+        <ThemedText
+          style={[typography.subheading2, styles.title, { color: "#FFFFFF" }]}
+        >
+          {t("screens.home.planHero.emptyState.title")}
+        </ThemedText>
+
+        <ThemedText
+          style={[
+            typography.caption,
+            styles.subtitle,
+            { color: "rgba(255, 255, 255, 0.85)" },
+          ]}
+        >
+          {totalCommunityPlans > 0
+            ? totalCommunityPlans === 1
+              ? t("screens.home.planHero.emptyState.subtitleWithOne", {
+                  count: totalCommunityPlans,
+                })
+              : t("screens.home.planHero.emptyState.subtitleWithPeople", {
+                  count: totalCommunityPlans,
+                })
+            : t("screens.home.planHero.emptyState.subtitle")}
+        </ThemedText>
+
+        <View pointerEvents="none">
+          <InputText
+            value=""
+            onChangeText={() => {}}
+            placeholder={t("screens.home.planHero.emptyState.locationButton")}
+            editable={false}
+            autoFocus={false}
+            leftIcon={MapPinIcon}
+            leftIconColor="rgba(255, 255, 255, 0.8)"
+            showClearButton={false}
+            containerStyle={{ flex: 0, marginBottom: spacing.sm }}
+            inputStyle={{
+              backgroundColor: "rgba(255, 255, 255, 0.25)",
+              borderColor: "transparent",
+              color: "#FFFFFF",
+            }}
+            placeholderTextColor="rgba(255, 255, 255, 0.8)"
+          />
+        </View>
+
+        {/* Pagination Dots */}
+        {showDots && (
+          <View style={styles.dotsContainer}>
+            {Array.from({ length: totalItems }).map((_, index) => (
+              <PaginationDot
+                key={index}
+                index={index}
+                currentIndex={currentIndex}
+              />
+            ))}
+          </View>
+        )}
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+// ──────────────────────────────────────────────
 // PlanHero (main export)
 // ──────────────────────────────────────────────
 
 export function PlanHero({
   plans,
+  allPlans = [],
+  userHasPlans = false,
   initialIndex = 0,
   onViewPeoplePress,
-  defaultConfirmedCount = 10,
+  defaultConfirmedCount = 0,
   loading = false,
 }: PlanHeroProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const visiblePlans = plans.slice(0, 5);
+  // Merge: keep backend sort order, swap in user's version where they overlap
+  const visiblePlans = React.useMemo(() => {
+    const userByKey = new Map(
+      plans.map((p) => [`${p.placeId}_${p.plannedFor}_${p.plannedPeriod}`, p]),
+    );
+    const usedKeys = new Set<string>();
+
+    // Walk feed in backend order; swap in user plan if it exists for that slot
+    const merged = allPlans.map((fp) => {
+      const key = `${fp.placeId}_${fp.plannedFor}_${fp.plannedPeriod}`;
+      const userPlan = userByKey.get(key);
+      if (userPlan) {
+        usedKeys.add(key);
+        // Keep user's plan (isOwn + presence ID) but preserve feed avatars/count
+        return {
+          ...userPlan,
+          previewAvatars: fp.previewAvatars,
+          confirmedCount: fp.confirmedCount,
+        };
+      }
+      return fp;
+    });
+
+    // Append user plans that weren't in the feed
+    for (const [key, p] of userByKey) {
+      if (!usedKeys.has(key)) merged.push(p);
+    }
+
+    return merged.slice(0, 10);
+  }, [plans, allPlans]);
 
   const handleLocationPress = () => {
     Haptics.selectionAsync();
@@ -325,10 +526,12 @@ export function PlanHero({
     [onViewPeoplePress],
   );
 
-  const confirmedCount =
-    visiblePlans[currentIndex]?.confirmedCount ?? defaultConfirmedCount;
+  const totalCommunityPlans = visiblePlans
+    .filter((p) => !p.isOwn)
+    .reduce((sum, p) => sum + (p.confirmedCount ?? 0), 0);
 
   const hasPlans = visiblePlans.length > 0;
+  const showEmptyFirst = !userHasPlans;
 
   return (
     <Animated.View
@@ -336,37 +539,65 @@ export function PlanHero({
       style={styles.container}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
-      {hasPlans && containerWidth > 0 ? (
+      {(hasPlans || showEmptyFirst) && containerWidth > 0 ? (
         <>
           <Carousel
             loop={false}
             width={containerWidth}
-            height={160}
-            data={visiblePlans}
-            defaultIndex={initialIndex}
+            height={
+              (showEmptyFirst ? visiblePlans.length + 1 : visiblePlans.length) >
+              1
+                ? 188
+                : 160
+            }
+            data={showEmptyFirst ? [null, ...visiblePlans] : visiblePlans}
+            defaultIndex={0}
             scrollAnimationDuration={300}
             overscrollEnabled={false}
             onProgressChange={(_, absoluteProgress) => {
               const newIndex = Math.round(absoluteProgress);
+              const total = showEmptyFirst
+                ? visiblePlans.length + 1
+                : visiblePlans.length;
               if (
                 newIndex !== currentIndex &&
                 newIndex >= 0 &&
-                newIndex < visiblePlans.length
+                newIndex < total
               ) {
                 setCurrentIndex(newIndex);
               }
             }}
-            renderItem={({ item, index }) => (
-              <PlanCard
-                plan={item}
-                onViewPeople={() => handleViewPeoplePress(item)}
-                loading={loading}
-                showDots={visiblePlans.length > 1}
-                totalPlans={visiblePlans.length}
-                currentIndex={currentIndex}
-                cardIndex={index}
-              />
-            )}
+            renderItem={({ item, index }) => {
+              // Empty-state card when user has no plans (first item)
+              if (item === null) {
+                return (
+                  <EmptyStateSlide
+                    onPress={handleLocationPress}
+                    totalCommunityPlans={totalCommunityPlans}
+                    isFirst
+                    isLast={visiblePlans.length === 0}
+                    showDots={visiblePlans.length > 0}
+                    totalItems={visiblePlans.length + 1}
+                    currentIndex={currentIndex}
+                  />
+                );
+              }
+              const adjustedIndex = showEmptyFirst ? index : index;
+              const totalItems = showEmptyFirst
+                ? visiblePlans.length + 1
+                : visiblePlans.length;
+              return (
+                <PlanCard
+                  plan={item}
+                  onViewPeople={() => handleViewPeoplePress(item)}
+                  loading={loading}
+                  showDots={totalItems > 1}
+                  totalPlans={totalItems}
+                  currentIndex={currentIndex}
+                  cardIndex={adjustedIndex}
+                />
+              );
+            }}
           />
         </>
       ) : hasPlans ? (
@@ -378,75 +609,16 @@ export function PlanHero({
           style={[styles.gradient, { minHeight: 160 }]}
         />
       ) : (
-        /* Empty state */
-        <Pressable onPress={handleLocationPress}>
-          <LinearGradient
-            colors={["#E94B7D", "#FF7A5C"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradient}
-          >
-            <ThemedText
-              style={[
-                typography.subheading2,
-                styles.title,
-                { color: "#FFFFFF" },
-              ]}
-            >
-              {t("screens.home.planHero.emptyState.title")}
-            </ThemedText>
-
-            <ThemedText
-              style={[
-                typography.caption,
-                styles.subtitle,
-                { color: "rgba(255, 255, 255, 0.85)" },
-              ]}
-            >
-              {t("screens.home.planHero.emptyState.subtitle")}
-            </ThemedText>
-
-            <View pointerEvents="none">
-              <InputText
-                value=""
-                onChangeText={() => {}}
-                placeholder={t(
-                  "screens.home.planHero.emptyState.locationButton",
-                )}
-                editable={false}
-                autoFocus={false}
-                leftIcon={MapPinIcon}
-                leftIconColor="rgba(255, 255, 255, 0.8)"
-                showClearButton={false}
-                containerStyle={{ flex: 0, marginBottom: spacing.sm }}
-                inputStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.25)",
-                  borderColor: "transparent",
-                  color: "#FFFFFF",
-                }}
-                placeholderTextColor="rgba(255, 255, 255, 0.8)"
-              />
-            </View>
-
-            {confirmedCount > 0 && (
-              <ThemedText
-                style={[
-                  typography.caption,
-                  styles.confirmedText,
-                  { color: "#FFFFFF" },
-                ]}
-              >
-                {confirmedCount === 1
-                  ? t("screens.home.planHero.emptyState.confirmedOne", {
-                      count: confirmedCount,
-                    })
-                  : t("screens.home.planHero.emptyState.confirmed", {
-                      count: confirmedCount,
-                    })}
-              </ThemedText>
-            )}
-          </LinearGradient>
-        </Pressable>
+        /* Empty state — no plans at all, not even community */
+        <EmptyStateSlide
+          onPress={handleLocationPress}
+          totalCommunityPlans={0}
+          isFirst
+          isLast
+          showDots={false}
+          totalItems={1}
+          currentIndex={0}
+        />
       )}
     </Animated.View>
   );
@@ -530,5 +702,15 @@ const styles = StyleSheet.create({
   dot: {
     height: 6,
     borderRadius: 3,
+  },
+  confirmedBadge: {
+    position: "absolute",
+    top: spacing.md,
+    right: spacing.md,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 100,
+    zIndex: 5,
   },
 });

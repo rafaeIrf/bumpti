@@ -728,13 +728,16 @@
         "emptyState": {
           "title": "Planeje sua semana",
           "subtitle": "Veja quem vai e conecte-se antecipadamente",
+          "subtitleWithOne": "{{count}} pessoa já está planejando por aqui!",
+          "subtitleWithPeople": "{{count}} pessoas já planejando por aqui!",
           "locationButton": "Onde você vai se conectar?",
           "confirmedOne": "{{count}} pessoa confirmou hoje",
           "confirmed": "{{count}} pessoas confirmaram hoje"
         },
         "activeState": {
           "title": "Seu próximo plano",
-          "viewPeopleButton": "Entrar"
+          "viewPeopleButton": "Ver quem vai",
+          "joinCommunityButton": "Vou também!"
         },
         "confirmedOne": "{{count}} pessoa confirmou",
         "confirmed": "{{count}} pessoas confirmaram",
@@ -760,6 +763,7 @@
         "createPlan": "Criar novo plano",
         "emptyTitle": "Nenhum plano ainda",
         "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
+        "activeUsersOne": "{{count}} pessoa",
         "activeUsers": "{{count}} pessoas",
         "viewPeople": "Entrar",
         "deletePlan": "Excluir plano",

@@ -30,8 +30,8 @@ import {
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
-import { fetchSuggestedPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
+import { useAllPlansFeed } from "@/modules/plans/use-all-plans-feed";
 import { updateProfile } from "@/modules/profile";
 import { useAppDispatch } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
@@ -47,7 +47,6 @@ export default function HomeScreen() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [todayPlansCount, setTodayPlansCount] = useState(0);
 
   const { profile, refetch: refetchProfile } = useProfile();
   const dispatch = useAppDispatch();
@@ -72,27 +71,23 @@ export default function HomeScreen() {
   // This ensures the count updates when places with 0 active_users are filtered out
   const trendingCount = trendingData?.places?.length ?? 0;
 
+  // Get user plans for PlanHero carousel
+  const { sortedPlans, initialIndex } = useUserPlans();
+  const userHasPlans = sortedPlans.length > 0;
+
+  // Fetch community plan feed for PlanHero
+  const { feedPlans, refetch: refetchFeed } = useAllPlansFeed();
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchProfile(), refetchTrending()]);
+      await Promise.all([refetchProfile(), refetchTrending(), refetchFeed()]);
     } catch (error) {
       logger.error("[HomeScreen] Failed to refresh", error);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchProfile, refetchTrending]);
-
-  // Get user plans for PlanHero carousel
-  const { sortedPlans, initialIndex } = useUserPlans();
-
-  // Fetch today's plans count for PlanHero social proof
-  useEffect(() => {
-    if (!location?.latitude || !location?.longitude) return;
-    fetchSuggestedPlans(location.latitude, location.longitude).then(
-      ({ totalCount }) => setTodayPlansCount(totalCount),
-    );
-  }, [location?.latitude, location?.longitude]);
+  }, [refetchProfile, refetchTrending, refetchFeed]);
 
   // Detection banner — disabled when city override is active (user is browsing remotely)
   const { place: detectedPlace, dismiss: dismissDetectedPlace } =
@@ -235,9 +230,10 @@ export default function HomeScreen() {
           {/* Plan Hero - Create or view plans */}
           <PlanHero
             plans={sortedPlans}
+            allPlans={feedPlans}
+            userHasPlans={userHasPlans}
             initialIndex={initialIndex}
             loading={planLoading}
-            defaultConfirmedCount={todayPlansCount}
             onViewPeoplePress={async (plan) => {
               setPlanLoading(true);
               try {
