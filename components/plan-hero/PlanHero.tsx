@@ -531,7 +531,12 @@ export function PlanHero({
     .reduce((sum, p) => sum + (p.confirmedCount ?? 0), 0);
 
   const hasPlans = visiblePlans.length > 0;
-  const showEmptyFirst = !userHasPlans;
+  // Show empty-state slide when user has no own plans.
+  // Keep it while userHasPlans is true but visiblePlans is still empty
+  // (race condition right after joining a community plan — feed hasn't refetched yet).
+  // allPlans.length > 0 acts as a guard: if there was a feed before, keep showing.
+  const showEmptyFirst =
+    !userHasPlans || (userHasPlans && !hasPlans && allPlans.length > 0);
 
   return (
     <Animated.View
