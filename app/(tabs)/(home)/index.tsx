@@ -2,6 +2,7 @@ import {
   CalendarIcon,
   FlameIcon,
   MapIcon,
+  SearchIcon,
   SlidersHorizontalIcon,
 } from "@/assets/icons";
 
@@ -208,6 +209,12 @@ export default function HomeScreen() {
               router.push("main/filters" as any);
             },
             ariaLabel: t("screens.home.toolbar.filters"),
+            color: colors.icon,
+          }}
+          rightActions={{
+            icon: SearchIcon,
+            onClick: () => router.push("/(modals)/place-search"),
+            ariaLabel: t("screens.home.toolbar.search"),
             color: colors.icon,
           }}
           customTitleView={<BumptiWideLogo height={28} width={100} />}
