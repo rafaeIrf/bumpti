@@ -836,7 +836,7 @@
           "periodDescriptions": {
             "morning": "6am - 12pm",
             "lunch": "12pm - 2pm",
-            "afternoon": "2pm - 6pm",
+            "afternoon": "12pm - 6pm",
             "night": "After 6pm",
             "late_night": "12am - 6am"
           },

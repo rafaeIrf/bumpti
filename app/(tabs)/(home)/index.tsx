@@ -31,6 +31,7 @@ import {
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
+import { fetchAndSetUserPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
 import { useAllPlansFeed } from "@/modules/plans/use-all-plans-feed";
 import { updateProfile } from "@/modules/profile";
@@ -99,6 +100,7 @@ export default function HomeScreen() {
         refetchTrending(),
         refetchFeed(),
         refetchDetection(),
+        fetchAndSetUserPlans(),
       ]);
     } catch (error) {
       logger.error("[HomeScreen] Failed to refresh", error);
