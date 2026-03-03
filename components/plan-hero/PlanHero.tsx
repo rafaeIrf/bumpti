@@ -544,12 +544,7 @@ export function PlanHero({
           <Carousel
             loop={false}
             width={containerWidth}
-            height={
-              (showEmptyFirst ? visiblePlans.length + 1 : visiblePlans.length) >
-              1
-                ? 188
-                : 160
-            }
+            height={160}
             data={showEmptyFirst ? [null, ...visiblePlans] : visiblePlans}
             defaultIndex={0}
             scrollAnimationDuration={300}
