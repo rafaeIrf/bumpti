@@ -79,25 +79,33 @@ export default function HomeScreen() {
   // Fetch community plan feed for PlanHero
   const { feedPlans, refetch: refetchFeed } = useAllPlansFeed();
 
+  // Detection banner — disabled when city override is active (user is browsing remotely)
+  const {
+    place: detectedPlace,
+    dismiss: dismissDetectedPlace,
+    refetch: refetchDetection,
+  } = useDetectionBanner({
+    latitude: location?.latitude,
+    longitude: location?.longitude,
+    accuracy: location?.accuracy,
+    enabled: !!location?.latitude && !!location?.longitude && !cityOverride,
+  });
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchProfile(), refetchTrending(), refetchFeed()]);
+      await Promise.all([
+        refetchProfile(),
+        refetchTrending(),
+        refetchFeed(),
+        refetchDetection(),
+      ]);
     } catch (error) {
       logger.error("[HomeScreen] Failed to refresh", error);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchProfile, refetchTrending, refetchFeed]);
-
-  // Detection banner — disabled when city override is active (user is browsing remotely)
-  const { place: detectedPlace, dismiss: dismissDetectedPlace } =
-    useDetectionBanner({
-      latitude: location?.latitude,
-      longitude: location?.longitude,
-      accuracy: location?.accuracy,
-      enabled: !!location?.latitude && !!location?.longitude && !cityOverride,
-    });
+  }, [refetchProfile, refetchTrending, refetchFeed, refetchDetection]);
 
   // Place click handler for auto check-in
   const { handlePlaceClick } = usePlaceClick();

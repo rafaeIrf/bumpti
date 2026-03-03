@@ -49,7 +49,7 @@ export default function SocialHubsScreen() {
           variant="single"
           primaryLabel={t("common.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={selectedPlaceIds.length === 0}
+          primaryDisabled={selectedPlaceIds.length < 2}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet

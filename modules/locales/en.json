@@ -1177,7 +1177,7 @@
       },
       "socialHubs": {
         "title": "Your Social Hubs",
-        "subtitle": "Choose 1 to 6 places where you'd like to meet people.",
+        "subtitle": "Choose at least 2 places where you'd like to meet people.",
         "others": "Others"
       },
       "locationTitle": "Your location",
