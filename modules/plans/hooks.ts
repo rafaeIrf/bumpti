@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import type { UserAvatar } from "@/modules/places/types";
 import { useAppSelector } from "../store/hooks";
 import type { PlanPeriod, UserPlan } from "./types";
 
@@ -23,6 +24,9 @@ export interface ActivePlan {
   confirmedCount: number;
   plannedFor: string;
   plannedPeriod: PlanPeriod;
+  previewAvatars: UserAvatar[];
+  /** Whether this plan belongs to the current user */
+  isOwn: boolean;
 }
 
 function toActivePlan(p: UserPlan): ActivePlan {
@@ -33,6 +37,8 @@ function toActivePlan(p: UserPlan): ActivePlan {
     confirmedCount: p.active_users,
     plannedFor: p.planned_for,
     plannedPeriod: p.planned_period,
+    previewAvatars: [],
+    isOwn: true,
   };
 }
 
