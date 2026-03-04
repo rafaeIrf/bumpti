@@ -223,7 +223,7 @@ export default function HomeScreen() {
           }}
           rightActions={{
             icon: SearchIcon,
-            onClick: () => router.push("/(modals)/place-search"),
+            onClick: () => router.push("/main/place-search"),
             ariaLabel: t("screens.home.toolbar.search"),
             color: colors.icon,
           }}

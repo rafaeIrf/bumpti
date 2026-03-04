@@ -478,6 +478,12 @@ export function PlanHero({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  // Once the hero has ever shown content (own or community plans), we never
+  // hide it during transient empty states (e.g. async fetchAndSetUserPlans
+  // fires and flips userHasPlans=true before allPlans has synced).
+  // We only hide when BOTH sources are definitively empty.
+  const hasEverHadContent = React.useRef(false);
+
   // Merge: keep backend sort order, swap in user's version where they overlap
   const visiblePlans = React.useMemo(() => {
     const userByKey = new Map(
@@ -531,12 +537,17 @@ export function PlanHero({
     .reduce((sum, p) => sum + (p.confirmedCount ?? 0), 0);
 
   const hasPlans = visiblePlans.length > 0;
-  // Show empty-state slide when user has no own plans.
-  // Keep it while userHasPlans is true but visiblePlans is still empty
-  // (race condition right after joining a community plan — feed hasn't refetched yet).
-  // allPlans.length > 0 acts as a guard: if there was a feed before, keep showing.
-  const showEmptyFirst =
-    !userHasPlans || (userHasPlans && !hasPlans && allPlans.length > 0);
+
+  // Mark once we've ever had displayable content
+  if (hasPlans || allPlans.length > 0 || !userHasPlans) {
+    hasEverHadContent.current = true;
+  }
+  // Reset only when truly nothing exists anymore
+  if (plans.length === 0 && allPlans.length === 0) {
+    hasEverHadContent.current = false;
+  }
+
+  const showEmptyFirst = !userHasPlans || (userHasPlans && !hasPlans);
 
   return (
     <Animated.View
@@ -544,7 +555,8 @@ export function PlanHero({
       style={styles.container}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
-      {(hasPlans || showEmptyFirst) && containerWidth > 0 ? (
+      {(hasPlans || showEmptyFirst || hasEverHadContent.current) &&
+      containerWidth > 0 ? (
         <>
           <Carousel
             loop={false}
