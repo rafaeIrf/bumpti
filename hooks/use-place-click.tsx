@@ -277,6 +277,19 @@ export function usePlaceClick() {
         return;
       }
 
+      // Plan entries are always free — skip boundary check and credits
+      if (params.plannedFor) {
+        logger.log("[PlaceClick] Plan entry — navigating directly");
+        navigateToPlacePeople(
+          params.placeId,
+          params.name || "Unknown",
+          params.distance,
+          params.plannedFor,
+          params.plannedPeriod,
+        );
+        return;
+      }
+
       if (!userLocation?.latitude || !userLocation?.longitude) {
         logger.info("[PlaceClick] Missing user location, forcing locked state");
         handleConnectionBottomSheet(params, "locked");
