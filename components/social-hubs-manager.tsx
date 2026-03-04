@@ -1,9 +1,11 @@
 import {
   AwardIcon,
   BeerIcon,
+  ChevronRightIcon,
   CoffeeIcon,
   DumbbellIcon,
   GraduationCapIcon,
+  MapPinIcon,
   MartiniIcon,
   SearchIcon,
   TreesIcon,
@@ -17,7 +19,7 @@ import { t } from "@/modules/locales";
 import { PlaceCategory } from "@/modules/places/types";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -187,6 +189,58 @@ export function useSocialHubs({
     });
   }, []);
 
+  const handlePopularHubsPress = useCallback(() => {
+    // @ts-ignore
+    globalThis.__popularHubsCallback = (result: {
+      added: { id: string; name: string; category?: string }[];
+      removed: string[];
+    }) => {
+      // Remove deselected hubs
+      if (result.removed.length > 0) {
+        setSelectedHubs((prev) => {
+          const updated = { ...prev };
+          result.removed.forEach((id) => delete updated[id]);
+          return updated;
+        });
+        setHubCategories((prev) => {
+          const updated = { ...prev };
+          result.removed.forEach((id) => delete updated[id]);
+          return updated;
+        });
+      }
+
+      // Add newly selected hubs
+      if (result.added.length > 0) {
+        setSelectedHubs((prev) => {
+          const updated = { ...prev };
+          result.added.forEach((p) => {
+            if (Object.keys(updated).length < MAX_SOCIAL_HUBS) {
+              updated[p.id] = p.name;
+            }
+          });
+          return updated;
+        });
+
+        setHubCategories((prev) => {
+          const updated = { ...prev };
+          result.added.forEach((p) => {
+            updated[p.id] = p.category
+              ? mapCategoryToGridId(p.category)
+              : "others";
+          });
+          return updated;
+        });
+      }
+    };
+
+    router.push({
+      pathname: "/(modals)/popular-hubs" as any,
+      params: {
+        selectedIds: JSON.stringify(Object.keys(selectedHubsRef.current)),
+      },
+    });
+  }, [router]);
+
   const allSelectedPlaces = useMemo(
     () =>
       selectedPlaceIds.map((id) => ({
@@ -206,6 +260,7 @@ export function useSocialHubs({
     getCountForCategory,
     handleCategoryPress,
     handleRemoveHub,
+    handlePopularHubsPress,
     allSelectedPlaces,
   };
 }
@@ -217,6 +272,7 @@ export interface SocialHubsContentProps {
   getCountForCategory: (categoryId: string) => number;
   handleCategoryPress: (category: HubCategory) => void;
   onSearchPress?: () => void;
+  onPopularHubsPress?: () => void;
 }
 
 export function SocialHubsContent({
@@ -224,6 +280,7 @@ export function SocialHubsContent({
   getCountForCategory,
   handleCategoryPress,
   onSearchPress,
+  onPopularHubsPress,
 }: SocialHubsContentProps) {
   const colors = useThemeColors();
 
@@ -355,8 +412,55 @@ export function SocialHubsContent({
         </ThemedText>
       </Animated.View>
 
+      {onPopularHubsPress && (
+        <Animated.View entering={FadeInDown.delay(180).springify()}>
+          <Pressable
+            onPress={onPopularHubsPress}
+            style={({ pressed }) => [
+              styles.popularCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+              pressed && styles.popularCardPressed,
+            ]}
+          >
+            <View
+              style={[
+                styles.popularIconContainer,
+                { backgroundColor: `${colors.accent}15` },
+              ]}
+            >
+              <MapPinIcon width={20} height={20} color={colors.accent} />
+            </View>
+            <View style={styles.popularTextContainer}>
+              <ThemedText
+                style={[
+                  typography.body,
+                  { color: colors.text, fontWeight: "600" },
+                ]}
+                numberOfLines={1}
+              >
+                {t("screens.onboarding.socialHubs.popular.cardTitle")}
+              </ThemedText>
+              <ThemedText
+                style={[typography.caption, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
+                {t("screens.onboarding.socialHubs.popular.cardSubtitle")}
+              </ThemedText>
+            </View>
+            <ChevronRightIcon
+              width={24}
+              height={24}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        </Animated.View>
+      )}
+
       <Animated.View
-        entering={FadeInDown.delay(200).springify()}
+        entering={FadeInDown.delay(250).springify()}
         style={styles.gridContainer}
       >
         <FlatList
@@ -412,6 +516,30 @@ const styles = StyleSheet.create({
   },
   row: {
     gap: spacing.sm,
+  },
+  popularCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.lg,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  popularCardPressed: {
+    opacity: 0.7,
+  },
+  popularIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  popularTextContainer: {
+    flex: 1,
+    gap: 2,
   },
 });
 

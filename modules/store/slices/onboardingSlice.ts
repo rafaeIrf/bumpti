@@ -5,7 +5,6 @@ export type OnboardingStep =
   | "user-age"
   | "user-gender"
   | "connect-with"
-  | "intention"
   | "user-photos"
   | "user-bio"
   | "interests"

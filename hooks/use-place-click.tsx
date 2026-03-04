@@ -24,6 +24,9 @@ export interface PlaceInteractionParams {
   longitude: number;
   distance?: number;
   active_users?: number;
+  // Planning context — when present, place-people opens in planning mode
+  plannedFor?: string; // 'YYYY-MM-DD'
+  plannedPeriod?: string; // 'morning' | 'afternoon' | 'night'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,13 +44,21 @@ export function usePlaceClick() {
   // ───────────────────────────────────────────────────────────────────────────
 
   const navigateToPlacePeople = useCallback(
-    (placeId: string, placeName: string, distance?: number) => {
-      const distanceKm = distance ?? 0;
+    (
+      placeId: string,
+      placeName: string,
+      distance?: number,
+      plannedFor?: string,
+      plannedPeriod?: string,
+    ) => {
       router.push({
         pathname: "/(modals)/place-people",
         params: {
           placeId,
           placeName,
+          ...(plannedFor
+            ? { plannedFor, plannedPeriod: plannedPeriod ?? "" }
+            : {}),
         },
       });
     },
@@ -151,6 +162,8 @@ export function usePlaceClick() {
             params.placeId,
             params.name || "Unknown",
             params.distance,
+            params.plannedFor,
+            params.plannedPeriod,
           );
         } else {
           // Track failure
@@ -206,6 +219,8 @@ export function usePlaceClick() {
               params.placeId,
               params.name || "Unknown",
               params.distance,
+              params.plannedFor,
+              params.plannedPeriod,
             );
           } else {
             logger.warn("[PlaceClick] Entry failed even with credits");
@@ -262,6 +277,19 @@ export function usePlaceClick() {
         return;
       }
 
+      // Plan entries are always free — skip boundary check and credits
+      if (params.plannedFor) {
+        logger.log("[PlaceClick] Plan entry — navigating directly");
+        navigateToPlacePeople(
+          params.placeId,
+          params.name || "Unknown",
+          params.distance,
+          params.plannedFor,
+          params.plannedPeriod,
+        );
+        return;
+      }
+
       if (!userLocation?.latitude || !userLocation?.longitude) {
         logger.info("[PlaceClick] Missing user location, forcing locked state");
         handleConnectionBottomSheet(params, "locked");
@@ -281,6 +309,8 @@ export function usePlaceClick() {
           params.placeId,
           params.name || "Unknown",
           params.distance,
+          params.plannedFor,
+          params.plannedPeriod,
         );
         return;
       }

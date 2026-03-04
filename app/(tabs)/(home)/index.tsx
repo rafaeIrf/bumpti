@@ -2,6 +2,7 @@ import {
   CalendarIcon,
   FlameIcon,
   MapIcon,
+  SearchIcon,
   SlidersHorizontalIcon,
 } from "@/assets/icons";
 
@@ -20,6 +21,7 @@ import { useCachedLocation } from "@/hooks/use-cached-location";
 import { useDetectionBanner } from "@/hooks/use-detection-banner";
 import { usePermissionSheet } from "@/hooks/use-permission-sheet";
 import { usePlaceClick } from "@/hooks/use-place-click";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import {
   ANALYTICS_EVENTS,
@@ -29,10 +31,11 @@ import {
 import { t } from "@/modules/locales";
 import type { DetectedPlace } from "@/modules/places/api";
 import { useGetTrendingPlacesQuery } from "@/modules/places/placesApi";
-import { fetchSuggestedPlans } from "@/modules/plans/api";
+import { fetchAndSetUserPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
-import { updateProfile } from "@/modules/profile/api";
-import { useAppDispatch, useAppSelector } from "@/modules/store/hooks";
+import { useAllPlansFeed } from "@/modules/plans/use-all-plans-feed";
+import { updateProfile } from "@/modules/profile";
+import { useAppDispatch } from "@/modules/store/hooks";
 import { setProfile } from "@/modules/store/slices/profileSlice";
 import { logger } from "@/utils/logger";
 import { router } from "expo-router";
@@ -45,53 +48,69 @@ export default function HomeScreen() {
   const { location, cityOverride } = useCachedLocation();
   const [isConnecting, setIsConnecting] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
-  const [todayPlansCount, setTodayPlansCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Get user profile for MyCampusCard
-  const profile = useAppSelector((state) => state.profile.data);
+  const { profile, refetch: refetchProfile } = useProfile();
   const dispatch = useAppDispatch();
 
-  // Get user plans for PlanHero carousel
-  const { sortedPlans, initialIndex } = useUserPlans();
-
-  // Fetch today's plans count for PlanHero social proof
-  useEffect(() => {
-    if (!location?.latitude || !location?.longitude) return;
-    fetchSuggestedPlans(location.latitude, location.longitude).then(
-      ({ totalCount }) => setTodayPlansCount(totalCount),
-    );
-  }, [location?.latitude, location?.longitude]);
-
-  // Detection banner — disabled when city override is active (user is browsing remotely)
-  const { place: detectedPlace, dismiss: dismissDetectedPlace } =
-    useDetectionBanner({
-      latitude: location?.latitude,
-      longitude: location?.longitude,
-      accuracy: location?.accuracy,
-      enabled: !!location?.latitude && !!location?.longitude && !cityOverride,
-    });
-
-  // Place click handler for auto check-in
-  const { handlePlaceClick } = usePlaceClick();
-
   // Trending places count for "No radar" card
-  const { data: trendingData } = useGetTrendingPlacesQuery(
-    location?.latitude && location?.longitude
-      ? {
-          lat: location.latitude,
-          lng: location.longitude,
-          page: 1,
-          pageSize: 20,
-        }
-      : undefined,
-    {
-      skip: !location?.latitude || !location?.longitude,
-      refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
-    },
-  );
+  const { data: trendingData, refetch: refetchTrending } =
+    useGetTrendingPlacesQuery(
+      location?.latitude && location?.longitude
+        ? {
+            lat: location.latitude,
+            lng: location.longitude,
+            page: 1,
+            pageSize: 20,
+          }
+        : undefined,
+      {
+        skip: !location?.latitude || !location?.longitude,
+        refetchOnMountOrArgChange: 15, // Refetch if data is older than 15 seconds
+      },
+    );
   // Use actual count of places in the filtered array, not backend totalCount
   // This ensures the count updates when places with 0 active_users are filtered out
   const trendingCount = trendingData?.places?.length ?? 0;
+
+  // Get user plans for PlanHero carousel
+  const { sortedPlans, initialIndex } = useUserPlans();
+  const userHasPlans = sortedPlans.length > 0;
+
+  // Fetch community plan feed for PlanHero
+  const { feedPlans, refetch: refetchFeed } = useAllPlansFeed();
+
+  // Detection banner — disabled when city override is active (user is browsing remotely)
+  const {
+    place: detectedPlace,
+    dismiss: dismissDetectedPlace,
+    refetch: refetchDetection,
+  } = useDetectionBanner({
+    latitude: location?.latitude,
+    longitude: location?.longitude,
+    accuracy: location?.accuracy,
+    enabled: !!location?.latitude && !!location?.longitude && !cityOverride,
+  });
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchProfile(),
+        refetchTrending(),
+        refetchFeed(),
+        refetchDetection(),
+        fetchAndSetUserPlans(),
+      ]);
+    } catch (error) {
+      logger.error("[HomeScreen] Failed to refresh", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchProfile, refetchTrending, refetchFeed, refetchDetection]);
+
+  // Place click handler for auto check-in
+  const { handlePlaceClick } = usePlaceClick();
 
   // Track detection banner shown
   useEffect(() => {
@@ -189,6 +208,8 @@ export default function HomeScreen() {
   return (
     <BaseTemplateScreen
       ignoreBottomSafeArea
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
       TopHeader={
         <ScreenToolbar
           leftAction={{
@@ -198,6 +219,12 @@ export default function HomeScreen() {
               router.push("main/filters" as any);
             },
             ariaLabel: t("screens.home.toolbar.filters"),
+            color: colors.icon,
+          }}
+          rightActions={{
+            icon: SearchIcon,
+            onClick: () => router.push("/main/place-search"),
+            ariaLabel: t("screens.home.toolbar.search"),
             color: colors.icon,
           }}
           customTitleView={<BumptiWideLogo height={28} width={100} />}
@@ -220,9 +247,10 @@ export default function HomeScreen() {
           {/* Plan Hero - Create or view plans */}
           <PlanHero
             plans={sortedPlans}
+            allPlans={feedPlans}
+            userHasPlans={userHasPlans}
             initialIndex={initialIndex}
             loading={planLoading}
-            defaultConfirmedCount={todayPlansCount}
             onViewPeoplePress={async (plan) => {
               setPlanLoading(true);
               try {

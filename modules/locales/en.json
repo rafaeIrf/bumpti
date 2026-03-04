@@ -728,13 +728,16 @@
         "emptyState": {
           "title": "Plan your week",
           "subtitle": "See who's going and connect in advance",
+          "subtitleWithOne": "{{count}} person already planning nearby!",
+          "subtitleWithPeople": "{{count}} people already planning nearby!",
           "locationButton": "Where will you connect?",
           "confirmedOne": "{{count}} person confirmed today",
           "confirmed": "{{count}} people confirmed today"
         },
         "activeState": {
           "title": "Your next plan",
-          "viewPeopleButton": "Enter"
+          "viewPeopleButton": "See who's going",
+          "joinCommunityButton": "I'm in too!"
         },
         "confirmedOne": "{{count}} person confirmed",
         "confirmed": "{{count}} people confirmed",
@@ -760,6 +763,7 @@
         "createPlan": "Create new plan",
         "emptyTitle": "No plans yet",
         "emptyDescription": "Create your first plan and see who's going!",
+        "activeUsersOne": "{{count}} person",
         "activeUsers": "{{count}} people",
         "viewPeople": "Enter",
         "deletePlan": "Delete plan",
@@ -832,7 +836,7 @@
           "periodDescriptions": {
             "morning": "6am - 12pm",
             "lunch": "12pm - 2pm",
-            "afternoon": "2pm - 6pm",
+            "afternoon": "12pm - 6pm",
             "night": "After 6pm",
             "late_night": "12am - 6am"
           },
@@ -1173,8 +1177,19 @@
       },
       "socialHubs": {
         "title": "Your Social Hubs",
-        "subtitle": "Choose 1 to 6 places where you'd like to meet people.",
-        "others": "Others"
+        "subtitle": "Choose at least 2 places where you'd like to meet people.",
+        "others": "Others",
+        "popular": {
+          "title": "Popular",
+          "subtitle": "Places people in your area choose most",
+          "empty": "No popular hubs in your area yet. Be the first to set yours!",
+          "countLabel": "{{count}} places nearby",
+          "place": "place",
+          "places": "places",
+          "userCount": "{{count}} people",
+          "cardTitle": "Popular near you",
+          "cardSubtitle": "See the most popular spots"
+        }
       },
       "locationTitle": "Your location",
       "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
@@ -1406,7 +1421,7 @@
       "emptySubtitle": "Check in at your favorite spots and discover who shares your vibe.",
       "emptyCta": "Explore places",
       "noEncounters": "No encounters yet. Keep visiting places and we'll find your matches!",
-      "blurCta": "Check in to reveal",
+      "blurCta": "Reveal now",
       "verified": "Verified",
       "infoTitle": "How does Discover work?",
       "infoSubtitle": "We help you reconnect with people who crossed your path in the last 7 days — your Second Chances.",

@@ -1,4 +1,4 @@
-import { HeartIcon } from "@/assets/icons";
+import { CheckIcon } from "@/assets/icons";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
 import { ALL_INTERESTS } from "@/constants/profile-options";
@@ -52,6 +52,7 @@ export default function EncounterCard({
 }: EncounterCardProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  // const { isPremium } = useUserSubscription();
   const isPremium = true;
   const { profile, isLoading } = useHydratedProfile(encounter.other_user_id);
   const isDismissed = useRef(false);
@@ -428,7 +429,7 @@ export default function EncounterCard({
                 },
               ]}
             >
-              <HeartIcon width={20} height={20} fill="#FFFFFF" />
+              <CheckIcon width={20} height={20} color="#FFFFFF" />
             </Pressable>
           )}
         </View>

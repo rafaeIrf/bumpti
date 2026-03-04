@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   gradient: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.lg,
+    height: 96,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
@@ -179,7 +179,6 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flex: 1,
-    gap: 2,
   },
   descRow: {
     flexDirection: "row",
@@ -188,7 +187,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    marginBottom: 2,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     color: "rgba(255, 255, 255, 0.85)",
@@ -197,7 +196,6 @@ const styles = StyleSheet.create({
   badge: {
     backgroundColor: "rgba(255,255,255,0.22)",
     paddingHorizontal: 6,
-    paddingVertical: 1,
     borderRadius: 8,
   },
   badgeText: {

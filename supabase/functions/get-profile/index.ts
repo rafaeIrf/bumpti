@@ -49,7 +49,7 @@ async function enrichUniversity(client: any, universityId: string | null, userId
     client.rpc("get_combined_place_avatars", {
       target_place_id: universityId,
       requesting_user_id: userId,
-      max_avatars: 5,
+      max_avatars: 4,
     }),
   ]);
 
@@ -87,7 +87,7 @@ async function enrichSocialHubs(
       const { data } = await client.rpc("get_combined_place_avatars", {
         target_place_id: hub.id,
         requesting_user_id: userId,
-        max_avatars: 5,
+        max_avatars: 4,
       });
       return {
         ...hub,

@@ -75,7 +75,6 @@ const MyHubCardComponent = memo(function MyHubCard({ hub }: MyHubCardProps) {
     >
       {avatars.length > 0 ? (
         <StackedAvatars
-          style={styles.avatars}
           avatarStyle={styles.avatarBorder}
           avatars={avatars}
           size={24}
@@ -198,9 +197,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: "rgba(255,255,255,0.8)",
     fontWeight: "500",
-  },
-  avatars: {
-    marginTop: spacing.xs,
   },
   avatarBorder: {
     borderColor: "#FFFFFF",

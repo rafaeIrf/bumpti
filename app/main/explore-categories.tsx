@@ -10,9 +10,10 @@ import {
   MartiniIcon,
   TreesIcon,
   TrendingUpIcon,
+  UsersIcon,
   UtensilsCrossedIcon,
 } from "@/assets/icons";
-import { ClubIcon, NearbyIcon } from "@/assets/illustrations";
+import { NearbyIcon } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { CategoryCard } from "@/components/category-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
@@ -152,7 +153,7 @@ export default function ExploreCategoriesScreen() {
       iconBgColor: "rgba(255, 255, 255, 0.2)",
       category: ["club", "sports_centre"],
       color: colors.pastelTeal,
-      illustration: ClubIcon,
+      illustration: UsersIcon,
     },
   ];
 

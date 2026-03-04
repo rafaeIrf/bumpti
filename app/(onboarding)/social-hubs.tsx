@@ -27,6 +27,7 @@ export default function SocialHubsScreen() {
     getCountForCategory,
     handleCategoryPress,
     handleRemoveHub,
+    handlePopularHubsPress,
     allSelectedPlaces,
   } = useSocialHubs({
     searchPath: "/(onboarding)/place-search",
@@ -49,7 +50,7 @@ export default function SocialHubsScreen() {
           variant="single"
           primaryLabel={t("common.continue")}
           onPrimaryPress={handleContinue}
-          primaryDisabled={selectedPlaceIds.length === 0}
+          primaryDisabled={selectedPlaceIds.length < 2}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet
@@ -69,6 +70,7 @@ export default function SocialHubsScreen() {
         selectedPlaceIds={selectedPlaceIds}
         getCountForCategory={getCountForCategory}
         handleCategoryPress={handleCategoryPress}
+        onPopularHubsPress={handlePopularHubsPress}
         onSearchPress={() =>
           handleCategoryPress({
             id: "search",

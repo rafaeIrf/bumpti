@@ -5,11 +5,11 @@ import { MapDataAttribution } from "@/components/map-data-attribution";
 import { PlaceCard } from "@/components/place-card";
 import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { PlacesEmptyState } from "@/components/places-empty-state";
-import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { SearchToolbar } from "@/components/search-toolbar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BrandIcon } from "@/components/ui/brand-icon";
+import { SelectionBottomBar } from "@/components/ui/selection-bottom-bar";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { spacing, typography } from "@/constants/theme";
 import { useCachedLocation } from "@/hooks/use-cached-location";
@@ -750,40 +750,10 @@ export function PlaceSearchContent({
       TopHeader={header}
       BottomBar={
         multiSelectMode && (localSelectedIds.length > 0 || categoryFilter) ? (
-          <ScreenBottomBar variant="custom" showBorder>
-            <View style={styles.bottomBarContent}>
-              <View style={styles.bottomBarText}>
-                <ThemedText
-                  style={[
-                    styles.bottomBarLabel,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {t("common.selected")}
-                </ThemedText>
-                <ThemedText
-                  style={[styles.bottomBarCount, { color: colors.text }]}
-                >
-                  {otherSelectionsCount + localSelectedIds.length}{" "}
-                  {otherSelectionsCount + localSelectedIds.length === 1
-                    ? "lugar"
-                    : "lugares"}
-                </ThemedText>
-              </View>
-              <Pressable
-                onPress={handleDone}
-                style={({ pressed }) => [
-                  styles.doneButton,
-                  { backgroundColor: colors.accent },
-                  pressed && styles.doneButtonPressed,
-                ]}
-              >
-                <ThemedText style={styles.doneButtonText}>
-                  {t("common.done")}
-                </ThemedText>
-              </Pressable>
-            </View>
-          </ScreenBottomBar>
+          <SelectionBottomBar
+            selectedCount={otherSelectionsCount + localSelectedIds.length}
+            onDone={handleDone}
+          />
         ) : undefined
       }
     >
@@ -835,38 +805,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.xl,
     gap: spacing.sm,
-  },
-  clearButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 999,
-  },
-  bottomBarContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: spacing.md,
-  },
-  bottomBarText: {
-    flex: 1,
-  },
-  bottomBarLabel: {
-    ...typography.captionBold,
-  },
-  bottomBarCount: {
-    ...typography.caption,
-  },
-  doneButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 24,
-  },
-  doneButtonPressed: {
-    opacity: 0.8,
-  },
-  doneButtonText: {
-    ...typography.body1,
-    color: "#FFFFFF",
   },
   suggestedSection: {
     paddingTop: spacing.sm,

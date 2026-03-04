@@ -23,6 +23,7 @@ interface UseDetectionBannerResult {
   place: DetectedPlace | null;
   isVisible: boolean;
   dismiss: () => void;
+  refetch: () => void;
 }
 
 /**
@@ -50,7 +51,7 @@ export function useDetectionBanner({
   }, []);
 
   // Query for detected place
-  const { data: detectedPlaceResult } = useDetectPlaceQuery(
+  const { data: detectedPlaceResult, refetch: refetchDetection } = useDetectPlaceQuery(
     {
       latitude: latitude ?? 0,
       longitude: longitude ?? 0,
@@ -125,5 +126,6 @@ export function useDetectionBanner({
     place: visiblePlace,
     isVisible: visiblePlace !== null,
     dismiss,
+    refetch: refetchDetection,
   };
 }

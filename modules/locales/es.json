@@ -728,13 +728,16 @@
         "emptyState": {
           "title": "Planifica tu semana",
           "subtitle": "Ve quién va y conéctate de antemano",
+          "subtitleWithOne": "¡{{count}} persona ya planificando por aquí!",
+          "subtitleWithPeople": "¡{{count}} personas ya planificando por aquí!",
           "locationButton": "¿Dónde te conectarás?",
           "confirmedOne": "{{count}} persona confirmó hoy",
           "confirmed": "{{count}} personas confirmaron hoy"
         },
         "activeState": {
           "title": "Tu próximo plan",
-          "viewPeopleButton": "Entrar"
+          "viewPeopleButton": "Ver quién va",
+          "joinCommunityButton": "¡Yo también voy!"
         },
         "confirmedOne": "{{count}} persona confirmó",
         "confirmed": "{{count}} personas confirmaron",
@@ -760,6 +763,7 @@
         "createPlan": "Crear nuevo plan",
         "emptyTitle": "Sin planes aún",
         "emptyDescription": "¡Crea tu primer plan y mira quién va!",
+        "activeUsersOne": "{{count}} persona",
         "activeUsers": "{{count}} personas",
         "viewPeople": "Entrar",
         "deletePlan": "Eliminar plan",
@@ -832,7 +836,7 @@
           "periodDescriptions": {
             "morning": "6h - 12h",
             "lunch": "12h - 14h",
-            "afternoon": "14h - 18h",
+            "afternoon": "12h - 18h",
             "night": "Después de las 18h",
             "late_night": "00h - 6h"
           },
@@ -1173,8 +1177,19 @@
       },
       "socialHubs": {
         "title": "Tus Hubs sociales",
-        "subtitle": "Elige de 1 a 6 lugares donde te gustaría conocer personas.",
-        "others": "Otros"
+        "subtitle": "Elige al menos 2 lugares donde te gustaría conocer personas.",
+        "others": "Otros",
+        "popular": {
+          "title": "Populares",
+          "subtitle": "Los más elegidos en tu región",
+          "empty": "Aún no hay hubs populares en tu zona. ¡Sé el primero!",
+          "countLabel": "{{count}} lugares cercanos",
+          "place": "lugar",
+          "places": "lugares",
+          "userCount": "{{count}} personas",
+          "cardTitle": "Populares cerca de ti",
+          "cardSubtitle": "Ve los más frecuentados"
+        }
       },
       "locationTitle": "Tu ubicación",
       "locationSubtitle": "Para encontrar personas y lugares cerca de ti, necesitamos tu ubicación. Puedes desactivar esto en cualquier momento",
@@ -1406,7 +1421,7 @@
       "emptySubtitle": "Haz check-in en tus lugares favoritos y descubre quién comparte tus intereses.",
       "emptyCta": "Explorar lugares",
       "noEncounters": "Aún no hay encuentros. ¡Sigue visitando lugares y encontraremos tus matches!",
-      "blurCta": "Haz check-in para revelar",
+      "blurCta": "Revelar ahora",
       "verified": "Verificado",
       "infoTitle": "¿Cómo funciona Discover?",
       "infoSubtitle": "Te ayudamos a reconectar con personas que cruzaron tu camino en los últimos 7 días — tus Segundas Oportunidades.",

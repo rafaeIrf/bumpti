@@ -12,8 +12,6 @@ import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ALL_INTERESTS } from "@/constants/profile-options";
 import { spacing, typography } from "@/constants/theme";
-import { useCachedLocation } from "@/hooks/use-cached-location";
-import { usePlaceClick } from "@/hooks/use-place-click";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { trackEvent } from "@/modules/analytics";
 import { ANALYTICS_EVENTS } from "@/modules/analytics/analytics-events";
@@ -27,6 +25,9 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { useCachedLocation } from "@/hooks/use-cached-location";
+import { usePlaceClick } from "@/hooks/use-place-click";
 
 // ── Types ─────────────────────────────────────────────────────────────
 type CommonInterest = {
@@ -55,12 +56,14 @@ function getInterestLabel(key: string): string {
 
 // ── Component ─────────────────────────────────────────────────────────
 export default function VibeCheckScreen() {
-  const { placeId, placeName, plannedFor, planPeriod } = useLocalSearchParams<{
-    placeId: string;
-    placeName: string;
-    plannedFor?: string;
-    planPeriod?: string;
-  }>();
+  const { placeId, placeName, plannedFor, planPeriod, plannedPeriodKey } =
+    useLocalSearchParams<{
+      placeId: string;
+      placeName: string;
+      plannedFor?: string;
+      planPeriod?: string; // display label, e.g. "12h - 18h" (for UI only)
+      plannedPeriodKey?: string; // raw DB key, e.g. "afternoon" (for API)
+    }>();
   const colors = useThemeColors();
   const { handlePlaceClick } = usePlaceClick();
   const { location: userLocation } = useCachedLocation();
@@ -98,12 +101,16 @@ export default function VibeCheckScreen() {
       planningCount: data?.planning_count ?? 0,
     });
     router.dismissAll();
-    // Delegate navigation to usePlaceClick hook
     await handlePlaceClick({
       placeId: placeId ?? "",
       name: placeName ?? undefined,
       latitude: userLocation?.latitude ?? 0,
       longitude: userLocation?.longitude ?? 0,
+      // Pass planning context so place-people uses get-planning-users-at-place
+      // plannedPeriodKey is the raw DB value (morning/afternoon/night)
+      // planPeriod is the display label and must NOT be used for API calls
+      plannedFor: plannedFor,
+      plannedPeriod: plannedPeriodKey,
     });
   };
 

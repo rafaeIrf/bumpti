@@ -38,14 +38,6 @@ export function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(profile)" options={{ headerShown: false }} />
         <Stack.Screen name="main" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="(modals)"
-          options={{
-            presentation: "modal",
-            headerShown: false,
-            animation: "slide_from_bottom",
-          }}
-        />
       </Stack.Protected>
 
       <Stack.Protected guard={onboardingGuard}>
@@ -55,6 +47,16 @@ export function RootNavigator() {
       <Stack.Protected guard={authGuard}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
+
+      {/* Modals accessible from both main app and onboarding */}
+      <Stack.Screen
+        name="(modals)"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
+        }}
+      />
 
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>

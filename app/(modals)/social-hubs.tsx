@@ -51,6 +51,7 @@ export default function EditSocialHubsScreen() {
     getCountForCategory,
     handleCategoryPress,
     handleRemoveHub,
+    handlePopularHubsPress,
     allSelectedPlaces,
   } = useSocialHubs({
     initialSelectedHubs: initialHubs,
@@ -104,7 +105,7 @@ export default function EditSocialHubsScreen() {
         <ScreenBottomBar
           primaryLabel={t("common.save")}
           onPrimaryPress={handleSave}
-          primaryDisabled={selectedPlaceIds.length < 1}
+          primaryDisabled={selectedPlaceIds.length < 2}
           topContent={
             selectedPlaceIds.length > 0 ? (
               <MultiSelectSheet
@@ -124,6 +125,7 @@ export default function EditSocialHubsScreen() {
         selectedPlaceIds={selectedPlaceIds}
         getCountForCategory={getCountForCategory}
         handleCategoryPress={handleCategoryPress}
+        onPopularHubsPress={handlePopularHubsPress}
         onSearchPress={() =>
           handleCategoryPress({
             id: "search",
