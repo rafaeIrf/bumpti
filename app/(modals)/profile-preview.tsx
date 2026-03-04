@@ -18,6 +18,7 @@ import { prefetchImages } from "@/utils/image-prefetch";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProfilePreviewModal() {
   const { profile: myProfile, isLoading: isMyProfileLoading } = useProfile();
@@ -30,6 +31,7 @@ export default function ProfilePreviewModal() {
     placeId?: string;
     encounterType?: string;
   }>();
+  const insets = useSafeAreaInsets();
 
   const isFromDiscover = params.source === "discover";
   const isScanningOther = !!params.userId;
@@ -243,6 +245,7 @@ export default function ProfilePreviewModal() {
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
+            paddingBottom: insets.bottom,
           },
         ]}
       >
@@ -334,6 +337,7 @@ export default function ProfilePreviewModal() {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 0,
+    paddingBottom: spacing.xxl * 3,
   },
   content: {
     flex: 1,
