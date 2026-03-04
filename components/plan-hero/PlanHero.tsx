@@ -271,12 +271,22 @@ function PlanCard({
         </View>
 
         <View style={styles.activePlanFooter}>
-          {plan.previewAvatars && plan.previewAvatars.length > 0 && (
+          {plan.previewAvatars && plan.previewAvatars.length > 0 ? (
             <StackedAvatars
               avatars={plan.previewAvatars}
               maxVisible={3}
               avatarStyle={{ borderColor: "rgba(255,255,255,0.6)" }}
             />
+          ) : (
+            <ThemedText
+              style={[
+                typography.caption,
+                { color: "rgba(255, 255, 255, 0.75)", flex: 1 },
+              ]}
+              numberOfLines={1}
+            >
+              {t("screens.home.planHero.beFirstToConfirm")}
+            </ThemedText>
           )}
 
           <Button
@@ -318,7 +328,9 @@ function PlanCard({
               }
             }}
             loading={loading || joining}
-            style={[{ backgroundColor: "rgba(255, 255, 255, 0.2)" }]}
+            style={[
+              { backgroundColor: "rgba(255, 255, 255, 0.2)", flexShrink: 0 },
+            ]}
             label={
               plan.isOwn
                 ? t("screens.home.planHero.activeState.viewPeopleButton")
