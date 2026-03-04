@@ -38,12 +38,15 @@ export type DeepLinkAction =
 export type NotificationType =
   | "favorite_activity_started"
   | "favorite_activity_heating"
+  | "hub_activity_started"
+  | "hub_activity_heating"
   | "nearby_activity_started"
   | "nearby_activity_heating"
   | "match_created"
   | "message_received"
   | "like_received"
-  | "favorite_new_regular";
+  | "favorite_new_regular"
+  | "social_hub_new_regular";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FCM Data Payload — raw data from push notification
