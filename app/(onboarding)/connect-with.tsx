@@ -32,7 +32,7 @@ const optionIconMap: Record<
 
 export default function ConnectWithScreen() {
   const colors = useThemeColors();
-  const { userData, completeCurrentStep} = useOnboardingFlow();
+  const { userData, completeCurrentStep } = useOnboardingFlow();
 
   // Track screen view
   useScreenTracking({
@@ -204,9 +204,9 @@ export default function ConnectWithScreen() {
           </Animated.View>
         </Animated.View>
 
-        <ThemedText style={[styles.info, { color: colors.textSecondary }]}>
+        {/* <ThemedText style={[styles.info, { color: colors.textSecondary }]}>
           {t("screens.onboarding.connectWithPrivacy")}
-        </ThemedText>
+        </ThemedText> */}
 
         <ThemedText style={[styles.footer, { color: colors.textSecondary }]}>
           {t("screens.onboarding.connectWithFooter")}
@@ -247,7 +247,6 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: spacing.lg,
-    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.sm,
