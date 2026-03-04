@@ -144,6 +144,8 @@ function PlanCard({
         planPeriod: t(
           `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
         ),
+        // Raw DB key (morning/afternoon/night) used for API calls
+        plannedPeriodKey: plan.plannedPeriod ?? "",
       },
     });
   };
@@ -325,6 +327,8 @@ function PlanCard({
                         planPeriod: t(
                           `screens.home.createPlan.period.periodDescriptions.${plan.plannedPeriod}`,
                         ),
+                        // Raw DB key (morning/afternoon/night) used for API calls
+                        plannedPeriodKey: plan.plannedPeriod ?? "",
                       },
                     });
                   }
@@ -526,10 +530,28 @@ export function PlanHero({
       Haptics.selectionAsync();
       trackEvent(ANALYTICS_EVENTS.HOME.PLAN_HERO_ENTER_CLICKED, {
         planId: plan.id,
+        isOwn: plan.isOwn,
       });
+
+      if (plan.plannedFor) {
+        // All PlanHero cards (own or community) are planning-type presences.
+        // Navigate to the planning-users view filtered by date/period.
+        router.push({
+          pathname: "/(modals)/place-people",
+          params: {
+            placeId: plan.placeId,
+            placeName: plan.locationName,
+            plannedFor: plan.plannedFor,
+            plannedPeriod: plan.plannedPeriod ?? "",
+          },
+        });
+        return;
+      }
+
+      // Fallback for check-in plans (no plannedFor) — delegates to parent
       onViewPeoplePress?.(plan);
     },
-    [onViewPeoplePress],
+    [onViewPeoplePress, router],
   );
 
   const totalCommunityPlans = visiblePlans
