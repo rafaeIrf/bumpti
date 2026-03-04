@@ -8,8 +8,8 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 interface StackedAvatarsProps {
   /** Avatars with user_id and url */
   avatars: UserAvatar[];
-  /** Total user count (for +X badge) */
-  totalCount: number;
+  /** Total user count (for +X badge, optional) */
+  totalCount?: number;
   /** Maximum avatars to show before +X badge (default: 4) */
   maxVisible?: number;
   /** Avatar size in pixels (default: 24) */
@@ -36,7 +36,7 @@ export function StackedAvatars({
   const visibleAvatars = avatars.slice(0, maxVisible);
   // Use the larger of totalCount or actual avatar count — handles cold start
   // where active_users=0 but regulars avatars are present
-  const effectiveCount = Math.max(totalCount, avatars.length);
+  const effectiveCount = Math.max(totalCount ?? 0, avatars.length);
   const overflowCount = effectiveCount - visibleAvatars.length;
   const overlap = size * 0.4; // 40% overlap
 

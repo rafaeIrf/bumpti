@@ -26,6 +26,7 @@ export interface UserPlan {
   planned_for: string; // YYYY-MM-DD
   planned_period: PlanPeriod;
   active_users: number;
+  preview_avatars?: { user_id: string; url: string }[];
 }
 
 export interface SuggestedPlan {

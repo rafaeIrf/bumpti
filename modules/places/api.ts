@@ -340,6 +340,42 @@ export async function getSuggestedPlacesByCategories(
   };
 }
 
+export interface PopularHub {
+  placeId: string;
+  name: string;
+  category: string;
+  formattedAddress: string;
+  userCount: number;
+  distKm: number;
+}
+
+/**
+ * Fetch popular social hubs near the user's location
+ * Returns places that other users in the area have selected as their social hubs
+ */
+export async function getPopularHubs(
+  latitude: number,
+  longitude: number,
+): Promise<{ data: PopularHub[] }> {
+  const { data, error } = await supabase.functions.invoke<{
+    data: PopularHub[];
+  }>("get-popular-hubs", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+    },
+  });
+
+  if (error) {
+    logger.error("Failed to fetch popular hubs (edge):", error);
+    return { data: [] };
+  }
+
+  return {
+    data: data?.data || [],
+  };
+}
+
 export async function toggleFavoritePlace({
   placeId,
   action,

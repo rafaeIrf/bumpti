@@ -51,6 +51,7 @@ export default function EditSocialHubsScreen() {
     getCountForCategory,
     handleCategoryPress,
     handleRemoveHub,
+    handlePopularHubsPress,
     allSelectedPlaces,
   } = useSocialHubs({
     initialSelectedHubs: initialHubs,
@@ -124,6 +125,7 @@ export default function EditSocialHubsScreen() {
         selectedPlaceIds={selectedPlaceIds}
         getCountForCategory={getCountForCategory}
         handleCategoryPress={handleCategoryPress}
+        onPopularHubsPress={handlePopularHubsPress}
         onSearchPress={() =>
           handleCategoryPress({
             id: "search",

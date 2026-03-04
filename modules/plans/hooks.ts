@@ -37,7 +37,7 @@ function toActivePlan(p: UserPlan): ActivePlan {
     confirmedCount: p.active_users,
     plannedFor: p.planned_for,
     plannedPeriod: p.planned_period,
-    previewAvatars: [],
+    previewAvatars: p.preview_avatars ?? [],
     isOwn: true,
   };
 }

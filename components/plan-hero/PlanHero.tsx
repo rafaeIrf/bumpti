@@ -111,7 +111,6 @@ function PlanCard({
   cardIndex: number;
 }) {
   const router = useRouter();
-  const confirmedCount = plan.confirmedCount;
   const [sharing, setSharing] = useState(false);
   const [joining, setJoining] = useState(false);
 
@@ -272,31 +271,12 @@ function PlanCard({
         </View>
 
         <View style={styles.activePlanFooter}>
-          {plan.previewAvatars && plan.previewAvatars.length > 0 ? (
+          {plan.previewAvatars && plan.previewAvatars.length > 0 && (
             <StackedAvatars
               avatars={plan.previewAvatars}
-              totalCount={confirmedCount}
               maxVisible={3}
               avatarStyle={{ borderColor: "rgba(255,255,255,0.6)" }}
             />
-          ) : (
-            <ThemedText
-              style={[
-                typography.caption,
-                styles.confirmedText,
-                { color: "#FFFFFF" },
-              ]}
-            >
-              {confirmedCount > 0
-                ? confirmedCount === 1
-                  ? t("screens.home.planHero.confirmedOne", {
-                      count: confirmedCount,
-                    })
-                  : t("screens.home.planHero.confirmed", {
-                      count: confirmedCount,
-                    })
-                : t("screens.home.planHero.beFirstToConfirm")}
-            </ThemedText>
           )}
 
           <Button

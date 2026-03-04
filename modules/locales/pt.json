@@ -1178,7 +1178,18 @@
       "socialHubs": {
         "title": "Seus Hubs sociais",
         "subtitle": "Escolha pelo menos 2 lugares onde você gostaria de conhecer pessoas.",
-        "others": "Outros"
+        "others": "Outros",
+        "popular": {
+          "title": "Populares",
+          "subtitle": "Os mais escolhidos na sua região",
+          "empty": "Nenhum hub popular na sua região ainda. Seja o primeiro!",
+          "countLabel": "{{count}} lugares próximos",
+          "place": "lugar",
+          "places": "lugares",
+          "userCount": "{{count}} pessoas",
+          "cardTitle": "Populares perto de você",
+          "cardSubtitle": "Veja os mais frequentados"
+        }
       },
       "locationTitle": "Sua localização",
       "locationSubtitle": "Para encontrar pessoas e lugares perto de você, precisamos da sua localização. Você pode desativar isso a qualquer momento",

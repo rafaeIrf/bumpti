@@ -21,6 +21,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="vibe-check" />
       <Stack.Screen name="join-plan" />
       <Stack.Screen name="social-hubs" />
+      <Stack.Screen name="popular-hubs" />
     </Stack>
   );
 }

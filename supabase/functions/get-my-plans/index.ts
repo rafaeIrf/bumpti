@@ -2,6 +2,7 @@
 import { requireAuth } from "../_shared/auth.ts";
 import { handleCors } from "../_shared/cors.ts";
 import { internalError, jsonOk, methodNotAllowed } from "../_shared/response.ts";
+import { signUserAvatars } from "../_shared/signPhotoUrls.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
 Deno.serve(async (req) => {
@@ -60,6 +61,16 @@ Deno.serve(async (req) => {
         const address =
           [street, houseNumber].filter(Boolean).join(", ") || null;
 
+        // Fetch planning avatars for this plan slot
+        const { data: rawAvatars } = await admin.rpc("get_planning_avatars", {
+          target_place_id: plan.place_id,
+          target_date: plan.planned_for,
+          target_period: plan.planned_period,
+          requesting_user_id: user.id,
+          max_avatars: 4,
+        });
+        const preview_avatars = await signUserAvatars(admin, rawAvatars ?? []);
+
         return {
           id: plan.id,
           place_id: plan.place_id,
@@ -70,6 +81,7 @@ Deno.serve(async (req) => {
           planned_for: plan.planned_for,
           planned_period: plan.planned_period,
           active_users: count ?? 0,
+          preview_avatars,
         };
       }),
     );
