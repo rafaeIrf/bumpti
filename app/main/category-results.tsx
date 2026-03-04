@@ -183,7 +183,6 @@ export default function CategoryResultsScreen() {
     !communityFavoritesMode &&
     !mostFrequentMode &&
     !!userLocation &&
-    !!userLocation.city &&
     targetCategory.length > 0;
 
   // Fetch for mostFrequent mode with ranking
@@ -425,17 +424,22 @@ export default function CategoryResultsScreen() {
       : lastAvailableCategories;
 
   // Calculate loading state before using it
+  // Treat location as "not ready" when still loading or when permission
+  // is granted but location hasn't arrived yet
+  const locationNotReady =
+    locationLoading || (!userLocation && hasLocationPermission);
+
   let loadingState: boolean;
   if (trendingMode) {
     loadingState = trendingLoading;
   } else if (favoritesMode) {
     loadingState = favoritePlacesLoading;
   } else if (communityFavoritesMode) {
-    loadingState = locationLoading || communityFavoritesLoading;
+    loadingState = locationNotReady || communityFavoritesLoading;
   } else if (mostFrequentMode) {
-    loadingState = locationLoading || mostFrequentFetching;
+    loadingState = locationNotReady || mostFrequentFetching;
   } else {
-    loadingState = locationLoading || isPaginatedInitialLoading;
+    loadingState = locationNotReady || isPaginatedInitialLoading;
   }
 
   const isLoadingState = useMemo(() => loadingState, [loadingState]);
@@ -680,12 +684,6 @@ export default function CategoryResultsScreen() {
                             color: colors.icon,
                           },
                         ]),
-                    {
-                      icon: SearchIcon,
-                      onClick: handleOpenSearch,
-                      ariaLabel: t("common.search"),
-                      color: colors.icon,
-                    },
                   ]
                 : []
             }

@@ -453,12 +453,14 @@ export default function MyPlansScreen() {
       onRefresh={handleRefresh}
       BottomBar={
         plans.length > 0 ? (
-          <ScreenBottomBar variant="custom" style={styles.fabBar}>
+          <ScreenBottomBar variant="custom">
             <Button
               onPress={handleCreatePlan}
               variant="default"
-              size="fab"
-              leftIcon={PlusIcon}
+              size="lg"
+              fullWidth
+              leftIcon={<PlusIcon width={18} height={18} />}
+              label={t("screens.home.myPlans.newPlan")}
             />
           </ScreenBottomBar>
         ) : undefined

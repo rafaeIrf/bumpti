@@ -635,7 +635,7 @@
       },
       "explorePlaces": {
         "title": "Explore places",
-        "subtitle": "Explore places in your area by category"
+        "subtitle": "Explore places by category"
       },
       "infoTitle": "How it works?",
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
@@ -719,7 +719,7 @@
       },
       "myHubs": {
         "sectionTitle": "My Hubs",
-        "tapToConnect": "Tap to enter",
+        "tapToConnect": "No one around yet",
         "addHubs": "Add your favorite hubs",
         "addHubsEmpty": "Add your first hub and connect with the places you love",
         "addHubsMore": "Add another hub"
@@ -761,6 +761,7 @@
         "cardTitle": "Plans",
         "cardSubtitle": "View and manage your plans",
         "createPlan": "Create new plan",
+        "newPlan": "New plan",
         "emptyTitle": "No plans yet",
         "emptyDescription": "Create your first plan and see who's going!",
         "activeUsersOne": "{{count}} person",
@@ -813,7 +814,7 @@
       },
       "createPlan": {
         "location": {
-          "title": "What's the plan?",
+          "title": "New plan",
           "subtitle": "Choose where you're going",
           "suggestionsTitle": "Suggestions",
           "searchPlaceholder": "Search place...",

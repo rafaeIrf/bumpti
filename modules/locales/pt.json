@@ -635,7 +635,7 @@
       },
       "explorePlaces": {
         "title": "Explorar lugares",
-        "subtitle": "Explore lugares na sua região por categoria"
+        "subtitle": "Explore lugares por categoria"
       },
       "infoTitle": "Como funciona?",
       "infoDescription": "Escolha uma categoria e veja lugares próximos onde você pode se conectar com outras pessoas.",
@@ -719,7 +719,7 @@
       },
       "myHubs": {
         "sectionTitle": "Meus Hubs",
-        "tapToConnect": "Toque para entrar",
+        "tapToConnect": "Ninguém por aqui ainda",
         "addHubs": "Adicione seus hubs favoritos",
         "addHubsEmpty": "Adicione seu primeiro hub e conecte-se com os lugares que você ama",
         "addHubsMore": "Adicionar outro hub"
@@ -761,6 +761,7 @@
         "cardTitle": "Planos",
         "cardSubtitle": "Veja e gerencie seus planos",
         "createPlan": "Criar novo plano",
+        "newPlan": "Novo plano",
         "emptyTitle": "Nenhum plano ainda",
         "emptyDescription": "Crie seu primeiro plano e veja quem vai!",
         "activeUsersOne": "{{count}} pessoa",
@@ -813,7 +814,7 @@
       },
       "createPlan": {
         "location": {
-          "title": "Qual é o plano?",
+          "title": "Novo plano",
           "subtitle": "Escolha onde você vai",
           "suggestionsTitle": "Sugestões",
           "searchPlaceholder": "Buscar local...",

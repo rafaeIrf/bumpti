@@ -1,5 +1,6 @@
 import { registerCityChangeCallback, useCityOverride } from "@/hooks/use-city-override";
 import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useIsReviewer } from "@/modules/auth";
 import { getUserPosition } from "@/modules/places";
 import { syncLocationToBackend } from "@/modules/profile/helpers";
 import { logger } from "@/utils/logger";
@@ -46,7 +47,7 @@ export const useCachedLocation = () => {
   const { selectedCity: cityOverride } = useCityOverride();
 
   // Check if current user is the reviewer (reads from auth session, not profile)
-  const isReviewer = true;
+  const isReviewer = useIsReviewer();
 
   // Set reviewer location immediately if reviewer
   useEffect(() => {
