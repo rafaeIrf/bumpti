@@ -9,6 +9,7 @@ import {
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { useCustomBottomSheet } from "@/components/BottomSheetProvider/hooks";
 import { GenericConfirmationBottomSheet } from "@/components/generic-confirmation-bottom-sheet";
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedText } from "@/components/themed-text";
@@ -209,14 +210,21 @@ export default function MyPlansScreen() {
             </Pressable>
 
             {/* Plan info */}
-            <View
-              style={[
-                styles.sheetIconContainer,
-                { backgroundColor: `${colors.accent}15` },
-              ]}
-            >
-              <MapPinIcon width={28} height={28} color={colors.accent} />
-            </View>
+            {(() => {
+              const tag = plan.place_category ?? "default";
+              const CategoryIcon = getPlaceIcon(tag);
+              const categoryColor = getCategoryColor(tag);
+              return (
+                <View
+                  style={[
+                    styles.sheetIconContainer,
+                    { backgroundColor: `${categoryColor}20` },
+                  ]}
+                >
+                  <CategoryIcon width={28} height={28} color={categoryColor} />
+                </View>
+              );
+            })()}
 
             <ThemedText
               style={[
@@ -248,9 +256,11 @@ export default function MyPlansScreen() {
                 <ThemedText
                   style={[typography.caption, { color: colors.accent }]}
                 >
-                  {t("screens.home.myPlans.activeUsers", {
-                    count: plan.active_users,
-                  })}
+                  {plan.active_users === 1
+                    ? t("screens.home.myPlans.activeUsersOne", { count: 1 })
+                    : t("screens.home.myPlans.activeUsers", {
+                        count: plan.active_users,
+                      })}
                 </ThemedText>
               </View>
             )}
@@ -319,21 +329,27 @@ export default function MyPlansScreen() {
             styles.planCard,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
           <View style={styles.planCardContent}>
-            {/* Location icon */}
-            <View
-              style={[
-                styles.planCardIcon,
-                { backgroundColor: `${colors.accent}15` },
-              ]}
-            >
-              <MapPinIcon width={20} height={20} color={colors.accent} />
-            </View>
+            {/* Category icon */}
+            {(() => {
+              const tag = item.place_category ?? "default";
+              const CategoryIcon = getPlaceIcon(tag);
+              const categoryColor = getCategoryColor(tag);
+              return (
+                <View
+                  style={[
+                    styles.planCardIcon,
+                    { backgroundColor: categoryColor },
+                  ]}
+                >
+                  <CategoryIcon width={20} height={20} color="#FFFFFF" />
+                </View>
+              );
+            })()}
 
             {/* Info */}
             <View style={styles.planCardInfo}>
@@ -437,12 +453,14 @@ export default function MyPlansScreen() {
       onRefresh={handleRefresh}
       BottomBar={
         plans.length > 0 ? (
-          <ScreenBottomBar variant="custom" style={styles.fabBar}>
+          <ScreenBottomBar variant="custom">
             <Button
               onPress={handleCreatePlan}
               variant="default"
-              size="fab"
-              leftIcon={PlusIcon}
+              size="lg"
+              fullWidth
+              leftIcon={<PlusIcon width={18} height={18} />}
+              label={t("screens.home.myPlans.newPlan")}
             />
           </ScreenBottomBar>
         ) : undefined
@@ -475,8 +493,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   planCard: {
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: spacing.lg,
     padding: spacing.md,
   },
   planCardContent: {

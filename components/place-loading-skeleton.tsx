@@ -2,6 +2,7 @@ import { spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
+import type { SharedValue } from "react-native-reanimated";
 import Animated, {
   Easing,
   interpolate,
@@ -25,7 +26,7 @@ function ShimmerBlock({
   width: number | string;
   height: number;
   borderRadius?: number;
-  shimmerProgress: Animated.SharedValue<number>;
+  shimmerProgress: SharedValue<number>;
 }) {
   const colors = useThemeColors();
 
@@ -69,60 +70,74 @@ function SkeletonCard({ index }: { index: number }) {
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
         },
       ]}
     >
       <View style={styles.content}>
-        {/* Header: title + arrow placeholder */}
-        <View style={styles.headerRow}>
+        {/* Icon Column */}
+        <View style={styles.iconCol}>
           <ShimmerBlock
-            width="58%"
-            height={17}
+            width={56}
+            height={56}
+            borderRadius={28}
+            shimmerProgress={shimmerProgress}
+          />
+          <ShimmerBlock
+            width={36}
+            height={10}
+            borderRadius={3}
+            shimmerProgress={shimmerProgress}
+          />
+        </View>
+
+        {/* Text Column */}
+        <View style={styles.textColumn}>
+          {/* Title */}
+          <ShimmerBlock
+            width="72%"
+            height={16}
             borderRadius={4}
             shimmerProgress={shimmerProgress}
           />
-          <ShimmerBlock
-            width={14}
-            height={14}
-            borderRadius={3}
-            shimmerProgress={shimmerProgress}
-          />
+
+          {/* Meta row */}
+          <View style={styles.metaRow}>
+            <ShimmerBlock
+              width={64}
+              height={12}
+              borderRadius={3}
+              shimmerProgress={shimmerProgress}
+            />
+            <View style={styles.dot} />
+            <ShimmerBlock
+              width={40}
+              height={12}
+              borderRadius={3}
+              shimmerProgress={shimmerProgress}
+            />
+          </View>
+
+          {/* Avatars row */}
+          <View style={styles.footerRow}>
+            {[0, 1, 2].map((i) => (
+              <ShimmerBlock
+                key={i}
+                width={34}
+                height={34}
+                borderRadius={17}
+                shimmerProgress={shimmerProgress}
+              />
+            ))}
+          </View>
         </View>
 
-        {/* Meta row */}
-        <View style={styles.metaRow}>
-          <ShimmerBlock
-            width={56}
-            height={13}
-            borderRadius={3}
-            shimmerProgress={shimmerProgress}
-          />
-          <View style={styles.dot} />
-          <ShimmerBlock
-            width={68}
-            height={13}
-            borderRadius={3}
-            shimmerProgress={shimmerProgress}
-          />
-          <View style={styles.dot} />
-          <ShimmerBlock
-            width={36}
-            height={13}
-            borderRadius={3}
-            shimmerProgress={shimmerProgress}
-          />
-        </View>
-
-        {/* Footer: chip */}
-        <View style={styles.footerRow}>
-          <ShimmerBlock
-            width={110}
-            height={28}
-            borderRadius={14}
-            shimmerProgress={shimmerProgress}
-          />
-        </View>
+        {/* Arrow placeholder */}
+        <ShimmerBlock
+          width={16}
+          height={16}
+          borderRadius={3}
+          shimmerProgress={shimmerProgress}
+        />
       </View>
     </View>
   );
@@ -151,11 +166,22 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: spacing.lg,
-    overflow: "hidden",
-    borderWidth: 1,
+    borderWidth: 0,
   },
   content: {
     padding: spacing.md,
+    flexDirection: "row",
+    gap: spacing.md,
+    alignItems: "center",
+  },
+  iconCol: {
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+  },
+  textColumn: {
+    flex: 1,
+    minWidth: 0,
     gap: spacing.xs,
   },
   headerRow: {

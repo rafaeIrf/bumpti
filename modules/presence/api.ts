@@ -63,7 +63,7 @@ export type ActiveUserAtPlace = {
   place_id?: string | null;
   zodiac_sign: string | null;
   verification_status?: "unverified" | "pending" | "verified" | "rejected" | null;
-  entry_type?: "physical" | "checkin_plus" | "planning" | "past_visitor" | "favorite"; // How user entered the place
+  entry_type?: "physical" | "checkin_plus" | "planning" | "past_visitor" | "favorite" | "social_hub" | "university_member"; // How user entered the place
   planned_for?: string | null; // ISO date string for planning entries
   planned_period?: "morning" | "afternoon" | "night" | null;
   // University fields
@@ -74,6 +74,8 @@ export type ActiveUserAtPlace = {
   university_lng?: number | null;
   graduation_year?: number | null;
   show_university_on_home?: boolean;
+  // Social hubs
+  social_hubs?: { id: string; name: string; category: string }[];
 };
 
 export type ActiveUsersResponse = {
@@ -196,3 +198,57 @@ export async function getActiveUsersAtPlace(
     return null;
   }
 }
+
+export type PlanningUsersResponse = {
+  place_id: string;
+  planned_for: string;
+  planned_period: string | null;
+  count: number;
+  users: ActiveUserAtPlace[];
+  liker_ids: string[];
+};
+
+/**
+ * Fetches users who are planning to go to a place on a specific date/period.
+ * Used by the PlanHero "Ver quem vai" flow for community plan cards.
+ */
+export async function getPlanningUsersAtPlace(
+  placeId: string,
+  plannedFor: string,           // 'YYYY-MM-DD'
+  plannedPeriod?: string | null // 'morning' | 'afternoon' | 'night' | null
+): Promise<PlanningUsersResponse | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke<PlanningUsersResponse>(
+      "get-planning-users-at-place",
+      {
+        body: {
+          place_id: placeId,
+          planned_for: plannedFor,
+          planned_period: plannedPeriod ?? null,
+        },
+      }
+    );
+
+    if (error) {
+      logger.error("get-planning-users-at-place (edge) error", { error });
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    logger.debug("getPlanningUsersAtPlace data", {
+      count: data.count,
+      placeId,
+      plannedFor,
+      plannedPeriod,
+    });
+
+    return data;
+  } catch (err) {
+    logger.error("getPlanningUsersAtPlace (api) error", { err });
+    return null;
+  }
+}
+

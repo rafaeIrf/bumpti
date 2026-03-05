@@ -13,12 +13,14 @@ import {
     setInterests as setInterestsAction,
     setLocationPermission as setLocationPermissionAction,
     setNotificationPermission as setNotificationPermissionAction,
+    setPhotoHashes as setPhotoHashesAction,
     setPhotoUris as setPhotoUrisAction,
+    setSocialHubs as setSocialHubsAction,
     setTrackingPermission as setTrackingPermissionAction,
     setUniversityData as setUniversityDataAction,
     setUserBirthdate as setUserBirthdateAction,
     setUserGender as setUserGenderAction,
-    setUserName as setUserNameAction,
+    setUserName as setUserNameAction
 } from "./onboardingSlice";
 
 // Action creators that encapsulate dispatch
@@ -55,6 +57,10 @@ export const onboardingActions = {
     store.dispatch(setPhotoUrisAction(photoUris));
   },
 
+  setPhotoHashes: (hashes: Record<string, string>) => {
+    store.dispatch(setPhotoHashesAction(hashes));
+  },
+
   setBio: (bio: string) => {
     store.dispatch(setBioAction(bio));
   },
@@ -65,6 +71,10 @@ export const onboardingActions = {
 
   setInterests: (interests: string[]) => {
     store.dispatch(setInterestsAction(interests));
+  },
+
+  setSocialHubs: (socialHubs: string[]) => {
+    store.dispatch(setSocialHubsAction(socialHubs));
   },
 
   setLocationPermission: (hasPermission: boolean) => {

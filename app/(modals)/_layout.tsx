@@ -20,6 +20,13 @@ export default function ModalsLayout() {
       <Stack.Screen name="create-plan" />
       <Stack.Screen name="vibe-check" />
       <Stack.Screen name="join-plan" />
+      <Stack.Screen name="social-hubs" />
+      <Stack.Screen name="popular-hubs" />
+      <Stack.Screen name="manage-subscription" />
+      <Stack.Screen name="place-report" />
+      <Stack.Screen name="rate-place" />
+      <Stack.Screen name="referral-hub" />
+      <Stack.Screen name="university-search" />
     </Stack>
   );
 }

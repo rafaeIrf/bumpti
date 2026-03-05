@@ -1,32 +1,35 @@
 import {
-    detectPlace as detectPlaceApi,
-    type DetectPlaceResult,
-    getFavoritePlaces as getFavoritePlacesApi,
-    getMapActivePlaces as getMapActivePlacesApi,
-    getNearbyPlaces as getNearbyPlacesApi,
-    getPlacesByFavorites as getPlacesByFavoritesApi,
-    getPlaceSocialSummary as getPlaceSocialSummaryApi,
-    getRankedPlaces as getRankedPlacesApi,
-    getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
-    getTrendingPlaces as getTrendingPlacesApi,
-    type MapActivePlace,
-    type PlacesByCategory,
-    type PlaceSocialSummary,
-    type RankByOption,
-    saveSocialReview,
-    searchPlacesByText as searchPlacesByTextApi,
-    toggleFavoritePlace as toggleFavoritePlaceApi
+  detectPlace as detectPlaceApi,
+  type DetectPlaceResult,
+  getFavoritePlaces as getFavoritePlacesApi,
+  getMapActivePlaces as getMapActivePlacesApi,
+  getNearbyPlaces as getNearbyPlacesApi,
+  getPlacesByFavorites as getPlacesByFavoritesApi,
+  getPlaceSocialSummary as getPlaceSocialSummaryApi,
+  getPopularHubs as getPopularHubsApi,
+  getRankedPlaces as getRankedPlacesApi,
+  getSuggestedPlacesByCategories as getSuggestedPlacesByCategoriesApi,
+  getSupportedCities as getSupportedCitiesApi,
+  getTrendingPlaces as getTrendingPlacesApi,
+  type MapActivePlace,
+  type PlacesByCategory,
+  type PlaceSocialSummary,
+  type PopularHub,
+  type RankByOption,
+  saveSocialReview,
+  searchPlacesByText as searchPlacesByTextApi,
+  toggleFavoritePlace as toggleFavoritePlaceApi
 } from "@/modules/places/api";
 import { updateProfile } from "@/modules/profile/api";
 import { setFavoritePlaces, setFilterOnlyVerified } from "@/modules/store/slices/profileSlice";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-    buildNearbyCacheKey,
-    mergeNearbyPlaces,
-    roundToGrid,
-    shouldRefetchNearby,
+  buildNearbyCacheKey,
+  mergeNearbyPlaces,
+  roundToGrid,
+  shouldRefetchNearby,
 } from "./nearby-cache";
-import { Place, PlaceCategory } from "./types";
+import { Place, PlaceCategory, SupportedCity } from "./types";
 
 // TTL configurations (in seconds)
 // Default to short cache in dev for easier testing.
@@ -41,6 +44,9 @@ const CACHE_TIME = {
   SUGGESTED_PLACES: __DEV__ ? DEV_CACHE_TTL : 15 * 60,
   DETECTED_PLACE: __DEV__ ? DEV_CACHE_TTL : 60,
   RANKED_PLACES: __DEV__ ? DEV_CACHE_TTL : 60,
+  POPULAR_HUBS: __DEV__ ? DEV_CACHE_TTL : 120,
+  // Cities barely change (new city added ~monthly), high TTL is safe
+  SUPPORTED_CITIES: __DEV__ ? DEV_CACHE_TTL : 24 * 60 * 60,
 };
 
 export const placesApi = createApi({
@@ -57,8 +63,28 @@ export const placesApi = createApi({
     "PlaceById",
     "PlaceSocialSummary",
     "MapActivePlaces",
+    "SupportedCities",
+    "PopularHubs",
   ],
   endpoints: (builder) => ({
+    // Supported cities list — very high TTL, cities change rarely
+    // Accepts optional lat/lng to sort by proximity in the edge function
+    getSupportedCities: builder.query<
+      SupportedCity[],
+      { lat?: number; lng?: number } | void
+    >({
+      queryFn: async (args) => {
+        try {
+          const cities = await getSupportedCitiesApi(args?.lat, args?.lng);
+          return { data: cities };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: [{ type: "SupportedCities", id: "list" }],
+      keepUnusedDataFor: CACHE_TIME.SUPPORTED_CITIES,
+    }),
+
     getSuggestedPlaces: builder.query<
       { data: PlacesByCategory[] },
       { latitude: number; longitude: number; categories: PlaceCategory[] }
@@ -623,6 +649,28 @@ export const placesApi = createApi({
       keepUnusedDataFor: 30,
     }),
 
+    // Popular hubs: places other users nearby selected as social hubs
+    getPopularHubs: builder.query<
+      PopularHub[],
+      { latitude: number; longitude: number }
+    >({
+      queryFn: async ({ latitude, longitude }) => {
+        try {
+          const { data } = await getPopularHubsApi(latitude, longitude);
+          return { data };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: (result, error, arg) => [
+        {
+          type: "PopularHubs",
+          id: `${roundToGrid(arg.latitude)}_${roundToGrid(arg.longitude)}`,
+        },
+      ],
+      keepUnusedDataFor: CACHE_TIME.POPULAR_HUBS,
+    }),
+
   }),
 });
 
@@ -631,6 +679,7 @@ export const {
   useGetNearbyPlacesQuery,
   useGetPlacesByFavoritesQuery,
   useGetRankedPlacesQuery,
+  useGetSupportedCitiesQuery,
   useSearchPlacesByTextQuery,
   useGetTrendingPlacesQuery,
   useGetFavoritePlacesQuery,
@@ -642,6 +691,7 @@ export const {
   useUpdateProfileSettingsMutation,
   useLazyGetPlaceSocialSummaryQuery,
   useLazyGetMapActivePlacesQuery,
+  useGetPopularHubsQuery,
 } = placesApi;
 
 /**

@@ -129,6 +129,7 @@ export default function CreatePlanModal() {
     return searchData.places.map((p: any) => ({
       id: p.placeId,
       name: p.name,
+      tag: p.types?.[0] ?? undefined,
       category: p.types?.[0] ? t(`place.categories.${p.types[0]}`) : "",
       address: p.formattedAddress ?? "",
       neighborhood: p.neighborhood,
@@ -199,6 +200,7 @@ export default function CreatePlanModal() {
       suggestedPlans.map((s) => ({
         id: s.place_id,
         name: s.name,
+        tag: s.category ?? undefined,
         category: s.category ? t(`place.categories.${s.category}`) : "",
         address: "",
         distance: s.distance / 1000,

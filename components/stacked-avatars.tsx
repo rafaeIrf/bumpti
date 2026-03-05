@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { UserAvatar } from "@/modules/places/types";
 import { isAndroid } from "@/utils";
 import { Image } from "expo-image";
@@ -7,8 +8,8 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 interface StackedAvatarsProps {
   /** Avatars with user_id and url */
   avatars: UserAvatar[];
-  /** Total user count (for +X badge) */
-  totalCount: number;
+  /** Total user count (for +X badge, optional) */
+  totalCount?: number;
   /** Maximum avatars to show before +X badge (default: 4) */
   maxVisible?: number;
   /** Avatar size in pixels (default: 24) */
@@ -31,10 +32,11 @@ export function StackedAvatars({
   style,
   avatarStyle,
 }: StackedAvatarsProps) {
+  const colors = useThemeColors();
   const visibleAvatars = avatars.slice(0, maxVisible);
   // Use the larger of totalCount or actual avatar count — handles cold start
   // where active_users=0 but regulars avatars are present
-  const effectiveCount = Math.max(totalCount, avatars.length);
+  const effectiveCount = Math.max(totalCount ?? 0, avatars.length);
   const overflowCount = effectiveCount - visibleAvatars.length;
   const overlap = size * 0.4; // 40% overlap
 
@@ -55,6 +57,7 @@ export function StackedAvatars({
               borderRadius: size / 2,
               marginLeft: index === 0 ? 0 : -overlap,
               zIndex: index + 1,
+              borderColor: colors.border,
             },
             avatarStyle,
           ]}
@@ -70,7 +73,7 @@ export function StackedAvatars({
               },
             ]}
             contentFit="cover"
-            blurRadius={isAndroid ? 2 : 70}
+            blurRadius={isAndroid ? 2 : 80}
           />
         </View>
       ))}
@@ -86,6 +89,7 @@ export function StackedAvatars({
               borderRadius: size / 2,
               marginLeft: -overlap,
               zIndex: maxVisible + 1,
+              borderColor: colors.border,
             },
             avatarStyle,
           ]}
@@ -107,7 +111,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     overflow: "hidden",
     borderWidth: 1.5,
-    borderColor: "#0F0F0F",
   },
   avatar: {
     backgroundColor: "#2F3336",
@@ -117,7 +120,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#0F0F0F",
   },
   overflowText: {
     color: "#FFFFFF",

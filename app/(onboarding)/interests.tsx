@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import InterestsSelector from "@/components/profile-edit/interests-selector";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
@@ -9,7 +10,7 @@ import React, { useCallback, useState } from "react";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 export default function InterestsScreen() {
-  const { userData, completeCurrentStep } = useOnboardingFlow();
+  const { userData, completeCurrentStep} = useOnboardingFlow();
 
   useScreenTracking({
     screenName: "onboarding_interests",
@@ -34,9 +35,12 @@ export default function InterestsScreen() {
       hasStackHeader
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("common.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={false}
+          primaryIcon={ArrowRightIcon}
+          secondaryLabel={t("common.skip")}
+          onSecondaryPress={() => completeCurrentStep("interests")}
         />
       }
     >

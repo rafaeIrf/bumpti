@@ -33,6 +33,10 @@ import Sortable from "react-native-sortables";
 interface UserPhotoGridProps {
   photos: string[];
   onPhotosChange: (photos: string[]) => void;
+  /** Called with a map of localUri → SHA-256 hash when new photos are approved */
+  onPhotoHashesChange?: (hashes: Record<string, string>) => void;
+  /** Current map of uri → hash for already-added photos (used for content-level dedup) */
+  photoHashes?: Record<string, string>;
   maxPhotos?: number;
   minPhotos?: number;
   showInfo?: boolean;
@@ -100,6 +104,8 @@ function isLocalUri(uri: string): boolean {
 export function UserPhotoGrid({
   photos,
   onPhotosChange,
+  onPhotoHashesChange,
+  photoHashes = {},
   maxPhotos = 9,
   minPhotos = 2,
   showInfo = true,
@@ -223,18 +229,43 @@ export function UserPhotoGrid({
           if (base64Images.length > 1) {
             const batchResult = await moderateProfilePhotosBatch(base64Images);
 
+            // Build set of existing hashes to detect content-level duplicates
+            const existingHashSet = new Set(Object.values(photoHashes));
+            const approvedHashes: Record<string, string> = {};
             for (let i = 0; i < localUris.length; i++) {
-              if (batchResult.results[i]?.approved) {
+              const item = batchResult.results[i];
+              if (item?.approved) {
+                // Skip if same image content already in grid
+                if (item.hash && existingHashSet.has(item.hash)) {
+                  rejectedCount++;
+                  continue;
+                }
                 approvedUris.push(localUris[i]);
+                if (item.hash) {
+                  approvedHashes[localUris[i]] = item.hash;
+                  existingHashSet.add(item.hash); // prevent two identical picks in same batch
+                }
               } else {
                 rejectedCount++;
               }
+            }
+            if (onPhotoHashesChange && Object.keys(approvedHashes).length > 0) {
+              onPhotoHashesChange(approvedHashes);
             }
           } else {
             // Single image - use regular moderation
             const modResult = await moderateProfilePhoto(base64Images[0]);
             if (modResult.approved) {
-              approvedUris.push(localUris[0]);
+              // Skip if same image content already in grid
+              const existingHashSet = new Set(Object.values(photoHashes));
+              if (modResult.hash && existingHashSet.has(modResult.hash)) {
+                rejectedCount++;
+              } else {
+                approvedUris.push(localUris[0]);
+                if (modResult.hash && onPhotoHashesChange) {
+                  onPhotoHashesChange({ [localUris[0]]: modResult.hash });
+                }
+              }
             } else {
               rejectedCount++;
             }
@@ -247,7 +278,10 @@ export function UserPhotoGrid({
 
       // Update photos if any were approved
       if (approvedUris.length > 0) {
-        const finalPhotos = [...photosRef.current, ...approvedUris].slice(
+        const existing = new Set(photosRef.current);
+        const dedupedUris = approvedUris.filter((uri) => !existing.has(uri));
+        if (dedupedUris.length === 0) return;
+        const finalPhotos = [...photosRef.current, ...dedupedUris].slice(
           0,
           maxPhotos,
         );
@@ -278,6 +312,8 @@ export function UserPhotoGrid({
     pickFromLibrary,
     showError,
     onPhotosChange,
+    onPhotoHashesChange,
+    photoHashes,
   ]);
 
   const handleReplacePhoto = useCallback(
@@ -308,6 +344,9 @@ export function UserPhotoGrid({
               showError(t("moderation.photoRejected"));
               return;
             }
+            if (modResult.hash && onPhotoHashesChange) {
+              onPhotoHashesChange({ [newUri]: modResult.hash });
+            }
           } catch (modError) {
             logger.warn("Moderation failed, allowing photo:", modError);
           }
@@ -320,7 +359,7 @@ export function UserPhotoGrid({
         logger.error("Error replacing photo:", error);
       }
     },
-    [pickFromLibrary, showError, onPhotosChange],
+    [pickFromLibrary, showError, onPhotosChange, onPhotoHashesChange],
   );
 
   const handleRemovePhoto = useCallback(

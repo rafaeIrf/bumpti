@@ -5,13 +5,12 @@ export type OnboardingStep =
   | "user-age"
   | "user-gender"
   | "connect-with"
-  | "intention"
   | "user-photos"
   | "user-bio"
   | "interests"
-  | "university"
-  | "favorite-places"
   | "location"
+  | "social-hubs-intro"
+  | "social-hubs"
   | "notifications"
   | "tracking"
   | "complete";
@@ -23,6 +22,8 @@ export interface OnboardingUserData {
   connectWith?: string[];
   intentions?: string[];
   photoUris?: string[];
+  /** Accumulated {localUri: hash} map from moderation results */
+  photoHashes?: Record<string, string>;
   bio?: string;
   universityId?: string | null;
   universityName?: string | null;
@@ -33,6 +34,7 @@ export interface OnboardingUserData {
   showUniversityOnHome?: boolean;
   interests?: string[];
   favoritePlaces?: string[];
+  socialHubs?: string[];
   hasLocationPermission?: boolean;
   hasNotificationPermission?: boolean;
   hasTrackingPermission?: boolean;
@@ -84,6 +86,9 @@ const onboardingSlice = createSlice({
     setPhotoUris: (state, action: PayloadAction<string[]>) => {
       state.userData.photoUris = action.payload;
     },
+    setPhotoHashes: (state, action: PayloadAction<Record<string, string>>) => {
+      state.userData.photoHashes = { ...state.userData.photoHashes, ...action.payload };
+    },
     setBio: (state, action: PayloadAction<string>) => {
       state.userData.bio = action.payload;
     },
@@ -92,6 +97,9 @@ const onboardingSlice = createSlice({
     },
     setFavoritePlaces: (state, action: PayloadAction<string[]>) => {
       state.userData.favoritePlaces = action.payload;
+    },
+    setSocialHubs: (state, action: PayloadAction<string[]>) => {
+      state.userData.socialHubs = action.payload;
     },
     setLocationPermission: (state, action: PayloadAction<boolean>) => {
       state.userData.hasLocationPermission = action.payload;
@@ -158,9 +166,11 @@ export const {
   setConnectWith,
   setIntentions,
   setPhotoUris,
+  setPhotoHashes,
   setBio,
   setInterests,
   setFavoritePlaces,
+  setSocialHubs,
   setLocationPermission,
   setNotificationPermission,
   setTrackingPermission,

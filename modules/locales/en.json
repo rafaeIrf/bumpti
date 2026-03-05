@@ -92,7 +92,8 @@
       "casino": "Casino",
       "shopping": "Shopping",
       "plaza": "Plaza",
-      "skate_park": "Skate Park"
+      "skate_park": "Skate Park",
+      "hotel": "Hotel"
     },
     "activeUsersLabel": "people here",
     "noConnections": "Start connecting",
@@ -158,7 +159,8 @@
       "dance_club": "Dance Schools",
       "theatre": "Theatres",
       "casino": "Casinos",
-      "shopping": "Shopping Centers"
+      "shopping": "Shopping Centers",
+      "hotel": "Hotels"
     }
   },
   "referral": {
@@ -205,7 +207,8 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
-    "profileUnavailable": "Profile unavailable"
+    "profileUnavailable": "Profile unavailable",
+    "network": "Something went wrong. Please check your connection and try again."
   },
   "moderation": {
     "validatingPhoto": "Validating your photo...",
@@ -254,7 +257,10 @@
         "presence": {
           "title": "PRESENCE PREFERENCES",
           "invisible": "Invisible mode",
-          "invisibleDescription": "Hides your presence from other users."
+          "invisibleDescription": "Hides your presence from other users.",
+          "cityOverride": "City",
+          "cityOverrideDescription": "Browse places in another city",
+          "myLocation": "Current location"
         },
         "notifications": {
           "title": "Notifications",
@@ -472,7 +478,9 @@
           "vibes": "Vibes",
           "vibesCount": "{{count}} vibes",
           "spots": "Favorite spots",
-          "spotsPlaceholder": "Add spots"
+          "spotsPlaceholder": "Add spots",
+          "socialHubs": "Social Hubs",
+          "socialHubsCount": "{{count}} hubs"
         },
         "more": {
           "title": "More about you",
@@ -508,7 +516,8 @@
         "turboWeekly": "Connect+ (5/week)",
         "earlyCheckinWeekly": "Check-in+",
         "pingsWeekly": "Pings (5/week)",
-        "morePlansDaily": "10 plans per day"
+        "morePlansDaily": "10 plans per day",
+        "exploreCities": "Explore new cities"
       },
       "powerUps": {
         "earlyCheckin": {
@@ -640,12 +649,18 @@
           "createPlan": "Create Plan"
         }
       },
+      "explorePlaces": {
+        "title": "Explore places",
+        "subtitle": "Explore places by category"
+      },
       "infoTitle": "How it works?",
       "infoDescription": "Choose a category and see nearby places where you can connect with others.",
       "categories": {
         "highlighted": {
-          "title": "On Radar",
-          "description": "Crowded places with people connecting."
+          "title": "Highlights",
+          "description": "The most sought-after places recently.",
+          "activePlaces": "{{count}} featured places today",
+          "noActivePlaces": "Trending places right now"
         },
         "favorites": {
           "title": "Favorites",
@@ -664,19 +679,19 @@
           "description": "To party all night long."
         },
         "cafes": {
-          "title": "Cafes & Chat",
+          "title": "Cafes",
           "description": "Places to talk and relax."
         },
         "university": {
-          "title": "University Life",
+          "title": "Universities",
           "description": "Where meetings happen in the routine."
         },
         "fitness": {
-          "title": "Fitness & Wellness",
+          "title": "Gyms",
           "description": "Connections that start at the workout."
         },
         "parks": {
-          "title": "Parks & Outdoors",
+          "title": "Parks",
           "description": "Outdoor meetings and nature."
         },
         "restaurants": {
@@ -688,7 +703,7 @@
           "description": "Art, history, and inspiration."
         },
         "stadium": {
-          "title": "Stadiums & Events",
+          "title": "Event Venues",
           "description": "Big games, big crowds."
         },
         "club": {
@@ -704,7 +719,7 @@
           "description": "See what's happening around"
         },
         "ranking": {
-          "title": "Hotspots",
+          "title": "+Frequentados",
           "description": "Places people always go to.",
           "filterMonth": "This month",
           "filterGeneral": "All time"
@@ -718,21 +733,31 @@
         "findOnMap": "Find your university on the map",
         "tapToConnect": "Tap to connect"
       },
+      "myHubs": {
+        "sectionTitle": "My Hubs",
+        "tapToConnect": "No one around yet",
+        "addHubs": "Add your favorite hubs",
+        "addHubsEmpty": "Add your first hub and connect with the places you love",
+        "addHubsMore": "Add another hub"
+      },
       "planHero": {
         "emptyState": {
           "title": "Plan your week",
           "subtitle": "See who's going and connect in advance",
+          "subtitleWithOne": "{{count}} person already planning nearby!",
+          "subtitleWithPeople": "{{count}} people already planning nearby!",
           "locationButton": "Where will you connect?",
           "confirmedOne": "{{count}} person confirmed today",
           "confirmed": "{{count}} people confirmed today"
         },
         "activeState": {
           "title": "Your next plan",
-          "viewPeopleButton": "Enter"
+          "viewPeopleButton": "See who's going",
+          "joinCommunityButton": "I'm in too!"
         },
         "confirmedOne": "{{count}} person confirmed",
         "confirmed": "{{count}} people confirmed",
-        "beFirstToConfirm": "You're already on the radar!",
+        "beFirstToConfirm": "Waiting for the crew",
         "periodLabels": {
           "todayMorning": "Today in the morning",
           "todayAfternoon": "Today in the afternoon",
@@ -749,9 +774,13 @@
       },
       "myPlans": {
         "title": "My Plans",
+        "cardTitle": "Plans",
+        "cardSubtitle": "View and manage your plans",
         "createPlan": "Create new plan",
+        "newPlan": "New plan",
         "emptyTitle": "No plans yet",
         "emptyDescription": "Create your first plan and see who's going!",
+        "activeUsersOne": "{{count}} person",
         "activeUsers": "{{count}} people",
         "viewPeople": "Enter",
         "deletePlan": "Delete plan",
@@ -764,7 +793,7 @@
         "upgradeForMore": "Upgrade to Premium for up to 10 plans per day"
       },
       "vibeCheck": {
-        "title": "You're on the radar! 🎉",
+        "title": "You confirmed your spot! 🎉",
         "subtitle": "See who else is going to ",
         "totalPlanningLabel": "people going this week",
         "totalPlanningLabelOne": "person going this week",
@@ -801,11 +830,10 @@
       },
       "createPlan": {
         "location": {
-          "title": "What's the plan?",
+          "title": "New plan",
           "subtitle": "Choose where you're going",
           "suggestionsTitle": "Suggestions",
           "searchPlaceholder": "Search place...",
-
           "noResults": "No places found",
           "searchEmptyState": "Search for a bar, restaurant, or any other place you want to go"
         },
@@ -825,7 +853,7 @@
           "periodDescriptions": {
             "morning": "6am - 12pm",
             "lunch": "12pm - 2pm",
-            "afternoon": "2pm - 6pm",
+            "afternoon": "12pm - 6pm",
             "night": "After 6pm",
             "late_night": "12am - 6am"
           },
@@ -895,6 +923,10 @@
         "morePlans": {
           "title": "10 plans per day",
           "subtitle": "Create more daily plans and maximize your chances of meeting people."
+        },
+        "exploreCities": {
+          "title": "Explore new cities",
+          "subtitle": "Change your city to see the scene, discover places, and create plans in advance."
         }
       },
       "terms": "Your subscription renews automatically for the same price and period unless cancelled in your {{store}} settings. By confirming the subscription, you agree to our",
@@ -1139,15 +1171,42 @@
       },
       "favoritePlaces": {
         "title": "Your favorite Spots",
-        "subtitle": "Pick at least 3 Spots where you'd like to meet people",
+        "subtitle": "Choose your favorite places in your area",
         "searchPlaceholder": "Search place...",
-        "selectAtLeastOne": "Select at least 3 spots",
+        "selectAtLeastOne": "Select at least 1 spot",
         "locationNeeded": "To suggest places near you, we need your location.",
         "selectionHint": "{{current}}/{{max}}"
       },
       "cityNotAvailable": {
         "title": "We haven't reached there yet!",
         "subtitle": "Bumpti is currently available in select cities only. But you can finish signing up and we'll notify you as soon as we arrive in your area."
+      },
+      "socialHubsIntro": {
+        "title": "Your Social Hubs",
+        "tagline": "{{name}}, now let's pick the places in your social routine where you'd like to meet new people.",
+        "benefit1Title": "Your everyday places",
+        "benefit1Body": "Mark the places that are part of your social routine.",
+        "benefit2Title": "Meet people who go to the same places",
+        "benefit2Body": "Discover people who frequent the same places as you.",
+        "benefit3Title": "Connections that happen naturally",
+        "benefit3Body": "When the place is the same, the conversation flows easier.",
+        "button": "Choose my places"
+      },
+      "socialHubs": {
+        "title": "Your Social Hubs",
+        "subtitle": "Choose at least 2 places where you'd like to meet people.",
+        "others": "Others",
+        "popular": {
+          "title": "Popular",
+          "subtitle": "Places people in your area choose most",
+          "empty": "No popular hubs in your area yet. Be the first to set yours!",
+          "countLabel": "{{count}} places nearby",
+          "place": "place",
+          "places": "places",
+          "userCount": "{{count}} people",
+          "cardTitle": "Popular near you",
+          "cardSubtitle": "See the most popular spots"
+        }
       },
       "locationTitle": "Your location",
       "locationSubtitle": "To find people and places near you, we need your location. You can disable this at any time",
@@ -1239,7 +1298,7 @@
         },
         "search": {
           "title": "No places found",
-          "description": "We couldn't find anything with that name. Try simplifying or searching by category.",
+          "description": "We couldn't find anything with that name. Try simplifying your search.",
           "button": "Clear search"
         },
         "ranking": {
@@ -1264,6 +1323,18 @@
       "emptyTitle": "Search places",
       "emptyDescription": "Type the name of a place or choose a suggestion.",
       "suggestionsLabel": "Search suggestions",
+      "suggestedPlacesLabel": "Suggested places",
+      "categoryPlaceholder": {
+        "bar": "Search bars...",
+        "nightclub": "Search nightclubs...",
+        "cafe": "Search cafes...",
+        "restaurant": "Search restaurants...",
+        "gym": "Search gyms...",
+        "park": "Search parks...",
+        "stadium": "Search stadiums...",
+        "club": "Search clubs...",
+        "university": "Search universities..."
+      },
       "suggestionsOptions": {
         "bar": "Bar",
         "cafe": "Cafe",
@@ -1346,7 +1417,6 @@
     },
     "discover": {
       "title": "Discover",
-      "subtitle": "Your second chances at a connection",
       "sectionOverlap": "Crossed your path",
       "sectionOverlapDesc": "People who were at the same place as you",
       "sectionVibe": "Same wavelength",
@@ -1354,8 +1424,8 @@
       "sectionRoutine": "Same routine",
       "sectionRoutineDesc": "Frequent the same spots as you",
       "sharedFavorites": {
-        "title": "Same Places",
-        "subtitle": "Love the same spots as you",
+        "title": "Your vibe, your spots",
+        "subtitle": "Into the same hangouts and interests",
         "onePlace": "Also loves {{place}}",
         "morePlaces": "{{place}} +{{extra}}"
       },
@@ -1368,7 +1438,7 @@
       "emptySubtitle": "Check in at your favorite spots and discover who shares your vibe.",
       "emptyCta": "Explore places",
       "noEncounters": "No encounters yet. Keep visiting places and we'll find your matches!",
-      "blurCta": "Check in to reveal",
+      "blurCta": "Reveal now",
       "verified": "Verified",
       "infoTitle": "How does Discover work?",
       "infoSubtitle": "We help you reconnect with people who crossed your path in the last 7 days — your Second Chances.",
@@ -1381,6 +1451,11 @@
       "likedConfirmation": "You liked {{name}}",
       "skipLabel": "Skip",
       "likeLabel": "Like"
+    },
+    "citySelector": {
+      "title": "Choose city",
+      "useMyLocation": "Use my location",
+      "useMyLocationDescription": "Use GPS location"
     }
   },
   "venue": {
@@ -1455,6 +1530,7 @@
     "zodiac": "Zodiac",
     "interest": "INTEREST",
     "favoritePlaces": "Favorite Places",
+    "socialHubs": "Social Hubs",
     "lookingFor": {
       "friendship": "Make new friends",
       "networking": "Professional networking",

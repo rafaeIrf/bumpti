@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -8,6 +9,7 @@ import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useScreenTracking } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { onboardingActions } from "@/modules/store/slices/onboardingActions";
+import { extractFirstName } from "@/utils/string";
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
 
@@ -26,8 +28,7 @@ export default function UserNameScreen() {
 
   const handleContinue = () => {
     if (name.trim()) {
-      // Extract only the first name (in case user enters full name)
-      const firstName = name.trim().split(/\s+/)[0];
+      const firstName = extractFirstName(name);
 
       // Save only the first name to Redux
       onboardingActions.setUserName(firstName);
@@ -48,9 +49,10 @@ export default function UserNameScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={!isValid}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >

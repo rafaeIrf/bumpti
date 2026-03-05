@@ -25,7 +25,8 @@ def validate_category_name(name, category, original_category, config):
     return True
 
 
-def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categories, config):
+def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categories, config,
+                              taxonomy_hierarchy=None):
     """Check if the PRIMARY category is valid (not in forbidden list).
     
     IMPORTANT: We only check the PRIMARY category, not alternates.
@@ -46,7 +47,13 @@ def check_taxonomy_hierarchy(category_tags, overture_category, alternate_categor
     if overture_category and overture_category.lower() in forbidden_terms:
         return False
     
-    # Accept - primary category is valid
+    # Also scan the full hierarchy path for forbidden ancestors
+    if taxonomy_hierarchy:
+        for ancestor in (taxonomy_hierarchy or []):
+            if ancestor and ancestor.lower() in forbidden_terms:
+                return False
+    
+    # Accept - primary category and hierarchy are valid
     return True
 
 

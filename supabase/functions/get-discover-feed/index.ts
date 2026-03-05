@@ -61,6 +61,17 @@ Deno.serve(async (req) => {
     const userId = user.id;
     const adminClient = createAdminClient();
 
+    // Read optional lat/lng from request body
+    let lat: number | null = null;
+    let lng: number | null = null;
+    try {
+      const body = await req.json();
+      lat = body?.lat ?? null;
+      lng = body?.lng ?? null;
+    } catch {
+      // No body or invalid JSON — use defaults
+    }
+
     // 1. Check recent presence (7-day window) + shared favorites in parallel
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -72,14 +83,27 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .gte("entered_at", sevenDaysAgo.toISOString())
         .limit(1),
-      supabase.rpc("get_shared_favorite_users", { p_viewer_id: userId }),
+      supabase.rpc("get_shared_favorite_users", {
+        p_viewer_id: userId,
+        p_lat: lat,
+        p_lng: lng,
+      }),
     ]);
 
     if (presenceResult.error) {
       console.error("[get-discover-feed] presenceError:", presenceResult.error);
     }
 
+    if (sharedResult.error) {
+      console.error("[get-discover-feed] sharedFavoritesError:", sharedResult.error);
+    }
+
     const hasRecentPresence = (presenceResult.data?.length ?? 0) > 0;
+
+    // 🍎 Reviewer bypass: check if viewer is a known reviewer account
+    // so the discover feed RPC is always called even without a physical presence.
+    const REVIEWER_EMAILS = ["reviewer@bumpti.com", "reviewer_onboarding@bumpti.com"];
+    const isReviewer = REVIEWER_EMAILS.includes(user.email?.toLowerCase() ?? "");
 
     // Sign avatar photos for shared favorites
     const rawShared = sharedResult.data ?? [];
@@ -103,12 +127,13 @@ Deno.serve(async (req) => {
           shared_count: u.shared_count,
           shared_place_ids: u.shared_place_ids,
           shared_place_names: u.shared_place_names,
+          shared_interest_keys: u.shared_interest_keys ?? [],
         };
       })
     );
 
-    // 2. If no recent presence, return early with only shared_favorites
-    if (!hasRecentPresence) {
+    // 2. If no recent presence (and not a reviewer), return early with only shared_favorites
+    if (!hasRecentPresence && !isReviewer) {
       return new Response(
         JSON.stringify({
           has_recent_presence: false,

@@ -1,5 +1,6 @@
 import { MapPinIcon } from "@/assets/icons";
 import { ThemedText } from "@/components/themed-text";
+import { BrandIcon } from "@/components/ui/brand-icon";
 import { spacing, typography } from "@/constants/theme";
 import { getCardGradientColors } from "@/utils/card-gradient";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,13 +18,15 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { SvgProps } from "react-native-svg";
 
 export interface PlaceCardFeaturedProps {
   title: string;
-  icon?: React.ComponentType<{ width: number; height: number; color: string }>;
+  icon?: React.ComponentType<SvgProps>;
   onClick: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   color?: string;
+  iconColor?: string;
   count?: number;
 }
 
@@ -34,6 +37,7 @@ export function PlaceCardFeatured({
   icon: Icon,
   onClick,
   containerStyle,
+  iconColor = "#FFFFFF",
   color = "#2997FF",
   count,
 }: PlaceCardFeaturedProps) {
@@ -85,14 +89,21 @@ export function PlaceCardFeatured({
         {/* Count Badge - top-right corner */}
         {count !== undefined && count > 0 && (
           <View style={styles.countBadge}>
-            <MapPinIcon width={8} height={8} color="#FFFFFF" />
+            <MapPinIcon width={8} height={8} color={iconColor} />
             <ThemedText style={styles.countText}>{count}</ThemedText>
           </View>
         )}
 
         {/* Content Container */}
         <View style={styles.contentContainer}>
-          {Icon && <Icon width={32} height={32} color="#FFFFFF" />}
+          {Icon && (
+            <BrandIcon
+              icon={Icon}
+              size="sm"
+              color={iconColor}
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            />
+          )}
 
           <ThemedText
             numberOfLines={1}
@@ -126,6 +137,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
     textAlign: "center",

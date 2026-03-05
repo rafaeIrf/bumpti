@@ -1,9 +1,12 @@
+import { getCachedLocation } from "@/hooks/use-cached-location";
+import { getUserPosition } from "@/modules/places";
 import { store } from "@/modules/store";
-import { setPlans, setPlansLoading } from "@/modules/store/slices/plansSlice";
+import { setPlans, setPlansFeed, setPlansFeedLoading, setPlansLoading } from "@/modules/store/slices/plansSlice";
 import { supabase } from "@/modules/supabase/client";
 import { getLocalDateString } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import type {
+  AllPlanFeedItem,
   CreatePlanPayload,
   JoinPlanPayload,
   PlanPeriod,
@@ -197,5 +200,78 @@ export async function fetchSuggestedPlans(
   } catch (err) {
     logger.error("[fetchSuggestedPlans] Unexpected error:", { err });
     return { suggestions: [], totalCount: 0 };
+  }
+}
+
+/**
+ * Fetches all plan slots (place+date+period) near the user for the PlanHero
+ * carousel. Returns up to 10 items sorted by date proximity + attendee count.
+ */
+export async function fetchAllPlansFeed(
+  lat: number,
+  lng: number
+): Promise<AllPlanFeedItem[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      plans: AllPlanFeedItem[];
+    }>("get-all-plans-feed", {
+      body: { lat, lng, local_date: getLocalDateString(0) },
+    });
+
+    if (error) {
+      logger.error("[fetchAllPlansFeed] Edge function error:", { error });
+      return [];
+    }
+
+    return data?.plans ?? [];
+  } catch (err) {
+    logger.error("[fetchAllPlansFeed] Unexpected error:", { err });
+    return [];
+  }
+}
+
+/**
+ * Fetches the community plan feed and stores it in Redux.
+ * Resolves location internally: cache → fresh GPS → skip if unavailable.
+ */
+export async function fetchAndSetPlansFeed(): Promise<AllPlanFeedItem[]> {
+  try {
+    store.dispatch(setPlansFeedLoading(true));
+
+    // 1. Try in-memory cache first (populated by useCachedLocation hook)
+    let lat: number | undefined;
+    let lng: number | undefined;
+
+    const cached = getCachedLocation();
+    if (cached) {
+      lat = cached.latitude;
+      lng = cached.longitude;
+    } else {
+      // 2. Fetch fresh GPS — same as useCachedLocation does
+      try {
+        const pos = await getUserPosition();
+        lat = pos.latitude;
+        lng = pos.longitude;
+      } catch (locErr) {
+        logger.warn("[fetchAndSetPlansFeed] Could not get location:", { locErr });
+      }
+    }
+
+    if (!lat || !lng) {
+      logger.warn("[fetchAndSetPlansFeed] No location available, skipping");
+      store.dispatch(setPlansFeed([]));
+      return [];
+    }
+
+    const plans = await fetchAllPlansFeed(lat, lng);
+    logger.log("[fetchAndSetPlansFeed] Fetched feed:", { count: plans.length });
+    store.dispatch(setPlansFeed(plans));
+    return plans;
+  } catch (err) {
+    logger.error("[fetchAndSetPlansFeed] Unexpected error:", { err });
+    store.dispatch(setPlansFeed([]));
+    return [];
+  } finally {
+    store.dispatch(setPlansFeedLoading(false));
   }
 }

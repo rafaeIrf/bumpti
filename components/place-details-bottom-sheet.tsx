@@ -1,21 +1,22 @@
 import {
   HeartIcon,
-  MapPinIcon,
   NavigationIcon,
   StarIcon,
   UsersIcon,
   XIcon,
 } from "@/assets/icons";
 import { MAX_FAVORITES } from "@/components/favorite-places-manager";
+import { getCategoryColor, getPlaceIcon } from "@/components/place-card-utils";
 import { ThemedText } from "@/components/themed-text";
-import Button from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { spacing, typography } from "@/constants/theme";
 import { useOptimisticFavorite } from "@/hooks/use-optimistic-favorite";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { ANALYTICS_EVENTS, trackEvent } from "@/modules/analytics";
 import { t } from "@/modules/locales";
 import { PlaceReview } from "@/modules/places/types";
-import { useFeatureFlag, usePostHog } from "posthog-react-native";
+import { toTitleCase } from "@/utils/string";
+import { usePostHog } from "posthog-react-native";
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,6 +27,7 @@ import { RatingBadge } from "./ui/rating-badge";
 interface PlaceDetailsBottomSheetProps {
   placeName: string;
   category: string;
+  categoryKey?: string;
   address: string;
   neighborhood?: string; // NEW: Bairro name
   distance: string; // e.g., "1.2 km de você"
@@ -55,6 +57,7 @@ interface PlaceDetailsBottomSheetProps {
 export function PlaceDetailsBottomSheet({
   placeName,
   category,
+  categoryKey,
   address,
   neighborhood,
   distance,
@@ -75,11 +78,7 @@ export function PlaceDetailsBottomSheet({
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const posthog = usePostHog();
-  const ctaVariant = useFeatureFlag("place-details-cta-test");
-  const ctaLabel =
-    ctaVariant === "variant-conectar"
-      ? t("venue.connection.active.buttonConectar")
-      : t("venue.connection.active.button");
+  const ctaLabel = t("venue.connection.active.button");
 
   const { isFavorite: localFavorite, handleToggle: handleFavorite } =
     useOptimisticFavorite({
@@ -89,10 +88,6 @@ export function PlaceDetailsBottomSheet({
     });
 
   const ratingCount = review?.count || 0;
-
-  const formattedRating = review?.average
-    ? review.average.toFixed(1)
-    : undefined;
 
   const vibeTagsDisplay = useMemo(() => {
     if (!review?.tags || review.tags.length === 0) return [];
@@ -106,6 +101,9 @@ export function PlaceDetailsBottomSheet({
   }, [review]);
 
   const hasRating = review?.average !== undefined && review.average > 0;
+
+  const Icon = getPlaceIcon(categoryKey || "default");
+  const categoryBgColor = getCategoryColor(categoryKey || "default");
 
   return (
     <View
@@ -136,7 +134,12 @@ export function PlaceDetailsBottomSheet({
       <View style={styles.content}>
         {/* Brand Icon Header - Simplified & Floating */}
         <View style={styles.iconWrapper}>
-          <BrandIcon icon={MapPinIcon} size="lg" color={colors.accent} />
+          <BrandIcon
+            icon={Icon}
+            size="lg"
+            color={colors.white}
+            style={{ backgroundColor: categoryBgColor }}
+          />
         </View>
 
         {/* Identity Section - Tight & Focused */}
@@ -152,7 +155,7 @@ export function PlaceDetailsBottomSheet({
             ]}
             numberOfLines={2}
           >
-            {placeName.toUpperCase()}
+            {toTitleCase(placeName)}
           </ThemedText>
 
           <View style={styles.metaRow}>
@@ -190,23 +193,27 @@ export function PlaceDetailsBottomSheet({
 
           {/* Address with neighborhood */}
           <View style={styles.addressRow}>
-            <ThemedText
-              style={[
-                typography.caption,
-                {
-                  color: colors.textSecondary,
-                  textAlign: "center",
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {address}
-            </ThemedText>
-            {neighborhood && (
+            {address && (
               <>
+                <ThemedText
+                  style={[
+                    typography.caption,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: "center",
+                    },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {address}
+                </ThemedText>
                 <View
                   style={[styles.dot, { backgroundColor: colors.border }]}
                 />
+              </>
+            )}
+            {neighborhood && (
+              <>
                 <ThemedText
                   style={[
                     typography.caption,
@@ -289,8 +296,6 @@ export function PlaceDetailsBottomSheet({
               posthog?.capture("place_details_connect_clicked", {
                 place_id: placeId,
                 distance_meters: distance,
-                cta_variant: ctaVariant || "fallback",
-                cta_text: ctaLabel,
                 active_users: activeUsers || 0,
               });
               onConnect?.();

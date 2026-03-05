@@ -183,7 +183,6 @@ export default function CategoryResultsScreen() {
     !communityFavoritesMode &&
     !mostFrequentMode &&
     !!userLocation &&
-    !!userLocation.city &&
     targetCategory.length > 0;
 
   // Fetch for mostFrequent mode with ranking
@@ -425,17 +424,22 @@ export default function CategoryResultsScreen() {
       : lastAvailableCategories;
 
   // Calculate loading state before using it
+  // Treat location as "not ready" when still loading or when permission
+  // is granted but location hasn't arrived yet
+  const locationNotReady =
+    locationLoading || (!userLocation && hasLocationPermission);
+
   let loadingState: boolean;
   if (trendingMode) {
     loadingState = trendingLoading;
   } else if (favoritesMode) {
     loadingState = favoritePlacesLoading;
   } else if (communityFavoritesMode) {
-    loadingState = locationLoading || communityFavoritesLoading;
+    loadingState = locationNotReady || communityFavoritesLoading;
   } else if (mostFrequentMode) {
-    loadingState = locationLoading || mostFrequentFetching;
+    loadingState = locationNotReady || mostFrequentFetching;
   } else {
-    loadingState = locationLoading || isPaginatedInitialLoading;
+    loadingState = locationNotReady || isPaginatedInitialLoading;
   }
 
   const isLoadingState = useMemo(() => loadingState, [loadingState]);
@@ -538,7 +542,6 @@ export default function CategoryResultsScreen() {
         activeUserAvatars: (item as any).preview_avatars || undefined,
         tag: item.types?.[0] || undefined,
         neighborhood: item.neighborhood,
-        rank: mostFrequentMode ? item.rank : undefined,
         review: item.review,
         regularsCount: item.regulars_count,
       };
@@ -566,13 +569,6 @@ export default function CategoryResultsScreen() {
               });
               showPlaceDetails(item);
             }}
-            isFavorite={favoriteIds.has(item.placeId)}
-            onToggleFavorite={() =>
-              handleToggle(item.placeId, {
-                place: item,
-                details: { name: item.name, emoji: (item as any).emoji },
-              })
-            }
           />
         </Animated.View>
       );
@@ -688,12 +684,6 @@ export default function CategoryResultsScreen() {
                             color: colors.icon,
                           },
                         ]),
-                    {
-                      icon: SearchIcon,
-                      onClick: handleOpenSearch,
-                      ariaLabel: t("common.search"),
-                      color: colors.icon,
-                    },
                   ]
                 : []
             }

@@ -1,4 +1,4 @@
-import { HeartIcon } from "@/assets/icons";
+import { CheckIcon } from "@/assets/icons";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { VerificationBadge } from "@/components/verification-badge";
 import { ALL_INTERESTS } from "@/constants/profile-options";
@@ -52,6 +52,7 @@ export default function EncounterCard({
 }: EncounterCardProps) {
   const colors = useThemeColors();
   const router = useRouter();
+  // const { isPremium } = useUserSubscription();
   const isPremium = true;
   const { profile, isLoading } = useHydratedProfile(encounter.other_user_id);
   const isDismissed = useRef(false);
@@ -118,9 +119,16 @@ export default function EncounterCard({
         userId: encounter.other_user_id,
         source: "discover",
         placeId: encounter.place_id,
+        encounterType: encounter.encounter_type,
       },
     });
-  }, [isPremium, router, encounter.other_user_id, encounter.place_id]);
+  }, [
+    isPremium,
+    router,
+    encounter.other_user_id,
+    encounter.place_id,
+    encounter.encounter_type,
+  ]);
 
   const animateDismiss = useCallback(
     (direction: 1 | -1, callback?: () => void) => {
@@ -319,48 +327,89 @@ export default function EncounterCard({
                 );
               })()}
 
-            {/* Place pills (shared_favorites only) */}
+            {/* Place/Interest pills (shared_favorites only) */}
             {encounter.encounter_type === "shared_favorites" &&
               (() => {
                 const placeNames = encounter.metadata?.shared_place_names ?? [];
-                if (placeNames.length === 0) return null;
-                const maxPills = 1;
-                const visiblePlaces = placeNames.slice(0, maxPills);
-                const extraCount = placeNames.length - maxPills;
-                return (
-                  <View style={styles.interestsRow}>
-                    {visiblePlaces.map((placeName, i) => (
-                      <View
-                        key={`place-${i}`}
-                        style={[
-                          styles.interestPill,
-                          { backgroundColor: "rgba(255,255,255,0.15)" },
-                        ]}
-                      >
-                        <Text
-                          style={[typography.caption, { color: "#FFFFFF" }]}
-                          numberOfLines={1}
+                const interestKeys =
+                  encounter.metadata?.shared_interest_keys ?? [];
+
+                // Priority: show place pills if available, otherwise interest pills
+                if (placeNames.length > 0) {
+                  const maxPills = 1;
+                  const visiblePlaces = placeNames.slice(0, maxPills);
+                  const extraCount = placeNames.length - maxPills;
+                  return (
+                    <View style={styles.interestsRow}>
+                      {visiblePlaces.map((placeName, i) => (
+                        <View
+                          key={`place-${i}`}
+                          style={[
+                            styles.interestPill,
+                            { backgroundColor: "rgba(255,255,255,0.15)" },
+                          ]}
                         >
-                          {placeName}
-                        </Text>
-                      </View>
-                    ))}
-                    {extraCount > 0 && (
-                      <View
-                        style={[
-                          styles.interestPill,
-                          { backgroundColor: "rgba(255,255,255,0.15)" },
-                        ]}
-                      >
-                        <Text
-                          style={[typography.caption, { color: "#FFFFFF" }]}
+                          <Text
+                            style={[typography.caption, { color: "#FFFFFF" }]}
+                            numberOfLines={1}
+                          >
+                            {placeName}
+                          </Text>
+                        </View>
+                      ))}
+                      {extraCount > 0 && (
+                        <View
+                          style={[
+                            styles.interestPill,
+                            { backgroundColor: "rgba(255,255,255,0.15)" },
+                          ]}
                         >
-                          +{extraCount}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                );
+                          <Text
+                            style={[typography.caption, { color: "#FFFFFF" }]}
+                          >
+                            +{extraCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                }
+
+                // Fallback: show shared interest pills
+                if (interestKeys.length > 0) {
+                  const maxPills = 2;
+                  const visibleInterests = interestKeys.slice(0, maxPills);
+                  return (
+                    <View style={styles.interestsRow}>
+                      {visibleInterests.map((key) => {
+                        const catalogItem = ALL_INTERESTS.find(
+                          (item) => item.key === key,
+                        );
+                        const emoji = catalogItem?.icon ?? "";
+                        const label = t(
+                          `screens.onboarding.interests.items.${key}` as any,
+                        );
+                        return (
+                          <View
+                            key={key}
+                            style={[
+                              styles.interestPill,
+                              { backgroundColor: "rgba(255,255,255,0.15)" },
+                            ]}
+                          >
+                            <Text
+                              style={[typography.caption, { color: "#FFFFFF" }]}
+                            >
+                              {emoji} {label}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                }
+
+                return null;
               })()}
           </View>
 
@@ -380,7 +429,7 @@ export default function EncounterCard({
                 },
               ]}
             >
-              <HeartIcon width={20} height={20} fill="#FFFFFF" />
+              <CheckIcon width={20} height={20} color="#FFFFFF" />
             </Pressable>
           )}
         </View>

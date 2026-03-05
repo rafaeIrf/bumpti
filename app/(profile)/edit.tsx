@@ -48,7 +48,8 @@ type FieldType =
   | "smoking"
   | "gender"
   | "relationshipStatus"
-  | "university";
+  | "university"
+  | "socialHubs";
 
 interface EditRowProps {
   icon: React.ComponentType<SvgProps> | React.ComponentType<any>;
@@ -136,7 +137,13 @@ function SectionHeader({ title, subtitle }: SectionHeaderProps) {
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { profile, photos, isUploading, updatePhotos } = useProfileEdit();
+  const {
+    profile,
+    photos,
+    isUploading,
+    updatePhotos,
+    handlePhotoHashesChange,
+  } = useProfileEdit();
 
   const professionValue = React.useMemo(() => {
     const parts = [profile?.job_title, profile?.company_name].filter(
@@ -164,6 +171,10 @@ export default function ProfileEditScreen() {
   const handleFieldPress = (field: FieldType) => {
     if (field === "spots") {
       router.push("/(profile)/favorite-places");
+      return;
+    }
+    if (field === "socialHubs") {
+      router.push("/(modals)/social-hubs");
       return;
     }
     if (field === "university") {
@@ -246,6 +257,7 @@ export default function ProfileEditScreen() {
           <UserPhotoGrid
             photos={photos}
             onPhotosChange={handlePhotosChange}
+            onPhotoHashesChange={handlePhotoHashesChange}
             maxPhotos={9}
             minPhotos={2}
             isUploading={isUploading}
@@ -344,6 +356,18 @@ export default function ProfileEditScreen() {
                 : ""
             }
             onPress={() => handleFieldPress("spots")}
+          />
+          <EditRow
+            icon={MapPinIcon}
+            label={t("screens.profile.profileEdit.interests.socialHubs")}
+            value={
+              profile?.socialHubs && profile.socialHubs.length > 0
+                ? t("screens.profile.profileEdit.interests.socialHubsCount", {
+                    count: profile.socialHubs.length,
+                  })
+                : ""
+            }
+            onPress={() => handleFieldPress("socialHubs")}
           />
         </View>
 

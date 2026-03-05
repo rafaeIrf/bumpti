@@ -17,12 +17,16 @@ export type ModerationRequest = SingleModerationRequest | BatchModerationRequest
 export interface SingleModerationResponse {
   approved: boolean;
   reason: "content_flagged" | "sensitive_content" | "personal_data_detected" | "not_human" | "underage_detected" | null;
+  /** SHA-256 hash of the image (only present for approved images) */
+  hash?: string;
 }
 
 export interface BatchModerationResponse {
   results: {
     approved: boolean;
     reason: "content_flagged" | "sensitive_content" | "not_human" | "underage_detected" | null;
+    /** SHA-256 hash of the image (only present for approved images) */
+    hash?: string;
   }[];
   processedCount: number;
 }

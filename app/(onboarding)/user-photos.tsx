@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -15,8 +16,12 @@ export default function UserPhotosScreen() {
   const colors = useThemeColors();
   const { userData, completeCurrentStep } = useOnboardingFlow();
   const [photos, setPhotos] = useState<string[]>(userData.photoUris || []);
+  const photoHashes = userData.photoHashes ?? {};
 
-  // Track screen view
+  const handlePhotosChange = (newPhotos: string[]) => {
+    setPhotos(newPhotos);
+    onboardingActions.setPhotoUris(newPhotos);
+  };
   useScreenTracking({
     screenName: "onboarding_photos",
     params: {
@@ -24,14 +29,16 @@ export default function UserPhotosScreen() {
     },
   });
 
+  const handlePhotoHashesChange = (hashes: Record<string, string>) => {
+    onboardingActions.setPhotoHashes(hashes);
+  };
+
   const handleContinue = () => {
     if (photos.length >= 2) {
       onboardingActions.setPhotoUris(photos);
       completeCurrentStep("user-photos");
     }
   };
-
-  const remainingPhotos = Math.max(0, 2 - photos.length);
 
   return (
     <BaseTemplateScreen
@@ -41,9 +48,10 @@ export default function UserPhotosScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={photos.length < 2}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >
@@ -58,7 +66,9 @@ export default function UserPhotosScreen() {
         maxPhotos={9}
         minPhotos={2}
         photos={photos}
-        onPhotosChange={setPhotos}
+        onPhotosChange={handlePhotosChange}
+        onPhotoHashesChange={handlePhotoHashesChange}
+        photoHashes={photoHashes}
       />
     </BaseTemplateScreen>
   );

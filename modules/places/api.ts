@@ -1,6 +1,6 @@
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import { CityPrediction, Place, PlaceCategory } from "./types";
+import { CityPrediction, Place, PlaceCategory, SupportedCity } from "./types";
 
 type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating" | "trending";
 
@@ -19,6 +19,32 @@ export async function searchCities(
   }
 
   return data?.places || [];
+}
+
+export async function getSupportedCities(
+  lat?: number,
+  lng?: number,
+): Promise<SupportedCity[]> {
+  const params = new URLSearchParams();
+  if (lat !== undefined && lng !== undefined) {
+    params.set("lat", String(lat));
+    params.set("lng", String(lng));
+  }
+  const queryString = params.toString();
+  const functionPath = queryString
+    ? `get-supported-cities?${queryString}`
+    : "get-supported-cities";
+
+  const { data, error } = await supabase.functions.invoke<{
+    cities: SupportedCity[];
+  }>(functionPath);
+
+  if (error) {
+    logger.error("get-supported-cities (edge) error:", error);
+    return [];
+  }
+
+  return data?.cities || [];
 }
 
 export async function searchPlacesByText(
@@ -306,6 +332,42 @@ export async function getSuggestedPlacesByCategories(
 
   if (error) {
     logger.error("Failed to fetch suggested places (edge):", error);
+    return { data: [] };
+  }
+
+  return {
+    data: data?.data || [],
+  };
+}
+
+export interface PopularHub {
+  placeId: string;
+  name: string;
+  category: string;
+  formattedAddress: string;
+  userCount: number;
+  distKm: number;
+}
+
+/**
+ * Fetch popular social hubs near the user's location
+ * Returns places that other users in the area have selected as their social hubs
+ */
+export async function getPopularHubs(
+  latitude: number,
+  longitude: number,
+): Promise<{ data: PopularHub[] }> {
+  const { data, error } = await supabase.functions.invoke<{
+    data: PopularHub[];
+  }>("get-popular-hubs", {
+    body: {
+      lat: latitude,
+      lng: longitude,
+    },
+  });
+
+  if (error) {
+    logger.error("Failed to fetch popular hubs (edge):", error);
     return { data: [] };
   }
 

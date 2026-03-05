@@ -523,6 +523,21 @@ export function UserProfileCard({
             </View>
           </Section>
         )}
+
+        {/* SOCIAL HUBS */}
+        {profile.social_hubs && profile.social_hubs.length > 0 && (
+          <Section title={t("userProfile.socialHubs")}>
+            <View style={styles.chipsWrap}>
+              {profile.social_hubs.map((hub) =>
+                renderTag(
+                  hub.name,
+                  <MapPinIcon width={12} height={12} color="#E7E9EA" />,
+                  false,
+                ),
+              )}
+            </View>
+          </Section>
+        )}
       </View>
 
       {/* ACTIONS */}

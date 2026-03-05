@@ -63,6 +63,5 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.caption,
-    fontWeight: "700",
   },
 });

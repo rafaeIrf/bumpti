@@ -15,10 +15,14 @@ import { useDiscoverySwipes } from "@/hooks/use-discovery-swipes";
 import { usePrefetchWindowSize } from "@/hooks/use-prefetch-window-size";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { upsertDiscoveryProfiles } from "@/modules/discovery/discovery-service";
+import { upsertLikerIds } from "@/modules/discovery/liker-ids-service";
 import { removeQueuedSwipes } from "@/modules/discovery/swipe-queue-service";
 import { useUserSubscription } from "@/modules/iap/hooks";
 import { t } from "@/modules/locales";
-import { ActiveUserAtPlace } from "@/modules/presence/api";
+import {
+  ActiveUserAtPlace,
+  getPlanningUsersAtPlace,
+} from "@/modules/presence/api";
 import { prefetchNextCards } from "@/utils/image-prefetch";
 import { logger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
@@ -40,6 +44,9 @@ export default function PlacePeopleScreen() {
     placeId: string;
     placeName: string;
     initialUsers?: string;
+    // Planning context — when present, shows only planning users for this date
+    plannedFor?: string; // 'YYYY-MM-DD'
+    plannedPeriod?: string; // 'morning' | 'afternoon' | 'night'
   }>();
   const [isHydratingInitialUsers, setIsHydratingInitialUsers] = useState(false);
   const [matchProfile, setMatchProfile] = useState<ActiveUserAtPlace | null>(
@@ -63,6 +70,7 @@ export default function PlacePeopleScreen() {
 
   const placeId = params.placeId;
   const hasInitialUsers = Boolean(params.initialUsers);
+  const isPlanningMode = Boolean(params.plannedFor);
 
   const place: Place = {
     id: placeId,
@@ -71,10 +79,11 @@ export default function PlacePeopleScreen() {
 
   const {
     profiles: availableProfiles,
-    isLoading,
+    isLoading: isFeedLoading,
     refresh,
   } = useDiscoveryFeed(placeId, {
-    enabled: !hasInitialUsers,
+    // Disable standard discovery feed in planning mode — we load planners instead
+    enabled: !hasInitialUsers && !isPlanningMode,
   });
 
   const profileByIdRef = useRef<Record<string, ActiveUserAtPlace>>({});
@@ -103,6 +112,60 @@ export default function PlacePeopleScreen() {
     setRewindUsedForCurrent(false);
   }, [placeId]);
 
+  // ── Planning mode: fetch planning users and hydrate into WatermelonDB ──────
+  const [isPlanningLoading, setIsPlanningLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isPlanningMode || !params.plannedFor) return;
+    let isMounted = true;
+
+    const hydratePlanners = async () => {
+      setIsPlanningLoading(true);
+      try {
+        const result = await getPlanningUsersAtPlace(
+          placeId,
+          params.plannedFor!,
+          // Normalize empty string (sent by router) to null so RPC returns all periods
+          params.plannedPeriod || null,
+        );
+        if (!result || !isMounted) return;
+
+        // Filter out users already swiped locally (mirrors fetchDiscoveryFeed behavior)
+        const swipedIds = swipedIdsRef.current;
+        const freshUsers = result.users.filter(
+          (u) => !swipedIds.has(u.user_id),
+        );
+
+        await upsertDiscoveryProfiles({
+          database,
+          placeId,
+          users: freshUsers,
+        });
+
+        // Upsert liker IDs so the "liked you" indicator works in planning mode
+        if (result.liker_ids.length > 0) {
+          await upsertLikerIds({ database, ids: result.liker_ids });
+        }
+      } catch (error) {
+        logger.error("[PlacePeople] Failed to load planning users", { error });
+      } finally {
+        if (isMounted) setIsPlanningLoading(false);
+      }
+    };
+
+    void hydratePlanners();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    database,
+    isPlanningMode,
+    params.plannedFor,
+    params.plannedPeriod,
+    placeId,
+  ]);
+
+  // ── Original initialUsers hydration ─────────────────────────────────────────
   useEffect(() => {
     if (!params.initialUsers) return;
     let isMounted = true;
@@ -111,7 +174,7 @@ export default function PlacePeopleScreen() {
       setIsHydratingInitialUsers(true);
       try {
         const parsedUsers = JSON.parse(
-          params.initialUsers,
+          params.initialUsers as string,
         ) as ActiveUserAtPlace[];
         await upsertDiscoveryProfiles({
           database,
@@ -293,7 +356,8 @@ export default function PlacePeopleScreen() {
     />
   );
 
-  const loading = isLoading || isHydratingInitialUsers;
+  const isLoading =
+    isFeedLoading || isHydratingInitialUsers || isPlanningLoading;
   const remaining = deck.length - currentIndex;
   const hasAvailableToAppend = useMemo(
     () =>
@@ -306,17 +370,18 @@ export default function PlacePeopleScreen() {
   );
 
   const showEmpty =
-    !loading &&
+    !isLoading &&
     (deck.length === 0 || isDeckExhausted) &&
     !hasAvailableToAppend &&
     !isRefilling;
-  const showSwiper = !loading && !showEmpty && remaining > 0;
+  const showSwiper = !isLoading && !showEmpty && remaining > 0;
 
   useEffect(() => {
     if (!showSwiper) return;
     if (remaining > 3) return;
     if (isRefilling) return;
     if (hasInitialUsers) return;
+    if (isPlanningMode) return; // planning users are loaded once; no refill via discovery feed
     if (currentIndex === 0) return;
     if (lastRefillIndexRef.current === currentIndex) return;
 
@@ -367,7 +432,7 @@ export default function PlacePeopleScreen() {
         }
         TopHeader={toolbar}
       >
-        {loading && <LoadingView />}
+        {isLoading && <LoadingView />}
 
         {showEmpty && (
           <ThemedView style={styles.emptyContainer}>

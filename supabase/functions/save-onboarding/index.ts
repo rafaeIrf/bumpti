@@ -1,6 +1,5 @@
 /// <reference types="https://deno.land/x/supabase@1.7.4/functions/types.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { grantCheckinCredits } from "../_shared/iap-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +18,13 @@ if (!supabaseUrl || !serviceKey) {
 
 const supabase = createClient(supabaseUrl, serviceKey);
 
+/** Extracts and normalizes the first name: first word only, properly capitalized. */
+function extractFirstName(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0];
+  if (!first) return "";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
 function getFileExtension(fileName?: string, contentType?: string) {
   if (fileName && fileName.includes(".")) {
     return fileName.split(".").pop() ?? "jpg";
@@ -33,8 +39,9 @@ function getFileExtension(fileName?: string, contentType?: string) {
 
 async function uploadPhotos(
   userId: string,
-  photos: File[]
-): Promise<{ paths: string[]; positions: number[] }> {
+  photos: File[],
+  fileHashes: string[] = []
+): Promise<{ paths: string[]; positions: number[]; hashes: (string | null)[] }> {
   // Remove existing photos for this user before uploading new ones
   const { data: existing } = await supabase.storage
     .from(userPhotosBucket)
@@ -59,7 +66,7 @@ async function uploadPhotos(
 
     if (uploadError) throw uploadError;
 
-    return { path, position: index };
+    return { path, position: index, hash: fileHashes[index] ?? null };
   });
 
   const results = await Promise.all(uploadPromises);
@@ -67,6 +74,7 @@ async function uploadPhotos(
   return {
     paths: results.map(r => r.path),
     positions: results.map(r => r.position),
+    hashes: results.map(r => r.hash),
   };
 }
 
@@ -102,7 +110,9 @@ Deno.serve(async (req) => {
     }
 
     const formData = await req.formData();
-    const name = (formData.get("name") as string | null) || null;
+    const rawName = (formData.get("name") as string | null)?.trim() || null;
+    // Normalize: keep only the first word, capitalize properly (e.g. "GustaVo de" → "Gustavo")
+    const name = rawName ? extractFirstName(rawName) : null;
     const birthdateRaw = (formData.get("birthdate") as string | null) || null;
     const birthdate =
       birthdateRaw && /^\d{4}-\d{2}-\d{2}$/.test(birthdateRaw) ? birthdateRaw : null;
@@ -118,6 +128,10 @@ Deno.serve(async (req) => {
     const favoritePlaces =
       (formData.get("favoritePlaces") as string | null)?.length
         ? JSON.parse(formData.get("favoritePlaces") as string)
+        : [];
+    const socialHubs =
+      (formData.get("socialHubs") as string | null)?.length
+        ? JSON.parse(formData.get("socialHubs") as string)
         : [];
     const bio = (formData.get("bio") as string | null) || null;
     const interests =
@@ -135,6 +149,20 @@ Deno.serve(async (req) => {
     const showUniversityOnHome = showUniversityOnHomeRaw === "true" ? true : (showUniversityOnHomeRaw === "false" ? false : null);
     
     const photos = formData.getAll("photos").filter((f): f is File => f instanceof File);
+
+    // Parse photo hashes (same format as update-profile)
+    let fileHashes: string[] = [];
+    if (formData.has("photo_hashes")) {
+      try {
+        const list = JSON.parse(formData.get("photo_hashes") as string) as (string | null)[];
+        fileHashes = list.filter((h): h is string => h !== null);
+      } catch { /* malformed — proceed without hashes */ }
+    } else if (formData.has("photo_hash_map")) {
+      try {
+        const map = JSON.parse(formData.get("photo_hash_map") as string) as Record<string, string>;
+        fileHashes = Object.values(map);
+      } catch { /* malformed — proceed without hashes */ }
+    }
 
     // Server-side photo limit validation (prevents abuse via direct API calls)
     if (photos.length > 9) {
@@ -167,8 +195,8 @@ Deno.serve(async (req) => {
       : Promise.resolve({ data: [], error: null });
 
     const uploadPromise = photos.length
-      ? uploadPhotos(user.id, photos)
-      : Promise.resolve({ paths: [], positions: [] });
+      ? uploadPhotos(user.id, photos, fileHashes)
+      : Promise.resolve({ paths: [], positions: [], hashes: [] });
 
     const interestPromise = interests.length
       ? supabase.from("interests").select("id,key").in("key", interests)
@@ -220,6 +248,7 @@ Deno.serve(async (req) => {
 
     const photoPaths = uploadResult.paths;
     const photoPositions = uploadResult.positions;
+    const photoHashes = uploadResult.hashes;
 
     const { error: rpcError } = await supabase.rpc("save_onboarding_txn", {
       p_user_id: user.id,
@@ -230,6 +259,7 @@ Deno.serve(async (req) => {
       p_intention_ids: intentionIds,
       p_photo_urls: photoPaths,
       p_photo_positions: photoPositions,
+      p_photo_hashes: photoHashes,
       p_favorite_place_ids: favoritePlaces,
       p_bio: bio,
       // University fields (name/lat/lng come from places table via FK)
@@ -238,17 +268,11 @@ Deno.serve(async (req) => {
       p_graduation_year: graduationYear,
       p_show_university_on_home: showUniversityOnHome,
       p_interest_ids: interestIds,
+      p_social_hub_ids: socialHubs,
     });
 
     if (rpcError) {
       throw rpcError;
-    }
-
-    try {
-      await grantCheckinCredits(supabase, user.id, 10, "onboarding_bonus");
-      console.log(`Granted 10 checkin+ credits to user ${user.id}`);
-    } catch (creditError) {
-      console.error("Failed to grant onboarding credits:", creditError);
     }
 
     return new Response(JSON.stringify({ success: true }), {

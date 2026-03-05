@@ -3,6 +3,11 @@ import { logger } from "@/utils/logger";
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { DiscoverFeed } from "./types";
 
+type DiscoverFeedArgs = {
+  lat?: number | null;
+  lng?: number | null;
+};
+
 type DiscoverFeedResponse = {
   has_recent_presence: boolean;
   feed: DiscoverFeed;
@@ -17,14 +22,20 @@ export const discoverApi = createApi({
      * Fetches the discover feed via get-discover-feed Edge Function.
      * Returns presence status + categorized encounters.
      */
-    getDiscoverFeed: builder.query<DiscoverFeedResponse, void>({
-      queryFn: async () => {
+    getDiscoverFeed: builder.query<DiscoverFeedResponse, DiscoverFeedArgs | void>({
+      queryFn: async (args) => {
 
         try {
+          const body: Record<string, unknown> = {};
+          if (args?.lat != null && args?.lng != null) {
+            body.lat = args.lat;
+            body.lng = args.lng;
+          }
+
           const { data, error } =
             await supabase.functions.invoke<DiscoverFeedResponse>(
               "get-discover-feed",
-              { method: "POST" }
+              { method: "POST", body: JSON.stringify(body) }
             );
 
           if (error) {

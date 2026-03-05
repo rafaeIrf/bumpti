@@ -18,6 +18,7 @@ import { prefetchImages } from "@/utils/image-prefetch";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProfilePreviewModal() {
   const { profile: myProfile, isLoading: isMyProfileLoading } = useProfile();
@@ -28,7 +29,9 @@ export default function ProfilePreviewModal() {
     initialProfile?: string;
     source?: string;
     placeId?: string;
+    encounterType?: string;
   }>();
+  const insets = useSafeAreaInsets();
 
   const isFromDiscover = params.source === "discover";
   const isScanningOther = !!params.userId;
@@ -101,6 +104,7 @@ export default function ProfilePreviewModal() {
           university_name_custom: cachedProfileData.university_name_custom,
           graduation_year: cachedProfileData.graduation_year,
           show_university_on_home: cachedProfileData.show_university_on_home,
+          social_hubs: cachedProfileData.social_hubs,
         };
       }
 
@@ -147,6 +151,12 @@ export default function ProfilePreviewModal() {
       university_name_custom: myProfile.university_name_custom ?? null,
       graduation_year: myProfile.graduation_year ?? null,
       show_university_on_home: myProfile.show_university_on_home ?? false,
+      social_hubs:
+        (myProfile as any).socialHubs?.map((h: any) => ({
+          id: h.id || h.place_id,
+          name: h.name,
+          category: h.category || "",
+        })) ?? [],
     };
   }, [isScanningOther, cachedProfileData, otherUserProfile, myProfile]);
 
@@ -182,7 +192,9 @@ export default function ProfilePreviewModal() {
       user_a_id: "",
       user_b_id: "",
       place_id: params.placeId ?? "",
-      encounter_type: "direct_overlap",
+      encounter_type:
+        (params.encounterType as DiscoverEncounter["encounter_type"]) ??
+        "direct_overlap",
       affinity_score: 0,
       last_encountered_at: new Date().toISOString(),
       metadata: {},
@@ -196,7 +208,7 @@ export default function ProfilePreviewModal() {
       place_name: null,
       additional_encounters: null,
     } satisfies DiscoverEncounter;
-  }, [isFromDiscover, profileCardData, params.placeId]);
+  }, [isFromDiscover, profileCardData, params.placeId, params.encounterType]);
 
   const onLikePress = useCallback(async () => {
     if (!encounterForActions) return;
@@ -233,6 +245,7 @@ export default function ProfilePreviewModal() {
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
+            paddingBottom: insets.bottom,
           },
         ]}
       >
@@ -324,6 +337,7 @@ export default function ProfilePreviewModal() {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 0,
+    paddingBottom: spacing.xxl * 3,
   },
   content: {
     flex: 1,

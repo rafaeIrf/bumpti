@@ -49,7 +49,7 @@ export const setNotificationSettings = (settings: any) => {
 
 let latestPhotoRequestId = 0;
 
-export const updateProfilePhotosAction = async (newPhotos: string[]) => {
+export const updateProfilePhotosAction = async (newPhotos: string[], photoHashes?: Record<string, string>) => {
   // Increment request ID to track the latest request
   const requestId = ++latestPhotoRequestId;
 
@@ -69,7 +69,7 @@ export const updateProfilePhotosAction = async (newPhotos: string[]) => {
 
   try {
     // 2. API Call
-    const updatedProfile = await updateProfilePhotos(newPhotos);
+    const updatedProfile = await updateProfilePhotos(newPhotos, photoHashes);
     
     // Check if this is still the latest request
     if (requestId !== latestPhotoRequestId) {

@@ -38,7 +38,7 @@ export type InteractionBatchResult = {
 export async function interactUser(params: {
   toUserId: string;
   action: InteractionAction;
-  placeId: string;
+  placeId?: string | null;
   /**
    * Raw entry_type of the liked user. Backend maps to match_origin:
    *   past_visitor | favorite  → regular
@@ -53,8 +53,10 @@ export async function interactUser(params: {
     const body: Record<string, unknown> = {
       to_user_id: toUserId,
       action,
-      place_id: placeId,
     };
+    if (placeId) {
+      body.place_id = placeId;
+    }
     if (context) {
       body.match_origin_override = context;
     }
@@ -80,7 +82,7 @@ export async function interactUser(params: {
 
     // Track match analytics conversion event
     if (data.status === "liked" && data.match) {
-      trackMatch({ matchId: data.match_id, placeId });
+      trackMatch({ matchId: data.match_id, placeId: placeId ?? undefined });
     }
 
     return data;

@@ -1,4 +1,4 @@
-import { CalendarIcon } from "@/assets/icons";
+import { ArrowRightIcon, CalendarIcon } from "@/assets/icons";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
 import { ScreenBottomBar } from "@/components/screen-bottom-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -119,9 +119,10 @@ export default function UserAgeScreen() {
       }}
       BottomBar={
         <ScreenBottomBar
-          primaryLabel={t("screens.onboarding.continue")}
+          variant="wizard"
           onPrimaryPress={handleContinue}
           primaryDisabled={!isValid}
+          primaryIcon={ArrowRightIcon}
         />
       }
     >
@@ -139,6 +140,7 @@ export default function UserAgeScreen() {
           placeholder="DD/MM/AAAA"
           keyboardType="number-pad"
           maxLength={10}
+          autoFocus
           leftIcon={CalendarIcon}
           onLeftIconPress={() => setShowPicker(true)}
         />

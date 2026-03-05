@@ -72,6 +72,24 @@ serve(async (req) => {
             body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'fez' : 'fizeram'} check-in em ${item.target_place_name}. Faça também e conecte-se!`;
           }
           break;
+        case "hub_activity_started":
+          if (isPlanning) {
+            title = "Movimento no seu hub! 📍";
+            body = `Pessoas estão planejando ir em ${item.target_place_name}. Planeje também e conecte-se!`;
+          } else {
+            title = "Conexão no seu hub! 📍";
+            body = `${count === 1 ? 'Alguém' : count + ' pessoas'} ${count === 1 ? 'iniciou' : 'iniciaram'} check-in em ${item.target_place_name}. Faça também e conecte-se!`;
+          }
+          break;
+        case "hub_activity_heating":
+          if (isPlanning) {
+            title = `${item.target_place_name} está esquentando 🔥`;
+            body = `Seu hub está com movimento! Pessoas planejando ir e iniciando conexões.`;
+          } else {
+            title = `${item.target_place_name} está bombando 🔥`;
+            body = `Seu hub tem ${count} ${count === 1 ? 'pessoa' : 'pessoas'} conectadas. Faça check-in e conecte-se!`;
+          }
+          break;
         case "nearby_activity_heating":
           if (isPlanning) {
             title = `${item.target_place_name} está esquentando 🔥`;

@@ -12,13 +12,12 @@ const STEP_ORDER: OnboardingStep[] = [
   "user-age",
   "user-gender",
   "connect-with",
-  "intention",
   "user-photos",
   "user-bio",
   "interests",
   "location",
-  "favorite-places",
-  "university",
+  "social-hubs-intro",
+  "social-hubs",
   "notifications",
   "tracking",
   "complete",
@@ -30,13 +29,12 @@ const STEP_ROUTES: Record<OnboardingStep, string> = {
   "user-age": "/(onboarding)/user-age",
   "user-gender": "/(onboarding)/user-gender",
   "connect-with": "/(onboarding)/connect-with",
-  intention: "/(onboarding)/intention",
   "user-photos": "/(onboarding)/user-photos",
   "user-bio": "/(onboarding)/user-bio",
   interests: "/(onboarding)/interests",
-  university: "/(onboarding)/university",
   location: "/(onboarding)/location",
-  "favorite-places": "/(onboarding)/favorite-places",
+  "social-hubs-intro": "/(onboarding)/social-hubs-intro",
+  "social-hubs": "/(onboarding)/social-hubs",
   notifications: "/(onboarding)/notifications",
   tracking: "/(onboarding)/tracking",
   complete: "/(onboarding)/complete",
@@ -117,11 +115,16 @@ export function useOnboardingFlow() {
     }
   };
   
+  const goBack = () => {
+    router.back();
+  };
+
   return {
     currentStep,
     completedSteps,
     userData,
     completeCurrentStep,
     getNextStep,
+    goBack,
   };
 }

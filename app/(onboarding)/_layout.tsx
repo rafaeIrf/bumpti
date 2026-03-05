@@ -59,17 +59,9 @@ export default function OnboardingLayout() {
         <Stack.Screen name="user-photos" />
         <Stack.Screen name="user-bio" />
         <Stack.Screen name="interests" />
-        <Stack.Screen name="university" />
-        <Stack.Screen
-          name="university-search"
-          options={{
-            presentation: "modal",
-            headerShown: false,
-            animation: "slide_from_bottom",
-          }}
-        />
         <Stack.Screen name="location" />
-        <Stack.Screen name="favorite-places" />
+        <Stack.Screen name="social-hubs-intro" />
+        <Stack.Screen name="social-hubs" />
         <Stack.Screen
           name="place-search"
           options={{

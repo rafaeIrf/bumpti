@@ -216,13 +216,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (!item?.place_id || typeof item.place_id !== "string") {
-        return new Response(JSON.stringify({ error: "invalid_place_id" }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
       if (item.to_user_id === user.id) {
         return new Response(
           JSON.stringify({ error: "cannot_interact_with_self" }),
@@ -256,7 +249,7 @@ Deno.serve(async (req) => {
         to_user_id: item.to_user_id,
         action: "dislike",
         action_expires_at: null,
-        place_id: item.place_id,
+        place_id: item.place_id ?? null,
       }));
 
       const { error: dislikeError } = await dbClient
@@ -350,7 +343,7 @@ Deno.serve(async (req) => {
           to_user_id: item.to_user_id,
           action: "like",
           action_expires_at: expiresAt,
-          place_id: item.place_id,
+          place_id: item.place_id ?? null,
         };
         if (item.match_origin_override) {
           interactionRow.match_origin_override = item.match_origin_override;

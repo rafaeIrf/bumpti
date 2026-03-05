@@ -52,6 +52,11 @@ const BENEFITS: BenefitRow[] = [
     free: false,
     premium: true,
   },
+  {
+    labelKey: "screens.profile.benefits.exploreCities",
+    free: false,
+    premium: true,
+  },
 ];
 
 export function BenefitsTable() {

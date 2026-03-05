@@ -65,6 +65,11 @@ export async function syncLocationToBackend(
       return;
     }
 
+    console.log("Syncing location to backend", {
+      lat: latitude,
+      lng: longitude,
+      accuracy,
+    });
     // Update location using existing API (handles auth validation)
     await updateProfile({
       last_lat: latitude,

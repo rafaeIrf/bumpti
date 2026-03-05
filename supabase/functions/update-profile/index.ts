@@ -17,6 +17,37 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
+type PlaceSummary = { id: string; name: string; category: string };
+
+/** Extract { id, name, category } from joined place rows. */
+function parsePlaceRows(rows: any[]): PlaceSummary[] {
+  return rows.reduce<PlaceSummary[]>((acc, row) => {
+    const place = row.places;
+    if (place) acc.push({ id: place.id, name: place.name || "", category: place.category || "" });
+    return acc;
+  }, []);
+}
+
+/** Extract social hub data including visibility flag. */
+function parseSocialHubRows(rows: any[]) {
+  return rows.reduce<(PlaceSummary & { visible: boolean })[]>((acc, row) => {
+    const place = row.places;
+    if (place) {
+      acc.push({
+        id: place.id,
+        name: place.name || "",
+        category: place.category || "",
+        visible: row.visible ?? true,
+      });
+    }
+    return acc;
+  }, []);
+}
+
+// ─── Types ──────────────────────────────────────────────────────────
+
 type UpdateProfilePayload = {
   name?: string;
   birthdate?: string; // ISO date
@@ -39,6 +70,7 @@ type UpdateProfilePayload = {
   relationship_key?: string;
   height_cm?: number;
   favoritePlaces?: string[]; // array of place_ids
+  socialHubs?: string[]; // array of place_ids (max 6)
   interests?: string[]; // interest keys
   is_invisible?: boolean; // Invisible mode flag
   filter_only_verified?: boolean; // Trust Circle filter flag
@@ -48,6 +80,8 @@ type UpdateProfilePayload = {
   show_university_on_home?: boolean;
   last_lat?: number; // GPS latitude for nearby notifications
   last_lng?: number; // GPS longitude for nearby notifications
+  /** Internal: normalised hash array for new File uploads (set during FormData parsing) */
+  _fileHashes?: string[];
   [key: string]: unknown;
 };
 
@@ -96,10 +130,27 @@ Deno.serve(async (req) => {
       if (formData.has("photos")) {
         photosToUpdate = formData.getAll("photos");
       }
-      
-      // Parse other fields from formData if needed (currently only photos are sent via FormData)
-      // If we wanted to support mixed updates, we'd parse them here.
-      // For now, we assume FormData is primarily for photos.
+
+      // Read photo hashes sent by the mobile client after moderation.
+      // Accepts two formats for backward compat:
+      //   photo_hashes  — (string|null)[] positional array matching photos order
+      //   photo_hash_map — {localUri: hash} map; values used in File-upload order
+      // Both are normalised into a string[] of hashes for new File uploads only.
+      let fileHashes: string[] = [];
+      if (formData.has("photo_hashes")) {
+        try {
+          const list = JSON.parse(formData.get("photo_hashes") as string) as (string | null)[];
+          fileHashes = list.filter((h): h is string => h !== null);
+        } catch { /* malformed — proceed without hashes */ }
+      } else if (formData.has("photo_hash_map")) {
+        try {
+          const map = JSON.parse(formData.get("photo_hash_map") as string) as Record<string, string>;
+          fileHashes = Object.values(map);
+        } catch { /* malformed — proceed without hashes */ }
+      }
+      if (fileHashes.length > 0) {
+        payload._fileHashes = fileHashes;
+      }
     } else {
       return new Response(
         JSON.stringify({ error: "invalid_content_type", message: "Content-Type must be application/json or multipart/form-data" }),
@@ -146,8 +197,12 @@ Deno.serve(async (req) => {
       show_university_on_home,
       last_lat,
       last_lng,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ...rest
     } = payload;
+
+    // Photo hashes for new File uploads — normalised from FormData parsing above
+    const fileHashes: string[] = (payload._fileHashes as string[] | undefined) ?? [];
 
     // Lookup IDs for keys
     let educationId: number | undefined;
@@ -707,19 +762,45 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Social hubs CRUD (max 6) ────────────────────────────────
+    if (Array.isArray(payload.socialHubs)) {
+      const { error: deleteErr } = await supabase
+        .from("profile_social_hubs")
+        .delete()
+        .eq("user_id", userId);
+      if (deleteErr) throw deleteErr;
+
+      const hubIds = payload.socialHubs.slice(0, 6);
+      if (hubIds.length > 0) {
+        const { error: insertErr } = await supabase
+          .from("profile_social_hubs")
+          .insert(hubIds.map((placeId, index) => ({ user_id: userId, place_id: placeId, position: index })));
+        if (insertErr) throw insertErr;
+      }
+    }
+
     // Manage photos
     if (photosToUpdate && photosToUpdate.length > 0) {
       // Backend enforcement: limit to 9 photos max (prevents bypass attacks)
       const MAX_PHOTOS = 9;
       const limitedPhotos = photosToUpdate.slice(0, MAX_PHOTOS);
       
-      // Fetch current photos to identify what needs to be deleted later
+      // Fetch current photos (including hashes) to preserve hashes and clean up storage
       const { data: currentPhotos } = await supabase
         .from("profile_photos")
-        .select("url")
+        .select("url, image_hash")
         .eq("user_id", userId);
 
-      const newPhotos: { url: string; position: number }[] = [];
+      // Build lookup of existing hashes by storage path so we can preserve them
+      const existingHashByUrl = new Map<string, string>();
+      if (currentPhotos) {
+        for (const p of currentPhotos) {
+          if (p.image_hash) existingHashByUrl.set(p.url, p.image_hash);
+        }
+      }
+
+      const newPhotos: { url: string; position: number; hash?: string | null }[] = [];
+      let fileIndex = 0;
 
       for (let i = 0; i < limitedPhotos.length; i++) {
         const item = limitedPhotos[i];
@@ -736,7 +817,7 @@ Deno.serve(async (req) => {
           } catch (e) {
             // Not a URL, assume it is the path
           }
-          newPhotos.push({ url: path, position: i });
+          newPhotos.push({ url: path, position: i, hash: existingHashByUrl.get(path) ?? null });
 
         } else if (item instanceof File) {
           // New file upload
@@ -755,7 +836,8 @@ Deno.serve(async (req) => {
              throw new Error("Failed to upload photo");
           }
           
-          newPhotos.push({ url: fileName, position: i });
+          newPhotos.push({ url: fileName, position: i, hash: fileHashes[fileIndex] ?? null });
+          fileIndex++;
         }
       }
 
@@ -798,6 +880,8 @@ Deno.serve(async (req) => {
               user_id: userId,
               url: p.url,
               position: p.position,
+              // Include hash if provided by caller (from moderation response)
+              ...(p.hash ? { image_hash: p.hash } : {}),
             }))
           );
           
@@ -815,6 +899,7 @@ Deno.serve(async (req) => {
       photosResult,
       favoritePlacesResult,
       interestsResult,
+      socialHubsResult,
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -852,6 +937,11 @@ Deno.serve(async (req) => {
         .from("profile_interests")
         .select("interest:interests(key)")
         .eq("profile_id", userId),
+      supabase
+        .from("profile_social_hubs")
+        .select("place_id, visible, places:places(id, name, category)")
+        .eq("user_id", userId)
+        .order("position", { ascending: true }),
     ]);
 
     const { data: profile, error: profileError } = profileResult;
@@ -926,18 +1016,9 @@ Deno.serve(async (req) => {
         : rest.location;
 
 
-      // Favorite places with joined data
-      const favoritePlaces = (favoritePlacesRows ?? [])
-        .map((row: any) => {
-          const place = row.places;
-          if (!place) return null;
-          return {
-            id: place.id,
-            name: place.name || "",
-            category: place.category || "",
-          };
-        })
-        .filter((p): p is { id: string; name: string; category: string } => p !== null);
+      // ── Places ─────────────────────────────────────────────────
+      const favoritePlaces = parsePlaceRows(favoritePlacesRows ?? []);
+      const socialHubs = parseSocialHubRows(socialHubsResult.data ?? []);
 
       profilePayload = {
         ...rest,
@@ -954,11 +1035,11 @@ Deno.serve(async (req) => {
           profile_languages
             ?.map((pl: any) => pl.language?.key)
             .filter(Boolean) ?? [],
-        // University fields from joined places table
         university_name: university?.name ?? null,
         university_lat: university?.lat ?? null,
         university_lng: university?.lng ?? null,
         interests: interestKeys,
+        socialHubs,
       };
     }
 

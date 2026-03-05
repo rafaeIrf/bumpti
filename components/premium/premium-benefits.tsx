@@ -1,6 +1,7 @@
 import {
   CalendarIcon,
   CheckIcon,
+  GlobeIcon,
   HeartIcon,
   MapPinIcon,
   SearchIcon,
@@ -65,6 +66,11 @@ const BENEFITS: Benefit[] = [
     icon: MapPinIcon,
     titleKey: "screens.premiumPaywall.benefits.earlyCheckin.title",
     subtitleKey: "screens.premiumPaywall.benefits.earlyCheckin.subtitle",
+  },
+  {
+    icon: GlobeIcon,
+    titleKey: "screens.premiumPaywall.benefits.exploreCities.title",
+    subtitleKey: "screens.premiumPaywall.benefits.exploreCities.subtitle",
   },
   // {
   //   icon: NavigationIcon,

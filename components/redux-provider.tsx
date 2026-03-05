@@ -4,7 +4,10 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
 import { phoneAuthService } from "@/modules/auth/phone-auth-service";
-import { fetchAndSetUserPlans } from "@/modules/plans/api";
+import {
+  fetchAndSetPlansFeed,
+  fetchAndSetUserPlans,
+} from "@/modules/plans/api";
 import { fetchAndSetUserProfile } from "@/modules/profile";
 import { persistor, store } from "@/modules/store";
 import { supabase } from "@/modules/supabase/client";
@@ -40,7 +43,11 @@ async function validateSessionOrLogout(): Promise<boolean> {
  * Loads all user data (profile + plans) in parallel.
  */
 async function loadUserData(): Promise<void> {
-  await Promise.all([fetchAndSetUserProfile(), fetchAndSetUserPlans()]);
+  await Promise.all([
+    fetchAndSetUserProfile(),
+    fetchAndSetUserPlans(),
+    fetchAndSetPlansFeed(),
+  ]);
 }
 
 export function ReduxProvider({ children }: ReduxProviderProps) {
