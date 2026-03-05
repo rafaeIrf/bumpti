@@ -27,6 +27,8 @@ type PlaceHub = {
   id: string;
   name: string;
   category: string;
+  lat: number;
+  lng: number;
   visible: boolean;
   avatars: { user_id: string; url: string }[];
 };
@@ -74,6 +76,8 @@ async function enrichSocialHubs(
         id: place.id as string,
         name: (place.name || "") as string,
         category: (place.category || "") as string,
+        lat: (place.lat ?? 0) as number,
+        lng: (place.lng ?? 0) as number,
         visible: (row.visible ?? true) as boolean,
       };
     })
@@ -186,7 +190,7 @@ Deno.serve(async (req) => {
         .eq("profile_id", userId),
       supabase
         .from("profile_social_hubs")
-        .select("place_id, visible, places:places(id, name, category)")
+        .select("place_id, visible, places:places(id, name, category, lat, lng)")
         .eq("user_id", userId)
         .order("position", { ascending: true }),
     ]);

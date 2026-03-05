@@ -212,11 +212,13 @@ const styles = StyleSheet.create({
   card: {
     position: "absolute",
     bottom: 0,
-    left: 0,
-    right: 0,
+    left: 16,
+    right: 16,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + spacing.xs, // ~28px
+    marginBottom: 24,
+    borderRadius: 20,
     elevation: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },

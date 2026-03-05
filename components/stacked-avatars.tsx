@@ -1,3 +1,4 @@
+import { entryTypeBorderColors } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { UserAvatar } from "@/modules/places/types";
 import { isAndroid } from "@/utils";
@@ -6,7 +7,7 @@ import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface StackedAvatarsProps {
-  /** Avatars with user_id and url */
+  /** Avatars with user_id, url, and optional entry_type */
   avatars: UserAvatar[];
   /** Total user count (for +X badge, optional) */
   totalCount?: number;
@@ -21,8 +22,22 @@ interface StackedAvatarsProps {
 }
 
 /**
+ * Returns the border color for an avatar based on its entry_type.
+ * Physical presence gets the most prominent color (vivid green).
+ * Falls back to theme border color when entry_type is missing.
+ */
+function getAvatarBorderColor(
+  entryType: string | undefined,
+  fallback: string,
+): string {
+  if (!entryType) return fallback;
+  return entryTypeBorderColors[entryType] ?? fallback;
+}
+
+/**
  * Stacked avatar circles with blue blur overlay for privacy.
  * Displays up to maxVisible avatars with a +X badge for overflow.
+ * Each avatar ring is colored based on entry_type to signal presence status.
  */
 export function StackedAvatars({
   avatars,
@@ -46,37 +61,46 @@ export function StackedAvatars({
 
   return (
     <View style={[styles.container, { height: size }, style]}>
-      {visibleAvatars.map((avatar, index) => (
-        <View
-          key={avatar.user_id}
-          style={[
-            styles.avatarContainer,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              marginLeft: index === 0 ? 0 : -overlap,
-              zIndex: index + 1,
-              borderColor: colors.border,
-            },
-            avatarStyle,
-          ]}
-        >
-          <Image
-            source={{ uri: avatar.url }}
+      {visibleAvatars.map((avatar, index) => {
+        const borderColor = getAvatarBorderColor(
+          avatar.entry_type,
+          colors.border,
+        );
+        const isPhysical = avatar.entry_type === "physical";
+
+        return (
+          <View
+            key={avatar.user_id}
             style={[
-              styles.avatar,
+              styles.avatarContainer,
               {
                 width: size,
                 height: size,
                 borderRadius: size / 2,
+                marginLeft: index === 0 ? 0 : -overlap,
+                zIndex: index + 1,
+                borderColor,
+                borderWidth: 2,
               },
+              avatarStyle,
             ]}
-            contentFit="cover"
-            blurRadius={isAndroid ? 2 : 80}
-          />
-        </View>
-      ))}
+          >
+            <Image
+              source={{ uri: avatar.url }}
+              style={[
+                styles.avatar,
+                {
+                  width: size - 4,
+                  height: size - 4,
+                  borderRadius: (size - 4) / 2,
+                },
+              ]}
+              contentFit="cover"
+              blurRadius={isAndroid ? 2 : 80}
+            />
+          </View>
+        );
+      })}
 
       {/* +X overflow badge */}
       {overflowCount > 0 && (
@@ -110,7 +134,6 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     overflow: "hidden",
-    borderWidth: 1.5,
   },
   avatar: {
     backgroundColor: "#2F3336",
@@ -119,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1D9BF0",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
+    borderWidth: 2,
   },
   overflowText: {
     color: "#FFFFFF",

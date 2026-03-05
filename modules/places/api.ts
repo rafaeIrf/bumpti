@@ -1,6 +1,6 @@
 import { supabase } from "@/modules/supabase/client";
 import { logger } from "@/utils/logger";
-import { CityPrediction, Place, PlaceCategory, SupportedCity } from "./types";
+import { CityPrediction, Place, PlaceCategory, SupportedCity, UserAvatar } from "./types";
 
 type PlacesSortOption = "relevance" | "distance" | "popularity" | "rating" | "trending";
 
@@ -594,7 +594,7 @@ export interface MapActivePlace {
   active_users: number;
   planning_count: number;
   regulars_count: number;
-  preview_avatars: { user_id: string; url: string }[];
+  preview_avatars: UserAvatar[];
 }
 
 /**

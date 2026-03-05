@@ -22,9 +22,6 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
 
-# @generated begin @rnmapbox/maps-rnmapboxmapsimpl - expo prebuild (DO NOT MODIFY) sync-da39a3ee5e6b4b0d3255bfef95601890afd80709
-
-# @generated end @rnmapbox/maps-rnmapboxmapsimpl
 target 'Bumpti' do
   use_expo_modules!
 

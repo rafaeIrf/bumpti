@@ -1,24 +1,39 @@
 /**
- * HomeMapView — Mapbox dark map with semantic place pins.
+ * HomeMapView — Mapbox dark map with high-fidelity place markers.
  *
  * Architecture (per @rnmapbox/maps docs):
  *  - ShapeSource  → GeoJSON FeatureCollection of all active places
- *  - CircleLayer  → native circle per place (touch-enabled)
- *  - SymbolLayer  → count badge text on top of each circle
- *  - ShapeSource.onPress → reliable per-feature tap, hitbox 60x60px
+ *  - CircleLayer  × 3 → glow (physical only), ring (priority stroke), core (category fill)
+ *  - SymbolLayer  → count badge (text with halo) offset to top-right
+ *  - ShapeSource.onPress → reliable per-feature tap, hitbox 60×60px
  *
- * The MarkerView / Pressable combo is intentionally avoided — the Pressable
- * inside view annotations doesn't receive touches reliably on Android.
+ * Performance:
+ *  - ZERO React-rendered markers (no MarkerView for pins)
+ *  - circle-sort-key ensures physical > checkin_plus > planning z-order
+ *  - Glow pulse driven by setInterval (native layers can't use Reanimated)
  *
  * Attribution:
- *  - Mapbox attribution is rendered automatically by <MapView> (mandatory per ToS).
- *  - Overture Maps attribution badge is overlaid per Overture licensing requirements.
- *    (Places data: Meta, Microsoft, Foursquare — CDLA Permissive 2.0 / Apache 2.0)
+ *  - Mapbox attribution rendered automatically by <MapView> (mandatory per ToS)
+ *  - Overture Maps attribution badge overlaid per licensing requirements
  */
 
+import NavigationIcon from "@/assets/icons/navigation.svg";
+import MapCategoryIcons from "@/components/map-category-icons";
 import { MapPlacePreviewCard } from "@/components/map-place-preview-card";
-import { spacing, typography } from "@/constants/theme";
+import { Button } from "@/components/ui/button";
+import {
+  CORE_FILL_COLOR_EXPR,
+  GLOW_COLOR,
+  HUB_CORE_RADIUS_EXPR,
+  HUB_GLOW_RADIUS_EXPR,
+  HUB_RING_COLOR_EXPR,
+  HUB_RING_RADIUS_EXPR,
+  ICON_IMAGE_EXPR,
+  MARKER_SIZES,
+  SORT_KEY_EXPR,
+} from "@/constants/map-marker-config";
 import { useCachedLocation } from "@/hooks/use-cached-location";
+import { useProfile } from "@/hooks/use-profile";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { t } from "@/modules/locales";
 import { MapActivePlace, PlaceSocialSummary } from "@/modules/places/api";
@@ -30,23 +45,35 @@ import { logger } from "@/utils/logger";
 import {
   Camera,
   CircleLayer,
+  LocationPuck,
   MapView,
+  MarkerView,
   ShapeSource,
   SymbolLayer,
-  UserLocation,
 } from "@rnmapbox/maps";
 import * as Haptics from "expo-haptics";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { Image } from "expo-image";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-// Overture Maps Places attribution text (required by their licensing terms)
-const OVERTURE_ATTRIBUTION = "© Overture Maps (Meta, Microsoft, Foursquare)";
+// ─── Constants ───────────────────────────────────────────────────────────────
 
-// Pin colors
-const ACTIVE_COLOR = "#1D9BF0";
-const PLANNING_COLOR = "#5B6671";
+const OVERTURE_ATTRIBUTION =
+  "© OpenStreetMap contributors, Overture Maps Foundation";
+
+// Glow pulse timing
+const GLOW_INTERVAL_MS = 1500;
+const GLOW_OPACITY_LOW = 0.12;
+const GLOW_OPACITY_HIGH = 0.35;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+
 interface SelectedPin {
   place: MapActivePlace;
   summary: PlaceSocialSummary | null;
@@ -55,59 +82,86 @@ interface SelectedPin {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getPinVariant(place: MapActivePlace): "active" | "planning" | null {
-  if ((place.active_users ?? 0) > 0) return "active";
-  if ((place.planning_count ?? 0) > 0) return "planning";
-  if ((place.regulars_count ?? 0) > 0) return "planning";
-  return null;
+/**
+ * Badge count logic:
+ * - If people are physically there (active_users > 0), this is the authoritative count.
+ * - Otherwise, use the max of planning and regulars.
+ *
+ * Why Math.max? A user can be BOTH a planner and a regular. Summing them (planning + regulars)
+ * causes double-counting for the same person (e.g., 1 planner + 1 regular = 2 badges, 1 avatar).
+ */
+function getTotalCount(place: MapActivePlace): number {
+  const active = place.active_users ?? 0;
+  const planning = place.planning_count ?? 0;
+  const regulars = place.regulars_count ?? 0;
+
+  return active + planning + regulars;
 }
 
-function getPinCount(place: MapActivePlace): number {
-  return (
-    (place.active_users ?? 0) +
-    (place.planning_count ?? 0) +
-    (place.regulars_count ?? 0)
-  );
+function computeSortKey(place: MapActivePlace): number {
+  if ((place.active_users ?? 0) > 0) return 3;
+  if ((place.regulars_count ?? 0) > 0) return 2;
+  if ((place.planning_count ?? 0) > 0) return 1;
+  return 0;
 }
 
-/** Build a GeoJSON FeatureCollection from active places */
-function buildGeoJSON(places: MapActivePlace[]): GeoJSON.FeatureCollection {
+/** Build GeoJSON with enriched properties for multi-layer rendering. */
+function buildGeoJSON(
+  places: MapActivePlace[],
+  hubIds: Set<string>,
+): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
     features: places
-      .filter((p) => getPinVariant(p) !== null)
+      .filter((p) => getTotalCount(p) > 0 || hubIds.has(p.id))
       .map((p) => ({
-        type: "Feature",
+        type: "Feature" as const,
         id: p.id,
         geometry: {
-          type: "Point",
+          type: "Point" as const,
           coordinates: [p.lng, p.lat],
         },
         properties: {
           id: p.id,
-          variant: getPinVariant(p),
-          count: String(getPinCount(p)),
-          circleColor:
-            getPinVariant(p) === "active" ? ACTIVE_COLOR : PLANNING_COLOR,
+          category: p.category ?? "default",
+          physical_count: p.active_users ?? 0,
+          checkin_plus_count: p.regulars_count ?? 0,
+          planning_count: p.planning_count ?? 0,
+          total_count: String(getTotalCount(p)),
+          sort_key: computeSortKey(p),
+          has_physical: (p.active_users ?? 0) > 0 ? 1 : 0,
+          is_social_hub: hubIds.has(p.id) ? 1 : 0,
         },
       })),
   };
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
+
 export function HomeMapView() {
   const colors = useThemeColors();
   const { location } = useCachedLocation();
+  const { profile } = useProfile();
   const cameraRef = useRef<Camera>(null);
+  const userPhotoUrl = profile?.photos?.[0]?.url ?? null;
 
+  // Glow pulse state
+  const [glowOpacity, setGlowOpacity] = useState(GLOW_OPACITY_LOW);
+
+  // Recenter FAB visibility — shown after user pans away
+  const [showRecenter, setShowRecenter] = useState(false);
+  const didInitialFit = useRef(false);
+
+  // Place preview card state
   const [selectedPin, setSelectedPin] = useState<SelectedPin | null>(null);
 
   const [fetchSummary] = useLazyGetPlaceSocialSummaryQuery();
   const [fetchMapPlaces, { data: mapPlaces }] =
     useLazyGetMapActivePlacesQuery();
 
-  // Fetch active places whenever location becomes available
-  React.useEffect(() => {
+  // ─── Data fetching ──────────────────────────────────────────────────────────
+
+  useEffect(() => {
     if (location) {
       logger.log(
         "[HomeMapView] Fetching map places for:",
@@ -132,66 +186,101 @@ export function HomeMapView() {
   }, [location, fetchMapPlaces]);
 
   const places = useMemo<MapActivePlace[]>(() => {
-    const result = mapPlaces ?? [];
-    logger.log("[HomeMapView] places:", result.length);
+    const rpcPlaces = mapPlaces ?? [];
+    // Merge user's social hubs that are missing from RPC (zero activity)
+    const hubs = profile?.socialHubs ?? [];
+    const rpcIds = new Set(rpcPlaces.map((p) => p.id));
+    const missingHubs: MapActivePlace[] = hubs
+      .filter((h) => !rpcIds.has(h.id) && h.lat && h.lng)
+      .map((h) => ({
+        id: h.id,
+        name: h.name,
+        lat: h.lat,
+        lng: h.lng,
+        neighborhood: null,
+        category: h.category,
+        active_users: 0,
+        planning_count: 0,
+        regulars_count: 0,
+        preview_avatars: [],
+      }));
+    const result = [...rpcPlaces, ...missingHubs];
+    logger.log(
+      "[HomeMapView] places:",
+      result.length,
+      "(hubs merged:",
+      missingHubs.length,
+      ")",
+    );
     return result;
-  }, [mapPlaces]);
+  }, [mapPlaces, profile?.socialHubs]);
 
-  // Auto-zoom to fit user + all pins
-  React.useEffect(() => {
+  // ─── Auto-zoom to fit user + all pins ─────────────────────────────────────
+
+  useEffect(() => {
     if (!location || places.length === 0) return;
-    const allLngs = [location.longitude, ...places.map((p) => p.lng)];
-    const allLats = [location.latitude, ...places.map((p) => p.lat)];
-    const sw: [number, number] = [Math.min(...allLngs), Math.min(...allLats)];
-    const ne: [number, number] = [Math.max(...allLngs), Math.max(...allLats)];
-    cameraRef.current?.fitBounds(ne, sw, [80, 80, 120, 80], 800);
+    cameraRef.current?.setCamera({
+      centerCoordinate: [location.longitude, location.latitude],
+      zoomLevel: 13,
+      animationDuration: 800,
+      animationMode: "flyTo",
+    });
+    // Allow user-panning detection after initial fit settles
+    setTimeout(() => {
+      didInitialFit.current = true;
+    }, 1200);
   }, [location, places]);
 
-  // GeoJSON FeatureCollection — rebuilt whenever places change
-  const geoJSON = useMemo(() => buildGeoJSON(places), [places]);
+  // ─── Glow pulse animation ────────────────────────────────────────────────
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const hasPhysical = places.some((p) => (p.active_users ?? 0) > 0);
+    if (!hasPhysical) return;
 
-  const handlePinPress = useCallback(
-    async (place: MapActivePlace) => {
-      logger.log("[HomeMapView] Pin pressed:", place.name);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const interval = setInterval(() => {
+      setGlowOpacity((prev) =>
+        prev === GLOW_OPACITY_LOW ? GLOW_OPACITY_HIGH : GLOW_OPACITY_LOW,
+      );
+    }, GLOW_INTERVAL_MS);
 
-      cameraRef.current?.setCamera({
-        centerCoordinate: [place.lng, place.lat],
-        zoomLevel: 15,
-        animationDuration: 400,
-      });
+    return () => clearInterval(interval);
+  }, [places]);
 
-      setSelectedPin({ place, summary: null, loading: true });
+  // ─── GeoJSON FeatureCollection ────────────────────────────────────────────
 
-      try {
-        const result = await fetchSummary(place.id);
-        logger.log(
-          "[HomeMapView] fetchSummary result:",
-          JSON.stringify(result.data),
-        );
-        setSelectedPin({ place, summary: result.data ?? null, loading: false });
-      } catch (err) {
-        logger.error("[HomeMapView] fetchSummary error:", err);
-        setSelectedPin((prev) => (prev ? { ...prev, loading: false } : null));
-      }
-    },
-    [fetchSummary],
-  );
+  const hubIds = useMemo(() => {
+    const hubs = profile?.socialHubs ?? [];
+    return new Set(hubs.map((h) => h.id));
+  }, [profile?.socialHubs]);
 
-  // ShapeSource.onPress — receives exact feature tapped (native, not coordinate guessing)
+  const geoJSON = useMemo(() => buildGeoJSON(places, hubIds), [places, hubIds]);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
   const handleSourcePress = useCallback(
-    (event: { features: GeoJSON.Feature[] }) => {
+    async (event: { features: GeoJSON.Feature[] }) => {
       const feature = event.features[0];
       if (!feature) return;
       const placeId = feature.properties?.id as string | undefined;
       if (!placeId) return;
 
       const place = places.find((p) => p.id === placeId);
-      if (place) handlePinPress(place);
+      if (!place) return;
+
+      logger.log("[HomeMapView] Pin pressed:", place.name);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      setSelectedPin({ place, summary: null, loading: true });
+
+      try {
+        const result = await fetchSummary(place.id);
+        setSelectedPin({ place, summary: result.data ?? null, loading: false });
+      } catch (err) {
+        logger.error("[HomeMapView] fetchSummary error:", err);
+        setSelectedPin((prev) => (prev ? { ...prev, loading: false } : null));
+      }
     },
-    [places, handlePinPress],
+    [places, fetchSummary],
   );
 
   const handleDismiss = useCallback(() => {
@@ -206,9 +295,31 @@ export function HomeMapView() {
     logger.log("[HomeMapView] Create plan pressed for:", selectedPin?.place.id);
   }, [selectedPin]);
 
+  // ─── Recenter handler ──────────────────────────────────────────────────────
+
+  const handleRecenter = useCallback(() => {
+    if (!location) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    cameraRef.current?.setCamera({
+      centerCoordinate: [location.longitude, location.latitude],
+      zoomLevel: 13,
+      animationDuration: 800,
+      animationMode: "flyTo",
+    });
+    setShowRecenter(false);
+  }, [location]);
+
+  const handleCameraChanged = useCallback(() => {
+    if (didInitialFit.current) {
+      setShowRecenter(true);
+    }
+  }, []);
+
   const initialCenter: [number, number] = location
     ? [location.longitude, location.latitude]
     : [-49.246, -25.403];
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.container}>
@@ -217,13 +328,15 @@ export function HomeMapView() {
         styleURL="mapbox://styles/mapbox/dark-v11"
         scaleBarEnabled={false}
         compassEnabled={false}
+        attributionPosition={{ left: 0, top: 0 }}
         attributionEnabled={true}
-        attributionPosition={{ bottom: 40, right: 8 }}
+        logoEnabled={false}
+        tintColor="rgba(255,255,255,0.45)"
         surfaceView={false}
-        onPress={handleDismiss}
-        onDidFailLoadingMap={() =>
+        onMapLoadingError={() =>
           logger.error("[HomeMapView] Map failed to load (check token/style)")
         }
+        onCameraChanged={handleCameraChanged}
       >
         <Camera
           ref={cameraRef}
@@ -233,11 +346,31 @@ export function HomeMapView() {
           animationDuration={800}
         />
 
-        <UserLocation visible={true} />
+        <LocationPuck
+          puckBearingEnabled
+          pulsing={{ isEnabled: true, color: "#1D9BF0" }}
+        />
 
-        {/* ShapeSource + CircleLayer + SymbolLayer
-            onPress on ShapeSource is the official way to detect feature taps.
-            hitbox 60x60 gives a generous finger-friendly hit area.     */}
+        {/* User avatar ring at current location */}
+        {location && userPhotoUrl && (
+          <MarkerView
+            coordinate={[location.longitude, location.latitude]}
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <View style={styles.avatarMarker}>
+              <Image
+                source={{ uri: userPhotoUrl }}
+                style={styles.avatarImage}
+                contentFit="cover"
+              />
+            </View>
+          </MarkerView>
+        )}
+
+        {/* Register category SVG icons as native bitmaps */}
+        <MapCategoryIcons />
+
+        {/* ── Place markers — native layers only ───────────────────────── */}
         {places.length > 0 && (
           <ShapeSource
             id="places-source"
@@ -245,62 +378,79 @@ export function HomeMapView() {
             onPress={handleSourcePress}
             hitbox={{ width: 60, height: 60 }}
           >
-            {/* Circle body */}
+            {/* Layer 1: Glow aura — physical presence + social hubs */}
             <CircleLayer
-              id="places-circle"
+              id="places-glow"
+              filter={[
+                "any",
+                ["==", ["get", "has_physical"], 1],
+                ["==", ["get", "is_social_hub"], 1],
+              ]}
               style={{
-                circleRadius: 20,
-                circleColor: ["get", "circleColor"],
-                circleOpacity: 0.9,
-                circleStrokeWidth: 2,
-                circleStrokeColor: [
-                  "case",
-                  ["==", ["get", "variant"], "active"],
-                  "rgba(29,155,240,0.3)",
-                  "rgba(91,102,113,0.3)",
-                ],
+                circleRadius: HUB_GLOW_RADIUS_EXPR,
+                circleColor: GLOW_COLOR,
+                circleOpacity: glowOpacity,
+                circleBlur: 0.7,
+                circleSortKey: SORT_KEY_EXPR,
               }}
             />
-            {/* Count badge */}
-            <SymbolLayer
-              id="places-count"
+
+            {/* Layer 2: Ring — hub gold or activity-based stroke border */}
+            <CircleLayer
+              id="places-ring"
               style={{
-                textField: ["get", "count"],
-                textSize: 13,
-                textColor: "#ffffff",
-                textFont: ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-                textAllowOverlap: true,
-                textIgnorePlacement: true,
+                circleRadius: HUB_RING_RADIUS_EXPR,
+                circleColor: "transparent",
+                circleStrokeWidth: MARKER_SIZES.ringStrokeWidth,
+                circleStrokeColor: HUB_RING_COLOR_EXPR,
+                circleStrokeOpacity: 0.9,
+                circleSortKey: SORT_KEY_EXPR,
+              }}
+            />
+
+            {/* Layer 3: Core — category-colored fill */}
+            <CircleLayer
+              id="places-core"
+              style={{
+                circleRadius: HUB_CORE_RADIUS_EXPR,
+                circleColor: CORE_FILL_COLOR_EXPR,
+                circleOpacity: 1,
+                circleSortKey: SORT_KEY_EXPR,
+              }}
+            />
+
+            {/* Layer 4: Category icon — rendered as native bitmap */}
+            <SymbolLayer
+              id="places-icon"
+              style={{
+                iconImage: ICON_IMAGE_EXPR,
+                iconSize: 0.8,
+                iconAllowOverlap: true,
+                iconIgnorePlacement: true,
               }}
             />
           </ShapeSource>
         )}
       </MapView>
 
-      {/* Overture Maps attribution */}
+      {/* Unified attribution bar — Overture (bottom-right) */}
       <View
-        style={[
-          styles.overtureAttribution,
-          { backgroundColor: colors.surface + "CC" },
-        ]}
+        style={[styles.attributionBar, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         pointerEvents="none"
       >
-        <Text
-          style={[
-            typography.caption,
-            { color: colors.textSecondary, fontSize: 9 },
-          ]}
-        >
-          {OVERTURE_ATTRIBUTION}
-        </Text>
+        <Text style={styles.attributionText}>{OVERTURE_ATTRIBUTION}</Text>
       </View>
 
-      {/* Empty state */}
-      {places.length === 0 && (
-        <View style={styles.emptyState} pointerEvents="none">
-          <Text style={[typography.caption, { color: colors.textSecondary }]}>
-            {t("screens.home.map.comingSoon")}
-          </Text>
+      {/* Recenter FAB — appears when user pans away */}
+      {showRecenter && (
+        <View style={styles.recenterFabContainer}>
+          <Button
+            size="fab"
+            variant="secondary"
+            leftIcon={<NavigationIcon />}
+            onPress={handleRecenter}
+            accessibilityLabel={t("screens.home.map.recenterMap")}
+          />
         </View>
       )}
 
@@ -326,15 +476,24 @@ export function HomeMapView() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  overtureAttribution: {
+  container: { flex: 1, position: "relative" },
+  recenterFabContainer: {
     position: "absolute",
-    bottom: 40,
-    left: 0,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
+    bottom: 36,
+    right: 12,
+  },
+  attributionBar: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  attributionText: {
+    fontSize: 9,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 0.2,
   },
   emptyState: {
     position: "absolute",
@@ -342,8 +501,29 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     transform: [{ translateY: -20 }],
   },
+  emptyText: {
+    fontFamily: "Poppins-Regular",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  avatarMarker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2.5,
+    borderColor: "#1D9BF0",
+    backgroundColor: "#16181C",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
   dismissOverlay: {
     ...StyleSheet.absoluteFillObject,
-    bottom: 200, // don't cover the card at the bottom
+    bottom: 200,
+  },
+  avatarImage: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
   },
 });

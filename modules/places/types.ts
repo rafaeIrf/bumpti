@@ -35,6 +35,7 @@ export type PlaceReview = {
 export type UserAvatar = {
   user_id: string;
   url: string;
+  entry_type?: string; // Presence type for colored avatar borders
 };
 
 export type Place = {

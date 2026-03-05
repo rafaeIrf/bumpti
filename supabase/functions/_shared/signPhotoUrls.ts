@@ -2,8 +2,8 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
 const SIGNED_URL_EXPIRES = 60 * 60 * 24; // 24 hours
 
-// Type for avatar with user_id
-type UserAvatar = { user_id: string; url: string };
+// Type for avatar with user_id and optional entry_type for colored borders
+type UserAvatar = { user_id: string; url: string; entry_type?: string };
 
 /**
  * Signs photo URLs from profile_photos.url paths
@@ -62,7 +62,7 @@ export async function signUserAvatars(
         return null;
       }
 
-      return { user_id: avatar.user_id, url: data.signedUrl };
+      return { user_id: avatar.user_id, url: data.signedUrl, entry_type: avatar.entry_type };
     })
   );
 

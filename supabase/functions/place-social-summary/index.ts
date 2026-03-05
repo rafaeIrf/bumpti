@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     }
 
     // Sign avatar URLs — RPC returns storage paths, not public/signed URLs
-    const rawAvatars: { user_id: string; url: string }[] = data?.avatars ?? [];
+    const rawAvatars: { user_id: string; url: string; entry_type?: string }[] = data?.avatars ?? [];
     const signedAvatars = await signUserAvatars(dbClient, rawAvatars);
 
     const result = {

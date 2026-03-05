@@ -28,7 +28,7 @@ interface FavoritePlace {
   review_tags: string[];
   dist_meters: number;
   active_users: number;
-  preview_avatars: { user_id: string; url: string }[] | null;
+  preview_avatars: { user_id: string; url: string; entry_type?: string }[] | null;
   regulars_count: number;
 }
 

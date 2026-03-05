@@ -198,3 +198,20 @@ export const spacing = {
   xl: 32,
   xxl: 48,
 };
+
+/**
+ * Border colors for stacked avatars based on presence entry_type.
+ * physical = most prominent (muted green, "live" signal).
+ * Grouped: checkin_plus/planning share slate-blue; favorite/social_hub share mauve;
+ * past_visitor/university_member share lavender.
+ * All colors are pastel/neutral to blend with the dark UI.
+ */
+export const entryTypeBorderColors: Record<string, string> = {
+  physical: "#81C784",          // Pastel green — actively at the place
+  checkin_plus: "#81D4FA",      // Pastel blue — remote signal / intent
+  planning: "#81D4FA",          // Pastel blue — shared with checkin_plus
+  past_visitor: "#EF9A9A",      // Pastel lavender — recent visitor
+  university_member: "#EF9A9A", // Pastel lavender — shared with past_visitor
+  favorite: "#EF9A9A",          // Pastel red — favorited the place
+  social_hub: "#EF9A9A",        // Pastel red — shared with favorite
+};

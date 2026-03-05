@@ -636,6 +636,7 @@
         "list": "Lista"
       },
       "map": {
+        "recenterMap": "Recentrar mapa",
         "comingSoon": "Mapa em breve",
         "comingSoonDescription": "Estamos preparando o mapa para você encontrar pessoas próximas.",
         "activeNow": "{{count}} aqui agora",
