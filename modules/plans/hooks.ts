@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import type { UserAvatar } from "@/modules/places/types";
+import { getLocalDateString } from "@/utils/date";
 import { useAppSelector } from "../store/hooks";
 import type { PlanPeriod, UserPlan } from "./types";
 
@@ -52,7 +53,7 @@ export function useUserPlans() {
 
   // Client-side guard: filter out any past-date plans that might remain in the
   // store from a previous session or when the app stays open past midnight.
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
   const plans = rawPlans.filter((p) => p.planned_for >= today);
 
   const { sortedPlans, nextPlan, initialIndex } = useMemo(() => {
@@ -70,7 +71,7 @@ export function useUserPlans() {
     const mapped = sorted.map(toActivePlan);
 
     // Find the most relevant plan index
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalDateString();
     const currentOrder = PERIOD_ORDER[getCurrentPeriod()];
 
     let bestIdx = mapped.findIndex(

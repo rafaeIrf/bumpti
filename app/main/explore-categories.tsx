@@ -6,16 +6,13 @@ import {
   CoffeeIcon,
   DumbbellIcon,
   GraduationCapIcon,
-  MapPinIcon,
   MartiniIcon,
   TreesIcon,
   TrendingUpIcon,
   UsersIcon,
   UtensilsCrossedIcon,
 } from "@/assets/icons";
-import { NearbyIcon } from "@/assets/illustrations";
 import { BaseTemplateScreen } from "@/components/base-template-screen";
-import { CategoryCard } from "@/components/category-card";
 import { PlaceCardFeatured } from "@/components/place-card-featured";
 import { ScreenToolbar } from "@/components/screen-toolbar";
 import { ThemedView } from "@/components/themed-view";
@@ -30,7 +27,7 @@ import { useActiveCategories } from "@/modules/app";
 import { t } from "@/modules/locales";
 import { PlaceCategory } from "@/modules/places/types";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SvgProps } from "react-native-svg";
@@ -49,20 +46,8 @@ interface Category {
 
 export default function ExploreCategoriesScreen() {
   const colors = useThemeColors();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useScreenTracking({ screenName: "explore_categories" });
-
-  const nearbyCategory: Category = {
-    id: "nearby",
-    icon: MapPinIcon,
-    title: t("screens.home.categories.nearby.title"),
-    description: t("screens.home.categories.nearby.description"),
-    iconColor: "#FFFFFF",
-    iconBgColor: "rgba(255, 255, 255, 0.2)",
-    color: colors.pastelTeal,
-    illustration: NearbyIcon,
-  };
 
   const categories: Category[] = [
     {
@@ -171,8 +156,6 @@ export default function ExploreCategoriesScreen() {
   const browseItems = filteredCategories;
 
   const handleCategoryClick = (category: Category) => {
-    setSelectedCategory(category.id);
-
     trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
       categoryId: category.id,
       categoryName: category.title,
@@ -183,13 +166,10 @@ export default function ExploreCategoriesScreen() {
       pathname: "/main/category-results",
       params: {
         categoryName: category.title,
-        ...(category.id === "nearby"
-          ? { nearby: "true" }
-          : { category: category.category }),
+        category: category.category,
         isPremium: "false",
       },
     });
-    setSelectedCategory(null);
   };
 
   return (
@@ -265,20 +245,6 @@ export default function ExploreCategoriesScreen() {
           </View>
         </Animated.View>
 
-        {/* Nearby */}
-        <Animated.View entering={FadeInDown.delay(150).springify()}>
-          <CategoryCard
-            category={nearbyCategory}
-            isSelected={selectedCategory === nearbyCategory.id}
-            onClick={() => handleCategoryClick(nearbyCategory)}
-            color={nearbyCategory.color}
-            illustration={nearbyCategory.illustration}
-            useRawIllustration
-            style={styles.nearbyCard}
-            textStyle={{ textAlign: "left" }}
-          />
-        </Animated.View>
-
         {/* Browse Categories Grid */}
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <View style={styles.gridContainer}>
@@ -313,11 +279,6 @@ const styles = StyleSheet.create({
   },
   featuredItem: {
     width: "48.5%",
-  },
-  nearbyCard: {
-    width: "100%",
-    height: 140,
-    marginBottom: spacing.smd,
   },
   categoryItem: {
     width: "48.5%",

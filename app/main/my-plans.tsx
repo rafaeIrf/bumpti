@@ -28,7 +28,7 @@ import { t } from "@/modules/locales";
 import { deletePlan, fetchAndSetUserPlans } from "@/modules/plans/api";
 import { useUserPlans } from "@/modules/plans/hooks";
 import type { UserPlan } from "@/modules/plans/types";
-import { getPeriodLabel } from "@/utils/date";
+import { getLocalDateString, getPeriodLabel } from "@/utils/date";
 import { logger } from "@/utils/logger";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -62,7 +62,7 @@ export default function MyPlansScreen() {
 
   // ── Daily limit check ─────────────────────────────────────────────
   const getTodayPlansCount = useCallback(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalDateString();
     return plans.filter((p) => p.planned_for === today).length;
   }, [plans]);
 
@@ -453,12 +453,14 @@ export default function MyPlansScreen() {
       onRefresh={handleRefresh}
       BottomBar={
         plans.length > 0 ? (
-          <ScreenBottomBar variant="custom" style={styles.fabBar}>
+          <ScreenBottomBar variant="custom">
             <Button
               onPress={handleCreatePlan}
               variant="default"
-              size="fab"
-              leftIcon={PlusIcon}
+              size="lg"
+              fullWidth
+              leftIcon={<PlusIcon width={18} height={18} />}
+              label={t("screens.home.myPlans.newPlan")}
             />
           </ScreenBottomBar>
         ) : undefined

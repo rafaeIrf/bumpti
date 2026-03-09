@@ -2,6 +2,7 @@ import {
   CalendarIcon,
   FlameIcon,
   MapIcon,
+  MapPinIcon,
   SearchIcon,
   SlidersHorizontalIcon,
 } from "@/assets/icons";
@@ -285,6 +286,28 @@ export default function HomeScreen() {
           />
           <GradientActionCard
             style={{ marginTop: spacing.smd }}
+            title={t("screens.home.categories.nearby.title")}
+            subtitle={t("screens.home.categories.nearby.description")}
+            gradientColors={["#26A69A", "#4DB6AC"]}
+            icon={MapPinIcon}
+            onPress={() => {
+              trackEvent(ANALYTICS_EVENTS.HOME.CATEGORY_CLICKED, {
+                categoryId: "nearby",
+                categoryName: t("screens.home.categories.nearby.title"),
+              });
+              router.push({
+                pathname: "/main/category-results",
+                params: {
+                  categoryName: t("screens.home.categories.nearby.title"),
+                  nearby: "true",
+                  isPremium: "false",
+                },
+              });
+            }}
+            showChevron
+          />
+          <GradientActionCard
+            style={{ marginTop: spacing.smd }}
             title={t("screens.home.myPlans.cardTitle")}
             subtitle={t("screens.home.myPlans.cardSubtitle")}
             gradientColors={["#4B87B9", "#64B5F6", "#87C8F8"]}
@@ -294,7 +317,7 @@ export default function HomeScreen() {
             showChevron
           />
           <ScreenSectionHeading
-            titleStyle={{ marginTop: spacing.smd, marginBottom: spacing.sm }}
+            titleStyle={{ marginTop: spacing.md, marginBottom: spacing.sm }}
             title={t("screens.home.myHubs.sectionTitle")}
           />
           <MyHubsSection

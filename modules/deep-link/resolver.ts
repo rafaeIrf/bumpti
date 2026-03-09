@@ -22,6 +22,8 @@ export function resolveDeepLink(
     // ── Place Activity ────────────────────────────────────────────────────
     case "favorite_activity_started":
     case "favorite_activity_heating":
+    case "hub_activity_started":
+    case "hub_activity_heating":
     case "nearby_activity_started":
     case "nearby_activity_heating": {
       if (!data.place_id) {
@@ -54,8 +56,9 @@ export function resolveDeepLink(
       };
     }
 
-    // ── Favorite New Regular → Discover tab ───────────────────────────────
-    case "favorite_new_regular": {
+    // ── Favorite / Hub New Regular → Discover tab ─────────────────────────
+    case "favorite_new_regular":
+    case "social_hub_new_regular": {
       return {
         type: "discover",
       };
