@@ -472,6 +472,9 @@ export function PlanHero({
 }: PlanHeroProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  // Track previous showEmptyFirst to reset carousel index on transition
+  const prevShowEmptyFirst = React.useRef<boolean | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
   // Once the hero has ever shown content (own or community plans), we never
@@ -563,6 +566,15 @@ export function PlanHero({
 
   const showEmptyFirst = !userHasPlans || (userHasPlans && !hasPlans);
 
+  // Reset carousel index when showEmptyFirst transitions (data structure changes)
+  if (
+    prevShowEmptyFirst.current !== null &&
+    prevShowEmptyFirst.current !== showEmptyFirst
+  ) {
+    setCurrentIndex(0);
+  }
+  prevShowEmptyFirst.current = showEmptyFirst;
+
   return (
     <Animated.View
       entering={FadeInDown.delay(150).springify().damping(20).mass(0.8)}
@@ -573,6 +585,7 @@ export function PlanHero({
       containerWidth > 0 ? (
         <>
           <Carousel
+            key={showEmptyFirst ? "with-empty" : "plans-only"}
             loop={false}
             width={containerWidth}
             height={160}
